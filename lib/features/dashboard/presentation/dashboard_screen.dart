@@ -47,33 +47,26 @@ class DashboardScreen extends ConsumerWidget {
           // LEFT MENU for large screens only
           if (isTablet)
             SizedBox(
-              width: ScaleSize.aspectRatio,
+              width: fem,
               //child: AppDrawer(onClose: () {}),
             ),
 
           // MAIN CONTENT
-          Expanded(child: const DashboardBody()),
-        ],
-      ),
-    );
-  }
-}
-
-class DashboardBody extends ConsumerWidget {
-  const DashboardBody({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(
-        //horizontal: 20 * ScaleSize.aspectRatio,
-        vertical: 2 * ScaleSize.aspectRatio,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          HeroAndFeaturesSection(),
-          SizedBox(height: 24 * ScaleSize.aspectRatio),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                //horizontal: 20 * ScaleSize.aspectRatio,
+                vertical: 2 * fem,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  HeroAndFeaturesSection(),
+                  SizedBox(height: 24 * fem),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

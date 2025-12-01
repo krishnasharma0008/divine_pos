@@ -12,16 +12,84 @@ class HeroAndFeaturesSection extends ConsumerWidget {
 
     return Column(
       children: [
+        SizedBox(height: 10),
         // HERO BANNER
-        Container(
+        // Container(
+        //   width: double.infinity,
+        //   height: 410,
+        //   decoration: const BoxDecoration(
+        //     image: DecorationImage(
+        //       image: AssetImage('assets/dashboard/banner/hero_banner.png'),
+        //       fit: BoxFit.cover,
+        //       alignment: Alignment.topCenter,
+        //     ),
+        //   ),
+        // ),
+
+        // HERO BANNER WITH RIGHT IMAGE + TEXT
+        SizedBox(
           width: double.infinity,
           height: 410,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/dashboard/banner/hero_banner.png'),
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-            ),
+          child: Stack(
+            children: [
+              // background banner
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/dashboard/banner/hero_banner.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                ),
+              ),
+
+              // right-side image + text
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    right: 32.0,
+                  ), // adjust as needed
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Rectangle 5026 image
+                      Image.asset(
+                        'assets/dashboard/banner/rectangle_5026.png',
+                        height: 140,
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Text on top of it (or next to it)
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Your title text',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Your subtitle or description',
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w400,
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
 
@@ -100,7 +168,7 @@ class FeatureCard extends StatelessWidget {
     return Container(
       width: 230 * ar,
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2), // ← #F2F2F2 background
+        color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(22 * ar),
         boxShadow: [
           BoxShadow(
@@ -111,14 +179,12 @@ class FeatureCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        // outer padding smaller
         padding: EdgeInsets.all(6 * ar),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // IMAGE
             Padding(
-              padding: EdgeInsets.all(6), // .only(top: 9 * ar, left: 10 * ar),
+              padding: EdgeInsets.all(6 * ar),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16 * ar),
                 child: Image.asset(
@@ -129,10 +195,7 @@ class FeatureCard extends StatelessWidget {
                 ),
               ),
             ),
-
             SizedBox(height: 10 * ar),
-
-            // TEXT + ARROW aligned to same left/right (14)
             Expanded(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 14 * ar),
@@ -142,9 +205,12 @@ class FeatureCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         label,
-                        style: TextStyle(
-                          fontSize: 14 * ar,
-                          fontWeight: FontWeight.w600,
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          height: 1.0,
+                          letterSpacing: 0.0,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
