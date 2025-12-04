@@ -43,18 +43,19 @@ class HeroAndFeaturesSection extends ConsumerWidget {
 
               // right-side image + text
               Align(
+                //alignment: Alignment.centerRight,
                 alignment: Alignment.centerRight,
                 child: Padding(
-                  padding: const EdgeInsets.only(
-                    right: 32.0,
-                  ), // adjust as needed
+                  padding: const EdgeInsets.only(right: 0), // adjust as needed
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Rectangle 5026 image
                       Image.asset(
                         'assets/dashboard/banner/rectangle_5026.png',
-                        height: 140,
+                        height: 410,
+                        width: 419,
+                        fit: BoxFit.cover,
                       ),
 
                       const SizedBox(width: 12),

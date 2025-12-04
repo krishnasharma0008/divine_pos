@@ -21,7 +21,7 @@ Future<void> main() async {
   //final authBox = await Hive.openBox('authBox');
 
   /// Provide the opened box to Riverpod
-  runApp( 
+  runApp(
     ProviderScope(
       // overrides: [
       //   hiveBoxProvider.overrideWithValue(authBox),
@@ -36,18 +36,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final auth = ref.watch(authProvider);
-
-    // /// Show loading screen until Hive + token load finishes
-    // if (auth.status == AuthStatus.loading) {
-    //   return const MaterialApp(
-    //     home: Scaffold(
-    //       body: Center(child: CircularProgressIndicator()),q
-
-    //     ),
-    //   );
-    // }
-
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(

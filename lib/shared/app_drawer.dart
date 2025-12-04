@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../shared/utils/scale_size.dart';
 import '../shared/themes.dart';
+import 'package:go_router/go_router.dart';
+//import '../features/jewellery/jewellery_listing_screen.dart';
 
 class SideMenu extends StatelessWidget {
   final VoidCallback onClose;
   final VoidCallback onLogout;
+
   const SideMenu({super.key, required this.onClose, required this.onLogout});
 
   @override
@@ -13,7 +16,7 @@ class SideMenu extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: FractionallySizedBox(
-          widthFactor: 0.82, // adjust for phone / tablet as needed
+          widthFactor: 0.82,
           child: Material(
             color: Colors.transparent,
             child: Container(
@@ -33,6 +36,7 @@ class SideMenu extends StatelessWidget {
                 children: [
                   _Header(onClose: onClose),
                   const Divider(height: 1, color: Color(0xFFE2E6E5)),
+
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(
@@ -41,31 +45,45 @@ class SideMenu extends StatelessWidget {
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          _PrimaryItem(
+                        children: [
+                          // Home
+                          const _PrimaryItem(
                             icon: Icons.home_outlined,
                             label: 'Home',
                           ),
+
+                          // Jewellery Listing (NO CONST)
                           _PrimaryItem(
+                            icon: Icons.diamond_outlined,
+                            label: 'Jewellery Listing',
+                            onTap: () {
+                              onClose();
+                              context.go('/jewellery_listing');
+                            },
+                          ),
+
+                          const _PrimaryItem(
                             icon: Icons.menu_book_outlined,
                             label: 'Catalogue',
                           ),
-                          _PrimaryItem(
+                          const _PrimaryItem(
                             icon: Icons.star_border,
                             label: 'Feedback Form',
                           ),
-                          _PrimaryItem(
+                          const _PrimaryItem(
                             icon: Icons.diamond_outlined,
                             label: 'Know Your Diamond Value',
                           ),
-                          _PrimaryItem(
+                          const _PrimaryItem(
                             icon: Icons.track_changes_outlined,
                             label: 'Verify & Track',
                           ),
-                          SizedBox(height: 12),
-                          _SectionCard(
-                            icon: Icons.layers_outlined,
 
+                          const SizedBox(height: 12),
+
+                          // Categories Section
+                          const _SectionCard(
+                            icon: Icons.layers_outlined,
                             title: 'Categories',
                             items: [
                               'Necklaces',
@@ -77,20 +95,26 @@ class SideMenu extends StatelessWidget {
                               'Earrings',
                             ],
                           ),
-                          SizedBox(height: 12),
-                          _SectionCard(
+
+                          const SizedBox(height: 12),
+
+                          // Collection Section
+                          const _SectionCard(
                             icon: Icons.collections_outlined,
                             title: 'Collection',
                             items: ['Ballerina', 'Souls', 'Setu'],
                           ),
-                          SizedBox(height: 12),
-                          Divider(color: Color(0xFFE2E6E5)),
-                          SizedBox(height: 8),
-                          _PrimaryItem(
+
+                          const SizedBox(height: 12),
+                          const Divider(color: Color(0xFFE2E6E5)),
+
+                          const SizedBox(height: 8),
+
+                          const _PrimaryItem(
                             icon: Icons.shopping_cart_outlined,
                             label: 'Cart',
                           ),
-                          _PrimaryItem(
+                          const _PrimaryItem(
                             icon: Icons.person_outline,
                             label: 'Account',
                           ),
@@ -98,6 +122,7 @@ class SideMenu extends StatelessWidget {
                       ),
                     ),
                   ),
+
                   _LogoutRow(onLogout: onLogout),
                 ],
               ),
@@ -139,29 +164,34 @@ class _Header extends StatelessWidget {
 class _PrimaryItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _PrimaryItem({required this.icon, required this.label});
+  final VoidCallback? onTap;
+
+  const _PrimaryItem({required this.icon, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(999),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Icon(icon, size: 18, color: Colors.black87),
             ),
-            child: Icon(icon, size: 18, color: Colors.black87),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -185,7 +215,6 @@ class _SectionCard extends StatelessWidget {
         color: const Color(0xFFEFF4F3),
         borderRadius: BorderRadius.circular(12),
       ),
-      //      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,17 +235,16 @@ class _SectionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+
           Container(
             width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              //borderRadius: BorderRadius.circular(12),
-            ),
+            color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: items.map((text) {
                 final bool isFirst = text == items.first;
+
                 return Container(
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   padding: const EdgeInsets.symmetric(
@@ -255,7 +283,7 @@ class _LogoutRow extends StatelessWidget {
     return InkWell(
       onTap: onLogout,
       child: Container(
-        height: 56.0, // * ScaleSize.aspectRatio,
+        height: 56.0,
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: Color(0xFFE2E6E5))),
         ),
@@ -267,11 +295,11 @@ class _LogoutRow extends StatelessWidget {
               size: 18.0 * ScaleSize.aspectRatio,
               color: Colors.red,
             ),
-            SizedBox(width: 12.0), //* ScaleSize.aspectRatio),
+            const SizedBox(width: 12.0),
             Text(
               'Logout',
               style: TextStyle(
-                fontSize: 14.0, //* ScaleSize.aspectRatio,
+                fontSize: 14.0,
                 color: Colors.red,
                 fontWeight: FontWeight.w500,
                 fontFamily: MyThemes.labelFontFamily,

@@ -16,6 +16,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # syncfusion_flutter_sliders: ^25.1.37
+  # syncfusion_flutter_core: ^25.1.37
+  flutter_xlider: ^3.5.0
+
   # ------------ CORE LIBRARIES ------------
   intl: ^0.20.2 # date, number formatting
   dio: ^5.4.3 # API client
@@ -75,6 +79,8 @@ flutter:
     - assets/dashboard/action_section/verify-track.png
     - assets/dashboard/action_section/scan-ready-product.jpg
     - assets/dashboard/action_section/right-arrow-icon.png
+    - assets/jewellery/filters/
+    - assets/jewellery/filters/metal/
     # - assets/images/
     # - assets/config/
     # - .env

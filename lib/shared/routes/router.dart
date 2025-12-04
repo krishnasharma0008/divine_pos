@@ -11,6 +11,7 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/home/presentation/loading_screen.dart';
 //import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart'; // import your OTP screen
+import '../../features/jewellery/presentation/jewellery_listing_screen.dart';
 
 import '../../shared/shared_layout.dart';
 import 'route_pages.dart';
@@ -83,6 +84,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: RoutePages.dashboard.routePath,
             name: RoutePages.dashboard.routeName,
             builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: RoutePages.jewellery_listing.routePath,
+            name: RoutePages.jewellery_listing.routeName,
+            builder: (context, state) => const JewelleryListingScreen(),
           ),
           // GoRoute(
           //   path: RoutePages.profile.routePath,

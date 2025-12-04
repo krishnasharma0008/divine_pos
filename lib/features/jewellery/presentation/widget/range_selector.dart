@@ -1,16 +1,49 @@
 import 'package:flutter/material.dart';
 
-class PriceRangeSelector extends StatefulWidget {
+class RangeSelector extends StatefulWidget {
   final double min;
   final double max;
+  final String title;
+  final String Function(double value) formatter;
 
-  const PriceRangeSelector({super.key, required this.min, required this.max});
+  // new: notify parent when range changes
+  final ValueChanged<RangeValues>? onChanged;
+
+  const RangeSelector({
+    super.key,
+    required this.min,
+    required this.max,
+    this.title = '',
+    this.formatter = _defaultIndianFormatter,
+    this.onChanged,
+  });
+
+  // default Indian currency formatter
+  static String _defaultIndianFormatter(double value) {
+    String s = value.toStringAsFixed(0);
+    int n = s.length;
+    if (n <= 3) return "₹ $s";
+
+    String last3 = s.substring(n - 3);
+    String rest = s.substring(0, n - 3);
+
+    final buf = StringBuffer();
+    int counter = 0;
+    for (int i = rest.length - 1; i >= 0; i--) {
+      buf.write(rest[i]);
+      counter++;
+      if (counter % 2 == 0 && i != 0) buf.write(",");
+    }
+
+    String formattedRest = buf.toString().split('').reversed.join('');
+    return "₹ $formattedRest,$last3";
+  }
 
   @override
-  State<PriceRangeSelector> createState() => _PriceRangeSelectorState();
+  State<RangeSelector> createState() => _RangeSelectorState();
 }
 
-class _PriceRangeSelectorState extends State<PriceRangeSelector> {
+class _RangeSelectorState extends State<RangeSelector> {
   late RangeValues _range;
 
   final _borderColor = const Color(0xFFD9C6A3);
@@ -25,58 +58,41 @@ class _PriceRangeSelectorState extends State<PriceRangeSelector> {
     _range = RangeValues(widget.min, widget.max);
   }
 
-  // Format number as Indian currency 1,00,000
-  String _fmt(double value) {
-    String s = value.toStringAsFixed(0);
-    int n = s.length;
-
-    if (n <= 3) return "₹ $s";
-
-    String last3 = s.substring(n - 3);
-    String rest = s.substring(0, n - 3);
-
-    final buf = StringBuffer();
-    int counter = 0;
-
-    for (int i = rest.length - 1; i >= 0; i--) {
-      buf.write(rest[i]);
-      counter++;
-      if (counter % 2 == 0 && i != 0) buf.write(",");
-    }
-
-    String formattedRest = buf.toString().split('').reversed.join('');
-    return "₹ $formattedRest,$last3";
-  }
-
   @override
   Widget build(BuildContext context) {
+    final bool hasTitle = widget.title.trim().isNotEmpty;
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title Row
-          Row(
-            children: const [
-              Text(
-                "Price Range",
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-              ),
-              Spacer(),
-              Icon(Icons.keyboard_arrow_up_rounded, size: 20),
-            ],
-          ),
+          if (hasTitle) ...[
+            Row(
+              children: [
+                Text(
+                  widget.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                const Spacer(),
+                //const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
+              ],
+            ),
 
-          const SizedBox(height: 14),
-
-          // Start / End price buttons
+            const SizedBox(height: 14),
+          ],
+          // Start / End value buttons
           Padding(
-            padding: const EdgeInsets.only(left: 48),
+            padding: const EdgeInsets.only(left: 12),
             child: Row(
               children: [
-                _priceChip(_fmt(_range.start)),
+                _priceChip(widget.formatter(_range.start)),
                 const SizedBox(width: 20),
-                _priceChip(_fmt(_range.end)),
+                _priceChip(widget.formatter(_range.end)),
               ],
             ),
           ),
@@ -103,7 +119,13 @@ class _PriceRangeSelectorState extends State<PriceRangeSelector> {
               divisions: 12,
               onChanged: (values) {
                 setState(() => _range = values);
+                widget.onChanged?.call(
+                  values,
+                ); // ← send selected range to parent
               },
+              // onChanged: (values) {
+              //   setState(() => _range = values);
+              // },
             ),
           ),
         ],
@@ -112,19 +134,24 @@ class _PriceRangeSelectorState extends State<PriceRangeSelector> {
   }
 
   Widget _priceChip(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-      decoration: BoxDecoration(
-        color: _bgColor,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _borderColor, width: 1.2),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: _textColor,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
+    return SizedBox(
+      width: 135, // fixed width you want
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+        decoration: BoxDecoration(
+          //color: _bgColor,
+          color: Color(0xFFF3FBFA),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: _borderColor, width: 1.2),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 14,
+            fontFamily: 'Montserrat',
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
