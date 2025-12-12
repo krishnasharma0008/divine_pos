@@ -110,7 +110,7 @@ class HeroAndFeaturesSection extends ConsumerWidget {
                   FeatureCard(
                     label: "Catalogue",
                     image: "assets/dashboard/action_section/catalouge.png",
-                    onTap: () => context.push('/catalogue'),
+                    onTap: () => context.push('/jewellery_listing'),
                   ),
                   SizedBox(width: 8 * ar),
                   FeatureCard(

@@ -49,11 +49,15 @@ class DiamondSliderThumbShape extends SliderComponentShape {
 class ColorGradeSelector extends StatefulWidget {
   final String label;
   final List<String> grades;
+  final ValueChanged<String> onSelected;
+  final String initialValue;
 
   const ColorGradeSelector({
     super.key,
     required this.label,
     required this.grades,
+    required this.onSelected,
+    required this.initialValue,
   });
 
   @override
@@ -61,9 +65,18 @@ class ColorGradeSelector extends StatefulWidget {
 }
 
 class _ColorGradeSelectorState extends State<ColorGradeSelector> {
-  double _sliderValue = 0.0;
+  late double _sliderValue;
 
-  final tickColor = const Color(0xFFBFE8E3); // light teal
+  final tickColor = const Color(0xFFBFE8E3);
+
+  @override
+  void initState() {
+    super.initState();
+    _sliderValue = widget.grades
+        .indexOf(widget.initialValue)
+        .toDouble()
+        .clamp(0, (widget.grades.length - 1).toDouble());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,80 +101,64 @@ class _ColorGradeSelectorState extends State<ColorGradeSelector> {
                   color: Colors.black87,
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
-                  letterSpacing: 0.1,
                 ),
               ),
             ),
             const SizedBox(height: 8),
-            // Separate row for ticks
+
+            /// ✅ LABELS + TICKS
             Row(
               children: List.generate(
                 widget.grades.length,
                 (index) => Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      left: index == 0
-                          ? 18
-                          : index == 1
-                          ? 8
-                          : 0,
-                      right: index == widget.grades.length - 1
-                          ? 18
-                          : index == widget.grades.length - 2
-                          ? 8
-                          : 0,
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          widget.grades[index],
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: (index == _sliderValue.round())
-                                ? Colors.teal
-                                : Colors.black87,
-                            fontWeight: (index == _sliderValue.round())
-                                ? FontWeight.bold
-                                : FontWeight.w400,
-                            letterSpacing: 1,
-                          ),
+                  child: Column(
+                    children: [
+                      Text(
+                        widget.grades[index],
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: (index == _sliderValue.round())
+                              ? Colors.teal
+                              : Colors.black87,
+                          fontWeight: (index == _sliderValue.round())
+                              ? FontWeight.bold
+                              : FontWeight.w400,
                         ),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: 4,
-                          height: 12, // taller tick
-                          decoration: BoxDecoration(
-                            color: tickColor,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 4,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: tickColor,
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-            //const SizedBox(height: 1), // more space after ticks
-            SizedBox(
-              width: double.infinity,
-              child: SliderTheme(
-                data: SliderThemeData(
-                  trackHeight: 8,
-                  activeTrackColor: tickColor,
-                  inactiveTrackColor: Colors.grey.shade200,
-                  thumbColor: tickColor,
-                  thumbShape: const DiamondSliderThumbShape(thumbRadius: 14),
-                  overlayColor: tickColor.withOpacity(0.21),
-                ),
-                child: Slider(
-                  min: 0,
-                  max: (widget.grades.length - 1).toDouble(),
-                  divisions: widget.grades.length - 1,
-                  value: _sliderValue,
-                  onChanged: (value) {
-                    setState(() => _sliderValue = value);
-                  },
-                ),
+
+            /// ✅ SLIDER
+            SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 8,
+                activeTrackColor: tickColor,
+                inactiveTrackColor: Colors.grey.shade200,
+                thumbColor: tickColor,
+                thumbShape: const DiamondSliderThumbShape(thumbRadius: 14),
+                overlayColor: tickColor.withOpacity(0.21),
+              ),
+              child: Slider(
+                min: 0,
+                max: (widget.grades.length - 1).toDouble(),
+                divisions: widget.grades.length - 1,
+                value: _sliderValue,
+                onChanged: (value) {
+                  setState(() => _sliderValue = value);
+                  widget.onSelected(widget.grades[value.round()]);
+                },
               ),
             ),
           ],

@@ -7,51 +7,6 @@ import '../../../shared/utils/http_client.dart';
 import 'auth_notifier.dart';
 import 'user.dart';
 
-// final loginRepoProvider = NotifierProvider<LoginNotifier, LoginState>(
-//   LoginNotifier.new,
-// );
-
-// class LoginNotifier extends Notifier<LoginState> {
-//   @override
-//   LoginState build() {
-//     return LoginState();
-//   }
-
-// class LoginState {
-//   final List<User> data;
-//   final bool isLoading;
-//   final Object? error;
-//   final String? errorMessage;
-
-//   LoginState({
-//     List<User>? data,
-//     this.isLoading = false,
-//     this.error,
-//     this.errorMessage,
-//   }) : data = data ?? [];
-
-//   LoginState copyWith({
-//     List<User>? data,
-//     User? currentUser,
-//     bool? isLoading,
-//     Object? error,
-//     String? errorMessage,
-//   }) {
-//     return LoginState(
-//       data: data ?? this.data,
-//       isLoading: isLoading ?? this.isLoading,
-//       error: error,
-//       errorMessage: errorMessage,
-//     );
-//   }
-// }
-
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import '../../../shared/utils/api_endpointen.dart';
-// import '../../../shared/utils/http_client.dart';
-// import 'user.dart';
-// import 'auth_notifier.dart';
-
 final loginRepoProvider = NotifierProvider<LoginNotifier, LoginState>(
   LoginNotifier.new,
 );
@@ -61,52 +16,43 @@ class LoginNotifier extends Notifier<LoginState> {
   LoginState build() => LoginState();
 
   Future<bool> sendOtp({required String mobile}) async {
+    // Start loading & clear old errors
     state = state.copyWith(isLoading: true, error: null, errorMessage: null);
+
     try {
       await Future.delayed(const Duration(seconds: 1));
-      state = state.copyWith(isLoading: false, tempMobile: mobile);
-      print("OTP sent (dummy): 1234");
-      return true;
+
+      final postData = {"username": mobile};
+      final dio = ref.read(httpClientProvider);
+
+      final response = await dio.post(ApiEndPoint.getotp, data: postData);
+
+      // ✅ SUCCESS CASE
+      if (response.statusCode == HttpStatus.ok &&
+          response.data["success"] == true) {
+        state = state.copyWith(
+          isLoading: false,
+          tempMobile: mobile, // ✅ store only on success
+        );
+        return true;
+      }
+
+      // ❌ API responded but failed
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: response.data["message"] ?? "Failed to send OTP",
+      );
+      return false;
     } catch (e) {
+      // ❌ NETWORK / SERVER ERROR
       state = state.copyWith(
         isLoading: false,
         error: e,
-        errorMessage: "Failed to send OTP",
+        errorMessage: "Failed to send OTP. Please try again.",
       );
       return false;
     }
   }
-
-  //   Future<bool> verifyOtp({required String otp}) async {
-  //     state = state.copyWith(isLoading: true, error: null, errorMessage: null);
-  //     try {
-  //       print("working");
-  //       await Future.delayed(const Duration(seconds: 1));
-  //       if (otp != "1234") {
-  //         state = state.copyWith(isLoading: false, errorMessage: "Invalid OTP");
-  //         return false;
-  //       }
-  //       final user = User(
-  //         userid: 1,
-  //         userName: state.tempMobile ?? "unknown",
-  //         displayName: "Demo User",
-  //         designation: "User",
-  //         token: "dummy_token_123",
-  //       );
-  //       ref.read(authProvider.notifier).login(user);
-  //       print("User logged in with mobile: ${state.tempMobile}");
-  //       state = state.copyWith(isLoading: false);
-  //       return true;
-  //     } catch (e) {
-  //       state = state.copyWith(
-  //         isLoading: false,
-  //         error: e,
-  //         errorMessage: "OTP verification failed",
-  //       );
-  //       return false;
-  //     }
-  //   }
-  // }
 
   Future<bool> login({
     required String username,
@@ -119,7 +65,7 @@ class LoginNotifier extends Notifier<LoginState> {
       final postData = {"username": username, "password": password};
       final dio = ref.read(httpClientProvider);
 
-      var response = await dio.post(ApiEndPoint.login, data: postData);
+      var response = await dio.post(ApiEndPoint.verify_otp, data: postData);
       //print(response.data);
       if (response.statusCode == HttpStatus.ok) {
         //print(response.data);
@@ -136,6 +82,7 @@ class LoginNotifier extends Notifier<LoginState> {
           ref.read(authProvider.notifier).login(user);
           print("User Name : ${user.userName}");
           print("token : ${user.token}");
+          print("Pj Store Code : , ${user.pjcode}");
         }
         return sucess;
       } else {

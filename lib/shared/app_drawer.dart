@@ -52,16 +52,25 @@ class SideMenu extends StatelessWidget {
                             label: 'Home',
                           ),
 
-                          // Jewellery Listing (NO CONST)
-                          _PrimaryItem(
-                            icon: Icons.diamond_outlined,
-                            label: 'Jewellery Listing',
-                            onTap: () {
-                              onClose();
-                              context.go('/jewellery_listing');
-                            },
-                          ),
+                          // // Jewellery Listing (NO CONST)
+                          // _PrimaryItem(
+                          //   icon: Icons.diamond_outlined,
+                          //   label: 'Jewellery Listing',
+                          //   onTap: () {
+                          //     onClose();
+                          //     context.go('/jewellery_listing');
+                          //   },
+                          // ),
 
+                          // // Jewellery Jurney
+                          // _PrimaryItem(
+                          //   icon: Icons.diamond_outlined,
+                          //   label: 'Jewellery Journey',
+                          //   onTap: () {
+                          //     onClose();
+                          //     context.go('/jewellery_journey');
+                          //   },
+                          // ),
                           const _PrimaryItem(
                             icon: Icons.menu_book_outlined,
                             label: 'Catalogue',

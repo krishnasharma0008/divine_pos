@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:divine_pos/features/jewellery_journey/presentation/jewellery_journey_screen.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -86,9 +87,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const DashboardScreen(),
           ),
           GoRoute(
-            path: RoutePages.jewellery_listing.routePath,
-            name: RoutePages.jewellery_listing.routeName,
-            builder: (context, state) => const JewelleryListingScreen(),
+            path: RoutePages.jewellerylisting.routePath,
+            name: RoutePages.jewellerylisting.routeName,
+            builder: (context, state) => JewelleryListingScreen(),
+          ),
+          GoRoute(
+            path: RoutePages.jewelleryjourney.routePath,
+            name: RoutePages.jewelleryjourney.routeName,
+            builder: (context, state) => JewelleryJourneyScreen(),
           ),
           // GoRoute(
           //   path: RoutePages.profile.routePath,

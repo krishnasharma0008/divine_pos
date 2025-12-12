@@ -1,36 +1,21 @@
 import 'package:flutter/material.dart';
 
-class MetalTypeGrid extends StatefulWidget {
+class MetalTypeGrid extends StatelessWidget {
   final double fem;
   final List<Map<String, String>> items; // [{label, asset}]
-  final String? initialSelected;
+  final Set<String> selected; // from FilterState.selectedMetal
   final void Function(String metal)? onSelected;
 
   const MetalTypeGrid({
     super.key,
     this.fem = 1.0,
     required this.items,
-    this.initialSelected,
+    required this.selected,
     this.onSelected,
   });
 
   @override
-  State<MetalTypeGrid> createState() => _MetalTypeGridState();
-}
-
-class _MetalTypeGridState extends State<MetalTypeGrid> {
-  String? current;
-
-  @override
-  void initState() {
-    super.initState();
-    current = widget.initialSelected;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final fem = widget.fem;
-
     return GridView.count(
       crossAxisCount: 2,
       mainAxisSpacing: 12 * fem,
@@ -38,16 +23,13 @@ class _MetalTypeGridState extends State<MetalTypeGrid> {
       childAspectRatio: 2.8,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      children: widget.items.map((it) {
+      children: items.map((it) {
         final String label = it['label']!;
         final String asset = it['asset']!;
-        final bool isSelected = current == label;
+        final bool isSelected = selected.contains(label);
 
         return GestureDetector(
-          onTap: () {
-            setState(() => current = label);
-            widget.onSelected?.call(label);
-          },
+          onTap: () => onSelected?.call(label),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             padding: EdgeInsets.symmetric(

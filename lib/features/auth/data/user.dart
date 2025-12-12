@@ -4,6 +4,7 @@ class User {
   final String displayName;
   final String designation;
   final String token;
+  final String pjcode;
 
   User({
     required this.userid,
@@ -11,6 +12,7 @@ class User {
     required this.displayName,
     required this.designation,
     required this.token,
+    required this.pjcode,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class User {
       displayName: json['dpname'] ?? '',
       designation: json['designation'] ?? '',
       token: json['token'] ?? '',
+      pjcode: json['pjcode'] ?? '',
     );
   }
 
@@ -30,6 +33,7 @@ class User {
       'dpname': displayName,
       'designation': designation,
       'token': token,
+      'pjcode': pjcode,
     };
   }
 }

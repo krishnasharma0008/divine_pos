@@ -6,15 +6,17 @@ import '../presentation/widget/range_selector.dart';
 import '../presentation/widget/diamond_shape_grid.dart';
 import '../presentation/widget/discrete_range_filter.dart';
 import '../presentation/widget/metal_type.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/filter_provider.dart';
 
-class FilterSidebar extends StatefulWidget {
+class FilterSidebar extends ConsumerStatefulWidget {
   const FilterSidebar({super.key});
 
   @override
-  State<FilterSidebar> createState() => _FilterSidebarState();
+  ConsumerState<FilterSidebar> createState() => _FilterSidebarState();
 }
 
-class _FilterSidebarState extends State<FilterSidebar> {
+class _FilterSidebarState extends ConsumerState<FilterSidebar> {
   // -----------------------------------------------------------
   // RANGE FILTERS
   // -----------------------------------------------------------
@@ -56,6 +58,12 @@ class _FilterSidebarState extends State<FilterSidebar> {
   // GENERIC TOGGLE
   // -----------------------------------------------------------
   void toggleSet(Set<String> s, String value, String group) {
+    // if (group == 'Gender') {
+    //   ref
+    //       .read(filterProvider.notifier)
+    //       .setGender(s.contains(value) ? null : value);
+    //   return;
+    // }
     setState(() {
       s.contains(value) ? s.remove(value) : s.add(value);
     });
@@ -68,7 +76,7 @@ class _FilterSidebarState extends State<FilterSidebar> {
   final _diamondItems = [
     {'label': 'Round', 'asset': 'assets/jewellery/filters/round.png'},
     {'label': 'Princess', 'asset': 'assets/jewellery/filters/princess.png'},
-    {'label': 'Cushion', 'asset': 'assets/jewellery/filters/cushion.png'},
+    //{'label': 'Cushion', 'asset': 'assets/jewellery/filters/cushion.png'},
     {'label': 'Oval', 'asset': 'assets/jewellery/filters/oval.png'},
     {'label': 'Pear', 'asset': 'assets/jewellery/filters/pear.png'},
     {'label': 'Radiant', 'asset': 'assets/jewellery/filters/radiant.png'},
@@ -76,6 +84,16 @@ class _FilterSidebarState extends State<FilterSidebar> {
     {'label': 'Heart', 'asset': 'assets/jewellery/filters/heart.png'},
   ];
 
+  //carat
+  final _caratOptions = [
+    '0.10',
+    '0.25',
+    '0.50',
+    '0.75',
+    '1.00',
+    '1.50',
+    '2.00',
+  ];
   // -----------------------------------------------------------
   // Metal
   // -----------------------------------------------------------
@@ -105,6 +123,7 @@ class _FilterSidebarState extends State<FilterSidebar> {
     required Set<String> selectedSet,
     required double fem,
     required String groupName,
+    required void Function(String item) onTapItem,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -121,7 +140,9 @@ class _FilterSidebarState extends State<FilterSidebar> {
               child: FilterPill(
                 label: item,
                 selected: selectedSet.contains(item),
-                onTap: () => toggleSet(selectedSet, item, groupName),
+                //onTap: () => toggleSet(selectedSet, item, groupName),
+                onTap: () => onTapItem(item),
+
                 fem: fem,
               ),
             );
@@ -137,6 +158,9 @@ class _FilterSidebarState extends State<FilterSidebar> {
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
+
+    final filter = ref.watch(filterProvider); // FilterState
+    final notifier = ref.read(filterProvider.notifier); // FilterNotifier
 
     return Container(
       width: 310 * fem,
@@ -198,8 +222,10 @@ class _FilterSidebarState extends State<FilterSidebar> {
                 max: 1000000,
                 title: '',
                 onChanged: (range) {
-                  setState(() => priceRange = range);
-                  print('Price range: ${range.start} - ${range.end}');
+                  //setState(() => priceRange = range);
+                  notifier.setPrice(range);
+                  //print('Price range: ${range.start} - ${range.end}');
+                  print('Price range: $range');
                 },
               ),
             ),
@@ -212,17 +238,22 @@ class _FilterSidebarState extends State<FilterSidebar> {
               fem: fem,
               child: twoColumnGrid(
                 items: [
-                  'Solitaires',
                   'Rings',
                   'Earrings',
-                  'Necklaces',
-                  'Bracelets',
-                  'Pendants',
                   'Bangles',
+                  'Mangalsutra',
+                  'Nosepin',
+                  // 'Necklaces',
+                  // 'Bracelets',
+                  // 'Pendants',
+                  //'Bangles',
                 ],
-                selectedSet: selectedCategories,
+                //selectedSet: selectedCategories,
+                selectedSet: filter.selectedCategory,
                 fem: fem,
                 groupName: "Category",
+                //onTapItem: (item) => notifier.setCategory(item),
+                onTapItem: (item) => notifier.toggleCategory(item),
               ),
             ),
 
@@ -240,24 +271,44 @@ class _FilterSidebarState extends State<FilterSidebar> {
                   'Daily Wear',
                   'Office Wear',
                 ],
-                selectedSet: selectedSubCat,
+                //selectedSet: selectedSubCat,
+                selectedSet: filter.selectedSubCategory,
                 fem: fem,
                 groupName: "Sub Category",
+                //onTapItem: (item) => notifier.setSubCategory(item),
+                onTapItem: (item) => notifier.toggleSubCategory(item),
               ),
             ),
 
             //------------------------------------------------------
             // CARAT WEIGHT
             //------------------------------------------------------
+            // FilterSection(
+            //   title: 'Carat Weight',
+            //   fem: fem,
+            //   initiallyExpanded: true,
+            //   child: RangeSelector(
+            //     min: 0.10,
+            //     max: 2.99,
+            //     title: '',
+            //     formatter: (v) => '${v.toStringAsFixed(2)} ct',
+            //   ),
+            // ),
             FilterSection(
               title: 'Carat Weight',
               fem: fem,
-              initiallyExpanded: true,
-              child: RangeSelector(
-                min: 0.10,
-                max: 2.99,
+              child: DiscreteClickRange(
                 title: '',
-                formatter: (v) => '${v.toStringAsFixed(2)} ct',
+                options: _caratOptions,
+                initialStartIndex: _caratOptions.indexOf(
+                  filter.caratStartLabel,
+                ),
+                initialEndIndex: _caratOptions.indexOf(filter.caratEndLabel),
+                onChanged: (range) {
+                  final start = _caratOptions[range.start.toInt()];
+                  final end = _caratOptions[range.end.toInt()];
+                  notifier.setCaratRange(start, end);
+                },
               ),
             ),
 
@@ -268,13 +319,21 @@ class _FilterSidebarState extends State<FilterSidebar> {
               title: 'Diamond Shape',
               fem: fem,
               initiallyExpanded: true,
+              //   child: DiamondShapeGrid(
+              //     fem: ScaleSize.aspectRatio,
+              //     items: _diamondItems,
+              //     //initialSelected: 'Round',
+              //     initialSelected: null, //filter.selectedShape,
+              //     onSelected: (shape) => notifier.toggleMetal(shape),
+              //     // onSelected: (shape) {
+              //     //   print('Shape selected → $shape');
+              //     // },
+              //   ),
               child: DiamondShapeGrid(
-                fem: ScaleSize.aspectRatio,
+                fem: fem,
                 items: _diamondItems,
-                initialSelected: 'Round',
-                onSelected: (shape) {
-                  print('Shape selected → $shape');
-                },
+                selected: filter.selectedShape, // Set<String>
+                onSelected: (shape) => notifier.toggleShape(shape),
               ),
             ),
 
@@ -287,14 +346,19 @@ class _FilterSidebarState extends State<FilterSidebar> {
               child: DiscreteClickRange(
                 title: '',
                 options: _colorOptions,
-                initialStartIndex: _colorOptions.indexOf(colorStartLabel),
-                initialEndIndex: _colorOptions.indexOf(colorEndLabel),
+                initialStartIndex: _colorOptions.indexOf(
+                  filter.colorStartLabel,
+                ),
+                initialEndIndex: _colorOptions.indexOf(filter.colorEndLabel),
                 onChanged: (range) {
-                  setState(() {
-                    colorStartLabel = _colorOptions[range.start.toInt()];
-                    colorEndLabel = _colorOptions[range.end.toInt()];
-                  });
-                  print('Color range: $colorStartLabel - $colorEndLabel');
+                  // setState(() {
+                  //   colorStartLabel = _colorOptions[range.start.toInt()];
+                  //   colorEndLabel = _colorOptions[range.end.toInt()];
+                  // });
+                  // print('Color range: $colorStartLabel - $colorEndLabel');
+                  final start = _colorOptions[range.start.toInt()];
+                  final end = _colorOptions[range.end.toInt()];
+                  notifier.setColorRange(start, end);
                 },
               ),
             ),
@@ -308,14 +372,21 @@ class _FilterSidebarState extends State<FilterSidebar> {
               child: DiscreteClickRange(
                 title: '',
                 options: _clarityOptions,
-                initialStartIndex: _clarityOptions.indexOf(clarityStartLabel),
-                initialEndIndex: _clarityOptions.indexOf(clarityEndLabel),
+                initialStartIndex: _clarityOptions.indexOf(
+                  filter.clarityStartLabel,
+                ),
+                initialEndIndex: _clarityOptions.indexOf(
+                  filter.clarityEndLabel,
+                ),
                 onChanged: (range) {
-                  setState(() {
-                    clarityStartLabel = _clarityOptions[range.start.toInt()];
-                    clarityEndLabel = _clarityOptions[range.end.toInt()];
-                  });
-                  print('Clarity: $clarityStartLabel - $clarityEndLabel');
+                  // setState(() {
+                  //   clarityStartLabel = _clarityOptions[range.start.toInt()];
+                  //   clarityEndLabel = _clarityOptions[range.end.toInt()];
+                  // });
+                  // print('Clarity: $clarityStartLabel - $clarityEndLabel');
+                  final start = _clarityOptions[range.start.toInt()];
+                  final end = _clarityOptions[range.end.toInt()];
+                  notifier.setClarityRange(start, end);
                 },
               ),
             ),
@@ -329,25 +400,34 @@ class _FilterSidebarState extends State<FilterSidebar> {
               child: MetalTypeGrid(
                 fem: fem,
                 items: _metalItems,
-                initialSelected: selectedMetal,
-                onSelected: (metal) {
-                  setState(() => selectedMetal = metal);
-                  print('Selected metal → $metal');
-                },
+                selected: filter.selectedMetal, // Set<String>
+                onSelected: (metal) => notifier.toggleMetal(metal),
               ),
             ),
 
             //------------------------------------------------------
             // GENDER
             //------------------------------------------------------
+            // FilterSection(
+            //   title: 'Gender',
+            //   fem: fem,
+            //   child: twoColumnGrid(
+            //     items: ['Men', 'Women', 'Unisex', 'Children'],
+            //     selectedSet: selectedGender,
+            //     fem: fem,
+            //     groupName: "Gender",
+            //   ),
+            // ),
             FilterSection(
               title: 'Gender',
               fem: fem,
               child: twoColumnGrid(
                 items: ['Men', 'Women', 'Unisex', 'Children'],
-                selectedSet: selectedGender,
+                selectedSet: filter.selectedGender,
                 fem: fem,
                 groupName: "Gender",
+                //onTapItem: (item) => notifier.toggleOccasion(item), single select
+                onTapItem: (item) => notifier.toggleGender(item),
               ),
             ),
 
@@ -365,9 +445,10 @@ class _FilterSidebarState extends State<FilterSidebar> {
                   'Daily Wear',
                   'Gifting',
                 ],
-                selectedSet: selectedOccasion,
+                selectedSet: filter.selectedOccasions,
                 fem: fem,
                 groupName: "Occasion",
+                onTapItem: (item) => notifier.toggleOccasion(item),
               ),
             ),
 

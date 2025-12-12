@@ -136,6 +136,7 @@ class _RightCardState extends ConsumerState<_RightCard> {
 
   Future<void> _onGetOtpPressed() async {
     final mobile = _phoneController.text.trim();
+
     if (mobile.isEmpty) {
       setState(() => _mobileError = "Mobile number cannot be blank");
       return;
@@ -165,6 +166,13 @@ class _RightCardState extends ConsumerState<_RightCard> {
 
   @override
   Widget build(BuildContext context) {
+    // final isLoading = ref.watch(loginRepoProvider).isLoading;
+    // final loginErrorMessage = ref.read(loginRepoProvider).errorMessage;
+
+    final loginState = ref.watch(loginRepoProvider);
+    final isLoading = loginState.isLoading;
+    final loginErrorMessage = loginState.errorMessage;
+
     final cardRadius = 20.0;
     final cardPadding = const EdgeInsets.only(
       left: 28.0,
@@ -269,7 +277,7 @@ class _RightCardState extends ConsumerState<_RightCard> {
                     border: Border.all(color: Colors.black12),
                   ),
                   child: ElevatedButton(
-                    onPressed: _onGetOtpPressed,
+                    onPressed: isLoading ? null : _onGetOtpPressed,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -277,18 +285,45 @@ class _RightCardState extends ConsumerState<_RightCard> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      "Get OTP",
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Color(0xFF063A38),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              valueColor: AlwaysStoppedAnimation(
+                                Color(0xFF063A38),
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            "Get OTP",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Color(0xFF063A38),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
               ),
             ),
+
+            // 🔴 SHOW ERROR MESSAGE HERE
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: loginErrorMessage != null
+                  ? Padding(
+                      key: const ValueKey('error'),
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        loginErrorMessage.replaceFirst("Exception: ", ""),
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('no-error')),
+            ),
+
             const SizedBox(height: 38),
             Center(
               child: Container(width: 332, height: 3, color: Colors.white),
