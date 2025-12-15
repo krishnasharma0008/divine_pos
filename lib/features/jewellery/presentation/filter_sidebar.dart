@@ -221,10 +221,9 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                 min: 10000,
                 max: 1000000,
                 title: '',
+                values: filter.selectedPriceRange, // <-- controlled by provider
                 onChanged: (range) {
-                  //setState(() => priceRange = range);
-                  notifier.setPrice(range);
-                  //print('Price range: ${range.start} - ${range.end}');
+                  notifier.setPrice(range); // <-- updates provider state
                   print('Price range: $range');
                 },
               ),

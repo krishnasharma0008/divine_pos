@@ -1,5 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import '../../../shared/routes/route_pages.dart';
+import '../../../shared/themes.dart';
+import '../../../shared/utils/scale_size.dart';
+import '../../../shared/widgets/text.dart';
 import '../data/providers.dart'; // import your provider file!
 //import '../presentation/otp_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -11,22 +15,24 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mq = MediaQuery.of(context);
-    final isNarrow = mq.size.width < 800;
+    final fem = ScaleSize.aspectRatio;
+    //print("fem:$fem");
 
     return Scaffold(
-      backgroundColor: const Color(0xFFD9F7F2),
+      backgroundColor: const Color(0xFFBEE4DD),
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 18.0,
+            padding: EdgeInsets.symmetric(
+              horizontal: fem * 80, //24.0,
+              vertical: fem * 0, //18.0,
             ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: isNarrow ? _buildColumn(context) : _buildRow(context),
-            ),
+            child: _buildRow(context, fem),
+            // child: ConstrainedBox(
+            //   constraints: const BoxConstraints(maxWidth: 1200),
+            //   //child: isNarrow ? _buildColumn(context) : _buildRow(context),
+            //   child: _buildRow(context),
+            // ),
           ),
         ),
       ),
@@ -57,21 +63,21 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(BuildContext context) {
+  Widget _buildRow(BuildContext context, double fem) {
+    //print("fem:$fem");
     return Row(
       children: [
         Expanded(
-          flex: 5,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 38.0),
+          flex: 4,
+          child: SingleChildScrollView(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(30.0),
+              borderRadius: BorderRadius.circular(fem * 30.0),
               child: Container(
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 18,
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: fem * 18,
                       offset: const Offset(0, 6),
                     ),
                   ],
@@ -80,8 +86,8 @@ class LoginScreen extends StatelessWidget {
                   'assets/Login/login_side_image.png',
                   fit: BoxFit.cover,
                   alignment: Alignment.centerLeft,
-                  height: 605,
-                  width: 404,
+                  height: fem * 605,
+                  //width: 464,
                 ),
               ),
             ),
@@ -93,20 +99,21 @@ class LoginScreen extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               Positioned(
-                top: -76,
+                top: fem * -100,
                 left: 0,
                 right: 0,
                 child: Image.asset(
                   'assets/Login/logo.png',
-                  width: 129,
-                  height: 99,
+                  width: fem * 129,
+                  height: fem * 99,
                   fit: BoxFit.contain,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(left: 0.0, top: 48.0),
+                padding: EdgeInsets.only(top: fem * 20.0, bottom: fem * 20.0),
                 child: _RightCard(isCompact: false),
               ),
+              //_RightCard(isCompact: false),
             ],
           ),
         ),
@@ -134,7 +141,7 @@ class _RightCardState extends ConsumerState<_RightCard> {
     super.dispose();
   }
 
-  Future<void> _onGetOtpPressed() async {
+  void _onGetOtpPressed() {
     final mobile = _phoneController.text.trim();
 
     if (mobile.isEmpty) {
@@ -146,135 +153,172 @@ class _RightCardState extends ConsumerState<_RightCard> {
     }
     setState(() => _mobileError = null);
 
-    bool sent = await ref
-        .read(loginRepoProvider.notifier)
-        .sendOtp(mobile: mobile);
-
-    if (sent) {
-      print("Navigating to OTP Screen with mobile: $mobile");
-      //Navigator.of(context).pushNamed('/otp_screen', arguments: mobile);
-      //context.go(RoutePages.otp.routePath, extra: mobile);
-      context.go('/otp', extra: mobile);
-      // Or, context.go('/otp', extra: mobile);
-    } else {
-      final state = ref.read(loginRepoProvider);
-      setState(() {
-        _mobileError = state.errorMessage ?? "Failed to send OTP";
-      });
-    }
+    final ctx = context;
+    ref.read(loginRepoProvider.notifier).sendOtp(mobile: mobile).then((val) {
+      if (val) {
+        //context.go('/otp', extra: mobile);
+        if (!ctx.mounted) return;
+        GoRouter.of(
+          ctx,
+        ).pushReplacement(RoutePages.otp.routePath, extra: mobile);
+        // Or, context.go('/otp', extra: mobile);
+      } else {
+        final state = ref.read(loginRepoProvider);
+        setState(() {
+          _mobileError = state.errorMessage ?? "Failed to send OTP";
+        });
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     // final isLoading = ref.watch(loginRepoProvider).isLoading;
     // final loginErrorMessage = ref.read(loginRepoProvider).errorMessage;
+    final fem = ScaleSize.aspectRatio;
 
     final loginState = ref.watch(loginRepoProvider);
     final isLoading = loginState.isLoading;
-    final loginErrorMessage = loginState.errorMessage;
+    //final loginErrorMessage = loginState.errorMessage;
 
     final cardRadius = 20.0;
-    final cardPadding = const EdgeInsets.only(
-      left: 28.0,
-      right: 28.0,
-      top: 36.0,
-      bottom: 16.0,
+    final cardPadding = EdgeInsets.only(
+      left: fem * 28.0,
+      right: fem * 28.0,
+      top: fem * 59.0,
+      bottom: fem * 13.0,
     );
-    return Container(
-      margin: const EdgeInsets.only(right: 8.0),
-      decoration: BoxDecoration(
-        color: const Color(0x5CFFFFFF),
-        borderRadius: BorderRadius.circular(cardRadius),
-      ),
-      child: Padding(
-        padding: cardPadding,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-            Center(
-              child: SizedBox(
-                width: 420,
-                child: Text(
-                  "Welcome to Divine Solitaires",
-                  style: TextStyle(
-                    fontSize: widget.isCompact ? 30 : 30,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF2C2C2C),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Center(
-              child: SizedBox(
-                width: 420,
-                child: Text(
-                  "Enter your mobile number to access your account",
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF666666),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 22),
-            Center(
-              child: SizedBox(
-                width: 420,
-                child: Text(
-                  "Mobile Number",
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF2C2C2C),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            Center(
-              child: SizedBox(
-                width: 420,
-                child: TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    hintText: "Enter 10 digit mobile number",
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
+    return SingleChildScrollView(
+      child: Container(
+        margin: EdgeInsets.only(right: fem * 8.0),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.only(
+            //topLeft: Radius.circular(cardRadius),
+            topRight: Radius.circular(cardRadius),
+            //bottomLeft: Radius.circular(cardRadius),
+            bottomRight: Radius.circular(cardRadius),
+          ),
+        ),
+        child: Padding(
+          padding: cardPadding,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: fem * 10),
+              Center(
+                child: SizedBox(
+                  width: fem * 420,
+                  child: Text(
+                    "Welcome to Divine Solitaires",
+                    style: TextStyle(
+                      fontFamily: "Rushter Glory",
+                      fontSize: fem * 30,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF2C2C2C),
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                    errorText: _mobileError,
                   ),
                 ),
               ),
-            ),
+              SizedBox(height: fem * 12),
+              Center(
+                child: SizedBox(
+                  width: fem * 420,
+                  child: MyText(
+                    "Enter your mobile number to access your account",
+                    style: TextStyle(
+                      fontSize: fem * 16,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF666666),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: fem * 50),
+              Center(
+                child: SizedBox(
+                  width: fem * 420,
+                  child: MyText(
+                    "Mobile Number",
+                    style: TextStyle(
+                      fontSize: fem * 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2C2C2C),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: fem * 8),
 
-            const SizedBox(height: 22),
-            Center(
-              child: SizedBox(
-                width: 420,
-                height: 52,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
+              Center(
+                child: SizedBox(
+                  width: fem * 420,
+                  child: TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    style: TextStyle(
+                      fontFamily: MyThemes.inputFontFamily,
+                      fontSize: fem * 14,
+                      color: Colors.black,
+                      letterSpacing: fem * 2,
+                    ),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: fem * 14,
+                        vertical: fem * 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      errorText: _mobileError,
+                      hintText: "Enter 10 digit mobile number",
+                      hintStyle: TextStyle(
+                        fontFamily: MyThemes.inputFontFamily,
+                        fontSize: fem * 12,
+                        color: Color(0xFF717182),
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: fem * 56),
+              Center(
+                child: Container(
+                  width: fem * 420,
+                  height: fem * 52,
+                  decoration: ShapeDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFD0B48E), Color(0xFF86C2B6)],
+                      colors: [Color(0xFFC8AC7D), Color(0xFFBEE4DD)],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        width: 1,
+                        color: const Color(0xFF9F8353),
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F777777),
+                        blurRadius: 4,
+                        offset: Offset(3, 3),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Color(0xFFFFFFFF),
+                        blurRadius: 4,
+                        offset: Offset(0, 4),
+                        spreadRadius: 0,
+                      ),
+                    ],
                   ),
                   child: ElevatedButton(
                     onPressed: isLoading ? null : _onGetOtpPressed,
@@ -286,9 +330,9 @@ class _RightCardState extends ConsumerState<_RightCard> {
                       ),
                     ),
                     child: isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
+                        ? SizedBox(
+                            width: fem * 22,
+                            height: fem * 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 3,
                               valueColor: AlwaysStoppedAnimation(
@@ -296,52 +340,40 @@ class _RightCardState extends ConsumerState<_RightCard> {
                               ),
                             ),
                           )
-                        : const Text(
+                        : MyText(
                             "Get OTP",
                             style: TextStyle(
-                              fontSize: 18,
-                              color: Color(0xFF063A38),
-                              fontWeight: FontWeight.w600,
+                              fontSize: fem * 20,
+                              color: Color(0xFF6C5022),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                   ),
                 ),
               ),
-            ),
 
-            // 🔴 SHOW ERROR MESSAGE HERE
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: loginErrorMessage != null
-                  ? Padding(
-                      key: const ValueKey('error'),
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        loginErrorMessage.replaceFirst("Exception: ", ""),
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    )
-                  : const SizedBox.shrink(key: ValueKey('no-error')),
-            ),
-
-            const SizedBox(height: 38),
-            Center(
-              child: Container(width: 332, height: 3, color: Colors.white),
-            ),
-            const SizedBox(height: 38),
-            Center(
-              child: Text(
-                "By logging in, you agree to our Terms of Service and Privacy Policy",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 12,
-                  color: const Color(0xFF3A3A3A),
+              SizedBox(height: fem * 45),
+              Center(
+                child: Container(
+                  width: fem * 332,
+                  height: fem * 1,
+                  color: Colors.white,
                 ),
               ),
-            ),
-          ],
+              SizedBox(height: fem * 27),
+              Center(
+                child: MyText(
+                  "By logging in, you agree to our Terms of Service and Privacy Policy",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: fem * 12,
+                    color: const Color(0xFF3A3A3A),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

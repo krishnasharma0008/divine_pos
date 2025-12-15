@@ -1,68 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'hero_feature_section.dart';
-//import '../../app/layout/app_drawer.dart';
-//import '../../utils/scale_size.dart';
-import '../../../shared/utils/scale_size.dart';
-//import '../../shared/layout/app_drawer.dart';
+import 'package:go_router/go_router.dart';
 
-class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
+import 'hero_feature_section.dart';
+import 'categories_section.dart';
+
+import '../../../shared/utils/scale_size.dart';
+import '../../../shared/app_bar.dart';
+import '../../../shared/routes/app_drawer.dart';
+import '../../auth/data/auth_notifier.dart';
+
+class DashboardScreen extends ConsumerStatefulWidget {
+  DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final width = MediaQuery.of(context).size.width;
-    final bool isTablet = width >= 800;
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
 
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  /// ✅ Scroll controller
+  final ScrollController _scrollController = ScrollController();
+
+  /// ✅ Target section key
+  final GlobalKey _categoriesKey = GlobalKey();
+
+  void openDrawer() => _scaffoldKey.currentState?.openDrawer();
+
+  void scrollToCategories() {
+    final context = _categoriesKey.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void closeDrawer(BuildContext context) {
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
     final fem = ScaleSize.aspectRatio;
 
     return Scaffold(
-      // Mobile - AppBar with menu button
-      appBar: !isTablet
-          ? AppBar(
-              title: Text("Dashboard", style: TextStyle(fontSize: 20 * fem)),
-              leading: Builder(
-                builder: (context) {
-                  return IconButton(
-                    icon: Icon(Icons.menu, size: 26 * fem),
-                    onPressed: () => Scaffold.of(context).openDrawer(),
-                  );
-                },
-              ),
-            )
-          : null,
+      key: _scaffoldKey,
+      backgroundColor: Colors.white,
 
-      // Drawer only for mobile
-      // drawer: !isTablet
-      //     ? AppDrawer(
-      //         onClose: () {
-      //           Navigator.pop(context);
-      //         },
-      //       )
-      //     : null,
+      // ------------------ APP BAR ------------------
+      appBar: CustomAppBar(
+        onMenuTap: openDrawer,
+        onCartTap: () => print('Cart tapped'),
+        onProfileTap: () => print('Profile tapped'),
+        onNotificationTap: () => print('Notification tapped'),
+        showBackButton: false,
+      ),
 
-      // Main Body
+      // ------------------ DRAWER ------------------
+      drawer: Drawer(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        width: 400 * fem,
+        child: SideMenu(
+          onClose: () => closeDrawer(context),
+          onLogout: () {
+            ref.read(authProvider.notifier).logout();
+
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Logged out')));
+
+            context.go('/login');
+          },
+        ),
+      ),
+
+      // ------------------ BODY ------------------
       body: Row(
         children: [
-          // LEFT MENU for large screens only
-          if (isTablet)
-            SizedBox(
-              width: fem,
-              //child: AppDrawer(onClose: () {}),
-            ),
-
-          // MAIN CONTENT
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                //horizontal: 20 * ScaleSize.aspectRatio,
-                vertical: 2 * fem,
-              ),
+              controller: _scrollController, // ✅ attached here
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  HeroAndFeaturesSection(),
+                  /// HERO + FEATURES
+                  HeroAndFeaturesSection(onArrowTap: scrollToCategories),
                   SizedBox(height: 24 * fem),
+
+                  /// TARGET SECTION
+                  Container(
+                    key: _categoriesKey,
+                    child: const CategoriesSection(),
+                  ),
+
+                  SizedBox(height: 40 * fem),
                 ],
               ),
             ),

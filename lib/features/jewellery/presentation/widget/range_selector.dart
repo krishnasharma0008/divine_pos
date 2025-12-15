@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 
-class RangeSelector extends StatefulWidget {
+class RangeSelector extends StatelessWidget {
   final double min;
   final double max;
   final String title;
   final String Function(double value) formatter;
-
-  // new: notify parent when range changes
   final ValueChanged<RangeValues>? onChanged;
+  final RangeValues values; // <-- new: controlled values from parent
 
   const RangeSelector({
     super.key,
@@ -16,9 +15,9 @@ class RangeSelector extends StatefulWidget {
     this.title = '',
     this.formatter = _defaultIndianFormatter,
     this.onChanged,
+    required this.values,
   });
 
-  // default Indian currency formatter
   static String _defaultIndianFormatter(double value) {
     String s = value.toStringAsFixed(0);
     int n = s.length;
@@ -40,92 +39,58 @@ class RangeSelector extends StatefulWidget {
   }
 
   @override
-  State<RangeSelector> createState() => _RangeSelectorState();
-}
-
-class _RangeSelectorState extends State<RangeSelector> {
-  late RangeValues _range;
-
-  final _borderColor = const Color(0xFFD9C6A3);
-  final _bgColor = const Color(0xFFEAF9F5);
-  final _textColor = const Color(0xFF20706F);
-  final _sliderColor = const Color(0xFFBFE8E3);
-  final _sliderThumb = const Color(0xFFA9E7DF);
-
-  @override
-  void initState() {
-    super.initState();
-    _range = RangeValues(widget.min, widget.max);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final bool hasTitle = widget.title.trim().isNotEmpty;
+    final bool hasTitle = title.trim().isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title Row
           if (hasTitle) ...[
             Row(
               children: [
                 Text(
-                  widget.title,
+                  title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),
                 ),
                 const Spacer(),
-                //const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
               ],
             ),
-
             const SizedBox(height: 14),
           ],
-          // Start / End value buttons
           Padding(
             padding: const EdgeInsets.only(left: 12),
             child: Row(
               children: [
-                _priceChip(widget.formatter(_range.start)),
+                _priceChip(formatter(values.start)),
                 const SizedBox(width: 20),
-                _priceChip(widget.formatter(_range.end)),
+                _priceChip(formatter(values.end)),
               ],
             ),
           ),
-
           const SizedBox(height: 10),
-
-          // Slider
           SliderTheme(
             data: SliderThemeData(
               trackHeight: 5,
-              activeTrackColor: _sliderColor,
+              activeTrackColor: const Color(0xFFBFE8E3),
               inactiveTrackColor: Colors.grey.shade200,
-              thumbColor: _sliderThumb,
-              overlayColor: _sliderColor.withOpacity(0.25),
+              thumbColor: const Color(0xFFA9E7DF),
+              overlayColor: const Color(0xFFBFE8E3).withOpacity(0.25),
               rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
               rangeThumbShape: const DiamondRangeThumbShape(
                 enabledThumbRadius: 13,
               ),
             ),
             child: RangeSlider(
-              min: widget.min,
-              max: widget.max,
-              values: _range,
+              min: min,
+              max: max,
+              values: values,
               divisions: 12,
-              onChanged: (values) {
-                setState(() => _range = values);
-                widget.onChanged?.call(
-                  values,
-                ); // ← send selected range to parent
-              },
-              // onChanged: (values) {
-              //   setState(() => _range = values);
-              // },
+              onChanged: onChanged,
             ),
           ),
         ],
@@ -135,18 +100,17 @@ class _RangeSelectorState extends State<RangeSelector> {
 
   Widget _priceChip(String text) {
     return SizedBox(
-      width: 135, // fixed width you want
+      width: 135,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
         decoration: BoxDecoration(
-          //color: _bgColor,
-          color: Color(0xFFF3FBFA),
+          color: const Color(0xFFF3FBFA),
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: _borderColor, width: 1.2),
+          border: Border.all(color: const Color(0xFFD9C6A3), width: 1.2),
         ),
         child: Text(
           text,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 14,
             fontFamily: 'Montserrat',

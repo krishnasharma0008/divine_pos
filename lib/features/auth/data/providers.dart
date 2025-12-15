@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/utils/api_endpointen.dart';
@@ -40,15 +41,17 @@ class LoginNotifier extends Notifier<LoginState> {
       // ❌ API responded but failed
       state = state.copyWith(
         isLoading: false,
-        errorMessage: response.data["message"] ?? "Failed to send OTP",
+        errorMessage: response.data["msg"] ?? "Failed to send OTP",
       );
       return false;
-    } catch (e) {
+    } on DioException catch (e) {
       // ❌ NETWORK / SERVER ERROR
+      // print(e.response?.data);
       state = state.copyWith(
         isLoading: false,
-        error: e,
-        errorMessage: "Failed to send OTP. Please try again.",
+        error: e.message,
+        errorMessage:
+            e.response?.data["msg"] ?? "Failed to send OTP. Please try again.",
       );
       return false;
     }
@@ -74,15 +77,15 @@ class LoginNotifier extends Notifier<LoginState> {
         state = state.copyWith(isLoading: false);
 
         if (sucess) {
-          print("Login successful entered if else block ${response.data}");
+          //print("Login successful entered if else block ${response.data}");
           response.data["username"] = username;
           final user = User.fromJson(response.data);
           //print("Login token : ${user}");
 
           ref.read(authProvider.notifier).login(user);
-          print("User Name : ${user.userName}");
-          print("token : ${user.token}");
-          print("Pj Store Code : , ${user.pjcode}");
+          //print("User Name : ${user.userName}");
+          //print("token : ${user.token}");
+          //print("Pj Store Code : , ${user.pjcode}");
         }
         return sucess;
       } else {
@@ -92,14 +95,15 @@ class LoginNotifier extends Notifier<LoginState> {
         );
         return false;
       }
-    } catch (e, stack) {
-      print("LOGIN ERROR: $e");
-      print("STACK TRACE: $stack");
+    } on DioException catch (e) {
+      //print("LOGIN ERROR: ${e.response?.data}");
+      // print("STACK TRACE: $stack");
 
       state = state.copyWith(
         isLoading: false,
         error: e,
-        errorMessage: 'Login failed. Please try again.',
+        errorMessage:
+            e.response?.data["msg"] ?? 'Login failed. Please try again.',
       );
       return false;
     }

@@ -2,31 +2,36 @@ import 'dart:async'; // ✅ REQUIRED FOR TIMER
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../shared/themes.dart';
+import '../../../shared/utils/scale_size.dart';
+import '../../../shared/widgets/text.dart';
 import '../data/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class OtpScreen extends StatelessWidget {
   final String phoneNumber;
-  const OtpScreen({Key? key, required this.phoneNumber}) : super(key: key);
+  const OtpScreen({super.key, required this.phoneNumber});
 
   @override
   Widget build(BuildContext context) {
-    final mq = MediaQuery.of(context);
-    final isNarrow = mq.size.width < 800;
+    //final mq = MediaQuery.of(context);
+    //final isNarrow = mq.size.width < 800;
+    final fem = ScaleSize.aspectRatio;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFD9F7F2),
+      backgroundColor: const Color(0xFFBEE4DD),
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 18.0,
+            padding: EdgeInsets.symmetric(
+              horizontal: fem * 80, //24.0,
+              vertical: fem * 0, //18.0,
             ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: isNarrow ? _buildColumn(context) : _buildRow(context),
-            ),
+            child: _buildRow(context, fem),
+            // child: ConstrainedBox(
+            //   constraints: const BoxConstraints(maxWidth: 1200),
+            //   child: isNarrow ? _buildColumn(context) : _buildRow(context),
+            // ),
           ),
         ),
       ),
@@ -57,21 +62,20 @@ class OtpScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(BuildContext context) {
+  Widget _buildRow(BuildContext context, double fem) {
     return Row(
       children: [
         Expanded(
-          flex: 5,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 38.0),
+          flex: 4,
+          child: SingleChildScrollView(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(30.0),
+              borderRadius: BorderRadius.circular(fem * 30.0),
               child: Container(
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 18,
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: fem * 18,
                       offset: const Offset(0, 6),
                     ),
                   ],
@@ -80,8 +84,8 @@ class OtpScreen extends StatelessWidget {
                   'assets/Login/login_side_image.png',
                   fit: BoxFit.cover,
                   alignment: Alignment.centerLeft,
-                  height: 605,
-                  width: 404,
+                  height: fem * 605,
+                  //width: 464,
                 ),
               ),
             ),
@@ -93,18 +97,18 @@ class OtpScreen extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               Positioned(
-                top: -76,
+                top: fem * -100,
                 left: 0,
                 right: 0,
                 child: Image.asset(
                   'assets/Login/logo.png',
-                  width: 129,
-                  height: 99,
+                  width: fem * 129,
+                  height: fem * 99,
                   fit: BoxFit.contain,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(left: 0.0, top: 48.0),
+                padding: EdgeInsets.only(top: fem * 20.0, bottom: fem * 20.0),
                 child: _RightCard(isCompact: false, phoneNumber: phoneNumber),
               ),
             ],
@@ -156,31 +160,39 @@ class _RightCardState extends ConsumerState<_RightCard> {
   //   });
   // }
 
-  Future<void> _verifyOtp() async {
+  void _verifyOtp() {
     final otp = otpController.text.trim();
-
+    //print(otp);
     if (otp.isEmpty) {
-      if (!mounted) return;
+      //if (!mounted) return;
       setState(() => _otpError = "OTP cannot be blank");
       return;
-    } else if (!RegExp(r'^\d{10}$').hasMatch(otp)) {
-      if (!mounted) return;
+    } else if (!RegExp(r'(^\-?\d*\.?\d*)').hasMatch(otp)) {
+      //if (!mounted) return;
+      //!RegExp(r'^\d{10}$').hasMatch(otp)
       setState(() => _otpError = "Enter a valid OTP");
       return;
     }
 
-    if (!mounted) return;
+    //if (!mounted) return;
     setState(() => _otpError = null);
 
-    final sent = await ref
+    //final sent =
+    ref
         .read(loginRepoProvider.notifier)
-        .login(username: widget.phoneNumber, password: widget.phoneNumber);
+        .login(username: widget.phoneNumber, password: widget.phoneNumber)
+        .then((val) {
+          if (!val) {
+            final state = ref.read(loginRepoProvider);
+            setState(() => _otpError = state.errorMessage);
+          }
+        });
 
-    if (!mounted) return; // widget might have been popped while waiting
+    // if (!mounted) return; // widget might have been popped while waiting
 
-    if (sent) {
-      context.go('/dashboard');
-    }
+    // if (sent) {
+    //   context.go('/dashboard');
+    // }
   }
 
   @override
@@ -195,106 +207,144 @@ class _RightCardState extends ConsumerState<_RightCard> {
   Widget build(BuildContext context) {
     final loginState = ref.watch(loginRepoProvider);
     final isLoading = loginState.isLoading;
-    final apiError = loginState.errorMessage;
+    //final apiError = loginState.errorMessage;
+
+    final fem = ScaleSize.aspectRatio;
 
     final cardRadius = 20.0;
-    final cardPadding = const EdgeInsets.only(
-      left: 28.0,
-      right: 28.0,
-      top: 36.0,
-      bottom: 16.0,
+    final cardPadding = EdgeInsets.only(
+      left: fem * 28.0,
+      right: fem * 28.0,
+      top: fem * 59,
+      bottom: fem * 16.0,
     );
 
-    return Container(
-      margin: const EdgeInsets.only(right: 8.0),
-      decoration: BoxDecoration(
-        color: const Color(0x5CFFFFFF),
-        borderRadius: BorderRadius.circular(cardRadius),
-      ),
-      child: Padding(
-        padding: cardPadding,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-
-            /// TITLE
-            Center(
-              child: SizedBox(
-                width: 420,
-                child: Text(
-                  "Verification Code",
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF2C2C2C),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            /// SUBTITLE
-            Center(
-              child: SizedBox(
-                width: 420,
-                child: Text(
-                  "We've sent a 4-digit code to ${widget.phoneNumber}",
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF666666),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 22),
-
-            /// OTP FIELD
-            Center(
-              child: SizedBox(
-                width: 420,
-                child: TextField(
-                  controller: otpController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: "Enter Your Code",
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
+    return SingleChildScrollView(
+      child: Container(
+        margin: EdgeInsets.only(right: fem * 8.0),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.only(
+            //topLeft: Radius.circular(cardRadius),
+            topRight: Radius.circular(cardRadius),
+            //bottomLeft: Radius.circular(cardRadius),
+            bottomRight: Radius.circular(cardRadius),
+          ),
+        ),
+        child: Padding(
+          padding: cardPadding,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// TITLE
+              Center(
+                child: SizedBox(
+                  width: fem * 420,
+                  child: Text(
+                    "Verification Code",
+                    style: TextStyle(
+                      fontFamily: "Rushter Glory",
+                      fontSize: fem * 30,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF2C2C2C),
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                    errorText: _otpError,
                   ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 22),
+              SizedBox(height: fem * 12),
 
-            /// LOGIN BUTTON
-            Center(
-              child: SizedBox(
-                width: 420,
-                height: 52,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
+              /// SUBTITLE
+              Center(
+                child: SizedBox(
+                  width: 420,
+                  child: MyText(
+                    "We've sent a 4-digit code to ${widget.phoneNumber}",
+                    style: TextStyle(
+                      fontSize: fem * 16,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF666666),
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: fem * 49),
+
+              /// OTP FIELD
+              Center(
+                child: SizedBox(
+                  width: fem * 420,
+                  child: TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(
+                      fontFamily: MyThemes.inputFontFamily,
+                      fontSize: fem * 14,
+                      color: Colors.black,
+                      letterSpacing: fem * 2,
+                    ),
+
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: fem * 14,
+                        vertical: fem * 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      errorText: _otpError,
+                      hintText: "Enter Your Code",
+                      hintStyle: TextStyle(
+                        fontFamily: MyThemes.inputFontFamily,
+                        fontSize: fem * 12,
+                        color: Color(0xFF717182),
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: fem * 56),
+
+              /// LOGIN BUTTON
+              Center(
+                child: Container(
+                  width: fem * 420,
+                  height: fem * 52,
+
+                  decoration: ShapeDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFD0B48E), Color(0xFF86C2B6)],
+                      colors: [Color(0xFFC8AC7D), Color(0xFFBEE4DD)],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        width: 1,
+                        color: const Color(0xFF9F8353),
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    shadows: [
+                      BoxShadow(
+                        color: Color(0x3F777777),
+                        blurRadius: 4,
+                        offset: Offset(3, 3),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Color(0xFFFFFFFF),
+                        blurRadius: 4,
+                        offset: Offset(0, 4),
+                        spreadRadius: 0,
+                      ),
+                    ],
                   ),
                   child: ElevatedButton(
                     //onPressed: _verifyOtp,
@@ -306,18 +356,11 @@ class _RightCardState extends ConsumerState<_RightCard> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    // child: const Text(
-                    //   "Login",
-                    //   style: TextStyle(
-                    //     fontSize: 18,
-                    //     color: Color(0xFF063A38),
-                    //     fontWeight: FontWeight.w600,
-                    //   ),
-                    // ),
+
                     child: isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
+                        ? SizedBox(
+                            width: fem * 22,
+                            height: fem * 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 3,
                               valueColor: AlwaysStoppedAnimation(
@@ -325,60 +368,60 @@ class _RightCardState extends ConsumerState<_RightCard> {
                               ),
                             ),
                           )
-                        : const Text(
+                        : MyText(
                             "Login",
                             style: TextStyle(
-                              fontSize: 18,
-                              color: Color(0xFF063A38),
-                              fontWeight: FontWeight.w600,
+                              fontSize: fem * 20,
+                              color: Color(0xFF6C5022),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                   ),
                 ),
               ),
-            ),
 
-            if (apiError != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  apiError.replaceFirst("Exception: ", ""),
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
+              // if (apiError != null)
+              //   Padding(
+              //     padding: const EdgeInsets.only(top: 8),
+              //     child: Text(
+              //       apiError.replaceFirst("Exception: ", ""),
+              //       style: const TextStyle(color: Colors.red),
+              //     ),
+              //   ),
 
-            const SizedBox(height: 38),
+              //const SizedBox(height: 38),
 
-            /// ✅ SMOOTH RESEND OTP (NO FLICKER)
-            // Align(
-            //   alignment: Alignment.centerRight,
-            //   child: ValueListenableBuilder<int>(
-            //     valueListenable: resendTimer,
-            //     builder: (_, value, __) {
-            //       return GestureDetector(
-            //         onTap: value == 0 ? _startTimer : null,
-            //         child: Text(
-            //           value == 0 ? "Resend OTP" : "Resend OTP in $value sec",
-            //           style: TextStyle(
-            //             fontFamily: 'Montserrat',
-            //             fontSize: 12,
-            //             color: value == 0
-            //                 ? const Color(0xFF063A38)
-            //                 : Colors.grey[700],
-            //             fontWeight: value == 0
-            //                 ? FontWeight.w700
-            //                 : FontWeight.w400,
-            //             decoration: value == 0
-            //                 ? TextDecoration.underline
-            //                 : TextDecoration.none,
-            //           ),
-            //         ),
-            //       );
-            //     },
-            //   ),
-            // ),
-            const SizedBox(height: 48),
-          ],
+              /// ✅ SMOOTH RESEND OTP (NO FLICKER)
+              // Align(
+              //   alignment: Alignment.centerRight,
+              //   child: ValueListenableBuilder<int>(
+              //     valueListenable: resendTimer,
+              //     builder: (_, value, __) {
+              //       return GestureDetector(
+              //         onTap: value == 0 ? _startTimer : null,
+              //         child: Text(
+              //           value == 0 ? "Resend OTP" : "Resend OTP in $value sec",
+              //           style: TextStyle(
+              //             fontFamily: 'Montserrat',
+              //             fontSize: 12,
+              //             color: value == 0
+              //                 ? const Color(0xFF063A38)
+              //                 : Colors.grey[700],
+              //             fontWeight: value == 0
+              //                 ? FontWeight.w700
+              //                 : FontWeight.w400,
+              //             decoration: value == 0
+              //                 ? TextDecoration.underline
+              //                 : TextDecoration.none,
+              //           ),
+              //         ),
+              //       );
+              //     },
+              //   ),
+              // ),
+              SizedBox(height: fem * 120),
+            ],
+          ),
         ),
       ),
     );

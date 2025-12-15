@@ -14,7 +14,7 @@ import '../../features/home/presentation/loading_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart'; // import your OTP screen
 import '../../features/jewellery/presentation/jewellery_listing_screen.dart';
 
-import '../../shared/shared_layout.dart';
+//import '../../shared/shared_layout.dart';
 import 'route_pages.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -70,41 +70,62 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ⭐ MAIN APP LAYOUT (Bottom Navigation)
-      ShellRoute(
-        builder: (context, state, child) {
-          return SharedLayout(child: child);
-        },
-        routes: [
-          GoRoute(
-            path: RoutePages.home.routePath,
-            name: RoutePages.home.routeName,
-            builder: (context, state) => const HomeScreen(),
-          ),
-          GoRoute(
-            path: RoutePages.dashboard.routePath,
-            name: RoutePages.dashboard.routeName,
-            builder: (context, state) => const DashboardScreen(),
-          ),
-          GoRoute(
-            path: RoutePages.jewellerylisting.routePath,
-            name: RoutePages.jewellerylisting.routeName,
-            builder: (context, state) => JewelleryListingScreen(),
-          ),
-          GoRoute(
-            path: RoutePages.jewelleryjourney.routePath,
-            name: RoutePages.jewelleryjourney.routeName,
-            builder: (context, state) => JewelleryJourneyScreen(),
-          ),
-          // GoRoute(
-          //   path: RoutePages.profile.routePath,
-          //   name: RoutePages.profile.routeName,
-          //   builder: (context, state) => const ProfileScreen(),
-          // ),
-
-          // GoRoute(
-        ],
+      GoRoute(
+        path: RoutePages.home.routePath,
+        name: RoutePages.home.routeName,
+        builder: (context, state) => HomeScreen(),
       ),
+      GoRoute(
+        path: RoutePages.dashboard.routePath,
+        name: RoutePages.dashboard.routeName,
+        builder: (context, state) => DashboardScreen(),
+      ),
+      GoRoute(
+        path: RoutePages.jewellerylisting.routePath,
+        name: RoutePages.jewellerylisting.routeName,
+        builder: (context, state) => JewelleryListingScreen(),
+      ),
+      GoRoute(
+        path: RoutePages.jewelleryjourney.routePath,
+        name: RoutePages.jewelleryjourney.routeName,
+        builder: (context, state) => JewelleryJourneyScreen(),
+      ),
+
+      // ⭐ MAIN APP LAYOUT (Bottom Navigation)
+      // ShellRoute(
+      //   builder: (context, state, child) {
+      //     return SharedLayout(child: child);
+      //   },
+      //   routes: [
+      //     GoRoute(
+      //       path: RoutePages.home.routePath,
+      //       name: RoutePages.home.routeName,
+      //       builder: (context, state) => const HomeScreen(),
+      //     ),
+      //     GoRoute(
+      //       path: RoutePages.dashboard.routePath,
+      //       name: RoutePages.dashboard.routeName,
+      //       builder: (context, state) => const DashboardScreen(),
+      //     ),
+      //     GoRoute(
+      //       path: RoutePages.jewellerylisting.routePath,
+      //       name: RoutePages.jewellerylisting.routeName,
+      //       builder: (context, state) => JewelleryListingScreen(),
+      //     ),
+      //     GoRoute(
+      //       path: RoutePages.jewelleryjourney.routePath,
+      //       name: RoutePages.jewelleryjourney.routeName,
+      //       builder: (context, state) => JewelleryJourneyScreen(),
+      //     ),
+      //     // GoRoute(
+      //     //   path: RoutePages.profile.routePath,
+      //     //   name: RoutePages.profile.routeName,
+      //     //   builder: (context, state) => const ProfileScreen(),
+      //     // ),
+
+      //     // GoRoute(
+      //   ],
+      // ),
     ],
   );
 });

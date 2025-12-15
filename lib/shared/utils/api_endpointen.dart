@@ -8,4 +8,7 @@ class ApiEndPoint {
 
   ///pjcode
   static const get_branch = "/erp/custlocation";
+
+  // jewellery listing page
+  static const get_jewellery_listing = "/erp/find-product";
 }

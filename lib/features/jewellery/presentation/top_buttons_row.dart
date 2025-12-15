@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../shared/utils/scale_size.dart';
-import '../presentation/widget/ultra_dropdown.dart'; // <-- IMPORTANT
+import '../presentation/widget/ultra_dropdown.dart';
 
 const Color kMint = Color(0xFF90DCD0);
 
@@ -27,14 +27,15 @@ class _TopButtonsRowState extends State<TopButtonsRow> {
   int _selectedIndex = 0;
   int? _hoveredIndex;
 
-  dynamic _selectedBranch; // store object/map
+  dynamic _selectedBranch;
   String? _selectedSort;
 
-  final items = const [
-    ('Products In Store', 'tab', 178.0),
-    ('Products At Other Branches', 'branch', 285.0),
-    ('All Designs', 'tab', 155.0),
-    ('Sort by', 'sort', 200.0),
+  /// Title, Type, Width
+  final items = [
+    ("Products In Store", "tab", 178.0),
+    ("Products At Other Branches", "branch", 285.0),
+    ("All Designs", "tab", 155.0),
+    ("Sort by", "sort", 200.0),
   ];
 
   @override
@@ -43,55 +44,33 @@ class _TopButtonsRowState extends State<TopButtonsRow> {
 
     return Container(
       color: const Color(0xFFF7F9F8),
-      padding: EdgeInsets.only(
-        left: 21,
-        right: 46,
-        top: 11 * fem,
-        bottom: 11 * fem,
-      ),
+      padding: EdgeInsets.symmetric(vertical: 11 * fem, horizontal: 21),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: List.generate(items.length, (index) {
-            final (title, type, width) = items[index];
+            final title = items[index].$1;
+            final type = items[index].$2;
+            final width = items[index].$3;
 
-            double spacing = 0;
-            if (index < 2) spacing = 14;
-            if (index == 2) spacing = 281;
-
-            // -------------------------------------------------------
-            // BRANCH DROPDOWN
-            // -------------------------------------------------------
-            if (type == 'branch') {
-              return Row(
-                children: [
+            return Row(
+              children: [
+                if (type == "branch")
                   UltraDropdown<dynamic>(
                     width: width,
                     height: 50,
                     items: widget.branchStores,
                     selectedItem: _selectedBranch,
-
                     placeholder: "Products At Other Branches",
-
                     itemBuilder: (item) => _branchLabel(item),
                     displayBuilder: (item) => _branchLabel(item),
-
                     onSelected: (store) {
                       setState(() => _selectedBranch = store);
                       widget.onBranchSelected?.call(store);
                     },
                   ),
-                  SizedBox(width: spacing),
-                ],
-              );
-            }
 
-            // -------------------------------------------------------
-            // SORT DROPDOWN
-            // -------------------------------------------------------
-            if (type == 'sort') {
-              return Row(
-                children: [
+                if (type == "sort")
                   UltraDropdown<String>(
                     width: width,
                     height: 50,
@@ -105,36 +84,29 @@ class _TopButtonsRowState extends State<TopButtonsRow> {
                     placeholder: "Sort by",
                     itemBuilder: (s) => s,
                     displayBuilder: (s) => s ?? '',
-
                     onSelected: (value) {
                       setState(() => _selectedSort = value);
                       widget.onSortSelected?.call(value);
                     },
                   ),
-                  SizedBox(width: spacing),
-                ],
-              );
-            }
 
-            // -------------------------------------------------------
-            // PILL BUTTONS
-            // -------------------------------------------------------
-            return Row(
-              children: [
-                _UltraPillButton(
-                  title: title,
-                  isSelected: _selectedIndex == index,
-                  isHovered: _hoveredIndex == index,
-                  width: width,
-                  height: 50,
-                  onTap: () {
-                    setState(() => _selectedIndex = index);
-                    widget.onTabSelected?.call(index);
-                  },
-                  onHover: (hover) =>
-                      setState(() => _hoveredIndex = hover ? index : null),
-                ),
-                SizedBox(width: spacing),
+                if (type == "tab")
+                  _UltraPillButton(
+                    title: title,
+                    isSelected: _selectedIndex == index,
+                    isHovered: _hoveredIndex == index,
+                    width: width,
+                    height: 50,
+                    onTap: () {
+                      setState(() => _selectedIndex = index);
+                      widget.onTabSelected?.call(index);
+                    },
+                    onHover: (hover) {
+                      setState(() => _hoveredIndex = hover ? index : null);
+                    },
+                  ),
+
+                SizedBox(width: _spacing(index)),
               ],
             );
           }),
@@ -143,33 +115,43 @@ class _TopButtonsRowState extends State<TopButtonsRow> {
     );
   }
 
-  // helper for labels
+  // Spacing rules made simpler & consistent
+  double _spacing(int index) {
+    return switch (index) {
+      0 => 14, // After "Products In Store"
+      1 => 14, // After branch dropdown
+      2 => 281, // After "All Designs"
+      _ => 0,
+    };
+  }
+
+  // Helper for labels
   String _branchLabel(dynamic item) {
     if (item == null) return '';
 
     if (item is Map<String, dynamic>) {
       final name = item['name'] ?? item['branchName'] ?? item['title'];
       final code = item['code'] ?? item['branchCode'];
+
       if (name != null && code != null) return "$name ($code)";
-      if (name != null) return name.toString();
-      return item.toString();
+      return name?.toString() ?? item.toString();
     }
 
     try {
-      final dyn = item as dynamic;
-      final name = dyn.name ?? dyn.branchName ?? dyn.title;
-      final code = dyn.code ?? dyn.branchCode;
+      final name = item.name ?? item.branchName ?? item.title;
+      final code = item.code ?? item.branchCode;
+
       if (name != null && code != null) return "$name ($code)";
-      if (name != null) return name.toString();
+      return name?.toString() ?? item.toString();
     } catch (_) {}
 
     return item.toString();
   }
 }
 
-///////////////////////////////////////////////////////////////////////////
-/// Pill Button (unchanged)
-///////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/// Pill Button
+////////////////////////////////////////////////////////////////////////////////
 
 class _UltraPillButton extends StatelessWidget {
   final String title;
@@ -193,23 +175,26 @@ class _UltraPillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filled = isSelected;
+
     return MouseRegion(
       onEnter: (_) => onHover(true),
       onExit: (_) => onHover(false),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           width: width,
           height: height,
-          duration: const Duration(milliseconds: 180),
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(40),
             color: filled
                 ? kMint
-                : (isHovered ? kMint.withOpacity(0.08) : Colors.white),
+                : isHovered
+                ? kMint.withOpacity(0.10)
+                : Colors.white,
             border: Border.all(color: filled ? kMint : Colors.black12),
           ),
-          alignment: Alignment.center,
           child: Text(
             title,
             style: TextStyle(

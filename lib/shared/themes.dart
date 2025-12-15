@@ -2,9 +2,9 @@ import 'dart:ui';
 
 class MyThemes {
   static const Color backgroundColor = Color(0xFFBEE4DD);
-  static const String labelFontFamily = "Roboto";
-  static const String inputFontFamily = "Roboto";
-  static const String buttonFontFamily = "Roboto";
+  static const String labelFontFamily = "Montserrat";
+  static const String inputFontFamily = "Montserrat";
+  static const String buttonFontFamily = "Montserrat";
   static const Color fontColor = Color(0xFF000000);
   static const Color appBarBackroundColor = Color(0xFFBEE4DD);
   static const Color appStatusBarColor = Color(0xFFB3DCD5);

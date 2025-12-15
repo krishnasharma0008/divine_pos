@@ -11,6 +11,8 @@ class FilterNotifier extends StateNotifier<FilterState> {
         FilterState(
           selectedGender: const {},
           selectedPriceRange: const RangeValues(10000, 1000000),
+          // selectstartprice:"10000",
+          // selectebdprice:"1000000",
           selectedCategory: const {},
           selectedSubCategory: const {},
           colorStartLabel: 'D',
@@ -156,5 +158,3 @@ final filterProvider = StateNotifierProvider<FilterNotifier, FilterState>((
 ) {
   return FilterNotifier();
 });
-
-

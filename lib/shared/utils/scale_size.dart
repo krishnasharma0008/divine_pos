@@ -6,13 +6,13 @@ class ScaleSize {
   static final double _devicePixelRatio =
       WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
   static final double _aspectratio =
-      (_physicalWidth / _devicePixelRatio) / 1194;
+      (_physicalWidth / _devicePixelRatio) / 1280; // 834;
 
   //static double get getDeviceWidth => _physicalWidth;
 
   static double get aspectRatio => _aspectratio;
 
-  static double get appBarHeight => 52.0 * _aspectratio;
+  static double get appBarHeight => 78.0 * _aspectratio;
 
   // static String get getDeviceType {
   //   final MediaQueryData data = MediaQueryData.fromView(

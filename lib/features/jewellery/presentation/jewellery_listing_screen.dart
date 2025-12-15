@@ -7,6 +7,9 @@ import 'product_grid.dart';
 import '../../auth/data/auth_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/listing_provider.dart';
+import "../data/jewellery_model.dart";
+import '../../../shared/app_bar.dart';
+import '../../../shared/widgets/text.dart'; // ✅ Import MyText
 
 class JewelleryListingScreen extends ConsumerStatefulWidget {
   const JewelleryListingScreen({super.key});
@@ -20,8 +23,9 @@ class _JewelleryListingScreenState
     extends ConsumerState<JewelleryListingScreen> {
   String? pjcode;
   bool isApiCalled = false;
-  String? _selectedSort; // local sort dropdown value
+  String? _selectedSort;
 
+  // Dummy products list
   final List<Map<String, dynamic>> products = [
     {
       "image": "assets/jewellery/filter_tags/rings.jpg",
@@ -69,9 +73,10 @@ class _JewelleryListingScreenState
   void initState() {
     super.initState();
 
-    /// SAFE read auth + API
+    /// SAFE API call using microtask
     Future.microtask(() {
       final authRepo = ref.read(authProvider);
+
       pjcode = authRepo.user?.pjcode;
 
       if (pjcode != null && !isApiCalled) {
@@ -88,33 +93,47 @@ class _JewelleryListingScreenState
 
     final storeState = ref.watch(StoreProvider);
 
-    return Stack(
-      children: [
-        Scaffold(
-          body: SafeArea(
+    return Scaffold(
+      appBar: CustomAppBar(
+        showBackButton: true,
+        showSearch: false, // ✅ optional
+        showLogo: false, // ✅ optional
+      ),
+      body: Stack(
+        children: [
+          SafeArea(
             child: Column(
               children: [
+                /// Top thin loader
                 if (storeState.isLoading)
                   const LinearProgressIndicator(minHeight: 3),
 
+                /// MAIN TOP BUTTONS ROW
                 TopButtonsRow(
                   branchStores: storeState.stores,
-                  onBranchSelected: (selected) {
-                    ref.read(StoreProvider.notifier).selectStore(selected);
+                  onBranchSelected: (selectedStore) {
+                    ref.read(StoreProvider.notifier).selectStore(selectedStore);
+                    debugPrint(
+                      "Selected branch store: ${selectedStore.name} (${selectedStore.code})",
+                    );
                   },
-                  onSortSelected: (sort) {
-                    setState(() {
-                      _selectedSort = sort; // update label
-                    });
-                    debugPrint("Selected sort: $sort");
+                  onSortSelected: (sortValue) {
+                    setState(() => _selectedSort = sortValue);
+                    debugPrint("Selected sort: $sortValue");
                   },
-                  onTabSelected: (index) => debugPrint("Tab: $index selected"),
+                  onTabSelected: (index) {
+                    debugPrint("Tab clicked: $index");
+                  },
                 ),
 
+                /// MAIN BODY SECTION
                 Expanded(
                   child: Row(
                     children: [
+                      /// LEFT SIDE FILTER PANEL
                       const FilterSidebar(),
+
+                      /// RIGHT SIDE CONTENT
                       Expanded(
                         child: Column(
                           children: [
@@ -122,6 +141,7 @@ class _JewelleryListingScreenState
                             const CategorySection(),
                             const SizedBox(height: 31),
                             const FilterTagsSection(),
+
                             Expanded(child: ProductGrid(products: products)),
                           ],
                         ),
@@ -132,14 +152,88 @@ class _JewelleryListingScreenState
               ],
             ),
           ),
-        ),
 
-        if (storeState.isLoading)
-          Container(
-            color: Colors.black.withOpacity(0.15),
-            child: const Center(child: CircularProgressIndicator()),
-          ),
-      ],
+          /// DARK OVERLAY WITH SPINNER
+          if (storeState.isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.15),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+        ],
+      ),
     );
   }
 }
+  //   @override
+  //   Widget build(BuildContext context) {
+  //     final authRepo = ref.watch(authProvider);
+  //     pjcode = authRepo.user?.pjcode;
+
+  //     final storeState = ref.watch(StoreProvider);
+
+  //     return Stack(
+  //       children: [
+  //         Scaffold(
+  //           body: SafeArea(
+  //             child: Column(
+  //               children: [
+  //                 /// Top thin loader
+  //                 if (storeState.isLoading)
+  //                   const LinearProgressIndicator(minHeight: 3),
+
+  //                 /// MAIN TOP BUTTONS ROW
+  //                 TopButtonsRow(
+  //                   branchStores: storeState.stores,
+  //                   onBranchSelected: (selectedStore) {
+  //                     ref.read(StoreProvider.notifier).selectStore(selectedStore);
+  //                     debugPrint(
+  //                       "Selected branch store: ${selectedStore.name} (${selectedStore.code})",
+  //                     );
+  //                   },
+  //                   onSortSelected: (sortValue) {
+  //                     setState(() => _selectedSort = sortValue);
+  //                     debugPrint("Selected sort: $sortValue");
+  //                   },
+  //                   onTabSelected: (index) {
+  //                     debugPrint("Tab clicked: $index");
+  //                   },
+  //                 ),
+
+  //                 /// MAIN BODY SECTION
+  //                 Expanded(
+  //                   child: Row(
+  //                     children: [
+  //                       /// LEFT SIDE FILTER PANEL
+  //                       const FilterSidebar(),
+
+  //                       /// RIGHT SIDE CONTENT
+  //                       Expanded(
+  //                         child: Column(
+  //                           children: [
+  //                             const SizedBox(height: 29),
+  //                             const CategorySection(),
+  //                             const SizedBox(height: 31),
+  //                             const FilterTagsSection(),
+
+  //                             Expanded(child: ProductGrid(products: products)),
+  //                           ],
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+
+  //         /// DARK OVERLAY WITH SPINNER (for API loading)
+  //         if (storeState.isLoading)
+  //           Container(
+  //             color: Colors.black.withOpacity(0.15),
+  //             child: const Center(child: CircularProgressIndicator()),
+  //           ),
+  //       ],
+  //     );
+  //   }
+  // }

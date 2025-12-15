@@ -12,52 +12,39 @@ class FilterTagsSection extends ConsumerWidget {
     final filter = ref.watch(filterProvider);
     final notifier = ref.read(filterProvider.notifier);
 
-    // 1) Build list of tag labels from FilterState
     final tags = <String>[];
 
-    // if (filter.selectedCategory.isNotEmpty) {
-    //   tags.add(filter.selectedCategory);
-    // }
-    for (final o in filter.selectedCategory) {
-      tags.add(o);
+    // Multi-select sets
+    for (final o in filter.selectedCategory) tags.add(o);
+    for (final o in filter.selectedSubCategory) tags.add(o);
+    for (final o in filter.selectedGender) tags.add(o);
+    for (final o in filter.selectedMetal) tags.add(o);
+    for (final o in filter.selectedShape) tags.add(o);
+    for (final o in filter.selectedOccasions) tags.add(o);
+
+    // Price range
+    if (filter.selectedPriceRange.start != 10000 ||
+        filter.selectedPriceRange.end != 1000000) {
+      tags.add(
+        'Price: ₹${filter.selectedPriceRange.start.toInt()} - ₹${filter.selectedPriceRange.end.toInt()}',
+      );
     }
-    // if (filter.selectedSubCategory.isNotEmpty) {
-    //   tags.add(filter.selectedSubCategory);
-    // }
-    for (final o in filter.selectedSubCategory) {
-      tags.add(o);
-    }
-    // if (filter.selectedGender != null) {
-    //   tags.add(filter.selectedGender!);
-    // }
-    for (final o in filter.selectedGender) {
-      tags.add(o);
-    }
-    // if (filter.selectedMetal != null) {
-    //   tags.add(filter.selectedMetal!);
-    // }
-    for (final o in filter.selectedMetal) {
-      tags.add(o);
-    }
-    // if (filter.selectedShape != null) {
-    //   tags.add(filter.selectedShape!);
-    // }
-    for (final o in filter.selectedShape) {
-      tags.add(o);
-    }
+
+    // Color range
     if (filter.colorStartLabel != filter.colorEndLabel) {
       tags.add('Color: ${filter.colorStartLabel}-${filter.colorEndLabel}');
     }
+
+    // Clarity range
     if (filter.clarityStartLabel != filter.clarityEndLabel) {
       tags.add(
         'Clarity: ${filter.clarityStartLabel}-${filter.clarityEndLabel}',
       );
     }
+
+    // Carat range
     if (filter.caratStartLabel != filter.caratEndLabel) {
       tags.add('Carat: ${filter.caratStartLabel}-${filter.caratEndLabel}');
-    }
-    for (final o in filter.selectedOccasions) {
-      tags.add(o);
     }
 
     if (tags.isEmpty) return const SizedBox.shrink();
@@ -66,7 +53,7 @@ class FilterTagsSection extends ConsumerWidget {
       selectedFilters: tags,
       onClearAll: () => notifier.resetFilters(),
       onRemoveTag: (tag) {
-        // 2) Map tag back to filter and clear it
+        // Map tag back to filter and clear it
         if (filter.selectedCategory.contains(tag)) {
           notifier.toggleCategory(tag);
         } else if (filter.selectedSubCategory.contains(tag)) {
@@ -79,12 +66,14 @@ class FilterTagsSection extends ConsumerWidget {
           notifier.toggleShape(tag);
         } else if (filter.selectedOccasions.contains(tag)) {
           notifier.toggleOccasion(tag);
+        } else if (tag.startsWith('Price:')) {
+          notifier.setPrice(const RangeValues(10000, 1000000));
         } else if (tag.startsWith('Color:')) {
-          notifier.setColorRange('D', 'J'); // or your default
+          notifier.setColorRange('D', 'J');
         } else if (tag.startsWith('Clarity:')) {
-          notifier.setClarityRange('IF', 'SI2'); // default
+          notifier.setClarityRange('IF', 'SI2');
         } else if (tag.startsWith('Carat:')) {
-          notifier.setCaratRange('0.10', '2.00'); // default
+          notifier.setCaratRange('0.10', '2.00');
         }
       },
     );

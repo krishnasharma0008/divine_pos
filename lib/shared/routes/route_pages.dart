@@ -9,6 +9,12 @@ enum RoutePages {
   estimate,
   jewellerylisting,
   jewelleryjourney,
+  catalogue,
+  feedback,
+  knowDiamond,
+  verifyTrack,
+  cart,
+  account,
 }
 
 extension RoutePagesExtension on RoutePages {
@@ -28,6 +34,24 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.jewelleryjourney:
         return "/jewellery_journey";
+
+      case RoutePages.catalogue:
+        return "/catalogue";
+
+      case RoutePages.feedback:
+        return "/feedback";
+
+      case RoutePages.knowDiamond:
+        return "/know_diamond";
+
+      case RoutePages.verifyTrack:
+        return "/verify_track";
+
+      case RoutePages.cart:
+        return "/cart";
+
+      case RoutePages.account:
+        return "/account";
 
       case RoutePages.login:
         return "/login";
@@ -63,6 +87,24 @@ extension RoutePagesExtension on RoutePages {
       case RoutePages.jewelleryjourney:
         return "jewellery_journey";
 
+      case RoutePages.catalogue:
+        return "catalogue";
+
+      case RoutePages.feedback:
+        return "feedback";
+
+      case RoutePages.knowDiamond:
+        return "know_diamond";
+
+      case RoutePages.verifyTrack:
+        return "verify_track";
+
+      case RoutePages.cart:
+        return "cart";
+
+      case RoutePages.account:
+        return "account";
+
       case RoutePages.login:
         return "login";
 
@@ -96,6 +138,24 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.jewelleryjourney:
         return "Jewellery Journey";
+
+      case RoutePages.catalogue:
+        return "Catalogue";
+
+      case RoutePages.feedback:
+        return "Feedback";
+
+      case RoutePages.knowDiamond:
+        return "Know Diamond";
+
+      case RoutePages.verifyTrack:
+        return "Verify / Track";
+
+      case RoutePages.cart:
+        return "Cart";
+
+      case RoutePages.account:
+        return "Account";
 
       case RoutePages.login:
         return "Login";

@@ -12,7 +12,7 @@ final hiveBoxProvider = Provider<Box>((ref) {
 });
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  //WidgetsFlutterBinding.ensureInitialized();
 
   /// Init Hive
   await Hive.initFlutter();
@@ -31,12 +31,44 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // @override
+  // void didChangeMetrics() {
+  //   //ScaleSize.refresh();
+  // }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
+    //print("width: ${MediaQuery.of(context).size.aspectRatio}");
+    //print("width:t ${ScaleSize.aspectRatio}");
+    // print("width:x ${MediaQuery.of(context).size.width}");
+    // print(
+    //   "width: ${WidgetsBinding.instance.platformDispatcher.views.first.physicalSize.width}",
+    // );
+    // print(
+    //   "width:d ${WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio}",
+    // );
+    // ScaleSize.refresh();
 
     return MaterialApp.router(
       routerConfig: router,
