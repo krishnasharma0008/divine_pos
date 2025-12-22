@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'product_card.dart';
 import '../data/jewellery_model.dart';
 import '../../../shared/utils/jewellery_helpers.dart';
+import '../../../shared/utils/scale_size.dart';
 
 class ProductGrid extends StatelessWidget {
   final List<Jewellery> jewellery;
@@ -15,71 +16,65 @@ class ProductGrid extends StatelessWidget {
     required this.isLoadingMore,
   });
 
+  static const double _rowSpacing = 20;
+  static const double _horizontalPadding = 24;
+  static const double _cardHeight = 399;
+
   @override
   Widget build(BuildContext context) {
+    final r = ScaleSize.aspectRatio;
+
     if (jewellery.isEmpty) {
       return const Center(child: Text("No products found"));
     }
 
     return SingleChildScrollView(
-      controller: controller, // ✅ THIS IS REQUIRED
+      controller: controller,
       child: Column(
         children: [
-          /// 🔹 FIRST 3 ITEMS → 3 COLUMN GRID
+          /// 🔹 FIRST 3 ITEMS
           GridView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: EdgeInsets.symmetric(
+              horizontal: _horizontalPadding * r,
+              vertical: 6 * r,
+            ),
             itemCount: jewellery.length.clamp(0, 3),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
-              crossAxisSpacing: 20,
-              mainAxisSpacing: 20,
-              mainAxisExtent: 399,
+              crossAxisSpacing: _rowSpacing * r,
+              mainAxisSpacing: _rowSpacing * r,
+              mainAxisExtent: _cardHeight * r,
             ),
             itemBuilder: (context, index) {
-              final item = jewellery[index];
-              final tagText = getTagText(item);
-
-              return ProductCard(
-                isWide: false,
-                image: item.imageUrl ?? '',
-                title: item.bomVariantName ?? '',
-                price: formatWeight(item.weight),
-                tagText: tagText,
-                tagColor: getTagColor(tagText),
-                isSoldOut: false,
-                onAddToCart: () => debugPrint("Add → ${item.itemNumber}"),
-                onTryOn: () => debugPrint("Try → ${item.itemNumber}"),
-                onHaertTap: () => debugPrint("❤️ ${item.itemNumber}"),
-              );
+              return _buildCard(jewellery[index]);
             },
           ),
 
-          /// 🔹 4th (WIDE) + 5th (NORMAL)
+          if (jewellery.length > 3) SizedBox(height: _rowSpacing * r),
+
+          /// 🔹 4th + 5th
           if (jewellery.length > 3)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 31),
+              padding: EdgeInsets.symmetric(horizontal: _horizontalPadding * r),
               child: Row(
                 children: [
-                  /// 4th → WIDE (2/3)
                   Expanded(
                     flex: 2,
                     child: SizedBox(
-                      height: 399,
+                      height: _cardHeight * r,
                       child: Padding(
-                        padding: const EdgeInsets.only(right: 10),
+                        padding: EdgeInsets.only(right: 5 * r),
                         child: _buildCard(jewellery[3], isWide: true),
                       ),
                     ),
                   ),
-
-                  /// 5th → NORMAL (1/3)
                   if (jewellery.length > 4)
                     Expanded(
                       flex: 1,
                       child: SizedBox(
-                        height: 399,
+                        height: _cardHeight * r,
                         child: _buildCard(jewellery[4]),
                       ),
                     ),
@@ -87,37 +82,36 @@ class ProductGrid extends StatelessWidget {
               ),
             ),
 
-          /// 🔹 REMAINING ITEMS → 3 COLUMN GRID
+          if (jewellery.length > 5) SizedBox(height: _rowSpacing * r),
+
+          /// 🔹 REMAINING ITEMS
           if (jewellery.length > 5)
             GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 31),
+              padding: EdgeInsets.symmetric(horizontal: _horizontalPadding * r),
               itemCount: jewellery.length - 5,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                crossAxisSpacing: 20,
-                mainAxisSpacing: 20,
-                mainAxisExtent: 399,
+                crossAxisSpacing: _rowSpacing * r,
+                mainAxisSpacing: _rowSpacing * r,
+                mainAxisExtent: _cardHeight * r,
               ),
               itemBuilder: (context, index) {
-                final item = jewellery[index + 5];
-                return _buildCard(item);
+                return _buildCard(jewellery[index + 5]);
               },
             ),
 
-          /// 🔹 LOAD MORE INDICATOR (IMPORTANT)
           if (isLoadingMore)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 24 * r),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
     );
   }
 
-  /// 🔹 Reusable card builder
   Widget _buildCard(Jewellery item, {bool isWide = false}) {
     final tagText = getTagText(item);
 
@@ -125,7 +119,7 @@ class ProductGrid extends StatelessWidget {
       isWide: isWide,
       image: item.imageUrl ?? '',
       title: item.bomVariantName ?? '',
-      price: formatWeight(item.weight), //item.weight,
+      price: formatWeight(item.weight),
       tagText: tagText,
       tagColor: getTagColor(tagText),
       isSoldOut: false,

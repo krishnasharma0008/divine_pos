@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../shared/utils/scale_size.dart';
 
 class ProductCard extends StatelessWidget {
   final String image;
@@ -29,9 +30,11 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = ScaleSize.aspectRatio;
+
     return Stack(
       children: [
-        isWide ? _buildWide(context) : _buildNormal(context),
+        isWide ? _buildWide(context, r) : _buildNormal(context, r),
         if (isSoldOut)
           Positioned.fill(
             child: Container(
@@ -41,18 +44,21 @@ class ProductCard extends StatelessWidget {
               ),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20 * r,
+                    vertical: 8 * r,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.grey.shade400),
                   ),
-                  child: const Text(
+                  child: Text(
                     "Sold out",
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 14 * r,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -62,26 +68,27 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildNormal(BuildContext context) {
+  Widget _buildNormal(BuildContext context, double r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _imageStack(),
-        const SizedBox(height: 10),
-        _title(),
-        const SizedBox(height: 8),
+        _imageStack(r),
+        SizedBox(height: 10 * r),
+        _title(r),
+        SizedBox(height: 8 * r),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: EdgeInsets.symmetric(horizontal: 12 * r),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: _price()),
+              Expanded(child: _price(r)),
               isSoldOut
-                  ? const SizedBox(width: 100, height: 46)
+                  ? SizedBox(width: 100 * r, height: 46 * r)
                   : SizedBox(
-                      width: 100,
+                      width: 100 * r,
                       child: _actionsRow(
                         mainAxisAlignment: MainAxisAlignment.end,
+                        r: r,
                       ),
                     ),
             ],
@@ -92,26 +99,26 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildWide(BuildContext context) {
+  Widget _buildWide(BuildContext context, double r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _imageStack(),
-        const SizedBox(height: 10),
+        _imageStack(r),
+        SizedBox(height: 10 * r),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _title(),
+          padding: EdgeInsets.symmetric(horizontal: 16 * r),
+          child: _title(r),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8 * r),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: EdgeInsets.symmetric(horizontal: 12 * r),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: _price()),
+              Expanded(child: _price(r)),
               isSoldOut
-                  ? const SizedBox(height: 46)
-                  : _actionsRow(mainAxisAlignment: MainAxisAlignment.end),
+                  ? SizedBox(height: 46 * r)
+                  : _actionsRow(mainAxisAlignment: MainAxisAlignment.end, r: r),
             ],
           ),
         ),
@@ -119,7 +126,7 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _imageStack() {
+  Widget _imageStack(double r) {
     final ImageProvider provider = image.startsWith('http')
         ? NetworkImage(image)
         : AssetImage(image) as ImageProvider;
@@ -127,7 +134,7 @@ class ProductCard extends StatelessWidget {
     return Stack(
       children: [
         Container(
-          height: 287,
+          height: 287 * r,
           width: double.infinity,
           decoration: BoxDecoration(
             color: const Color(0xffF7F7F7),
@@ -137,10 +144,13 @@ class ProductCard extends StatelessWidget {
         ),
         if (tagText.isNotEmpty)
           Positioned(
-            left: 14,
-            top: 14,
+            left: 14 * r,
+            top: 14 * r,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: 10 * r,
+                vertical: 4 * r,
+              ),
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
@@ -148,7 +158,7 @@ class ProductCard extends StatelessWidget {
               child: Text(
                 tagText,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 15 * r,
                   fontWeight: FontWeight.w300,
                   color: tagColor,
                 ),
@@ -156,14 +166,14 @@ class ProductCard extends StatelessWidget {
             ),
           ),
         Positioned(
-          right: 14,
-          top: 14,
+          right: 14 * r,
+          top: 14 * r,
           child: InkWell(
             onTap: onHaertTap,
             child: SvgPicture.asset(
               'assets/icons/heart.svg',
-              width: 35,
-              height: 36,
+              width: 35 * r,
+              height: 36 * r,
             ),
           ),
         ),
@@ -171,16 +181,16 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _title() => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 9),
+  Widget _title(double r) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: 9 * r),
     child: SizedBox(
-      height: 36,
+      height: 36 * r,
       child: Text(
         title,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          fontSize: 14,
+        style: TextStyle(
+          fontSize: 14 * r,
           fontWeight: FontWeight.w500,
           color: Colors.black87,
         ),
@@ -188,19 +198,22 @@ class ProductCard extends StatelessWidget {
     ),
   );
 
-  Widget _price() => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 9),
+  Widget _price(double r) => Padding(
+    padding: EdgeInsets.symmetric(horizontal: 9 * r),
     child: Text(
       price,
-      style: const TextStyle(
-        fontSize: 15,
+      style: TextStyle(
+        fontSize: 15 * r,
         fontWeight: FontWeight.bold,
         color: Colors.black,
       ),
     ),
   );
 
-  Widget _actionsRow({required MainAxisAlignment mainAxisAlignment}) {
+  Widget _actionsRow({
+    required MainAxisAlignment mainAxisAlignment,
+    required double r,
+  }) {
     return Row(
       mainAxisAlignment: mainAxisAlignment,
       children: [
@@ -208,17 +221,17 @@ class ProductCard extends StatelessWidget {
           onTap: onAddToCart,
           child: SvgPicture.asset(
             'assets/icons/cart.svg',
-            width: 38,
-            height: 40,
+            width: 38 * r,
+            height: 40 * r,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12 * r),
         InkWell(
           onTap: onTryOn,
           child: SvgPicture.asset(
             'assets/icons/tryon.svg',
-            width: 38,
-            height: 40,
+            width: 38 * r,
+            height: 40 * r,
           ),
         ),
       ],
