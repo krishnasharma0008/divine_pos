@@ -44,7 +44,7 @@ class _TopButtonsRowState extends State<TopButtonsRow> {
 
     return Container(
       color: const Color(0xFFF7F9F8),
-      padding: EdgeInsets.symmetric(vertical: 11 * fem, horizontal: 21),
+      padding: EdgeInsets.symmetric(vertical: 11 * fem, horizontal: 21 * fem),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -58,7 +58,7 @@ class _TopButtonsRowState extends State<TopButtonsRow> {
                 if (type == "branch")
                   UltraDropdown<dynamic>(
                     width: width,
-                    height: 50,
+                    height: 50 * fem,
                     items: widget.branchStores,
                     selectedItem: _selectedBranch,
                     placeholder: "Products At Other Branches",
@@ -73,10 +73,10 @@ class _TopButtonsRowState extends State<TopButtonsRow> {
                 if (type == "sort")
                   UltraDropdown<String>(
                     width: width,
-                    height: 50,
+                    height: 50 * fem,
                     items: const [
-                      "Price: High to Low",
-                      "Price: Low to High",
+                      // "Price: High to Low",
+                      // "Price: Low to High",
                       "Best Sellers",
                       "New Arrivals",
                     ],
@@ -96,9 +96,19 @@ class _TopButtonsRowState extends State<TopButtonsRow> {
                     isSelected: _selectedIndex == index,
                     isHovered: _hoveredIndex == index,
                     width: width,
-                    height: 50,
+                    height: 50 * fem,
                     onTap: () {
-                      setState(() => _selectedIndex = index);
+                      //setState(() => _selectedIndex = index);
+                      setState(() {
+                        _selectedIndex = index;
+
+                        // 🔹 Clear branch dropdown when switching
+                        // to "Products In Store" (index 0) or "All Designs" (index 2)
+                        if (index == 0 || index == 2) {
+                          _selectedBranch = null;
+                        }
+                      });
+
                       widget.onTabSelected?.call(index);
                     },
                     onHover: (hover) {
@@ -126,21 +136,27 @@ class _TopButtonsRowState extends State<TopButtonsRow> {
   }
 
   // Helper for labels
+
   String _branchLabel(dynamic item) {
     if (item == null) return '';
 
     if (item is Map<String, dynamic>) {
+      final nickName = item['nickName'];
       final name = item['name'] ?? item['branchName'] ?? item['title'];
       final code = item['code'] ?? item['branchCode'];
 
+      if (nickName != null) return nickName.toString();
       if (name != null && code != null) return "$name ($code)";
       return name?.toString() ?? item.toString();
     }
 
     try {
+      final nickName = item.nickName;
+
       final name = item.name ?? item.branchName ?? item.title;
       final code = item.code ?? item.branchCode;
 
+      if (nickName != null) return nickName.toString();
       if (name != null && code != null) return "$name ($code)";
       return name?.toString() ?? item.toString();
     } catch (_) {}
@@ -187,20 +203,21 @@ class _UltraPillButton extends StatelessWidget {
           height: height,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(40),
+            borderRadius: BorderRadius.circular(15),
             color: filled
                 ? kMint
                 : isHovered
                 ? kMint.withOpacity(0.10)
                 : Colors.white,
-            border: Border.all(color: filled ? kMint : Colors.black12),
+            border: Border.all(color: filled ? kMint : Color(0xFF90DCD0)),
           ),
           child: Text(
             title,
             style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: filled ? Colors.white : Colors.black87,
+              fontSize: 16 * ScaleSize.aspectRatio,
+              //fontWeight: FontWeight.w600,
+              fontWeight: filled ? FontWeight.w600 : FontWeight.w400,
+              color: filled ? Colors.white : Color(0xFF90DCD0),
             ),
           ),
         ),

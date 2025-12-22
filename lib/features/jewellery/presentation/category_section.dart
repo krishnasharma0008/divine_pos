@@ -17,7 +17,7 @@ class CategorySection extends ConsumerWidget {
     final categories = <CategoryItem>[
       CategoryItem(
         image: 'assets/jewellery/filter_tags/rings.jpg',
-        label: 'Rings',
+        label: 'Ring',
       ),
       CategoryItem(
         image: 'assets/jewellery/filter_tags/earrings.png',

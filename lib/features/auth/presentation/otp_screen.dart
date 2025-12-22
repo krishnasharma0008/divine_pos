@@ -258,7 +258,7 @@ class _RightCardState extends ConsumerState<_RightCard> {
               /// SUBTITLE
               Center(
                 child: SizedBox(
-                  width: 420,
+                  width: fem * 420,
                   child: MyText(
                     "We've sent a 4-digit code to ${widget.phoneNumber}",
                     style: TextStyle(

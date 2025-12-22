@@ -1,3 +1,4 @@
+import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,8 +13,11 @@ class HeroAndFeaturesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final double ar = ScaleSize.aspectRatio.clamp(0.7, 1.3);
-
+    //final double fem = ScaleSize.aspectRatio;
+    //print("ar:$ar");
+    //print("fem:$fem");
     return Column(
+      //mainAxisSize: MainAxisSize.max,
       children: [
         const SizedBox(height: 10),
 
@@ -114,49 +118,59 @@ class HeroAndFeaturesSection extends ConsumerWidget {
           ),
         ),
 
-        SizedBox(height: 20 * ar),
+        SizedBox(height: 23 * ar),
 
         // ---------------- FEATURE CARDS ----------------
         SizedBox(
           width: double.infinity,
-          height: 218,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 10 * ar), // ✅ x-7
+
+            padding: EdgeInsets.symmetric(horizontal: 7 * ar), // ✅ x-7
             child: Row(
+              //mainAxisAlignment: MainAxisAlignment.spaceAround,
+              //mainAxisSize: MainAxisSize.min,
+              spacing: ar * 5,
               children: [
-                FeatureCard(
+                featureCard(
+                  context: context,
+                  fem: ar,
                   label: "Catalogue",
-                  image: "assets/dashboard/action_section/catalouge.png",
-                  onTap: () => context.push('/jewellery_listing'),
+                  image: "catalouge.png",
+                  routePage: RoutePages.jewellerylisting,
                 ),
-                FeatureCard(
+                featureCard(
+                  context: context,
+                  fem: ar,
                   label: "Feedback Form",
-                  image: "assets/dashboard/action_section/feedback-form.png",
-                  onTap: () => context.push('/feedback'),
+                  image: "feedback-form.png",
+                  routePage: RoutePages.feedback,
                 ),
-                FeatureCard(
+                featureCard(
+                  context: context,
+                  fem: ar,
                   label: "Know Your Diamond Value",
-                  image:
-                      "assets/dashboard/action_section/know_your_diamond_value.png",
-                  onTap: () => context.push('/diamond-value'),
+                  image: "know_your_diamond_value.png",
+                  routePage: RoutePages.knowDiamond,
                 ),
-                FeatureCard(
+                featureCard(
+                  context: context,
+                  fem: ar,
                   label: "Verify & Track",
-                  image: "assets/dashboard/action_section/verify-track.png",
-                  onTap: () => context.push('/verify-track'),
+                  image: "verify-track.png",
+                  routePage: RoutePages.verifyTrack,
                 ),
-                FeatureCard(
+                featureCard(
+                  context: context,
+                  fem: ar,
                   label: "Scan Ready Product",
-                  image:
-                      "assets/dashboard/action_section/scan-ready-product.jpg",
-                  onTap: () => context.push('/scan-product'),
+                  image: "scan-ready-product.jpg",
+                  routePage: RoutePages.verifyTrack,
                 ),
               ],
             ),
           ),
         ),
-
         SizedBox(height: 23 * ar),
 
         // ---------------- SCROLL DOWN ARROW ----------------
@@ -181,35 +195,26 @@ class HeroAndFeaturesSection extends ConsumerWidget {
       ],
     );
   }
-}
 
-// ---------------- FEATURE CARD ----------------
-class FeatureCard extends StatelessWidget {
-  final String label;
-  final String image;
-  final VoidCallback onTap;
-
-  const FeatureCard({
-    super.key,
-    required this.label,
-    required this.image,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final double ar = ScaleSize.aspectRatio.clamp(0.7, 1.3);
-
+  // ---------------- FEATURE CARD ----------------
+  GestureDetector featureCard({
+    required BuildContext context,
+    required double fem,
+    required String label,
+    required String image,
+    required RoutePages routePage,
+  }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        GoRouter.of(context).push(routePage.routePath);
+      },
       child: Container(
-        margin: EdgeInsets.only(right: 10 * ar), // ✅ spacing here
-        width: 232 * ar,
-        height: 218 * ar,
-        padding: EdgeInsets.all(12 * ar),
+        width: 232 * fem,
+        //height: 218 * fem,
+        padding: EdgeInsets.symmetric(horizontal: fem * 14, vertical: 9 * fem),
         decoration: BoxDecoration(
           color: const Color(0xFFF2F2F2),
-          borderRadius: BorderRadius.circular(20 * ar),
+          borderRadius: BorderRadius.circular(20 * fem),
           border: Border.all(color: const Color(0xFFF2F2F2)),
           boxShadow: const [
             BoxShadow(
@@ -224,40 +229,39 @@ class FeatureCard extends StatelessWidget {
           children: [
             /// IMAGE
             Container(
-              width: double.infinity,
-              height: 114 * ar,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20 * ar),
+                borderRadius: BorderRadius.circular(20 * fem),
                 border: Border.all(color: const Color(0xFFB5B5B5)),
                 image: DecorationImage(
-                  image: AssetImage(image),
+                  image: AssetImage("assets/dashboard/action_section/$image"),
                   fit: BoxFit.cover,
                 ),
               ),
+              height: 114 * fem,
             ),
 
-            SizedBox(height: 12 * ar),
+            SizedBox(height: 22 * fem),
 
             /// LABEL + ICON
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Expanded(
-                  child: Text(
+                  child: MyText(
                     label,
                     maxLines: 2,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.black,
-                      fontSize: 16,
-                      fontFamily: 'Montserrat',
+                      fontSize: fem * 16,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
 
                 Container(
-                  width: 50 * ar,
-                  height: 50 * ar,
+                  width: 50 * fem,
+                  height: 50 * fem,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -266,17 +270,114 @@ class FeatureCard extends StatelessWidget {
                   child: Center(
                     child: Image.asset(
                       "assets/dashboard/action_section/right-arrow-icon.png",
-                      width: 50 * ar,
-                      height: 50 * ar,
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
               ],
             ),
+            SizedBox(height: fem * 13),
           ],
         ),
       ),
     );
   }
 }
+
+// ---------------- FEATURE CARD ----------------
+// class FeatureCard extends StatelessWidget {
+//   final String label;
+//   final String image;
+//   final VoidCallback onTap;
+
+//   const FeatureCard({
+//     super.key,
+//     required this.label,
+//     required this.image,
+//     required this.onTap,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final double ar = ScaleSize.aspectRatio.clamp(0.7, 1.3);
+
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: Container(
+//         margin: EdgeInsets.only(right: 10 * ar), // ✅ spacing here
+//         width: 232 * ar,
+//         height: 218 * ar,
+//         padding: EdgeInsets.all(12 * ar),
+//         decoration: BoxDecoration(
+//           color: const Color(0xFFF2F2F2),
+//           borderRadius: BorderRadius.circular(20 * ar),
+//           border: Border.all(color: const Color(0xFFF2F2F2)),
+//           boxShadow: const [
+//             BoxShadow(
+//               color: Color(0x3FEFEFEF),
+//               blurRadius: 4,
+//               offset: Offset(2, 4),
+//             ),
+//           ],
+//         ),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.center,
+//           children: [
+//             /// IMAGE
+//             Container(
+//               width: double.infinity,
+//               height: 114 * ar,
+//               decoration: BoxDecoration(
+//                 borderRadius: BorderRadius.circular(20 * ar),
+//                 border: Border.all(color: const Color(0xFFB5B5B5)),
+//                 image: DecorationImage(
+//                   image: AssetImage(image),
+//                   fit: BoxFit.cover,
+//                 ),
+//               ),
+//             ),
+
+//             SizedBox(height: 12 * ar),
+
+//             /// LABEL + ICON
+//             Row(
+//               crossAxisAlignment: CrossAxisAlignment.center,
+//               children: [
+//                 Expanded(
+//                   child: Text(
+//                     label,
+//                     maxLines: 2,
+//                     style: const TextStyle(
+//                       color: Colors.black,
+//                       fontSize: 16,
+//                       fontFamily: 'Montserrat',
+//                       fontWeight: FontWeight.w500,
+//                     ),
+//                   ),
+//                 ),
+
+//                 Container(
+//                   width: 50 * ar,
+//                   height: 50 * ar,
+//                   decoration: BoxDecoration(
+//                     color: Colors.white,
+//                     shape: BoxShape.circle,
+//                     border: Border.all(color: const Color(0xFFD2D2D2)),
+//                   ),
+//                   child: Center(
+//                     child: Image.asset(
+//                       "assets/dashboard/action_section/right-arrow-icon.png",
+//                       width: 50 * ar,
+//                       height: 50 * ar,
+//                       fit: BoxFit.contain,
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }

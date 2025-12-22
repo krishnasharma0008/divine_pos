@@ -5,39 +5,42 @@ class FilterState {
   final RangeValues selectedPriceRange;
   final Set<String> selectedCategory;
   final Set<String> selectedSubCategory;
-
-  // NEW fields
   final String colorStartLabel;
   final String colorEndLabel;
   final String clarityStartLabel;
   final String clarityEndLabel;
   final String caratStartLabel;
   final String caratEndLabel;
-
   final Set<String> selectedShape;
   final Set<String> selectedMetal;
   final Set<String> selectedOccasions;
 
-  FilterState({
-    Set<String>? selectedGender,
+  final bool isInStore;
+  final String? productBranch;
+  final bool allDesigns;
+  final String? sortBy;
+
+  const FilterState({
+    required this.selectedGender,
     required this.selectedPriceRange,
-    Set<String>? selectedCategory,
-    Set<String>? selectedSubCategory,
-    this.colorStartLabel = 'D',
-    this.colorEndLabel = 'J',
-    this.clarityStartLabel = 'IF',
-    this.clarityEndLabel = 'SI2',
-    this.caratStartLabel = '0.10',
-    this.caratEndLabel = '2.00',
-    Set<String>? selectedShape,
-    Set<String>? selectedMetal,
-    Set<String>? selectedOccasions,
-  }) : selectedGender = selectedGender ?? const {},
-       selectedCategory = selectedCategory ?? const {},
-       selectedSubCategory = selectedSubCategory ?? const {},
-       selectedShape = selectedShape ?? const {},
-       selectedMetal = selectedMetal ?? const {},
-       selectedOccasions = selectedOccasions ?? const {};
+    required this.selectedCategory,
+    required this.selectedSubCategory,
+    required this.colorStartLabel,
+    required this.colorEndLabel,
+    required this.clarityStartLabel,
+    required this.clarityEndLabel,
+    required this.caratStartLabel,
+    required this.caratEndLabel,
+    required this.selectedShape,
+    required this.selectedMetal,
+    required this.selectedOccasions,
+
+    // top button filters
+    this.isInStore = false, // ✅ default in-store
+    this.productBranch, // null = no branch filter
+    this.allDesigns = true,
+    this.sortBy,
+  });
 
   FilterState copyWith({
     Set<String>? selectedGender,
@@ -53,6 +56,11 @@ class FilterState {
     Set<String>? selectedShape,
     Set<String>? selectedMetal,
     Set<String>? selectedOccasions,
+    //top button filters
+    bool? isInStore,
+    String? productBranch,
+    bool? allDesigns,
+    String? sortBy,
   }) {
     return FilterState(
       selectedGender: selectedGender ?? this.selectedGender,
@@ -68,6 +76,12 @@ class FilterState {
       selectedShape: selectedShape ?? this.selectedShape,
       selectedMetal: selectedMetal ?? this.selectedMetal,
       selectedOccasions: selectedOccasions ?? this.selectedOccasions,
+
+      //top button filters
+      isInStore: isInStore ?? this.isInStore,
+      productBranch: productBranch ?? this.productBranch, // ✅ fixed
+      allDesigns: allDesigns ?? this.allDesigns,
+      sortBy: sortBy ?? this.sortBy,
     );
   }
 }

@@ -69,7 +69,7 @@ class LoginNotifier extends Notifier<LoginState> {
       final dio = ref.read(httpClientProvider);
 
       var response = await dio.post(ApiEndPoint.verify_otp, data: postData);
-      //print(response.data);
+      print(response.data);
       if (response.statusCode == HttpStatus.ok) {
         //print(response.data);
         final sucess = response.data["success"];

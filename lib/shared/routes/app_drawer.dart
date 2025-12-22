@@ -244,12 +244,16 @@ class _PrimaryItem extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Icon(icon, size: 18, color: color),
+              child: Icon(icon, size: 18 * ScaleSize.aspectRatio, color: color),
             ),
             const SizedBox(width: 12),
             Text(
               label,
-              style: TextStyle(fontSize: 14, color: color, fontWeight: weight),
+              style: TextStyle(
+                fontSize: 14 * ScaleSize.aspectRatio,
+                color: color,
+                fontWeight: weight,
+              ),
             ),
           ],
         ),
@@ -282,7 +286,11 @@ class _SectionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: Colors.black87),
+              Icon(
+                icon,
+                size: 18 * ScaleSize.aspectRatio,
+                color: Colors.black87,
+              ),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -356,7 +364,7 @@ class _LogoutRow extends StatelessWidget {
     return InkWell(
       onTap: onLogout,
       child: Container(
-        height: 56,
+        height: 56 * ScaleSize.aspectRatio,
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: Color(0xFFE2E6E5))),
         ),
@@ -372,7 +380,7 @@ class _LogoutRow extends StatelessWidget {
             Text(
               'Logout',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 14 * ScaleSize.aspectRatio,
                 color: Colors.red,
                 fontWeight: FontWeight.w500,
                 fontFamily: MyThemes.labelFontFamily,

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -62,6 +63,8 @@ class StoreNotifier extends StateNotifier<StoreDetailState> {
       final postData = {"code": pjcode};
 
       final response = await dio.post(ApiEndPoint.get_branch, data: postData);
+
+      debugPrint('getPJStore response: ${response.data}');
 
       if (response.statusCode == HttpStatus.ok) {
         final success = response.data["success"] ?? false;

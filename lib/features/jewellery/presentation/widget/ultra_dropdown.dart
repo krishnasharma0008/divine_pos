@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import '../../../../shared/utils/scale_size.dart';
 
 const Color kMint = Color(0xFF90DCD0);
 
@@ -219,12 +220,24 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: selected ? kMint.withOpacity(0.12) : Colors.transparent,
+              color: selected ? Color(0xFF90DCD0) : Colors.transparent,
             ),
             child: Row(
               children: [
-                Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
-                if (selected) const Icon(Icons.check, size: 18, color: kMint),
+                //Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
+                Expanded(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: selected ? Colors.white : const Color(0xFF90DCD0),
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+
+                if (selected)
+                  const Icon(Icons.check, size: 18, color: Colors.white),
               ],
             ),
           ),
@@ -257,6 +270,8 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
+
     final display = widget.selectedItem == null
         ? widget.placeholder
         : widget.displayBuilder(widget.selectedItem);
@@ -271,12 +286,22 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(40),
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(color: kMint, width: 1.2),
           ),
           child: Row(
             children: [
-              Expanded(child: Text(display, overflow: TextOverflow.ellipsis)),
+              //Expanded(child: Text(display, overflow: TextOverflow.ellipsis)),
+              Expanded(
+                child: Text(
+                  display,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: const Color(0xFF90DCD0), // ✅ mint when selected
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
               Icon(
                 isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                 color: kMint,

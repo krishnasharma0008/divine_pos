@@ -9,6 +9,7 @@ import '../../../shared/utils/scale_size.dart';
 import '../../../shared/app_bar.dart';
 import '../../../shared/routes/app_drawer.dart';
 import '../../auth/data/auth_notifier.dart';
+import '../../../shared/utils/enums.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   DashboardScreen({super.key});
@@ -55,12 +56,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       backgroundColor: Colors.white,
 
       // ------------------ APP BAR ------------------
-      appBar: CustomAppBar(
-        onMenuTap: openDrawer,
-        onCartTap: () => print('Cart tapped'),
-        onProfileTap: () => print('Profile tapped'),
-        onNotificationTap: () => print('Notification tapped'),
-        showBackButton: false,
+      appBar: MyAppBar(
+        //titleText: 'Dashboard',
+        appBarLeading: AppBarLeading.drawer,
+        showLogo: true,
+        actions: [
+          AppBarActionConfig(
+            type: AppBarAction.search,
+            onTap: () {
+              print('Search tapped');
+            },
+          ),
+          AppBarActionConfig(
+            type: AppBarAction.notification,
+            badgeCount: 1,
+            onTap: () {
+              context.push('/notifications');
+            },
+          ),
+          AppBarActionConfig(
+            type: AppBarAction.profile,
+            onTap: () {
+              context.push('/profile');
+            },
+          ),
+          AppBarActionConfig(
+            type: AppBarAction.cart,
+            badgeCount: 2,
+            onTap: () {
+              context.push('/cart');
+            },
+          ),
+        ],
       ),
 
       // ------------------ DRAWER ------------------
@@ -83,31 +110,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
 
       // ------------------ BODY ------------------
-      body: Row(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController, // ✅ attached here
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// HERO + FEATURES
-                  HeroAndFeaturesSection(onArrowTap: scrollToCategories),
-                  SizedBox(height: 24 * fem),
+      body: SingleChildScrollView(
+        controller: _scrollController, // ✅ attached here
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// HERO + FEATURES
+            HeroAndFeaturesSection(onArrowTap: scrollToCategories),
+            SizedBox(height: 24 * fem),
 
-                  /// TARGET SECTION
-                  Container(
-                    key: _categoriesKey,
-                    child: const CategoriesSection(),
-                  ),
+            /// TARGET SECTION
+            Container(key: _categoriesKey, child: const CategoriesSection()),
 
-                  SizedBox(height: 40 * fem),
-                ],
-              ),
-            ),
-          ),
-        ],
+            SizedBox(height: 80 * fem),
+          ],
+        ),
       ),
+
+      // body: Row(
+      //   children: [
+      //     Expanded(
+      //       child: SingleChildScrollView(
+      //         controller: _scrollController, // ✅ attached here
+      //         child: Column(
+      //           crossAxisAlignment: CrossAxisAlignment.start,
+      //           children: [
+      //             /// HERO + FEATURES
+      //             HeroAndFeaturesSection(onArrowTap: scrollToCategories),
+      //             SizedBox(height: 24 * fem),
+
+      //             /// TARGET SECTION
+      //             Container(
+      //               key: _categoriesKey,
+      //               child: const CategoriesSection(),
+      //             ),
+
+      //             SizedBox(height: 40 * fem),
+      //           ],
+      //         ),
+      //       ),
+      //     ),
+      //   ],
+      // ),
     );
   }
 }

@@ -6,6 +6,7 @@ import '../shared/utils/scale_size.dart';
 import '../features/auth/data/auth_notifier.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/utils/enums.dart';
 
 class SharedLayout extends ConsumerStatefulWidget {
   final Widget child;
@@ -31,12 +32,13 @@ class _SharedLayoutState extends ConsumerState<SharedLayout> {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
-      appBar: CustomAppBar(
-        onMenuTap: openDrawer, // Correct usage here
-        onCartTap: () => print('Cart tapped'),
-        onProfileTap: () => print('Profile tapped'),
-        onNotificationTap: () => print('Notification tapped'),
-      ),
+      // appBar: CustomAppBar(
+      //   onMenuTap: openDrawer, // Correct usage here
+      //   onCartTap: () => print('Cart tapped'),
+      //   onProfileTap: () => print('Profile tapped'),
+      //   onNotificationTap: () => print('Notification tapped'),
+      // ),
+      appBar: MyAppBar(showLogo: false, appBarLeading: AppBarLeading.drawer),
       drawer: Drawer(
         backgroundColor: Colors.transparent,
         elevation: 0,

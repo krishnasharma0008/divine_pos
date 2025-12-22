@@ -51,7 +51,7 @@ extension RoutePagesExtension on RoutePages {
         return "/cart";
 
       case RoutePages.account:
-        return "/account";
+        return "/accounts";
 
       case RoutePages.login:
         return "/login";
@@ -103,7 +103,7 @@ extension RoutePagesExtension on RoutePages {
         return "cart";
 
       case RoutePages.account:
-        return "account";
+        return "accounts";
 
       case RoutePages.login:
         return "login";

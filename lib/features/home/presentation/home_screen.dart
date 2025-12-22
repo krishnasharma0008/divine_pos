@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../auth/data/auth_notifier.dart';
 import '../../../shared/utils/scale_size.dart';
 import '../../../shared/app_bar.dart';
+import '../../../shared/utils/scale_size.dart';
+import '../../../shared/utils/enums.dart';
 import '../../../shared/routes/app_drawer.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -29,13 +31,14 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: Colors.white,
 
       // ------------------ CUSTOM APP BAR ------------------
-      appBar: CustomAppBar(
-        onMenuTap: openDrawer,
-        onCartTap: () => print('Cart tapped'),
-        onProfileTap: () => print('Profile tapped'),
-        onNotificationTap: () => print('Notification tapped'),
-        showBackButton: false, // show menu for home
-      ),
+      // appBar: CustomAppBar(
+      //   onMenuTap: openDrawer,
+      //   onCartTap: () => print('Cart tapped'),
+      //   onProfileTap: () => print('Profile tapped'),
+      //   onNotificationTap: () => print('Notification tapped'),
+      //   showBackButton: false, // show menu for home
+      // ),
+      appBar: MyAppBar(showLogo: false, appBarLeading: AppBarLeading.drawer),
 
       // ------------------ DRAWER ------------------
       drawer: Drawer(

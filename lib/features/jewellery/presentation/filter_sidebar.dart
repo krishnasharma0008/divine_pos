@@ -184,31 +184,12 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                     fontFamily: 'Montserrat',
                   ),
                 ),
-                Icon(Icons.close, size: 22 * fem),
+                //Icon(Icons.close, size: 22 * fem),
               ],
             ),
             SizedBox(height: 41 * fem),
-
-            //------------------------------------------------------
-            // solitaire header
-            //------------------------------------------------------
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Solitaire',
-                  style: TextStyle(
-                    fontSize: 20 * fem,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-                Icon(Icons.expand_less, size: 22 * fem),
-              ],
-            ),
-            SizedBox(height: 30 * fem),
             Divider(height: 1, color: Colors.black.withOpacity(0.08)),
-            SizedBox(height: 7 * fem),
+            SizedBox(height: 20 * fem),
 
             //------------------------------------------------------
             // PRICE RANGE
@@ -237,7 +218,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
               fem: fem,
               child: twoColumnGrid(
                 items: [
-                  'Rings',
+                  'Ring',
                   'Earrings',
                   'Bangles',
                   'Mangalsutra',
@@ -279,20 +260,6 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
               ),
             ),
 
-            //------------------------------------------------------
-            // CARAT WEIGHT
-            //------------------------------------------------------
-            // FilterSection(
-            //   title: 'Carat Weight',
-            //   fem: fem,
-            //   initiallyExpanded: true,
-            //   child: RangeSelector(
-            //     min: 0.10,
-            //     max: 2.99,
-            //     title: '',
-            //     formatter: (v) => '${v.toStringAsFixed(2)} ct',
-            //   ),
-            // ),
             FilterSection(
               title: 'Carat Weight',
               fem: fem,
@@ -318,16 +285,6 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
               title: 'Diamond Shape',
               fem: fem,
               initiallyExpanded: true,
-              //   child: DiamondShapeGrid(
-              //     fem: ScaleSize.aspectRatio,
-              //     items: _diamondItems,
-              //     //initialSelected: 'Round',
-              //     initialSelected: null, //filter.selectedShape,
-              //     onSelected: (shape) => notifier.toggleMetal(shape),
-              //     // onSelected: (shape) {
-              //     //   print('Shape selected → $shape');
-              //     // },
-              //   ),
               child: DiamondShapeGrid(
                 fem: fem,
                 items: _diamondItems,
@@ -339,56 +296,56 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
             //------------------------------------------------------
             // COLOR RANGE
             //------------------------------------------------------
-            FilterSection(
-              title: 'Color',
-              fem: fem,
-              child: DiscreteClickRange(
-                title: '',
-                options: _colorOptions,
-                initialStartIndex: _colorOptions.indexOf(
-                  filter.colorStartLabel,
-                ),
-                initialEndIndex: _colorOptions.indexOf(filter.colorEndLabel),
-                onChanged: (range) {
-                  // setState(() {
-                  //   colorStartLabel = _colorOptions[range.start.toInt()];
-                  //   colorEndLabel = _colorOptions[range.end.toInt()];
-                  // });
-                  // print('Color range: $colorStartLabel - $colorEndLabel');
-                  final start = _colorOptions[range.start.toInt()];
-                  final end = _colorOptions[range.end.toInt()];
-                  notifier.setColorRange(start, end);
-                },
-              ),
-            ),
+            // FilterSection(
+            //   title: 'Color',
+            //   fem: fem,
+            //   child: DiscreteClickRange(
+            //     title: '',
+            //     options: _colorOptions,
+            //     initialStartIndex: _colorOptions.indexOf(
+            //       filter.colorStartLabel,
+            //     ),
+            //     initialEndIndex: _colorOptions.indexOf(filter.colorEndLabel),
+            //     onChanged: (range) {
+            //       // setState(() {
+            //       //   colorStartLabel = _colorOptions[range.start.toInt()];
+            //       //   colorEndLabel = _colorOptions[range.end.toInt()];
+            //       // });
+            //       // print('Color range: $colorStartLabel - $colorEndLabel');
+            //       final start = _colorOptions[range.start.toInt()];
+            //       final end = _colorOptions[range.end.toInt()];
+            //       notifier.setColorRange(start, end);
+            //     },
+            //   ),
+            // ),
 
             //------------------------------------------------------
             // CLARITY RANGE
             //------------------------------------------------------
-            FilterSection(
-              title: 'Clarity',
-              fem: fem,
-              child: DiscreteClickRange(
-                title: '',
-                options: _clarityOptions,
-                initialStartIndex: _clarityOptions.indexOf(
-                  filter.clarityStartLabel,
-                ),
-                initialEndIndex: _clarityOptions.indexOf(
-                  filter.clarityEndLabel,
-                ),
-                onChanged: (range) {
-                  // setState(() {
-                  //   clarityStartLabel = _clarityOptions[range.start.toInt()];
-                  //   clarityEndLabel = _clarityOptions[range.end.toInt()];
-                  // });
-                  // print('Clarity: $clarityStartLabel - $clarityEndLabel');
-                  final start = _clarityOptions[range.start.toInt()];
-                  final end = _clarityOptions[range.end.toInt()];
-                  notifier.setClarityRange(start, end);
-                },
-              ),
-            ),
+            // FilterSection(
+            //   title: 'Clarity',
+            //   fem: fem,
+            //   child: DiscreteClickRange(
+            //     title: '',
+            //     options: _clarityOptions,
+            //     initialStartIndex: _clarityOptions.indexOf(
+            //       filter.clarityStartLabel,
+            //     ),
+            //     initialEndIndex: _clarityOptions.indexOf(
+            //       filter.clarityEndLabel,
+            //     ),
+            //     onChanged: (range) {
+            //       // setState(() {
+            //       //   clarityStartLabel = _clarityOptions[range.start.toInt()];
+            //       //   clarityEndLabel = _clarityOptions[range.end.toInt()];
+            //       // });
+            //       // print('Clarity: $clarityStartLabel - $clarityEndLabel');
+            //       final start = _clarityOptions[range.start.toInt()];
+            //       final end = _clarityOptions[range.end.toInt()];
+            //       notifier.setClarityRange(start, end);
+            //     },
+            //   ),
+            // ),
 
             //------------------------------------------------------
             // METAL

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/utils/scale_size.dart';
 
 class RangeSelector extends StatelessWidget {
   final double min;
@@ -6,7 +7,7 @@ class RangeSelector extends StatelessWidget {
   final String title;
   final String Function(double value) formatter;
   final ValueChanged<RangeValues>? onChanged;
-  final RangeValues values; // <-- new: controlled values from parent
+  final RangeValues values;
 
   const RangeSelector({
     super.key,
@@ -40,10 +41,11 @@ class RangeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     final bool hasTitle = title.trim().isNotEmpty;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+      padding: EdgeInsets.symmetric(vertical: 12 * fem, horizontal: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -52,38 +54,36 @@ class RangeSelector extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    fontSize: 16,
+                    fontSize: 16 * fem,
                   ),
                 ),
-                const Spacer(),
+                Spacer(),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14 * fem),
           ],
           Padding(
-            padding: const EdgeInsets.only(left: 12),
+            padding: EdgeInsets.only(left: 12 * fem),
             child: Row(
               children: [
-                _priceChip(formatter(values.start)),
-                const SizedBox(width: 20),
-                _priceChip(formatter(values.end)),
+                _priceChip(formatter(values.start), fem),
+                SizedBox(width: 10 * fem),
+                _priceChip(formatter(values.end), fem),
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10 * fem),
           SliderTheme(
             data: SliderThemeData(
               trackHeight: 5,
-              activeTrackColor: const Color(0xFFBFE8E3),
+              activeTrackColor: Color(0xFFBFE8E3),
               inactiveTrackColor: Colors.grey.shade200,
-              thumbColor: const Color(0xFFA9E7DF),
-              overlayColor: const Color(0xFFBFE8E3).withOpacity(0.25),
-              rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
-              rangeThumbShape: const DiamondRangeThumbShape(
-                enabledThumbRadius: 13,
-              ),
+              thumbColor: Color(0xFFA9E7DF),
+              overlayColor: Color(0xFFBFE8E3).withOpacity(0.25),
+              rangeTrackShape: RoundedRectRangeSliderTrackShape(),
+              rangeThumbShape: DiamondRangeThumbShape(enabledThumbRadius: 13),
             ),
             child: RangeSlider(
               min: min,
@@ -98,21 +98,21 @@ class RangeSelector extends StatelessWidget {
     );
   }
 
-  Widget _priceChip(String text) {
+  Widget _priceChip(String text, double fem) {
     return SizedBox(
-      width: 135,
+      width: 135 * fem,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 22 * fem, vertical: 10 * fem),
         decoration: BoxDecoration(
-          color: const Color(0xFFF3FBFA),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: const Color(0xFFD9C6A3), width: 1.2),
+          color: Color(0xFFF3FBFA),
+          borderRadius: BorderRadius.circular(15 * fem),
+          border: Border.all(color: Color(0xFFD9C6A3), width: 1.2 * fem),
         ),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
-            fontSize: 14,
+            fontSize: 14 * fem,
             fontFamily: 'Montserrat',
             fontWeight: FontWeight.w600,
           ),

@@ -205,7 +205,6 @@ class CategoryTile extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 20 * ar,
-                      fontFamily: 'Montserrat',
                       fontWeight: FontWeight.w400,
                       height: 1.1,
                       letterSpacing: 0.4,

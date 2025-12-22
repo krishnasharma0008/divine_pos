@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../shared/app_bar.dart';
+import '../../../shared/utils/scale_size.dart';
+import '../../../shared/utils/enums.dart';
+import '../../../shared/widgets/text.dart';
+
+import '../../auth/data/auth_notifier.dart';
+import '../data/listing_provider.dart';
+import '../data/jewellery_notifier.dart';
+import '../data/jewellery_model.dart';
+
 import 'top_buttons_row.dart';
 import 'filter_sidebar.dart';
 import 'category_section.dart';
 import 'filter_tags_section.dart';
 import 'product_grid.dart';
-import '../../auth/data/auth_notifier.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/listing_provider.dart';
-import "../data/jewellery_model.dart";
-import '../../../shared/app_bar.dart';
-import '../../../shared/widgets/text.dart'; // ✅ Import MyText
+
+import '../data/filter_provider.dart';
 
 class JewelleryListingScreen extends ConsumerStatefulWidget {
   const JewelleryListingScreen({super.key});
@@ -21,128 +29,161 @@ class JewelleryListingScreen extends ConsumerStatefulWidget {
 
 class _JewelleryListingScreenState
     extends ConsumerState<JewelleryListingScreen> {
-  String? pjcode;
-  bool isApiCalled = false;
+  bool isStoreApiCalled = false;
   String? _selectedSort;
 
-  // Dummy products list
-  final List<Map<String, dynamic>> products = [
-    {
-      "image": "assets/jewellery/filter_tags/rings.jpg",
-      "title": "Eternal Balance Ring For Hera Symbol Of Brilliance, Balance.",
-      "price": "₹ 50,000",
-      "tagText": "Best Seller 🔥",
-      "tagColor": Colors.orange,
-      "soldOut": true,
-    },
-    {
-      "image": "assets/jewellery/filter_tags/mangalsutra.png",
-      "title": "Eternal Radiance Necklace For Hera Symbol Of Brilliance.",
-      "price": "₹ 1,10,000",
-      "tagText": "New Arrival ✨",
-      "tagColor": Colors.teal,
-      "soldOut": false,
-    },
-    {
-      "image": "assets/jewellery/filter_tags/earrings.png",
-      "title": "Eternal Radiance Earrings For Hera.",
-      "price": "₹ 90,000",
-      "tagText": "Trending 🔥",
-      "tagColor": Colors.green,
-      "soldOut": false,
-    },
-    {
-      "image": "assets/jewellery/filter_tags/nosepin.png",
-      "title": "Eternal Radiance Pendant For Hera.",
-      "price": "₹ 59,000",
-      "tagText": "Best Seller 🔥",
-      "tagColor": Colors.orange,
-      "soldOut": false,
-    },
-    {
-      "image": "assets/jewellery/filter_tags/bangles.png",
-      "title": "Eternal Radiance Ring for Hera symbol of brilliance, balance.",
-      "price": "₹ 59,000",
-      "tagText": "Best Seller 🔥",
-      "tagColor": Colors.orange,
-      "soldOut": false,
-    },
-  ];
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
 
-    /// SAFE API call using microtask
+    /// 🔹 Store API (once)
     Future.microtask(() {
       final authRepo = ref.read(authProvider);
+      final pjcode = authRepo.user?.pjcode;
 
-      pjcode = authRepo.user?.pjcode;
+      if (pjcode != null && !isStoreApiCalled) {
+        ref.read(StoreProvider.notifier).getPJStore(pjcode: pjcode);
+        isStoreApiCalled = true;
+      }
+    });
 
-      if (pjcode != null && !isApiCalled) {
-        ref.read(StoreProvider.notifier).getPJStore(pjcode: pjcode!);
-        isApiCalled = true;
+    /// 🔹 Scroll → Load More
+    _scrollController.addListener(() {
+      final notifier = ref.read(jewelleryProvider.notifier);
+
+      if (_scrollController.position.pixels >=
+              _scrollController.position.maxScrollExtent - 300 &&
+          notifier.hasMore &&
+          !notifier.isLoadingMore) {
+        notifier.loadMore();
       }
     });
   }
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final authRepo = ref.watch(authProvider);
-    pjcode = authRepo.user?.pjcode;
-
     final storeState = ref.watch(StoreProvider);
+    final jewelleryAsync = ref.watch(jewelleryProvider);
 
-    return Scaffold(
-      appBar: CustomAppBar(
-        showBackButton: true,
-        showSearch: false, // ✅ optional
-        showLogo: false, // ✅ optional
-      ),
+    return //Scaffold(
+    //extendBodyBehindAppBar: true,
+    // appBar: const CustomAppBar(
+    //   showBackButton: true,
+    //   showSearch: false,
+    //   showLogo: false,
+    // ),
+    Scaffold(
+      appBar: MyAppBar(showLogo: false, appBarLeading: AppBarLeading.back),
       body: Stack(
         children: [
           SafeArea(
             child: Column(
               children: [
-                /// Top thin loader
                 if (storeState.isLoading)
                   const LinearProgressIndicator(minHeight: 3),
 
-                /// MAIN TOP BUTTONS ROW
+                /// 🔹 TOP CONTROLS
                 TopButtonsRow(
                   branchStores: storeState.stores,
-                  onBranchSelected: (selectedStore) {
-                    ref.read(StoreProvider.notifier).selectStore(selectedStore);
-                    debugPrint(
-                      "Selected branch store: ${selectedStore.name} (${selectedStore.code})",
-                    );
+                  onBranchSelected: (store) {
+                    ref.read(StoreProvider.notifier).selectStore(store);
+                    ref
+                        .read(filterProvider.notifier)
+                        .setProductsAtOtherBranch(
+                          store.code, // ✅ use class fields
+                        );
+                    //ref.read(jewelleryProvider.notifier).refresh();
+                    ref.read(jewelleryProvider.notifier).resetAndFetch();
                   },
-                  onSortSelected: (sortValue) {
-                    setState(() => _selectedSort = sortValue);
-                    debugPrint("Selected sort: $sortValue");
+
+                  onSortSelected: (sort) {
+                    ref.read(filterProvider.notifier).setSort(sort);
+                    //ref.read(jewelleryProvider.notifier).refresh();
+                    ref.read(jewelleryProvider.notifier).resetAndFetch();
                   },
-                  onTabSelected: (index) {
-                    debugPrint("Tab clicked: $index");
+
+                  onTabSelected: (tab) {
+                    final filter = ref.read(filterProvider.notifier);
+
+                    if (tab == 0) {
+                      filter.setProductsInStore();
+                    } else if (tab == 2) {
+                      filter.setAllDesigns();
+                    }
+
+                    //ref.read(jewelleryProvider.notifier).refresh();
                   },
                 ),
 
-                /// MAIN BODY SECTION
+                /// 🔹 MAIN CONTENT
                 Expanded(
                   child: Row(
                     children: [
-                      /// LEFT SIDE FILTER PANEL
                       const FilterSidebar(),
 
-                      /// RIGHT SIDE CONTENT
                       Expanded(
                         child: Column(
                           children: [
-                            const SizedBox(height: 29),
+                            const SizedBox(height: 9),
                             const CategorySection(),
-                            const SizedBox(height: 31),
+                            const SizedBox(height: 9),
                             const FilterTagsSection(),
 
-                            Expanded(child: ProductGrid(products: products)),
+                            /// 🔹 LIST
+                            Expanded(
+                              child: jewelleryAsync.when(
+                                loading: () => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                                error: (err, _) => Center(
+                                  child: MyText(
+                                    err.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                data: (jewellery) {
+                                  if (jewellery.isEmpty) {
+                                    return const Center(
+                                      child: MyText(
+                                        "No jewellery found",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  return ProductGrid(
+                                    jewellery: jewellery,
+                                    controller: _scrollController,
+                                    isLoadingMore: ref
+                                        .watch(jewelleryProvider.notifier)
+                                        .isLoadingMore,
+                                  );
+                                },
+                              ),
+                            ),
+
+                            /// 🔹 LOAD MORE INDICATOR
+                            if (ref
+                                .watch(jewelleryProvider.notifier)
+                                .isLoadingMore)
+                              const Padding(
+                                padding: EdgeInsets.all(16),
+                                child: CircularProgressIndicator(),
+                              ),
                           ],
                         ),
                       ),
@@ -153,7 +194,6 @@ class _JewelleryListingScreenState
             ),
           ),
 
-          /// DARK OVERLAY WITH SPINNER
           if (storeState.isLoading)
             Container(
               color: Colors.black.withOpacity(0.15),
@@ -164,76 +204,3 @@ class _JewelleryListingScreenState
     );
   }
 }
-  //   @override
-  //   Widget build(BuildContext context) {
-  //     final authRepo = ref.watch(authProvider);
-  //     pjcode = authRepo.user?.pjcode;
-
-  //     final storeState = ref.watch(StoreProvider);
-
-  //     return Stack(
-  //       children: [
-  //         Scaffold(
-  //           body: SafeArea(
-  //             child: Column(
-  //               children: [
-  //                 /// Top thin loader
-  //                 if (storeState.isLoading)
-  //                   const LinearProgressIndicator(minHeight: 3),
-
-  //                 /// MAIN TOP BUTTONS ROW
-  //                 TopButtonsRow(
-  //                   branchStores: storeState.stores,
-  //                   onBranchSelected: (selectedStore) {
-  //                     ref.read(StoreProvider.notifier).selectStore(selectedStore);
-  //                     debugPrint(
-  //                       "Selected branch store: ${selectedStore.name} (${selectedStore.code})",
-  //                     );
-  //                   },
-  //                   onSortSelected: (sortValue) {
-  //                     setState(() => _selectedSort = sortValue);
-  //                     debugPrint("Selected sort: $sortValue");
-  //                   },
-  //                   onTabSelected: (index) {
-  //                     debugPrint("Tab clicked: $index");
-  //                   },
-  //                 ),
-
-  //                 /// MAIN BODY SECTION
-  //                 Expanded(
-  //                   child: Row(
-  //                     children: [
-  //                       /// LEFT SIDE FILTER PANEL
-  //                       const FilterSidebar(),
-
-  //                       /// RIGHT SIDE CONTENT
-  //                       Expanded(
-  //                         child: Column(
-  //                           children: [
-  //                             const SizedBox(height: 29),
-  //                             const CategorySection(),
-  //                             const SizedBox(height: 31),
-  //                             const FilterTagsSection(),
-
-  //                             Expanded(child: ProductGrid(products: products)),
-  //                           ],
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-
-  //         /// DARK OVERLAY WITH SPINNER (for API loading)
-  //         if (storeState.isLoading)
-  //           Container(
-  //             color: Colors.black.withOpacity(0.15),
-  //             child: const Center(child: CircularProgressIndicator()),
-  //           ),
-  //       ],
-  //     );
-  //   }
-  // }

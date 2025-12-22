@@ -1,263 +1,383 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../shared/utils/scale_size.dart';
+import 'package:go_router/go_router.dart';
+
 import '../shared/themes.dart';
-import '../shared/widgets/text.dart';
+import '../shared/utils/enums.dart';
+import '../shared/utils/scale_size.dart';
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final VoidCallback? onMenuTap;
-  final VoidCallback? onBackTap;
-  final VoidCallback? onCartTap;
-  final VoidCallback? onProfileTap;
-  final VoidCallback? onNotificationTap;
+//////////////////////////////////////////////////
+/// ACTION CONFIG
+//////////////////////////////////////////////////
 
-  final bool showBackButton;
-  final bool showLogo;
-  final bool showSearch;
+class AppBarActionConfig {
+  final AppBarAction type;
+  final VoidCallback? onTap;
+  final int badgeCount;
+  final bool visible;
 
-  const CustomAppBar({
-    super.key,
-    this.onMenuTap,
-    this.onBackTap,
-    this.onCartTap,
-    this.onProfileTap,
-    this.onNotificationTap,
-    this.showBackButton = false,
-    this.showLogo = true,
-    this.showSearch = true,
+  const AppBarActionConfig({
+    required this.type,
+    this.onTap,
+    this.badgeCount = 0,
+    this.visible = true,
   });
+}
+
+//////////////////////////////////////////////////
+/// MY APP BAR (NO TITLE)
+//////////////////////////////////////////////////
+
+class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
+  MyAppBar({
+    super.key,
+    required this.appBarLeading,
+    this.actions = const [],
+    this.showLogo = false,
+  }) : preferredSize = Size.fromHeight(ScaleSize.appBarHeight);
 
   @override
-  Size get preferredSize => Size.fromHeight(ScaleSize.appBarHeight);
+  final Size preferredSize;
 
-  IconData get _leadingIcon => showBackButton ? Icons.arrow_back : Icons.menu;
+  final AppBarLeading appBarLeading;
+  final List<AppBarActionConfig> actions;
+  final bool showLogo;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final fem = ScaleSize.aspectRatio;
 
-    return Container(
-      height: preferredSize.height * fem,
-      color: MyThemes.appBarBackroundColor,
-      child: Row(
-        children: [
-          /// Leading Icon
-          Padding(
-            padding: EdgeInsets.only(
-              left: 30 * fem,
-              top: 22 * fem,
-              right: 28 * fem,
-              bottom: 24 * fem,
-            ),
-            child: IconButton(
-              icon: Icon(
-                _leadingIcon,
-                size: 32 * fem,
-                color: MyThemes.fontColor,
-              ),
-              onPressed: showBackButton
-                  ? (onBackTap ?? () => Navigator.of(context).maybePop())
-                  : onMenuTap,
-              padding: EdgeInsets.all(8 * fem),
-              constraints: const BoxConstraints(),
-            ),
-          ),
+    return SafeArea(
+      bottom: false,
+      child: AppBar(
+        elevation: 0,
+        toolbarHeight: ScaleSize.appBarHeight,
+        backgroundColor: MyThemes.appBarBackroundColor,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        automaticallyImplyLeading: false,
+        leadingWidth: ScaleSize.appBarHeight,
+        leading: _buildLeading(context, fem),
 
-          /// Optional Logo
-          if (showLogo) ...[
-            /// Logo
-            Padding(
-              padding: EdgeInsets.fromLTRB(28 * fem, 10 * fem, 0, 13 * fem),
-              child: Image.asset(
-                "assets/Login/logo.png",
-                height: 72 * fem,
-                width: 55 * fem,
-                fit: BoxFit.contain,
-              ),
-            ),
-
-            const Spacer(),
-          ],
-
-          /// Optional Search Bar
-          if (showSearch) ...[
-            SizedBox(
-              width: 254 * fem,
-              height: 56 * fem,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10 * fem),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15 * fem),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    SvgPicture.asset(
-                      'assets/icons/magnifying-glass.svg',
-                      width: 18 * fem,
-                      height: 18 * fem,
-                      colorFilter: const ColorFilter.mode(
-                        Colors.black54,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        style: const TextStyle(fontFamily: "Montserrat"),
-                        decoration: InputDecoration(
-                          hintText: "Search",
-                          hintStyle: const TextStyle(
-                            fontFamily: "Montserrat",
-                            fontSize: 16,
-                            color: Color(0xFF959595),
-                          ),
-                          border: InputBorder.none,
-                        ),
-                        cursorColor: Colors.black,
-                      ),
-                    ),
-                    SvgPicture.asset(
-                      'assets/icons/si_barcode-scan-line.svg',
-                      width: 33 * fem,
-                      height: 33 * fem,
-                      colorFilter: const ColorFilter.mode(
-                        Colors.brown,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                  ],
+        /// LOGO ONLY (NO TITLE)
+        title: Row(
+          children: [
+            if (showLogo) ...[
+              SizedBox(width: 28 * fem), // ✅ space between menu/back & logo
+              Padding(
+                padding: EdgeInsets.fromLTRB(0, 10 * fem, 0, 13 * fem),
+                child: Image.asset(
+                  "assets/Login/logo.png",
+                  height: 72 * fem,
+                  width: 55 * fem,
+                  fit: BoxFit.contain,
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
+            ],
           ],
+        ),
 
-          /// Notification
-          if (onNotificationTap != null) ...[
-            _roundedIcon(
-              icon: SvgPicture.asset(
-                'assets/icons/notification.svg',
-                width: 24 * fem,
-                height: 24 * fem,
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFF90DCD0),
-                  BlendMode.srcIn,
-                ),
-              ),
-              onTap: onNotificationTap!,
-              showDot: true,
-            ),
-            const SizedBox(width: 8),
-          ],
-
-          /// Profile
-          if (onProfileTap != null) ...[
-            _roundedIcon(
-              icon: SvgPicture.asset(
-                'assets/icons/profile.svg',
-                width: 24 * fem,
-                height: 24 * fem,
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFF90DCD0),
-                  BlendMode.srcIn,
-                ),
-              ),
-              onTap: onProfileTap!,
-            ),
-            const SizedBox(width: 8),
-          ],
-
-          /// Cart
-          if (onCartTap != null) ...[
-            _roundedIcon(
-              icon: SvgPicture.asset(
-                'assets/icons/mdi_cart.svg',
-                width: 24 * fem,
-                height: 24 * fem,
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFF90DCD0),
-                  BlendMode.srcIn,
-                ),
-              ),
-              onTap: onCartTap!,
-              badgeCount: 2,
-            ),
-            const SizedBox(width: 27),
-          ],
-        ],
+        actions: _buildActions(context, fem),
       ),
     );
   }
 
-  Widget _roundedIcon({
-    required Widget icon,
-    required VoidCallback onTap,
-    int? badgeCount,
-    bool showDot = false,
-  }) {
-    final fem = ScaleSize.aspectRatio;
+  //////////////////////////////////////////////////
+  /// LEADING
+  //////////////////////////////////////////////////
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Container(
-            width: 53 * fem, // ✅ fixed width
-            height: 53 * fem, // ✅ fixed height
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+  Widget? _buildLeading(BuildContext context, double fem) {
+    switch (appBarLeading) {
+      case AppBarLeading.drawer:
+        return IconButton(
+          icon: Icon(Icons.menu, size: fem * 30),
+          onPressed: () {
+            if (Scaffold.of(context).hasDrawer) {
+              Scaffold.of(context).openDrawer();
+            }
+          },
+        );
+
+      case AppBarLeading.back:
+        return IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, size: fem * 22),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
+        );
+
+      case AppBarLeading.none:
+        return null;
+    }
+  }
+
+  //////////////////////////////////////////////////
+  /// ACTIONS
+  //////////////////////////////////////////////////
+
+  List<Widget> _buildActions(BuildContext context, double fem) {
+    final List<Widget> widgets = [];
+
+    for (final action in actions) {
+      if (!action.visible) continue;
+
+      switch (action.type) {
+        case AppBarAction.search:
+          widgets.add(_searchAction(fem, action.onTap));
+
+          /// ✅ EXACT 59 PX SPACE AFTER SEARCH
+          widgets.add(SizedBox(width: 59 * fem));
+          break;
+
+        case AppBarAction.notification:
+          widgets.add(
+            _notificationAction(
+              fem: fem,
+              badgeCount: action.badgeCount,
+              onTap: action.onTap,
             ),
-            child: icon,
-          ),
-        ),
-        if (showDot)
-          Positioned(
-            right: 3 * fem,
-            top: 3 * fem,
-            child: Container(
-              width: 8 * fem,
-              height: 8 * fem,
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
+          );
+          break;
+
+        case AppBarAction.profile:
+          widgets.add(_profileAction(fem: fem, onTap: action.onTap));
+          break;
+
+        case AppBarAction.cart:
+          widgets.add(
+            _cartAction(
+              fem: fem,
+              badgeCount: action.badgeCount,
+              onTap: action.onTap,
             ),
+          );
+          break;
+
+          /// ✅ 27 PX SPACE AFTER CART
+          widgets.add(SizedBox(width: 27 * fem));
+          break;
+      }
+    }
+
+    return widgets;
+  }
+
+  // notification action
+  Widget _notificationAction({
+    required double fem,
+    required VoidCallback? onTap,
+    int badgeCount = 0,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4 * fem),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 53 * fem,
+          height: 53 * fem,
+          padding: EdgeInsets.all(4 * fem),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20 * fem),
+            border: Border.all(width: 1, color: const Color(0xFF90DCD0)),
           ),
-        if (badgeCount != null)
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              width: 22 * fem,
-              height: 22 * fem,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFFD9D9D9),
-              ),
-              child: MyText(
-                "$badgeCount",
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              /// 🔔 Notification Icon
+              Center(
+                child: Icon(
+                  Icons.notifications_none_outlined,
+                  size: 24 * fem,
+                  color: Colors.black87,
                 ),
               ),
+
+              /// 🔴 Red Dot Badge
+              if (badgeCount > 0)
+                Positioned(
+                  right: 4 * fem,
+                  top: 4 * fem,
+                  child: Container(
+                    width: 8 * fem,
+                    height: 8 * fem,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFB2C36),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // profile action
+  Widget _profileAction({required double fem, required VoidCallback? onTap}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4 * fem),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 54 * fem,
+          height: 54 * fem,
+          padding: EdgeInsets.all(4 * fem),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20 * fem),
+            border: Border.all(width: 1, color: const Color(0xFF90DCD0)),
+          ),
+          child: Center(
+            child: Icon(
+              Icons.person_outline,
+              size: 20 * fem,
+              color: Colors.black87,
             ),
           ),
-      ],
+        ),
+      ),
+    );
+  }
+
+  // cart action
+  Widget _cartAction({
+    required double fem,
+    required VoidCallback? onTap,
+    int badgeCount = 0,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4 * fem),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 53 * fem,
+          height: 54 * fem,
+          padding: EdgeInsets.all(4 * fem),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20 * fem),
+            border: Border.all(width: 1, color: const Color(0xFF90DCD0)),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              /// 🛒 Cart Icon
+              Center(
+                child: Icon(
+                  Icons.shopping_cart_outlined,
+                  size: 28 * fem,
+                  color: Colors.black87,
+                ),
+              ),
+
+              /// 🔢 Badge (optional)
+              if (badgeCount > 0)
+                Positioned(
+                  right: 2 * fem,
+                  top: 2 * fem,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 5 * fem,
+                      vertical: 1 * fem,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFB2C36),
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: 16 * fem,
+                      minHeight: 16 * fem,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$badgeCount',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10 * fem,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  //////////////////////////////////////////////////
+  /// SEARCH ACTION (FIGMA STYLE)
+  //////////////////////////////////////////////////
+
+  Widget _searchAction(double fem, VoidCallback? onTap) {
+    return Padding(
+      //padding: EdgeInsets.symmetric(horizontal: 6 * fem, vertical: 8 * fem),
+      padding: EdgeInsets.symmetric(horizontal: 4 * fem), // ✅ 8px gap
+      child: SizedBox(
+        width: 254 * fem,
+        height: 56 * fem,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10 * fem),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15 * fem),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/magnifying-glass.svg',
+                  width: 18 * fem,
+                  height: 18 * fem,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.black54,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                SizedBox(width: 10 * fem),
+                const Expanded(
+                  child: Text(
+                    'Search',
+                    style: TextStyle(
+                      fontFamily: "Montserrat",
+                      fontSize: 16,
+                      color: Color(0xFF959595),
+                    ),
+                  ),
+                ),
+                SvgPicture.asset(
+                  'assets/icons/si_barcode-scan-line.svg',
+                  width: 33 * fem,
+                  height: 33 * fem,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.brown,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

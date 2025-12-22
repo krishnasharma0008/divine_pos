@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:divine_pos/features/accounts/presentation/account_screen.dart';
 import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:divine_pos/features/jewellery_journey/presentation/jewellery_journey_screen.dart';
 import 'package:flutter/widgets.dart';
@@ -89,6 +90,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePages.jewelleryjourney.routePath,
         name: RoutePages.jewelleryjourney.routeName,
         builder: (context, state) => JewelleryJourneyScreen(),
+      ),
+
+      GoRoute(
+        path: RoutePages.account.routePath,
+        name: RoutePages.account.routeName,
+        //builder: (context, state) => const ProfileScreen(),
+        builder: (context, state) => const AccountScreen(),
       ),
 
       // ⭐ MAIN APP LAYOUT (Bottom Navigation)

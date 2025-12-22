@@ -2,8 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'route_pages.dart';
 
-final drawerProvider =
-    StateNotifierProvider<DrawerNotifier, DrawerState>((ref) {
+final drawerProvider = StateNotifierProvider<DrawerNotifier, DrawerState>((
+  ref,
+) {
   return DrawerNotifier(ref: ref);
 });
 
@@ -26,8 +27,6 @@ class DrawerState {
   bool get isOpenFromDrawer => routePage != null;
 
   DrawerState copyWith({RoutePages? routePage}) {
-    return DrawerState(
-      routePage: routePage ?? this.routePage,
-    );
+    return DrawerState(routePage: routePage ?? this.routePage);
   }
 }
