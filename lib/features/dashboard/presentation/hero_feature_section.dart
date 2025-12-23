@@ -49,8 +49,8 @@ class HeroAndFeaturesSection extends ConsumerWidget {
 
               /// LEFT ROTATED TEXT (EVERY PROMISE MATTERS)
               Positioned(
-                left: 949 * ar,
-                top: 100 * ar,
+                right: 46 * ar,
+                top: 92 * ar,
                 child: SizedBox(
                   width: 199 * ar,
                   height: 200 * ar,
@@ -283,101 +283,3 @@ class HeroAndFeaturesSection extends ConsumerWidget {
     );
   }
 }
-
-// ---------------- FEATURE CARD ----------------
-// class FeatureCard extends StatelessWidget {
-//   final String label;
-//   final String image;
-//   final VoidCallback onTap;
-
-//   const FeatureCard({
-//     super.key,
-//     required this.label,
-//     required this.image,
-//     required this.onTap,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final double ar = ScaleSize.aspectRatio.clamp(0.7, 1.3);
-
-//     return GestureDetector(
-//       onTap: onTap,
-//       child: Container(
-//         margin: EdgeInsets.only(right: 10 * ar), // ✅ spacing here
-//         width: 232 * ar,
-//         height: 218 * ar,
-//         padding: EdgeInsets.all(12 * ar),
-//         decoration: BoxDecoration(
-//           color: const Color(0xFFF2F2F2),
-//           borderRadius: BorderRadius.circular(20 * ar),
-//           border: Border.all(color: const Color(0xFFF2F2F2)),
-//           boxShadow: const [
-//             BoxShadow(
-//               color: Color(0x3FEFEFEF),
-//               blurRadius: 4,
-//               offset: Offset(2, 4),
-//             ),
-//           ],
-//         ),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.center,
-//           children: [
-//             /// IMAGE
-//             Container(
-//               width: double.infinity,
-//               height: 114 * ar,
-//               decoration: BoxDecoration(
-//                 borderRadius: BorderRadius.circular(20 * ar),
-//                 border: Border.all(color: const Color(0xFFB5B5B5)),
-//                 image: DecorationImage(
-//                   image: AssetImage(image),
-//                   fit: BoxFit.cover,
-//                 ),
-//               ),
-//             ),
-
-//             SizedBox(height: 12 * ar),
-
-//             /// LABEL + ICON
-//             Row(
-//               crossAxisAlignment: CrossAxisAlignment.center,
-//               children: [
-//                 Expanded(
-//                   child: Text(
-//                     label,
-//                     maxLines: 2,
-//                     style: const TextStyle(
-//                       color: Colors.black,
-//                       fontSize: 16,
-//                       fontFamily: 'Montserrat',
-//                       fontWeight: FontWeight.w500,
-//                     ),
-//                   ),
-//                 ),
-
-//                 Container(
-//                   width: 50 * ar,
-//                   height: 50 * ar,
-//                   decoration: BoxDecoration(
-//                     color: Colors.white,
-//                     shape: BoxShape.circle,
-//                     border: Border.all(color: const Color(0xFFD2D2D2)),
-//                   ),
-//                   child: Center(
-//                     child: Image.asset(
-//                       "assets/dashboard/action_section/right-arrow-icon.png",
-//                       width: 50 * ar,
-//                       height: 50 * ar,
-//                       fit: BoxFit.contain,
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }

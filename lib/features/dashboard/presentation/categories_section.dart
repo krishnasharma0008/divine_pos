@@ -1,13 +1,19 @@
+import '../../../shared/routes/route_pages.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../shared/widgets/text.dart';
 import '../../../shared/utils/scale_size.dart';
 import '../../../shared/widgets/text.dart';
+import '../../jewellery/data/filter_provider.dart';
 
-class CategoriesSection extends StatelessWidget {
+class CategoriesSection extends ConsumerWidget {
   const CategoriesSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(filterProvider.notifier);
+
     final ar = ScaleSize.aspectRatio.clamp(0.7, 1.3);
     final tiles = [
       CategoryTile(
@@ -16,6 +22,12 @@ class CategoriesSection extends StatelessWidget {
         label: 'Rings',
         productWidth: 132,
         productHeight: 125,
+        onTap: () {
+          notifier.resetFilters(); // optional
+          notifier.toggleCategory('Ring'); // ✅ set category
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
       CategoryTile(
         backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
@@ -23,6 +35,12 @@ class CategoriesSection extends StatelessWidget {
         label: 'Earrings',
         productWidth: 160,
         productHeight: 90,
+        onTap: () {
+          notifier.resetFilters(); // optional
+          notifier.toggleCategory('Earrings'); // ✅ set category
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
       CategoryTile(
         backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
@@ -30,6 +48,12 @@ class CategoriesSection extends StatelessWidget {
         label: 'Necklaces',
         productWidth: 210,
         productHeight: 210,
+        onTap: () {
+          notifier.resetFilters(); // optional
+          notifier.toggleCategory('Necklaces'); // ✅ set category
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
       CategoryTile(
         backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
@@ -37,6 +61,12 @@ class CategoriesSection extends StatelessWidget {
         label: 'Pendants',
         productWidth: 134,
         productHeight: 205,
+        onTap: () {
+          notifier.resetFilters(); // optional
+          notifier.toggleCategory('Pendants'); // ✅ set category
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
       CategoryTile(
         backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
@@ -44,6 +74,12 @@ class CategoriesSection extends StatelessWidget {
         label: 'Bangles',
         productWidth: 169,
         productHeight: 169,
+        onTap: () {
+          notifier.resetFilters(); // optional
+          notifier.toggleCategory('Bangles'); // ✅ set category
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
 
       CategoryTile(
@@ -52,6 +88,12 @@ class CategoriesSection extends StatelessWidget {
         label: 'Solitaire',
         productWidth: 111,
         productHeight: 99,
+        onTap: () {
+          notifier.resetFilters(); // optional
+          notifier.toggleCategory('Solitaire'); // ✅ set category
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
       CategoryTile(
         backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
@@ -59,6 +101,12 @@ class CategoriesSection extends StatelessWidget {
         label: 'Bracelet',
         productWidth: 120,
         productHeight: 120,
+        onTap: () {
+          notifier.resetFilters(); // optional
+          notifier.toggleCategory('Bracelet'); // ✅ set category
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
       CategoryTile(
         backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
@@ -66,14 +114,26 @@ class CategoriesSection extends StatelessWidget {
         label: 'Mangalsutra',
         productWidth: 210,
         productHeight: 165,
+        onTap: () {
+          notifier.resetFilters(); // optional
+          notifier.toggleCategory('Mangalsutra'); // ✅ set category
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
 
       CategoryTile(
         backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
         productAsset: 'assets/dashboard/categories/cat_maleaerring.png',
         label: 'Male Earring',
-        productWidth: 148,
+        productWidth: 210,
         productHeight: 94,
+        onTap: () {
+          notifier.resetFilters(); // optional
+          notifier.toggleCategory('Male Earring'); // ✅ set category
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
       CategoryTile(
         backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
@@ -165,9 +225,9 @@ class CategoryTile extends StatelessWidget {
   final String productAsset;
   final String label;
   final bool isCta;
-
   final double productWidth;
   final double productHeight;
+  final VoidCallback? onTap; // ✅ ADD
 
   const CategoryTile({
     super.key,
@@ -177,89 +237,57 @@ class CategoryTile extends StatelessWidget {
     required this.productWidth,
     required this.productHeight,
     this.isCta = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final ar = ScaleSize.aspectRatio.clamp(0.7, 1.3);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        /// IMAGE TILE
-        SizedBox(
-          width: 210 * ar,
-          height: 210 * ar,
-          child: Stack(
-            children: [
-              /// BACKGROUND IMAGE
-              Positioned.fill(
-                child: Image.asset(backgroundAsset, fit: BoxFit.cover),
-              ),
-
-              /// FOREGROUND PRODUCT IMAGE
-              if (isCta)
-                Center(
-                  child: MyText(
-                    'All Categories',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 20 * ar,
-                      fontWeight: FontWeight.w400,
-                      height: 1.1,
-                      letterSpacing: 0.4,
-                      color: Colors.white,
-                      //Text-Transform: TextTransform.capitalize,
+    return InkWell(
+      onTap: onTap, // ✅
+      borderRadius: BorderRadius.circular(12 * ar),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 210 * ar,
+            height: 210 * ar,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(backgroundAsset, fit: BoxFit.cover),
+                ),
+                if (isCta)
+                  Center(
+                    child: Text(
+                      'All Categories',
+                      style: TextStyle(fontSize: 20 * ar, color: Colors.white),
+                    ),
+                  )
+                else
+                  Center(
+                    child: SizedBox(
+                      width: productWidth * ar,
+                      height: productHeight * ar,
+                      child: Image.asset(productAsset),
                     ),
                   ),
-                )
-              else
-                Center(
-                  child: SizedBox(
-                    width: productWidth * ar,
-                    height: productHeight * ar,
-                    child: Image.asset(productAsset, fit: BoxFit.contain),
-                  ),
-                ),
-              // Positioned(
-              //   left: 39 * ar,
-              //   top: 41 * ar,
-              //   child: Container(
-              //     width: 132 * ar,
-              //     height: 132 * ar,
-              //     decoration: BoxDecoration(
-              //       image: DecorationImage(
-              //         image: AssetImage(productAsset),
-              //         fit: BoxFit.contain,
-              //       ),
-              //       boxShadow: const [
-              //         BoxShadow(
-              //           color: Color(0x3F000000),
-              //           blurRadius: 4,
-              //           offset: Offset(0, 4),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-            ],
-          ),
-        ),
-
-        SizedBox(height: 10 * ar),
-
-        /// LABEL (outside image)
-        if (!isCta)
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14 * ar,
-              fontFamily: 'Montserrat',
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF6A6A6A),
+              ],
             ),
           ),
-      ],
+          if (!isCta) ...[
+            SizedBox(height: 10 * ar),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14 * ar,
+                color: const Color(0xFF6A6A6A),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -220,10 +220,15 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                 items: [
                   'Ring',
                   'Earrings',
+                  'Necklaces',
+                  'Pendants',
                   'Bangles',
+                  'Solitaire',
+                  'Bracelets',
                   'Mangalsutra',
                   'Nosepin',
-                  // 'Necklaces',
+                  'Male Earring',
+                  //
                   // 'Bracelets',
                   // 'Pendants',
                   //'Bangles',
