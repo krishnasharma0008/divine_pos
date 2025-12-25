@@ -8,58 +8,43 @@ import '../../../shared/app_bar.dart';
 import '../../../shared/utils/scale_size.dart';
 import '../../../shared/utils/enums.dart';
 import '../../../shared/routes/app_drawer.dart';
+import '../../../shared/widgets/carat_selector.dart';
+import '../../../shared/widgets/carat_range_slider.dart';
+import '../data/home_provider.dart';
+import '../../../shared/widgets/grade_selecter.dart';
+import '../../jewellery_journey/presentation/customize_solitaire.dart';
 
 class HomeScreen extends ConsumerWidget {
   HomeScreen({super.key});
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  void openDrawer() => _scaffoldKey.currentState?.openDrawer();
-
-  void closeDrawer(BuildContext context) {
-    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
-      Navigator.of(context).pop();
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
+    String selectedColor = 'D';
+    final caratValues = [
+      0.10,
+      0.14,
+      0.18,
+      0.23,
+      0.30,
+      0.39,
+      0.45,
+      0.50,
+      0.70,
+      0.80,
+      0.90,
+      2.00,
+    ];
+
+    final caratRange = ref.watch(caratRangeProvider);
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
-
-      // ------------------ CUSTOM APP BAR ------------------
-      // appBar: CustomAppBar(
-      //   onMenuTap: openDrawer,
-      //   onCartTap: () => print('Cart tapped'),
-      //   onProfileTap: () => print('Profile tapped'),
-      //   onNotificationTap: () => print('Notification tapped'),
-      //   showBackButton: false, // show menu for home
-      // ),
       appBar: MyAppBar(showLogo: false, appBarLeading: AppBarLeading.drawer),
 
-      // ------------------ DRAWER ------------------
-      drawer: Drawer(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        width: 400 * ScaleSize.aspectRatio,
-        child: SideMenu(
-          onClose: () => closeDrawer(context),
-          onLogout: () {
-            ref.read(authProvider.notifier).logout();
-
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Logged out')));
-
-            context.go('/login');
-          },
-        ),
-      ),
-
-      // ------------------ BODY ------------------
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -67,24 +52,38 @@ class HomeScreen extends ConsumerWidget {
             Text('Welcome ${auth.user?.userName ?? ''}'),
             const SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: () => context.go('/profile'),
-              child: const Text('Go to Profile Screen'),
+            /// ✅ WORKING CARAT SELECTOR
+            // CaratSelector(
+            //   values: caratValues,
+            //   range: caratRange,
+            //   onChanged: (r) {
+            //     ref.read(caratRangeProvider.notifier).state = r;
+            //   },
+            // ),
+            ColorGradeSelector(
+              label: 'Color',
+              grades: const ['D', 'E', 'F', 'G', 'H', 'I', 'J'],
+              initialValue: selectedColor,
+              onSelected: (value) {
+                debugPrint('Selected color: $value');
+              },
             ),
-
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (_) => const CustomizeSolitaire(),
+                );
+              },
+              child: const Text('Customize Solitaire'),
+            ),
             const SizedBox(height: 20),
 
             ElevatedButton(
-              onPressed: () {
-                ref.read(authProvider.notifier).logout();
-
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Logged out')));
-
-                context.go('/login');
-              },
-              child: const Text('Logout'),
+              onPressed: () => context.go('/profile'),
+              child: const Text('Go to Profile Screen'),
             ),
           ],
         ),
@@ -92,17 +91,3 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
-
-
-/*
-Updated HomeScreen snippet without drawer and extra buttons:
-Scaffold(
-  appBar: CustomAppBar(
-    showBackButton: true,
-    automaticallyImplyBack: true,
-  ),
-  body: Center(
-    child: Text('This is a screen with only back button'),
-  ),
-);
-*/

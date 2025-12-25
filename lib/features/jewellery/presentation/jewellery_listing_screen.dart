@@ -37,6 +37,7 @@ class _JewelleryListingScreenState
   @override
   void initState() {
     super.initState();
+    
 
     /// 🔹 Store API (once)
     Future.microtask(() {
@@ -73,14 +74,7 @@ class _JewelleryListingScreenState
     final storeState = ref.watch(StoreProvider);
     final jewelleryAsync = ref.watch(jewelleryProvider);
 
-    return //Scaffold(
-    //extendBodyBehindAppBar: true,
-    // appBar: const CustomAppBar(
-    //   showBackButton: true,
-    //   showSearch: false,
-    //   showLogo: false,
-    // ),
-    Scaffold(
+    return Scaffold(
       appBar: MyAppBar(showLogo: false, appBarLeading: AppBarLeading.back),
       body: Stack(
         children: [

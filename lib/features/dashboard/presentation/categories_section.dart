@@ -142,6 +142,11 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 143,
         productHeight: 24,
         isCta: true,
+        onTap: () {
+          notifier.resetFilters(); // optional
+
+          context.go(RoutePages.jewellerylisting.routePath);
+        },
       ),
     ];
 
@@ -188,30 +193,40 @@ class CategoriesSection extends ConsumerWidget {
 
             SizedBox(height: 92 * ar),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(firstRow.length, (i) {
-                return Padding(
-                  padding: EdgeInsets.only(
-                    right: i == firstRow.length - 1 ? 0 : 24 * ar,
-                  ),
-                  child: firstRow[i],
-                );
-              }),
-            ),
+            SizedBox(
+              //height: 260 * ar, // adjust as needed
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(firstRow.length, (i) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            right: i == firstRow.length - 1 ? 0 : 24 * ar,
+                          ),
+                          child: firstRow[i],
+                        );
+                      }),
+                    ),
 
-            SizedBox(height: 32 * ar),
+                    SizedBox(height: 32 * ar),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(secondRow.length, (i) {
-                return Padding(
-                  padding: EdgeInsets.only(
-                    right: i == secondRow.length - 1 ? 0 : 24 * ar,
-                  ),
-                  child: secondRow[i],
-                );
-              }),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(secondRow.length, (i) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            right: i == secondRow.length - 1 ? 0 : 24 * ar,
+                          ),
+                          child: secondRow[i],
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -262,7 +277,12 @@ class CategoryTile extends StatelessWidget {
                   Center(
                     child: Text(
                       'All Categories',
-                      style: TextStyle(fontSize: 20 * ar, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 20 * ar,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Montserrat',
+                      ),
                     ),
                   )
                 else
@@ -276,16 +296,17 @@ class CategoryTile extends StatelessWidget {
               ],
             ),
           ),
-          if (!isCta) ...[
-            SizedBox(height: 10 * ar),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14 * ar,
-                color: const Color(0xFF6A6A6A),
-              ),
+
+          /// 👇 FIX: ALWAYS reserve space for label
+          SizedBox(height: 10 * ar),
+
+          Text(
+            isCta ? '' : label,
+            style: TextStyle(
+              fontSize: 14 * ar,
+              color: isCta ? Colors.transparent : const Color(0xFF6A6A6A),
             ),
-          ],
+          ),
         ],
       ),
     );

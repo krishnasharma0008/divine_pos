@@ -34,53 +34,55 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
 
   @override
   Widget build(BuildContext context) {
-    final fem = ScaleSize.aspectRatio;
+    final fem = ScaleSize.aspectRatio.clamp(0.7, 1.3);
     final bool hasTitle = widget.title.trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title Row
+        /// TITLE
         if (hasTitle) ...[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                widget.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Text(
+            widget.title,
+            style: TextStyle(fontSize: 18 * fem, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12 * fem),
         ],
-        // Selected start & end boxes
+
+        /// SELECTED VALUES
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _valueBox(widget.options[startIndex]),
-            const SizedBox(width: 12),
-            const Text("-", style: TextStyle(fontSize: 20)),
-            const SizedBox(width: 12),
-            _valueBox(widget.options[endIndex]),
+            Expanded(child: _valueBox(widget.options[startIndex], fem)),
+
+            SizedBox(width: 12 * fem),
+
+            Text(
+              '–',
+              style: TextStyle(fontSize: 20 * fem, fontWeight: FontWeight.w500),
+            ),
+
+            SizedBox(width: 12 * fem),
+
+            Expanded(child: _valueBox(widget.options[endIndex], fem)),
           ],
         ),
-        const SizedBox(height: 20),
 
-        // Clickable scale
+        SizedBox(height: 20 * fem),
+
+        /// CLICKABLE SCALE
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: 24 * fem),
           child: SizedBox(
             height: 55 * fem,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Grey base line
+                /// BASE LINE
                 Positioned(
-                  left: 8,
-                  right: 8,
-                  top: 18,
+                  left: 8 * fem,
+                  right: 8 * fem,
+                  top: 18 * fem,
                   child: Container(
                     height: 4,
                     decoration: BoxDecoration(
@@ -90,11 +92,11 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
                   ),
                 ),
 
-                // Ticks + labels
+                /// TICKS + LABELS
                 Positioned.fill(
                   child: Column(
                     children: [
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10 * fem),
                       Expanded(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -105,26 +107,22 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
                                 index >= startIndex && index <= endIndex;
 
                             return GestureDetector(
+                              behavior: HitTestBehavior.translucent,
                               onTap: () {
                                 setState(() {
-                                  final int s = startIndex;
-                                  final int e = endIndex;
+                                  final s = startIndex;
+                                  final e = endIndex;
 
                                   if (index <= s) {
-                                    // click on/left of start → move start
                                     startIndex = index;
                                   } else if (index >= e) {
-                                    // click on/right of end → move end
                                     endIndex = index;
                                   } else {
-                                    // between → move nearer handle
                                     final bool closerToStart =
                                         (index - s).abs() <= (index - e).abs();
-                                    if (closerToStart) {
-                                      startIndex = index;
-                                    } else {
-                                      endIndex = index;
-                                    }
+                                    closerToStart
+                                        ? startIndex = index
+                                        : endIndex = index;
                                   }
 
                                   if (endIndex < startIndex) {
@@ -145,7 +143,7 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
                                 children: [
                                   Container(
                                     width: 6,
-                                    height: selected ? 18 : 12,
+                                    height: selected ? 18 * fem : 12 * fem,
                                     decoration: BoxDecoration(
                                       color: selected
                                           ? const Color(0xFF90DCD0)
@@ -155,11 +153,11 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
+                                  SizedBox(height: 6 * fem),
                                   Text(
                                     widget.options[index],
                                     style: TextStyle(
-                                      fontSize: 12, //10 in fig
+                                      fontSize: 12 * fem,
                                       fontFamily: 'Montserrat',
                                       fontWeight: selected
                                           ? FontWeight.w600
@@ -183,25 +181,25 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
     );
   }
 
-  Widget _valueBox(String text) {
-    return SizedBox(
-      width: 135,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEFF8F7),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: const Color(0xFFE5C289), width: 1),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.w600,
-          ),
+  /// VALUE BOX
+  Widget _valueBox(String text, double fem) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16 * fem, vertical: 12 * fem),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF8F7),
+        borderRadius: BorderRadius.circular(15 * fem),
+        border: Border.all(color: const Color(0xFFE5C289), width: 1 * fem),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 14 * fem,
+          fontFamily: 'Montserrat',
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

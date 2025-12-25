@@ -1,30 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../shared/app_bar.dart';
 import '../../../shared/themes.dart';
 import '../../../shared/widgets/text.dart';
 import '../../../shared/utils/enums.dart';
+import '../../auth/data/auth_notifier.dart';
+import '../../jewellery/data/listing_provider.dart';
+import '../../jewellery/data/store_details.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
 
   @override
+  ConsumerState<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends ConsumerState<AccountScreen> {
+  bool isStoreApiCalled = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// Call API once
+    Future.microtask(() {
+      final authRepo = ref.read(authProvider);
+      final pjcode = authRepo.user?.pjcode;
+
+      if (pjcode != null && !isStoreApiCalled) {
+        ref.read(StoreProvider.notifier).getPJStore(pjcode: pjcode);
+        isStoreApiCalled = true;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final storeState = ref.watch(StoreProvider);
+    final store = storeState.selectedStore;
+
+    if (storeState.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (storeState.selectedStore == null) {
+      return const Scaffold(body: Center(child: Text('Store not found')));
+    }
+
+    // main branch (or first as fallback)
+    final mainBranch = storeState.stores.firstWhere(
+      (s) => s.locationType.toUpperCase() == 'MAIN BRANCH',
+      orElse: () => storeState.stores.first,
+    );
+
+    // all other branches
+    final subBranches = storeState.stores
+        .where((s) => s != mainBranch)
+        .toList();
+
     return Scaffold(
-      backgroundColor: Colors.white, // top strip background
+      backgroundColor: Colors.white,
       appBar: MyAppBar(showLogo: false, appBarLeading: AppBarLeading.back),
-      // appBar: const CustomAppBar(
-      //   showBackButton: true,
-      //   showSearch: false,
-      //   showLogo: false,
-      // ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: const _StoreCard(),
-            ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            //child: _StoreCard(store: mainBranch),
+            child: _StoreCard(store: mainBranch, subBranches: subBranches),
           ),
         ),
       ),
@@ -33,7 +82,10 @@ class AccountScreen extends StatelessWidget {
 }
 
 class _StoreCard extends StatelessWidget {
-  const _StoreCard();
+  final StoreDetail store;
+  final List<StoreDetail> subBranches;
+
+  const _StoreCard({required this.store, required this.subBranches});
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +104,10 @@ class _StoreCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: const [
-          _StoreHeader(),
+        children: [
+          _StoreHeader(store: store),
           SizedBox(height: 24),
-          _JewellerContact(),
+          _JewellerContact(store: store),
           SizedBox(height: 16),
           _SectionDivider(),
           SizedBox(height: 12),
@@ -74,17 +126,29 @@ class _StoreCard extends StatelessWidget {
           SizedBox(height: 12),
           SectionTitle(icon: Icons.store_outlined, title: 'Sub Branches'),
           SizedBox(height: 12),
-          BranchTile(
-            title: 'KHIMJI - SOAUBHAGYA NAGAR',
-            address: '123 Main Street',
-          ),
+          if (subBranches.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: subBranches
+                  .map(
+                    (branch) => BranchTile(
+                      title: branch.name,
+                      address: branch.address, // adapt to your field names
+                    ),
+                  )
+                  .toList(),
+            ),
+          // BranchTile(
+          //   title: 'KHIMJI - SOAUBHAGYA NAGAR',
+          //   address: '123 Main Street',
+          // ),
 
-          BranchTile(
-            title: 'KHIMJI - SAMANTARAPUR',
-            address: '456 West Avenue',
-          ),
+          // BranchTile(
+          //   title: 'KHIMJI - SAMANTARAPUR',
+          //   address: '456 West Avenue',
+          // ),
 
-          BranchTile(title: 'KHIMJI - PURI', address: '789 East Boulevard'),
+          // BranchTile(title: 'KHIMJI - PURI', address: '789 East Boulevard'),
         ],
       ),
     );
@@ -92,12 +156,13 @@ class _StoreCard extends StatelessWidget {
 }
 
 class _StoreHeader extends StatelessWidget {
-  const _StoreHeader();
+  final StoreDetail store;
+  const _StoreHeader({required this.store});
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: const [
+      children: [
         CircleAvatar(
           radius: 28,
           backgroundColor: MyThemes.Light_Mint,
@@ -105,7 +170,7 @@ class _StoreHeader extends StatelessWidget {
         ),
         SizedBox(height: 12),
         MyText(
-          'KHIMJI JANPATH',
+          store.name,
           style: TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 16,
@@ -117,7 +182,7 @@ class _StoreHeader extends StatelessWidget {
         ),
         SizedBox(height: 4),
         MyText(
-          'Main Branch',
+          store.locationType,
           style: TextStyle(
             fontFamily: MyThemes.labelFontFamily,
             fontSize: 13,
@@ -130,7 +195,8 @@ class _StoreHeader extends StatelessWidget {
 }
 
 class _JewellerContact extends StatelessWidget {
-  const _JewellerContact();
+  final StoreDetail store;
+  const _JewellerContact({required this.store});
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +228,7 @@ class _JewellerContact extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 MyText(
                   'Jeweller Contact',
                   style: TextStyle(
@@ -175,7 +241,9 @@ class _JewellerContact extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 MyText(
-                  '+91 98765 12345',
+                  store.contactNo?.isNotEmpty == true
+                      ? store.contactNo!
+                      : 'N/A',
                   style: TextStyle(
                     color: Color(0xFF1D2838),
                     fontSize: 16,

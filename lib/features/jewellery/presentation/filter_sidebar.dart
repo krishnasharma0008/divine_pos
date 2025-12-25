@@ -26,24 +26,24 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
   // -----------------------------------------------------------
   // COLOR OPTIONS
   // -----------------------------------------------------------
-  final _colorOptions = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
-  String colorStartLabel = 'D';
-  String colorEndLabel = 'J';
+  // final _colorOptions = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+  // String colorStartLabel = 'D';
+  // String colorEndLabel = 'J';
 
   // -----------------------------------------------------------
   // CLARITY OPTIONS
   // -----------------------------------------------------------
-  static const _clarityOptions = [
-    'IF',
-    'VVS1',
-    'VVS2',
-    'VS1',
-    'VS2',
-    'SI1',
-    'SI2',
-  ];
-  String clarityStartLabel = 'IF';
-  String clarityEndLabel = 'SI2';
+  // static const _clarityOptions = [
+  //   'IF',
+  //   'VVS1',
+  //   'VVS2',
+  //   'VS1',
+  //   'VS2',
+  //   'SI1',
+  //   'SI2',
+  // ];
+  // String clarityStartLabel = 'IF';
+  // String clarityEndLabel = 'SI2';
 
   // -----------------------------------------------------------
   // SELECTED SETS (MULTI SELECT)
@@ -165,15 +165,15 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
     return Container(
       width: 310 * fem,
       color: const Color(0xFFF6F6F6),
-      child: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 8 * fem, vertical: 18 * fem),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            //------------------------------------------------------
-            // HEADER
-            //------------------------------------------------------
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          //------------------------------------------------------
+          // FIXED HEADER (NON-SCROLLABLE)
+          //------------------------------------------------------
+          Padding(
+            padding: EdgeInsets.fromLTRB(8 * fem, 18 * fem, 8 * fem, 12 * fem),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
@@ -184,238 +184,183 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                     fontFamily: 'Montserrat',
                   ),
                 ),
-                //Icon(Icons.close, size: 22 * fem),
+                // Icon(Icons.close, size: 22 * fem),
               ],
             ),
-            SizedBox(height: 41 * fem),
-            Divider(height: 1, color: Colors.black.withOpacity(0.08)),
-            SizedBox(height: 20 * fem),
+          ),
 
-            //------------------------------------------------------
-            // PRICE RANGE
-            //------------------------------------------------------
-            FilterSection(
-              title: 'Price Range',
-              fem: fem,
-              initiallyExpanded: true,
-              child: RangeSelector(
-                min: 10000,
-                max: 1000000,
-                title: '',
-                values: filter.selectedPriceRange, // <-- controlled by provider
-                onChanged: (range) {
-                  notifier.setPrice(range); // <-- updates provider state
-                  print('Price range: $range');
-                },
+          Divider(height: 1, color: Colors.black.withOpacity(0.08)),
+
+          //------------------------------------------------------
+          // SCROLLABLE FILTER SECTIONS
+          //------------------------------------------------------
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                8 * fem,
+                20 * fem,
+                8 * fem,
+                18 * fem,
               ),
-            ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  //------------------------------------------------------
+                  // PRICE RANGE
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Price Range',
+                    fem: fem,
+                    initiallyExpanded: true,
+                    child: RangeSelector(
+                      min: 10000,
+                      max: 1000000,
+                      title: '',
+                      values: filter.selectedPriceRange,
+                      onChanged: notifier.setPrice,
+                    ),
+                  ),
 
-            //------------------------------------------------------
-            // CATEGORY
-            //------------------------------------------------------
-            FilterSection(
-              title: 'Category',
-              fem: fem,
-              child: twoColumnGrid(
-                items: [
-                  'Ring',
-                  'Earrings',
-                  'Necklaces',
-                  'Pendants',
-                  'Bangles',
-                  'Solitaire',
-                  'Bracelets',
-                  'Mangalsutra',
-                  'Nosepin',
-                  'Male Earring',
-                  //
-                  // 'Bracelets',
-                  // 'Pendants',
-                  //'Bangles',
+                  //------------------------------------------------------
+                  // CATEGORY
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Category',
+                    fem: fem,
+                    child: twoColumnGrid(
+                      items: [
+                        'Ring',
+                        'Earrings',
+                        'Necklaces',
+                        'Pendants',
+                        'Bangles',
+                        'Solitaire',
+                        'Bracelets',
+                        'Mangalsutra',
+                        'Nosepin',
+                        'Male Earring',
+                      ],
+                      selectedSet: filter.selectedCategory,
+                      fem: fem,
+                      groupName: "Category",
+                      onTapItem: notifier.toggleCategory,
+                    ),
+                  ),
+
+                  //------------------------------------------------------
+                  // SUB CATEGORY
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Sub Category',
+                    fem: fem,
+                    child: twoColumnGrid(
+                      items: [
+                        'Classic Rings',
+                        'Band Rings',
+                        'Couple Rings',
+                        'Daily Wear',
+                        'Office Wear',
+                      ],
+                      selectedSet: filter.selectedSubCategory,
+                      fem: fem,
+                      groupName: "Sub Category",
+                      onTapItem: notifier.toggleSubCategory,
+                    ),
+                  ),
+
+                  //------------------------------------------------------
+                  // CARAT RANGE
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Carat Weight',
+                    fem: fem,
+                    child: DiscreteClickRange(
+                      title: '',
+                      options: _caratOptions,
+                      initialStartIndex: _caratOptions.indexOf(
+                        filter.caratStartLabel,
+                      ),
+                      initialEndIndex: _caratOptions.indexOf(
+                        filter.caratEndLabel,
+                      ),
+                      onChanged: (range) {
+                        notifier.setCaratRange(
+                          _caratOptions[range.start.toInt()],
+                          _caratOptions[range.end.toInt()],
+                        );
+                      },
+                    ),
+                  ),
+
+                  //------------------------------------------------------
+                  // DIAMOND SHAPE
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Diamond Shape',
+                    fem: fem,
+                    initiallyExpanded: true,
+                    child: DiamondShapeGrid(
+                      fem: fem,
+                      items: _diamondItems,
+                      selected: filter.selectedShape,
+                      onSelected: notifier.toggleShape,
+                    ),
+                  ),
+
+                  //------------------------------------------------------
+                  // METAL
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Metal',
+                    fem: fem,
+                    child: MetalTypeGrid(
+                      fem: fem,
+                      items: _metalItems,
+                      selected: filter.selectedMetal,
+                      onSelected: notifier.toggleMetal,
+                    ),
+                  ),
+
+                  //------------------------------------------------------
+                  // GENDER
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Gender',
+                    fem: fem,
+                    child: twoColumnGrid(
+                      items: ['Men', 'Women', 'Unisex', 'Children'],
+                      selectedSet: filter.selectedGender,
+                      fem: fem,
+                      groupName: "Gender",
+                      onTapItem: notifier.toggleGender,
+                    ),
+                  ),
+
+                  //------------------------------------------------------
+                  // OCCASION
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Occasion',
+                    fem: fem,
+                    child: twoColumnGrid(
+                      items: [
+                        'Engagement',
+                        'Wedding',
+                        'Anniversary',
+                        'Daily Wear',
+                        'Gifting',
+                      ],
+                      selectedSet: filter.selectedOccasions,
+                      fem: fem,
+                      groupName: "Occasion",
+                      onTapItem: notifier.toggleOccasion,
+                    ),
+                  ),
                 ],
-                //selectedSet: selectedCategories,
-                selectedSet: filter.selectedCategory,
-                fem: fem,
-                groupName: "Category",
-                //onTapItem: (item) => notifier.setCategory(item),
-                onTapItem: (item) => notifier.toggleCategory(item),
               ),
             ),
-
-            //------------------------------------------------------
-            // SUB CATEGORY
-            //------------------------------------------------------
-            FilterSection(
-              title: 'Sub Category',
-              fem: fem,
-              child: twoColumnGrid(
-                items: [
-                  'Classic Rings',
-                  'Band Rings',
-                  'Couple Rings',
-                  'Daily Wear',
-                  'Office Wear',
-                ],
-                //selectedSet: selectedSubCat,
-                selectedSet: filter.selectedSubCategory,
-                fem: fem,
-                groupName: "Sub Category",
-                //onTapItem: (item) => notifier.setSubCategory(item),
-                onTapItem: (item) => notifier.toggleSubCategory(item),
-              ),
-            ),
-
-            FilterSection(
-              title: 'Carat Weight',
-              fem: fem,
-              child: DiscreteClickRange(
-                title: '',
-                options: _caratOptions,
-                initialStartIndex: _caratOptions.indexOf(
-                  filter.caratStartLabel,
-                ),
-                initialEndIndex: _caratOptions.indexOf(filter.caratEndLabel),
-                onChanged: (range) {
-                  final start = _caratOptions[range.start.toInt()];
-                  final end = _caratOptions[range.end.toInt()];
-                  notifier.setCaratRange(start, end);
-                },
-              ),
-            ),
-
-            //------------------------------------------------------
-            // DIAMOND SHAPE
-            //------------------------------------------------------
-            FilterSection(
-              title: 'Diamond Shape',
-              fem: fem,
-              initiallyExpanded: true,
-              child: DiamondShapeGrid(
-                fem: fem,
-                items: _diamondItems,
-                selected: filter.selectedShape, // Set<String>
-                onSelected: (shape) => notifier.toggleShape(shape),
-              ),
-            ),
-
-            //------------------------------------------------------
-            // COLOR RANGE
-            //------------------------------------------------------
-            // FilterSection(
-            //   title: 'Color',
-            //   fem: fem,
-            //   child: DiscreteClickRange(
-            //     title: '',
-            //     options: _colorOptions,
-            //     initialStartIndex: _colorOptions.indexOf(
-            //       filter.colorStartLabel,
-            //     ),
-            //     initialEndIndex: _colorOptions.indexOf(filter.colorEndLabel),
-            //     onChanged: (range) {
-            //       // setState(() {
-            //       //   colorStartLabel = _colorOptions[range.start.toInt()];
-            //       //   colorEndLabel = _colorOptions[range.end.toInt()];
-            //       // });
-            //       // print('Color range: $colorStartLabel - $colorEndLabel');
-            //       final start = _colorOptions[range.start.toInt()];
-            //       final end = _colorOptions[range.end.toInt()];
-            //       notifier.setColorRange(start, end);
-            //     },
-            //   ),
-            // ),
-
-            //------------------------------------------------------
-            // CLARITY RANGE
-            //------------------------------------------------------
-            // FilterSection(
-            //   title: 'Clarity',
-            //   fem: fem,
-            //   child: DiscreteClickRange(
-            //     title: '',
-            //     options: _clarityOptions,
-            //     initialStartIndex: _clarityOptions.indexOf(
-            //       filter.clarityStartLabel,
-            //     ),
-            //     initialEndIndex: _clarityOptions.indexOf(
-            //       filter.clarityEndLabel,
-            //     ),
-            //     onChanged: (range) {
-            //       // setState(() {
-            //       //   clarityStartLabel = _clarityOptions[range.start.toInt()];
-            //       //   clarityEndLabel = _clarityOptions[range.end.toInt()];
-            //       // });
-            //       // print('Clarity: $clarityStartLabel - $clarityEndLabel');
-            //       final start = _clarityOptions[range.start.toInt()];
-            //       final end = _clarityOptions[range.end.toInt()];
-            //       notifier.setClarityRange(start, end);
-            //     },
-            //   ),
-            // ),
-
-            //------------------------------------------------------
-            // METAL
-            //------------------------------------------------------
-            FilterSection(
-              title: 'Metal',
-              fem: fem,
-              child: MetalTypeGrid(
-                fem: fem,
-                items: _metalItems,
-                selected: filter.selectedMetal, // Set<String>
-                onSelected: (metal) => notifier.toggleMetal(metal),
-              ),
-            ),
-
-            //------------------------------------------------------
-            // GENDER
-            //------------------------------------------------------
-            // FilterSection(
-            //   title: 'Gender',
-            //   fem: fem,
-            //   child: twoColumnGrid(
-            //     items: ['Men', 'Women', 'Unisex', 'Children'],
-            //     selectedSet: selectedGender,
-            //     fem: fem,
-            //     groupName: "Gender",
-            //   ),
-            // ),
-            FilterSection(
-              title: 'Gender',
-              fem: fem,
-              child: twoColumnGrid(
-                items: ['Men', 'Women', 'Unisex', 'Children'],
-                selectedSet: filter.selectedGender,
-                fem: fem,
-                groupName: "Gender",
-                //onTapItem: (item) => notifier.toggleOccasion(item), single select
-                onTapItem: (item) => notifier.toggleGender(item),
-              ),
-            ),
-
-            //------------------------------------------------------
-            // OCCASION
-            //------------------------------------------------------
-            FilterSection(
-              title: 'Occasion',
-              fem: fem,
-              child: twoColumnGrid(
-                items: [
-                  'Engagement',
-                  'Wedding',
-                  'Anniversary',
-                  'Daily Wear',
-                  'Gifting',
-                ],
-                selectedSet: filter.selectedOccasions,
-                fem: fem,
-                groupName: "Occasion",
-                onTapItem: (item) => notifier.toggleOccasion(item),
-              ),
-            ),
-
-            //SizedBox(height: 30 * fem),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

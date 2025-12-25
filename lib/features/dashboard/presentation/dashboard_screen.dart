@@ -27,8 +27,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   /// ✅ Target section key
   final GlobalKey _categoriesKey = GlobalKey();
 
-  void openDrawer() => _scaffoldKey.currentState?.openDrawer();
-
   void scrollToCategories() {
     final context = _categoriesKey.currentContext;
     if (context != null) {
@@ -37,12 +35,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeInOut,
       );
-    }
-  }
-
-  void closeDrawer(BuildContext context) {
-    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
-      Navigator.of(context).pop();
     }
   }
 
@@ -91,23 +83,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
 
       // ------------------ DRAWER ------------------
-      drawer: Drawer(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        width: 400 * fem,
-        child: SideMenu(
-          onClose: () => closeDrawer(context),
-          onLogout: () {
-            ref.read(authProvider.notifier).logout();
-
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Logged out')));
-
-            context.go('/login');
-          },
-        ),
-      ),
+      drawer: SideDrawer(),
 
       // ------------------ BODY ------------------
       body: SingleChildScrollView(
@@ -126,32 +102,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         ),
       ),
-
-      // body: Row(
-      //   children: [
-      //     Expanded(
-      //       child: SingleChildScrollView(
-      //         controller: _scrollController, // ✅ attached here
-      //         child: Column(
-      //           crossAxisAlignment: CrossAxisAlignment.start,
-      //           children: [
-      //             /// HERO + FEATURES
-      //             HeroAndFeaturesSection(onArrowTap: scrollToCategories),
-      //             SizedBox(height: 24 * fem),
-
-      //             /// TARGET SECTION
-      //             Container(
-      //               key: _categoriesKey,
-      //               child: const CategoriesSection(),
-      //             ),
-
-      //             SizedBox(height: 40 * fem),
-      //           ],
-      //         ),
-      //       ),
-      //     ),
-      //   ],
-      // ),
     );
   }
 }

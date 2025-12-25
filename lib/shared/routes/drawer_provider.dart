@@ -1,17 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
+
 import 'route_pages.dart';
 
-final drawerProvider = StateNotifierProvider<DrawerNotifier, DrawerState>((
-  ref,
-) {
-  return DrawerNotifier(ref: ref);
-});
+final drawerProvider = NotifierProvider<DrawerNotifier, DrawerState>(
+  DrawerNotifier.new,
+);
 
-class DrawerNotifier extends StateNotifier<DrawerState> {
-  DrawerNotifier({required this.ref}) : super(DrawerState());
-
-  final Ref ref;
+class DrawerNotifier extends Notifier<DrawerState> {
+  @override
+  DrawerState build() {
+    return DrawerState();
+  }
 
   /// Update selected drawer page safely
   set routePage(RoutePages? routePage) {

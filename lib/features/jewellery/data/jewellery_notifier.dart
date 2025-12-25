@@ -86,10 +86,10 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       layingWith = null;
     }
 
-    debugPrint("is_in_store: ${filter.isInStore}");
-    debugPrint("branch_at_code: ${filter.productBranch}");
-    debugPrint("all_designs: ${filter.allDesigns}");
-    debugPrint("sort_by: ${filter.sortBy}");
+    // debugPrint("is_in_store: ${filter.isInStore}");
+    // debugPrint("branch_at_code: ${filter.productBranch}");
+    // debugPrint("all_designs: ${filter.allDesigns}");
+    // debugPrint("sort_by: ${filter.sortBy}");
 
     final postData = {
       "item_number": null,
@@ -123,9 +123,9 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       "laying_with": layingWith,
     };
 
-    debugPrint("postData: $postData");
-    debugPrint("Login PjCode: $pjcode");
-    debugPrint("laying_with: $layingWith");
+    // debugPrint("postData: $postData");
+    // debugPrint("Login PjCode: $pjcode");
+    // debugPrint("laying_with: $layingWith");
 
     final response = await dio.post(
       ApiEndPoint.get_jewellery_listing,

@@ -30,17 +30,17 @@ class FilterTagsSection extends ConsumerWidget {
       );
     }
 
-    // Color range
-    if (filter.colorStartLabel != filter.colorEndLabel) {
-      tags.add('Color: ${filter.colorStartLabel}-${filter.colorEndLabel}');
-    }
+    // // Color range
+    // if (filter.colorStartLabel != filter.colorEndLabel) {
+    //   tags.add('Color: ${filter.colorStartLabel}-${filter.colorEndLabel}');
+    // }
 
-    // Clarity range
-    if (filter.clarityStartLabel != filter.clarityEndLabel) {
-      tags.add(
-        'Clarity: ${filter.clarityStartLabel}-${filter.clarityEndLabel}',
-      );
-    }
+    // // Clarity range
+    // if (filter.clarityStartLabel != filter.clarityEndLabel) {
+    //   tags.add(
+    //     'Clarity: ${filter.clarityStartLabel}-${filter.clarityEndLabel}',
+    //   );
+    // }
 
     // Carat range
     if (filter.caratStartLabel != filter.caratEndLabel) {
@@ -68,11 +68,13 @@ class FilterTagsSection extends ConsumerWidget {
           notifier.toggleOccasion(tag);
         } else if (tag.startsWith('Price:')) {
           notifier.setPrice(const RangeValues(10000, 1000000));
-        } else if (tag.startsWith('Color:')) {
-          notifier.setColorRange('D', 'J');
-        } else if (tag.startsWith('Clarity:')) {
-          notifier.setClarityRange('IF', 'SI2');
-        } else if (tag.startsWith('Carat:')) {
+        } else
+        //  if (tag.startsWith('Color:')) {
+        //   notifier.setColorRange('D', 'J');
+        // } else if (tag.startsWith('Clarity:')) {
+        //   notifier.setClarityRange('IF', 'SI2');
+        // } else
+        if (tag.startsWith('Carat:')) {
           notifier.setCaratRange('0.10', '2.00');
         }
       },
