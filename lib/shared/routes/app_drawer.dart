@@ -67,7 +67,7 @@ class SideDrawer extends ConsumerWidget {
                           label: "Home",
                           //icon: Icons.home_outlined,
                           iconPath: 'assets/icons/menu_home.svg',
-                          routePage: RoutePages.home,
+                          routePage: RoutePages.dashboard,
                           drawerState: drawerState,
                           drawerNotifier: drawerNotifier,
                         ),
@@ -79,7 +79,7 @@ class SideDrawer extends ConsumerWidget {
                           label: "Catalogue",
                           //icon: Icons.menu_book_outlined,
                           iconPath: 'assets/icons/menu_catalouge.svg',
-                          routePage: RoutePages.catalogue,
+                          routePage: RoutePages.jewellerylisting,
                           drawerState: drawerState,
                           drawerNotifier: drawerNotifier,
                         ),
@@ -239,8 +239,7 @@ class SideDrawer extends ConsumerWidget {
               child: Center(
                 child: SvgPicture.asset(
                   iconPath,
-                  width: fem * 18,
-                  height: fem * 18,
+                  fit: BoxFit.scaleDown,
                   // keep color optional; remove if SVG already has correct color
                   colorFilter: const ColorFilter.mode(
                     Colors.black87,
@@ -281,98 +280,6 @@ class SideDrawer extends ConsumerWidget {
     );
   }
 
-  // dynamic sectionCard({
-  //   required double fem,
-  //   required BuildContext context,
-  //   required RoutePages routePage,
-  //   //required IconData icon,
-  //   required String iconPath,
-  //   required String title,
-  //   required List<String> items,
-  // }) {
-  //   //final isActive = false;
-  //   Widget categoryItem(String title) {
-  //     return InkWell(
-  //       onTap: () {
-  //         Navigator.of(context).pop();
-  //         GoRouter.of(context).push(routePage.routePath);
-  //       },
-  //       child: Container(
-  //         width: double.infinity,
-  //         padding: EdgeInsets.only(
-  //           left: fem * 35,
-  //           top: fem * 12,
-  //           bottom: fem * 12,
-  //         ),
-  //         margin: EdgeInsets.only(bottom: fem * 4),
-  //         // decoration: isActive
-  //         //     ? BoxDecoration(
-  //         //         borderRadius: BorderRadius.circular(6),
-  //         //         border: Border.all(color: const Color(0xFFCED4D1), width: 1),
-  //         //       )
-  //         //     : null,
-  //         child: MyText(title, style: TextStyle(fontSize: fem * 16)),
-  //       ),
-  //     );
-  //   }
-
-  //   return ListTileTheme(
-  //     minVerticalPadding: 0,
-  //     child: ExpansionTile(
-  //       tilePadding: EdgeInsets.only(
-  //         top: fem * 25,
-  //         bottom: fem * 25,
-  //         left: fem * 24,
-  //         right: fem * 10,
-  //       ),
-  //       minTileHeight: 0,
-  //       dense: true,
-  //       shape: const Border(), // Removes the border when expanded
-  //       collapsedShape: const Border(), // Removes the border when collapsed
-  //       //collapsedBackgroundColor: Colors.red,
-  //       title: Row(
-  //         children: [
-  //           Container(
-  //             width: fem * 36,
-  //             height: fem * 36,
-  //             decoration: BoxDecoration(
-  //               color: Colors.white,
-  //               borderRadius: BorderRadius.circular(999),
-  //             ),
-  //             child: Icon(icon, size: fem * 18, color: Colors.black87),
-  //           ),
-  //           SizedBox(width: fem * 16),
-  //           MyText(
-  //             title,
-  //             style: TextStyle(
-  //               fontSize: fem * 16,
-  //               color: Colors.black87,
-  //               fontWeight: FontWeight.w400,
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //       children: [
-  //         Container(
-  //           width: double.infinity,
-  //           decoration: BoxDecoration(
-  //             color: Colors.white,
-  //             borderRadius: BorderRadius.circular(10),
-  //           ),
-  //           padding: EdgeInsets.symmetric(
-  //             vertical: fem * 8,
-  //             horizontal: fem * 12,
-  //           ),
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [for (var item in items) categoryItem(item)],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   /// Central navigation builder (keeps code DRY)
   Widget _nav(
     WidgetRef ref, {
@@ -409,12 +316,7 @@ class SideDrawer extends ConsumerWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: SvgPicture.asset(
-                iconPath,
-                width: fem * 18,
-                height: fem * 18,
-                //colorFilter: ColorFilter.mode(activeColor, BlendMode.srcIn),
-              ),
+              child: SvgPicture.asset(iconPath, fit: BoxFit.scaleDown),
             ),
             SizedBox(width: fem * 16),
             MyText(

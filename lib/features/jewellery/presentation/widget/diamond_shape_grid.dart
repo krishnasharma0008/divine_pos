@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class DiamondShapeGrid extends StatelessWidget {
   final double fem;
   final List<Map<String, String>> items; // [{label, asset}]
-  final Set<String> selected;            // from FilterState.selectedShape
+  final Set<String> selected; // from FilterState.selectedShape
   final void Function(String shape)? onSelected;
 
   const DiamondShapeGrid({
@@ -42,7 +42,8 @@ class DiamondShapeGrid extends StatelessWidget {
               border: Border.all(
                 color: isSelected
                     ? const Color(0xFFE5C289)
-                    : const Color(0xFFEDEDED),
+                    : Colors.transparent,
+                //: const Color(0xFFEDEDED),
                 width: 1,
               ),
             ),
@@ -59,9 +60,10 @@ class DiamondShapeGrid extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontFamily: 'Montserrat',
-                      fontSize: isSelected ? 15 * fem : 14 * fem,
-                      fontWeight:
-                          isSelected ? FontWeight.w500 : FontWeight.w400,
+                      fontSize: 14 * fem,
+                      fontWeight: isSelected
+                          ? FontWeight.w500
+                          : FontWeight.w400,
                       color: const Color(0xFF555555),
                     ),
                     overflow: TextOverflow.ellipsis,

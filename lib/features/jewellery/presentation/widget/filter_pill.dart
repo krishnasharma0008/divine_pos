@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/widgets/text.dart';
+
 class FilterPill extends StatelessWidget {
   final String label;
   final bool selected;
@@ -30,8 +32,8 @@ class FilterPill extends StatelessWidget {
           borderRadius: BorderRadius.circular(15 * fem),
           // ONLY selected has border
           border: selected
-              ? Border.all(color: borderColor, width: 1.4 * fem)
-              : null,
+              ? Border.all(color: borderColor, width: 1 * fem)
+              : Border.all(color: Colors.transparent, width: 1 * fem),
 
           boxShadow: selected
               ? [
@@ -48,11 +50,11 @@ class FilterPill extends StatelessWidget {
           children: [
             _checkbox(selected, fem),
             SizedBox(width: 6 * fem),
-            Text(
+            MyText(
               label,
               style: TextStyle(
-                fontSize: 13 * fem,
-                fontWeight: FontWeight.w500,
+                fontSize: 14 * fem,
+                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
                 fontFamily: 'Montserrat',
                 color: Color(0xFF4B4B4B),
               ),

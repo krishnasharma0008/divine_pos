@@ -40,7 +40,7 @@ class ProductCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.80),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(0),
               ),
               child: Center(
                 child: Container(
@@ -50,7 +50,7 @@ class ProductCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(0),
                     border: Border.all(color: Colors.grey.shade400),
                   ),
                   child: Text(
@@ -76,24 +76,31 @@ class ProductCard extends StatelessWidget {
         SizedBox(height: 10 * r),
         _title(r),
         SizedBox(height: 8 * r),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12 * r),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(child: _price(r)),
-              isSoldOut
-                  ? SizedBox(width: 100 * r, height: 46 * r)
-                  : SizedBox(
-                      width: 100 * r,
-                      child: _actionsRow(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        r: r,
-                      ),
-                    ),
-            ],
-          ),
+
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _price(r),
+            if (!isSoldOut) SizedBox(height: 6 * r),
+            if (!isSoldOut)
+              _actionsRow(mainAxisAlignment: MainAxisAlignment.start, r: r),
+          ],
         ),
+        // child: Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   children: [
+        //     Expanded(child: _price(r)),
+        //     isSoldOut
+        //         ? SizedBox(width: 100 * r, height: 46 * r)
+        //         : SizedBox(
+        //             width: 100 * r,
+        //             child: _actionsRow(
+        //               mainAxisAlignment: MainAxisAlignment.end,
+        //               r: r,
+        //             ),
+        //           ),
+        //   ],
+        // ),
         const SizedBox(height: 8),
       ],
     );
@@ -110,18 +117,24 @@ class ProductCard extends StatelessWidget {
           child: _title(r),
         ),
         SizedBox(height: 8 * r),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12 * r),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(child: _price(r)),
-              isSoldOut
-                  ? SizedBox(height: 46 * r)
-                  : _actionsRow(mainAxisAlignment: MainAxisAlignment.end, r: r),
-            ],
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _price(r),
+            if (!isSoldOut) SizedBox(height: 6 * r),
+            if (!isSoldOut)
+              _actionsRow(mainAxisAlignment: MainAxisAlignment.start, r: r),
+          ],
         ),
+        // child: Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   children: [
+        //     Expanded(child: _price(r)),
+        //     isSoldOut
+        //         ? SizedBox(height: 46 * r)
+        //         : _actionsRow(mainAxisAlignment: MainAxisAlignment.end, r: r),
+        //   ],
+        // ),
       ],
     );
   }
@@ -138,7 +151,7 @@ class ProductCard extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             color: const Color(0xffF7F7F7),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+            //borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
             image: DecorationImage(image: provider, fit: BoxFit.contain),
           ),
         ),
@@ -153,7 +166,7 @@ class ProductCard extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
+                //borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 tagText,
@@ -190,9 +203,11 @@ class ProductCard extends StatelessWidget {
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 14 * r,
-          fontWeight: FontWeight.w500,
-          color: Colors.black87,
+          color: Colors.black,
+          fontSize: 13 * r,
+          fontFamily: 'Montserrat',
+          fontWeight: FontWeight.w300,
+          height: 1.54,
         ),
       ),
     ),
@@ -203,9 +218,10 @@ class ProductCard extends StatelessWidget {
     child: Text(
       price,
       style: TextStyle(
-        fontSize: 15 * r,
-        fontWeight: FontWeight.bold,
-        color: Colors.black,
+        color: const Color(0xFF212121),
+        fontSize: 12 * r,
+        fontFamily: 'Montserrat',
+        fontWeight: FontWeight.w500,
       ),
     ),
   );
@@ -221,8 +237,8 @@ class ProductCard extends StatelessWidget {
           onTap: onAddToCart,
           child: SvgPicture.asset(
             'assets/icons/cart.svg',
-            width: 38 * r,
-            height: 40 * r,
+            width: 44 * r,
+            height: 46 * r,
           ),
         ),
         SizedBox(width: 12 * r),
@@ -230,8 +246,8 @@ class ProductCard extends StatelessWidget {
           onTap: onTryOn,
           child: SvgPicture.asset(
             'assets/icons/tryon.svg',
-            width: 38 * r,
-            height: 40 * r,
+            width: 44 * r,
+            height: 46 * r,
           ),
         ),
       ],

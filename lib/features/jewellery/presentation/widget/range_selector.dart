@@ -1,5 +1,7 @@
+import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
+import '../../../../shared/widgets/text.dart';
 
 class RangeSelector extends StatelessWidget {
   final double min;
@@ -19,13 +21,14 @@ class RangeSelector extends StatelessWidget {
     required this.values,
   });
 
+  // 🇮🇳 Indian currency formatter
   static String _defaultIndianFormatter(double value) {
-    String s = value.toStringAsFixed(0);
-    int n = s.length;
+    final s = value.toStringAsFixed(0);
+    final n = s.length;
     if (n <= 3) return "₹ $s";
 
-    String last3 = s.substring(n - 3);
-    String rest = s.substring(0, n - 3);
+    final last3 = s.substring(n - 3);
+    final rest = s.substring(0, n - 3);
 
     final buf = StringBuffer();
     int counter = 0;
@@ -35,55 +38,75 @@ class RangeSelector extends StatelessWidget {
       if (counter % 2 == 0 && i != 0) buf.write(",");
     }
 
-    String formattedRest = buf.toString().split('').reversed.join('');
+    final formattedRest = buf.toString().split('').reversed.join();
     return "₹ $formattedRest,$last3";
   }
 
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
-    final bool hasTitle = title.trim().isNotEmpty;
+    final hasTitle = title.trim().isNotEmpty;
 
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 12 * fem, horizontal: 0),
+      padding: EdgeInsets.symmetric(vertical: 12 * fem),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 🔹 Title
           if (hasTitle) ...[
             Row(
               children: [
-                Text(
+                MyText(
                   title,
                   style: TextStyle(
-                    fontWeight: FontWeight.w600,
                     fontSize: 16 * fem,
+                    fontWeight: FontWeight.w400, // matches Figma
+                    color: Colors.black,
                   ),
                 ),
-                Spacer(),
+                const Spacer(),
               ],
             ),
             SizedBox(height: 14 * fem),
           ],
+
+          // 🔹 Price chips
           Padding(
             padding: EdgeInsets.only(left: 12 * fem),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _priceChip(formatter(values.start), fem),
+                SizedBox(width: 10 * fem),
+                MyText(
+                  '–',
+                  style: TextStyle(
+                    fontSize: 20 * fem,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 SizedBox(width: 10 * fem),
                 _priceChip(formatter(values.end), fem),
               ],
             ),
           ),
+
           SizedBox(height: 10 * fem),
+
+          // 🔹 Range Slider
           SliderTheme(
             data: SliderThemeData(
-              trackHeight: 5,
-              activeTrackColor: Color(0xFFBFE8E3),
-              inactiveTrackColor: Colors.grey.shade200,
-              thumbColor: Color(0xFFA9E7DF),
-              overlayColor: Color(0xFFBFE8E3).withOpacity(0.25),
-              rangeTrackShape: RoundedRectRangeSliderTrackShape(),
-              rangeThumbShape: DiamondRangeThumbShape(enabledThumbRadius: 13),
+              trackHeight: 3, // use larger height (Flutter limitation)
+              inactiveTrackColor: const Color(0xFFF1F1F1),
+              activeTrackColor: const Color(0xFFD0F5EE),
+              thumbColor: const Color(0xFFA9E7DF),
+              overlayColor: const Color(0xFFBFE8E3).withOpacity(0.25),
+              rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
+              rangeThumbShape: DiamondRangeThumbShape(
+                width: 10 * fem,
+                height: 15 * fem,
+              ),
+              overlayShape: RoundSliderOverlayShape(overlayRadius: 16 * fem),
             ),
             child: RangeSlider(
               min: min,
@@ -98,23 +121,31 @@ class RangeSelector extends StatelessWidget {
     );
   }
 
+  // 🔹 Price chip widget
   Widget _priceChip(String text, double fem) {
     return SizedBox(
-      width: 135 * fem,
+      width: 114 * fem,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 22 * fem, vertical: 10 * fem),
+        padding: EdgeInsets.all(10 * fem),
         decoration: BoxDecoration(
-          color: Color(0xFFF3FBFA),
+          color: const Color(0x1C90DCD0),
           borderRadius: BorderRadius.circular(15 * fem),
-          border: Border.all(color: Color(0xFFD9C6A3), width: 1.2 * fem),
+          border: Border.all(color: const Color(0xFFC8AC7D), width: 1 * fem),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x3FC5C5C5),
+              blurRadius: 4,
+              offset: Offset(2, 2),
+            ),
+          ],
         ),
-        child: Text(
+        alignment: Alignment.center,
+        child: MyText(
           text,
           style: TextStyle(
-            color: Colors.black,
             fontSize: 14 * fem,
-            fontFamily: 'Montserrat',
             fontWeight: FontWeight.w600,
+            color: const Color(0xFF4A4A4A),
           ),
         ),
       ),
@@ -122,15 +153,20 @@ class RangeSelector extends StatelessWidget {
   }
 }
 
-// Diamond thumb shape for slider
-class DiamondRangeThumbShape extends RangeSliderThumbShape {
-  final double enabledThumbRadius;
+///////////////////////////////////////////////////////////////////////////////
+/// Diamond Range Thumb Shape
+///////////////////////////////////////////////////////////////////////////////
 
-  const DiamondRangeThumbShape({this.enabledThumbRadius = 13});
+class DiamondRangeThumbShape extends RangeSliderThumbShape {
+  final double width;
+  final double height;
+
+  const DiamondRangeThumbShape({this.width = 10, this.height = 15});
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
-      Size.fromRadius(enabledThumbRadius);
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
+    return Size(width, height);
+  }
 
   @override
   void paint(
@@ -152,15 +188,16 @@ class DiamondRangeThumbShape extends RangeSliderThumbShape {
       ..color = sliderTheme.thumbColor!
       ..style = PaintingStyle.fill;
 
-    final r = enabledThumbRadius;
+    final halfW = width / 2;
+    final halfH = height / 2;
 
-    final diamond = Path()
-      ..moveTo(center.dx, center.dy - r)
-      ..lineTo(center.dx + r, center.dy)
-      ..lineTo(center.dx, center.dy + r)
-      ..lineTo(center.dx - r, center.dy)
+    final path = Path()
+      ..moveTo(center.dx, center.dy - halfH) // top
+      ..lineTo(center.dx + halfW, center.dy) // right
+      ..lineTo(center.dx, center.dy + halfH) // bottom
+      ..lineTo(center.dx - halfW, center.dy) // left
       ..close();
 
-    canvas.drawPath(diamond, paint);
+    canvas.drawPath(path, paint);
   }
 }

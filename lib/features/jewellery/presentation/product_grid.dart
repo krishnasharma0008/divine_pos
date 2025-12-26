@@ -16,9 +16,9 @@ class ProductGrid extends StatelessWidget {
     required this.isLoadingMore,
   });
 
-  static const double _rowSpacing = 20;
+  static const double _rowSpacing = 50;
   static const double _horizontalPadding = 24;
-  static const double _cardHeight = 399;
+  static const double _cardHeight = 424;
 
   @override
   Widget build(BuildContext context) {
@@ -28,67 +28,19 @@ class ProductGrid extends StatelessWidget {
       return const Center(child: Text("No products found"));
     }
 
-    return SingleChildScrollView(
-      controller: controller,
-      child: Column(
-        children: [
-          /// 🔹 FIRST 3 ITEMS
-          GridView.builder(
-            padding: EdgeInsets.symmetric(
-              horizontal: _horizontalPadding * r,
-              vertical: 6 * r,
-            ),
-            itemCount: jewellery.length.clamp(0, 3),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: _rowSpacing * r,
-              mainAxisSpacing: _rowSpacing * r,
-              mainAxisExtent: _cardHeight * r,
-            ),
-            itemBuilder: (context, index) {
-              return _buildCard(jewellery[index]);
-            },
-          ),
-
-          if (jewellery.length > 3) SizedBox(height: _rowSpacing * r),
-
-          /// 🔹 4th + 5th
-          if (jewellery.length > 3)
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _horizontalPadding * r),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: SizedBox(
-                      height: _cardHeight * r,
-                      child: Padding(
-                        padding: EdgeInsets.only(right: 5 * r),
-                        child: _buildCard(jewellery[3], isWide: true),
-                      ),
-                    ),
-                  ),
-                  if (jewellery.length > 4)
-                    Expanded(
-                      flex: 1,
-                      child: SizedBox(
-                        height: _cardHeight * r,
-                        child: _buildCard(jewellery[4]),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-          if (jewellery.length > 5) SizedBox(height: _rowSpacing * r),
-
-          /// 🔹 REMAINING ITEMS
-          if (jewellery.length > 5)
+    return Container(
+      color: Colors.white, // ✅ background color added
+      child: SingleChildScrollView(
+        controller: controller,
+        child: Column(
+          children: [
+            /// 🔹 FIRST 3 ITEMS
             GridView.builder(
-              padding: EdgeInsets.symmetric(horizontal: _horizontalPadding * r),
-              itemCount: jewellery.length - 5,
+              padding: EdgeInsets.symmetric(
+                horizontal: _horizontalPadding * r,
+                vertical: 6 * r,
+              ),
+              itemCount: jewellery.length.clamp(0, 3),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -98,16 +50,71 @@ class ProductGrid extends StatelessWidget {
                 mainAxisExtent: _cardHeight * r,
               ),
               itemBuilder: (context, index) {
-                return _buildCard(jewellery[index + 5]);
+                return _buildCard(jewellery[index]);
               },
             ),
 
-          if (isLoadingMore)
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 24 * r),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-        ],
+            if (jewellery.length > 3) SizedBox(height: _rowSpacing * r),
+
+            /// 🔹 4th + 5th
+            if (jewellery.length > 3)
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: _horizontalPadding * r,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: _cardHeight * r,
+                        child: Padding(
+                          padding: EdgeInsets.only(right: 5 * r),
+                          child: _buildCard(jewellery[3], isWide: true),
+                        ),
+                      ),
+                    ),
+                    if (jewellery.length > 4)
+                      Expanded(
+                        flex: 1,
+                        child: SizedBox(
+                          height: _cardHeight * r,
+                          child: _buildCard(jewellery[4]),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+            if (jewellery.length > 5) SizedBox(height: _rowSpacing * r),
+
+            /// 🔹 REMAINING ITEMS
+            if (jewellery.length > 5)
+              GridView.builder(
+                padding: EdgeInsets.symmetric(
+                  horizontal: _horizontalPadding * r,
+                ),
+                itemCount: jewellery.length - 5,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: _rowSpacing * r,
+                  mainAxisSpacing: _rowSpacing * r,
+                  mainAxisExtent: _cardHeight * r,
+                ),
+                itemBuilder: (context, index) {
+                  return _buildCard(jewellery[index + 5]);
+                },
+              ),
+
+            if (isLoadingMore)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 24 * r),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -6,23 +6,23 @@ import 'filter_state.dart';
 
 class FilterNotifier extends StateNotifier<FilterState> {
   FilterNotifier()
-      : super(
-          const FilterState(
-            selectedGender: {},
-            selectedPriceRange: RangeValues(10000, 1000000),
-            selectedCategory: {},
-            selectedSubCategory: {},
-            colorStartLabel: 'D',
-            colorEndLabel: 'J',
-            clarityStartLabel: 'IF',
-            clarityEndLabel: 'SI2',
-            caratStartLabel: '0.10',
-            caratEndLabel: '2.00',
-            selectedShape: {},
-            selectedMetal: {},
-            selectedOccasions: {},
-          ),
-        );
+    : super(
+        const FilterState(
+          selectedGender: {},
+          selectedPriceRange: RangeValues(10000, 1000000),
+          selectedCategory: {},
+          selectedSubCategory: {},
+          colorStartLabel: 'D',
+          colorEndLabel: 'J',
+          clarityStartLabel: 'IF',
+          clarityEndLabel: 'SI2',
+          caratStartLabel: '0.10',
+          caratEndLabel: '2.99',
+          selectedShape: {},
+          selectedMetal: {},
+          selectedOccasions: {},
+        ),
+      );
 
   // ───────────────── Top buttons ─────────────────
 
@@ -70,34 +70,45 @@ class FilterNotifier extends StateNotifier<FilterState> {
     update(updated);
   }
 
-  void toggleGender(String v) =>
-      _toggleSet(state.selectedGender, v,
-          (s) => state = state.copyWith(selectedGender: s));
+  void toggleGender(String v) => _toggleSet(
+    state.selectedGender,
+    v,
+    (s) => state = state.copyWith(selectedGender: s),
+  );
 
-  void toggleCategory(String v) =>
-      _toggleSet(state.selectedCategory, v,
-          (s) => state = state.copyWith(selectedCategory: s));
+  void toggleCategory(String v) => _toggleSet(
+    state.selectedCategory,
+    v,
+    (s) => state = state.copyWith(selectedCategory: s),
+  );
 
-  void toggleSubCategory(String v) =>
-      _toggleSet(state.selectedSubCategory, v,
-          (s) => state = state.copyWith(selectedSubCategory: s));
+  void toggleSubCategory(String v) => _toggleSet(
+    state.selectedSubCategory,
+    v,
+    (s) => state = state.copyWith(selectedSubCategory: s),
+  );
 
-  void toggleShape(String v) =>
-      _toggleSet(state.selectedShape, v,
-          (s) => state = state.copyWith(selectedShape: s));
+  void toggleShape(String v) => _toggleSet(
+    state.selectedShape,
+    v,
+    (s) => state = state.copyWith(selectedShape: s),
+  );
 
-  void toggleMetal(String v) =>
-      _toggleSet(state.selectedMetal, v,
-          (s) => state = state.copyWith(selectedMetal: s));
+  void toggleMetal(String v) => _toggleSet(
+    state.selectedMetal,
+    v,
+    (s) => state = state.copyWith(selectedMetal: s),
+  );
 
-  void toggleOccasion(String v) =>
-      _toggleSet(state.selectedOccasions, v,
-          (s) => state = state.copyWith(selectedOccasions: s));
+  void toggleOccasion(String v) => _toggleSet(
+    state.selectedOccasions,
+    v,
+    (s) => state = state.copyWith(selectedOccasions: s),
+  );
 
   // ───────────────── Ranges ─────────────────
 
-  void setPrice(RangeValues v) =>
-      state = state.copyWith(selectedPriceRange: v);
+  void setPrice(RangeValues v) => state = state.copyWith(selectedPriceRange: v);
 
   void setColorRange(String s, String e) =>
       state = state.copyWith(colorStartLabel: s, colorEndLabel: e);
@@ -117,7 +128,8 @@ class FilterNotifier extends StateNotifier<FilterState> {
 
 // ───────────────── Provider ─────────────────
 
-final filterProvider =
-    StateNotifierProvider<FilterNotifier, FilterState>((ref) {
+final filterProvider = StateNotifierProvider<FilterNotifier, FilterState>((
+  ref,
+) {
   return FilterNotifier();
 });

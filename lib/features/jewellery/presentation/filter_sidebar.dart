@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/utils/scale_size.dart';
+import '../../../shared/widgets/text.dart';
 import '../presentation/widget/filter_section.dart';
 import '../presentation/widget/filter_pill.dart';
 import '../presentation/widget/range_selector.dart';
@@ -93,27 +94,29 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
     '1.00',
     '1.50',
     '2.00',
+    '2.50',
+    '2.99',
   ];
   // -----------------------------------------------------------
   // Metal
   // -----------------------------------------------------------
   final List<Map<String, String>> _metalItems = [
     {
-      'label': 'Yellow Gold',
+      'label': '18KT Yellow Gold',
       'asset': 'assets/jewellery/filters/metal/yellow_gold.png',
     },
-    {
-      'label': 'White Gold',
-      'asset': 'assets/jewellery/filters/metal/white_gold.png',
-    },
-    {
-      'label': 'Rose Gold',
-      'asset': 'assets/jewellery/filters/metal/rose_gold.png',
-    },
-    {
-      'label': 'Platinum',
-      'asset': 'assets/jewellery/filters/metal/platinum.png',
-    },
+    // {
+    //   'label': 'White Gold',
+    //   'asset': 'assets/jewellery/filters/metal/white_gold.png',
+    // },
+    // {
+    //   'label': 'Rose Gold',
+    //   'asset': 'assets/jewellery/filters/metal/rose_gold.png',
+    // },
+    // {
+    //   'label': 'Platinum',
+    //   'asset': 'assets/jewellery/filters/metal/platinum.png',
+    // },
   ];
 
   String? selectedMetal;
@@ -163,8 +166,8 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
     final notifier = ref.read(filterProvider.notifier); // FilterNotifier
 
     return Container(
-      width: 310 * fem,
-      color: const Color(0xFFF6F6F6),
+      width: 380 * fem,
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -172,11 +175,16 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
           // FIXED HEADER (NON-SCROLLABLE)
           //------------------------------------------------------
           Padding(
-            padding: EdgeInsets.fromLTRB(8 * fem, 18 * fem, 8 * fem, 12 * fem),
+            padding: EdgeInsets.fromLTRB(
+              28 * fem,
+              24 * fem,
+              213.5 * fem,
+              43 * fem,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                MyText(
                   'Filters',
                   style: TextStyle(
                     fontSize: 24 * fem,
@@ -218,6 +226,45 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                       title: '',
                       values: filter.selectedPriceRange,
                       onChanged: notifier.setPrice,
+                    ),
+                  ),
+
+                  //------------------------------------------------------
+                  // DIAMOND SHAPE
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Diamond Shape',
+                    fem: fem,
+                    initiallyExpanded: true,
+                    child: DiamondShapeGrid(
+                      fem: fem,
+                      items: _diamondItems,
+                      selected: filter.selectedShape,
+                      onSelected: notifier.toggleShape,
+                    ),
+                  ),
+
+                  //------------------------------------------------------
+                  // CARAT RANGE
+                  //------------------------------------------------------
+                  FilterSection(
+                    title: 'Carat Weight',
+                    fem: fem,
+                    child: DiscreteClickRange(
+                      title: '',
+                      options: _caratOptions,
+                      initialStartIndex: _caratOptions.indexOf(
+                        filter.caratStartLabel,
+                      ),
+                      initialEndIndex: _caratOptions.indexOf(
+                        filter.caratEndLabel,
+                      ),
+                      onChanged: (range) {
+                        notifier.setCaratRange(
+                          _caratOptions[range.start.toInt()],
+                          _caratOptions[range.end.toInt()],
+                        );
+                      },
                     ),
                   ),
 
@@ -269,51 +316,12 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   ),
 
                   //------------------------------------------------------
-                  // CARAT RANGE
-                  //------------------------------------------------------
-                  FilterSection(
-                    title: 'Carat Weight',
-                    fem: fem,
-                    child: DiscreteClickRange(
-                      title: '',
-                      options: _caratOptions,
-                      initialStartIndex: _caratOptions.indexOf(
-                        filter.caratStartLabel,
-                      ),
-                      initialEndIndex: _caratOptions.indexOf(
-                        filter.caratEndLabel,
-                      ),
-                      onChanged: (range) {
-                        notifier.setCaratRange(
-                          _caratOptions[range.start.toInt()],
-                          _caratOptions[range.end.toInt()],
-                        );
-                      },
-                    ),
-                  ),
-
-                  //------------------------------------------------------
-                  // DIAMOND SHAPE
-                  //------------------------------------------------------
-                  FilterSection(
-                    title: 'Diamond Shape',
-                    fem: fem,
-                    initiallyExpanded: true,
-                    child: DiamondShapeGrid(
-                      fem: fem,
-                      items: _diamondItems,
-                      selected: filter.selectedShape,
-                      onSelected: notifier.toggleShape,
-                    ),
-                  ),
-
-                  //------------------------------------------------------
                   // METAL
                   //------------------------------------------------------
                   FilterSection(
                     title: 'Metal',
                     fem: fem,
-                    child: MetalTypeGrid(
+                    child: MetalTypeList(
                       fem: fem,
                       items: _metalItems,
                       selected: filter.selectedMetal,

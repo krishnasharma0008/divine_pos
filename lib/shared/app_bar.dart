@@ -59,6 +59,7 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
           statusBarIconBrightness: Brightness.dark,
         ),
         automaticallyImplyLeading: false,
+
         leadingWidth: ScaleSize.appBarHeight,
         leading: _buildLeading(context, fem),
 
@@ -66,14 +67,17 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
         title: Row(
           children: [
             if (showLogo) ...[
-              SizedBox(width: 28 * fem), // ✅ space between menu/back & logo
               Padding(
-                padding: EdgeInsets.fromLTRB(0, 10 * fem, 0, 13 * fem),
+                padding: EdgeInsets.only(
+                  left: fem * 28,
+                  top: fem * 50,
+                  bottom: fem * 50,
+                ),
                 child: Image.asset(
                   "assets/Login/logo.png",
-                  height: 72 * fem,
-                  width: 55 * fem,
-                  fit: BoxFit.contain,
+                  //height: fem * 55,
+                  width: fem * 72,
+                  fit: BoxFit.scaleDown,
                 ),
               ),
             ],

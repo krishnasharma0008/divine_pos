@@ -21,19 +21,23 @@ class CategorySection extends ConsumerWidget {
       ),
       CategoryItem(
         image: 'assets/jewellery/filter_tags/earrings.png',
-        label: 'Earrings',
+        label: 'Earring',
       ),
       CategoryItem(
-        image: 'assets/jewellery/filter_tags/bangles.png',
-        label: 'Bangles',
+        image: 'assets/jewellery/filter_tags/pendant.png',
+        label: 'Pendant',
       ),
       CategoryItem(
-        image: 'assets/jewellery/filter_tags/mangalsutra.png',
+        image: 'assets/jewellery/filter_tags/mangalsutra.jpg',
         label: 'Mangalsutra',
       ),
       CategoryItem(
-        image: 'assets/jewellery/filter_tags/nosepin.png',
-        label: 'Nosepin',
+        image: 'assets/jewellery/filter_tags/solitaires.png',
+        label: 'Solitaires',
+      ),
+      CategoryItem(
+        image: 'assets/jewellery/filter_tags/bangles.jpg',
+        label: 'Bangles',
       ),
     ];
 
@@ -44,12 +48,30 @@ class CategorySection extends ConsumerWidget {
         .map((e) => e.key)
         .toList();
 
-    return CategoryRow(
-      items: categories,
-      selectedIndexes: selectedIndexes,
-      onSelect: (index) {
-        notifier.toggleCategory(categories[index].label);
-      },
+    return Container(
+      color: Colors.white, // ✅ background color added
+      padding: const EdgeInsets.symmetric(
+        vertical: 12,
+        horizontal: 15,
+      ), // optional spacing
+      child: CategoryRow(
+        items: categories,
+        selectedIndexes: selectedIndexes,
+        onSelect: (index) {
+          notifier.toggleCategory(categories[index].label);
+        },
+      ),
     );
   }
 }
+
+//     return CategoryRow(
+//       items: categories,
+//       selectedIndexes: selectedIndexes,
+
+//       onSelect: (index) {
+//         notifier.toggleCategory(categories[index].label);
+//       },
+//     );
+//   }
+// }

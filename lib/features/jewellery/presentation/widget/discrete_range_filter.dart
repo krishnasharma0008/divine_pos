@@ -1,3 +1,4 @@
+import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
 
@@ -98,76 +99,99 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
                     children: [
                       SizedBox(height: 10 * fem),
                       Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: List.generate(widget.options.length, (
-                            index,
-                          ) {
-                            final bool selected =
-                                index >= startIndex && index <= endIndex;
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6 * fem,
+                          ), // 👈 inset ticks
+                          child: Row(
+                            //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(widget.options.length, (
+                              index,
+                            ) {
+                              final bool selected =
+                                  index >= startIndex && index <= endIndex;
 
-                            return GestureDetector(
-                              behavior: HitTestBehavior.translucent,
-                              onTap: () {
-                                setState(() {
-                                  final s = startIndex;
-                                  final e = endIndex;
-
-                                  if (index <= s) {
-                                    startIndex = index;
-                                  } else if (index >= e) {
-                                    endIndex = index;
-                                  } else {
-                                    final bool closerToStart =
-                                        (index - s).abs() <= (index - e).abs();
-                                    closerToStart
-                                        ? startIndex = index
-                                        : endIndex = index;
-                                  }
-
-                                  if (endIndex < startIndex) {
-                                    final t = startIndex;
-                                    startIndex = endIndex;
-                                    endIndex = t;
-                                  }
-
-                                  widget.onChanged?.call(
-                                    RangeValues(
-                                      startIndex.toDouble(),
-                                      endIndex.toDouble(),
-                                    ),
-                                  );
-                                });
-                              },
-                              child: Column(
+                              return Row(
                                 children: [
-                                  Container(
-                                    width: 6,
-                                    height: selected ? 18 * fem : 12 * fem,
-                                    decoration: BoxDecoration(
-                                      color: selected
-                                          ? const Color(0xFF90DCD0)
-                                          : const Color(
-                                              0xFF90DCD0,
-                                            ).withOpacity(0.4),
-                                      borderRadius: BorderRadius.circular(20),
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.translucent,
+                                    onTap: () {
+                                      setState(() {
+                                        final s = startIndex;
+                                        final e = endIndex;
+
+                                        if (index <= s) {
+                                          startIndex = index;
+                                        } else if (index >= e) {
+                                          endIndex = index;
+                                        } else {
+                                          final closerToStart =
+                                              (index - s).abs() <=
+                                              (index - e).abs();
+                                          closerToStart
+                                              ? startIndex = index
+                                              : endIndex = index;
+                                        }
+
+                                        if (endIndex < startIndex) {
+                                          final t = startIndex;
+                                          startIndex = endIndex;
+                                          endIndex = t;
+                                        }
+
+                                        widget.onChanged?.call(
+                                          RangeValues(
+                                            startIndex.toDouble(),
+                                            endIndex.toDouble(),
+                                          ),
+                                        );
+                                      });
+                                    },
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: selected
+                                              ? 18 * fem
+                                              : 12 * fem,
+                                          decoration: BoxDecoration(
+                                            color: selected
+                                                ? const Color(0xFF90DCD0)
+                                                : const Color(
+                                                    0xFF90DCD0,
+                                                  ).withOpacity(0.4),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 6 * fem),
+
+                                        /// ONLY FROM & TO LABELS
+                                        if (index == startIndex ||
+                                            index == endIndex)
+                                          Text(
+                                            widget.options[index],
+                                            style: TextStyle(
+                                              fontSize: 12 * fem,
+                                              fontFamily: 'Montserrat',
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          )
+                                        else
+                                          SizedBox(height: 14 * fem),
+                                      ],
                                     ),
                                   ),
-                                  SizedBox(height: 6 * fem),
-                                  Text(
-                                    widget.options[index],
-                                    style: TextStyle(
-                                      fontSize: 12 * fem,
-                                      fontFamily: 'Montserrat',
-                                      fontWeight: selected
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                    ),
-                                  ),
+
+                                  /// ✅ EXACT 20px spacing (not after last)
+                                  if (index != widget.options.length - 1)
+                                    SizedBox(width: 20 * fem),
                                 ],
-                              ),
-                            );
-                          }),
+                              );
+                            }),
+                          ),
                         ),
                       ),
                     ],
@@ -191,7 +215,7 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
         border: Border.all(color: const Color(0xFFE5C289), width: 1 * fem),
       ),
       alignment: Alignment.center,
-      child: Text(
+      child: MyText(
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,

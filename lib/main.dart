@@ -20,7 +20,7 @@ Future<void> main() async {
   /// Open the auth box before runApp
   //final authBox = await Hive.openBox('authBox');
 
-  /// Provide the opened box to Riverpod
+  /// Provide the opened box to Riverpodad
   runApp(
     ProviderScope(
       // overrides: [

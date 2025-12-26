@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
+import '../../../../shared/widgets/text.dart';
+
 
 const Color kMint = Color(0xFF90DCD0);
 
@@ -157,11 +159,11 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
                   constraints: BoxConstraints(maxHeight: widget.maxHeight),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
                         color: kMint.withOpacity(0.28),
-                        blurRadius: 14,
+                        blurRadius: 15,
                         offset: const Offset(0, 8),
                       ),
                     ],
@@ -185,6 +187,8 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
   }
 
   Widget _buildList(List<T> items) {
+    final fem = ScaleSize.aspectRatio;
+
     if (items.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(14),
@@ -226,12 +230,14 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
               children: [
                 //Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
                 Expanded(
-                  child: Text(
+                  child: MyText(
                     label,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: selected ? Colors.white : const Color(0xFF90DCD0),
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                      color: selected ? Colors.white : Color(0xFF90DCD0),
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Montserrat',
+                      fontSize: 16 * fem,
                     ),
                   ),
                 ),
@@ -281,24 +287,26 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
       child: GestureDetector(
         onTap: _toggleDropdown,
         child: Container(
-          width: widget.width,
+          width: widget.width * fem,
           height: widget.height,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: kMint, width: 1.2),
+            border: Border.all(color: kMint, width: 0.5),
           ),
           child: Row(
             children: [
               //Expanded(child: Text(display, overflow: TextOverflow.ellipsis)),
               Expanded(
-                child: Text(
+                child: MyText(
                   display,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: const Color(0xFF90DCD0), // ✅ mint when selected
                     fontWeight: FontWeight.w600,
+                    fontFamily: 'Montserrat',
+                    fontSize: 16 * fem,
                   ),
                 ),
               ),

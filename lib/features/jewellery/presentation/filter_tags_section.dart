@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/filter_provider.dart';
 import 'widget/filter_tags_row.dart';
+import '../../../shared/utils/scale_size.dart';
+import '../data/ui_providers.dart';
 
 class FilterTagsSection extends ConsumerWidget {
   const FilterTagsSection({super.key});
@@ -49,35 +51,46 @@ class FilterTagsSection extends ConsumerWidget {
 
     if (tags.isEmpty) return const SizedBox.shrink();
 
-    return FilterTagsRow(
-      selectedFilters: tags,
-      onClearAll: () => notifier.resetFilters(),
-      onRemoveTag: (tag) {
-        // Map tag back to filter and clear it
-        if (filter.selectedCategory.contains(tag)) {
-          notifier.toggleCategory(tag);
-        } else if (filter.selectedSubCategory.contains(tag)) {
-          notifier.toggleSubCategory(tag);
-        } else if (filter.selectedGender.contains(tag)) {
-          notifier.toggleGender(tag);
-        } else if (filter.selectedMetal.contains(tag)) {
-          notifier.toggleMetal(tag);
-        } else if (filter.selectedShape.contains(tag)) {
-          notifier.toggleShape(tag);
-        } else if (filter.selectedOccasions.contains(tag)) {
-          notifier.toggleOccasion(tag);
-        } else if (tag.startsWith('Price:')) {
-          notifier.setPrice(const RangeValues(10000, 1000000));
-        } else
-        //  if (tag.startsWith('Color:')) {
-        //   notifier.setColorRange('D', 'J');
-        // } else if (tag.startsWith('Clarity:')) {
-        //   notifier.setClarityRange('IF', 'SI2');
-        // } else
-        if (tag.startsWith('Carat:')) {
-          notifier.setCaratRange('0.10', '2.00');
-        }
-      },
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: FilterTagsRow(
+        selectedFilters: tags,
+        //onClearAll: () => notifier.resetFilters(),
+        onClearAll: () {
+          notifier.resetFilters(); // Reset filter state
+
+          // 🔹 Trigger TopButtonsRow reset
+          ref.read(topButtonsResetProvider.notifier).trigger();
+        },
+
+        onRemoveTag: (tag) {
+          // Map tag back to filter and clear it
+          if (filter.selectedCategory.contains(tag)) {
+            notifier.toggleCategory(tag);
+          } else if (filter.selectedSubCategory.contains(tag)) {
+            notifier.toggleSubCategory(tag);
+          } else if (filter.selectedGender.contains(tag)) {
+            notifier.toggleGender(tag);
+          } else if (filter.selectedMetal.contains(tag)) {
+            notifier.toggleMetal(tag);
+          } else if (filter.selectedShape.contains(tag)) {
+            notifier.toggleShape(tag);
+          } else if (filter.selectedOccasions.contains(tag)) {
+            notifier.toggleOccasion(tag);
+          } else if (tag.startsWith('Price:')) {
+            notifier.setPrice(const RangeValues(10000, 1000000));
+          } else
+          //  if (tag.startsWith('Color:')) {
+          //   notifier.setColorRange('D', 'J');
+          // } else if (tag.startsWith('Clarity:')) {
+          //   notifier.setClarityRange('IF', 'SI2');
+          // } else
+          if (tag.startsWith('Carat:')) {
+            notifier.setCaratRange('0.10', '2.99');
+          }
+        },
+      ),
     );
   }
 }

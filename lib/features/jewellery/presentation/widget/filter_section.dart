@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../shared/widgets/text.dart';
 import '../../../../shared/utils/scale_size.dart';
 
 class FilterSection extends StatefulWidget {
@@ -39,12 +41,14 @@ class _FilterSectionState extends State<FilterSection> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                widget.title,
-                style: TextStyle(
-                  fontSize: 16 * fem,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Montserrat',
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.0 * fem, 8.0, 8.0, 8.0),
+                child: MyText(
+                  widget.title,
+                  style: TextStyle(
+                    fontSize: 16 * fem,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
               Icon(
@@ -57,7 +61,7 @@ class _FilterSectionState extends State<FilterSection> {
         SizedBox(height: 10 * fem),
         if (expanded) widget.child,
         SizedBox(height: 12 * fem),
-        Divider(height: 1, color: Colors.black.withOpacity(0.08)),
+        Divider(height: 1, color: Colors.black.withValues(alpha: 0.08)),
         SizedBox(height: 13 * fem),
       ],
     );

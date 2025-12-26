@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_bar.dart';
+import '../../../shared/routes/app_drawer.dart';
 import '../../../shared/utils/scale_size.dart';
 import '../../../shared/utils/enums.dart';
 import '../../../shared/widgets/text.dart';
@@ -10,14 +12,14 @@ import '../../auth/data/auth_notifier.dart';
 import '../data/listing_provider.dart';
 import '../data/jewellery_notifier.dart';
 import '../data/jewellery_model.dart';
+import '../data/filter_provider.dart';
+import '../data/ui_providers.dart';
 
 import 'top_buttons_row.dart';
 import 'filter_sidebar.dart';
 import 'category_section.dart';
 import 'filter_tags_section.dart';
 import 'product_grid.dart';
-
-import '../data/filter_provider.dart';
 
 class JewelleryListingScreen extends ConsumerStatefulWidget {
   const JewelleryListingScreen({super.key});
@@ -30,14 +32,11 @@ class JewelleryListingScreen extends ConsumerStatefulWidget {
 class _JewelleryListingScreenState
     extends ConsumerState<JewelleryListingScreen> {
   bool isStoreApiCalled = false;
-  String? _selectedSort;
-
   final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    
 
     /// 🔹 Store API (once)
     Future.microtask(() {
@@ -50,7 +49,7 @@ class _JewelleryListingScreenState
       }
     });
 
-    /// 🔹 Scroll → Load More
+    /// 🔹 Infinite scroll
     _scrollController.addListener(() {
       final notifier = ref.read(jewelleryProvider.notifier);
 
@@ -74,8 +73,34 @@ class _JewelleryListingScreenState
     final storeState = ref.watch(StoreProvider);
     final jewelleryAsync = ref.watch(jewelleryProvider);
 
+    final jewelleryNotifier = ref.read(jewelleryProvider.notifier);
+    final filterNotifier = ref.read(filterProvider.notifier);
+
     return Scaffold(
-      appBar: MyAppBar(showLogo: false, appBarLeading: AppBarLeading.back),
+      appBar: MyAppBar(
+        appBarLeading: AppBarLeading.drawer,
+        showLogo: false,
+        actions: [
+          AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
+          AppBarActionConfig(
+            type: AppBarAction.notification,
+            badgeCount: 1,
+            onTap: () => context.push('/notifications'),
+          ),
+          AppBarActionConfig(
+            type: AppBarAction.profile,
+            onTap: () => context.push('/profile'),
+          ),
+          AppBarActionConfig(
+            type: AppBarAction.cart,
+            badgeCount: 2,
+            onTap: () => context.push('/cart'),
+          ),
+        ],
+      ),
+
+      drawer: const SideDrawer(),
+
       body: Stack(
         children: [
           SafeArea(
@@ -87,33 +112,27 @@ class _JewelleryListingScreenState
                 /// 🔹 TOP CONTROLS
                 TopButtonsRow(
                   branchStores: storeState.stores,
+
                   onBranchSelected: (store) {
                     ref.read(StoreProvider.notifier).selectStore(store);
-                    ref
-                        .read(filterProvider.notifier)
-                        .setProductsAtOtherBranch(
-                          store.code, // ✅ use class fields
-                        );
-                    //ref.read(jewelleryProvider.notifier).refresh();
-                    ref.read(jewelleryProvider.notifier).resetAndFetch();
+
+                    filterNotifier.setProductsAtOtherBranch(store.code);
+                    jewelleryNotifier.resetAndFetch();
                   },
 
                   onSortSelected: (sort) {
-                    ref.read(filterProvider.notifier).setSort(sort);
-                    //ref.read(jewelleryProvider.notifier).refresh();
-                    ref.read(jewelleryProvider.notifier).resetAndFetch();
+                    filterNotifier.setSort(sort);
+                    jewelleryNotifier.resetAndFetch();
                   },
 
                   onTabSelected: (tab) {
-                    final filter = ref.read(filterProvider.notifier);
-
                     if (tab == 0) {
-                      filter.setProductsInStore();
+                      filterNotifier.setProductsInStore();
                     } else if (tab == 2) {
-                      filter.setAllDesigns();
+                      filterNotifier.setAllDesigns();
                     }
 
-                    //ref.read(jewelleryProvider.notifier).refresh();
+                    jewelleryNotifier.resetAndFetch();
                   },
                 ),
 
@@ -126,9 +145,7 @@ class _JewelleryListingScreenState
                       Expanded(
                         child: Column(
                           children: [
-                            const SizedBox(height: 9),
                             const CategorySection(),
-                            const SizedBox(height: 9),
                             const FilterTagsSection(),
 
                             /// 🔹 LIST
@@ -162,18 +179,15 @@ class _JewelleryListingScreenState
                                   return ProductGrid(
                                     jewellery: jewellery,
                                     controller: _scrollController,
-                                    isLoadingMore: ref
-                                        .watch(jewelleryProvider.notifier)
-                                        .isLoadingMore,
+                                    isLoadingMore:
+                                        jewelleryNotifier.isLoadingMore,
                                   );
                                 },
                               ),
                             ),
 
                             /// 🔹 LOAD MORE INDICATOR
-                            if (ref
-                                .watch(jewelleryProvider.notifier)
-                                .isLoadingMore)
+                            if (jewelleryNotifier.isLoadingMore)
                               const Padding(
                                 padding: EdgeInsets.all(16),
                                 child: CircularProgressIndicator(),
