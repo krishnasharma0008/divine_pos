@@ -5,20 +5,27 @@ class Jewellery {
   final String productCategory;
   final String? solitaireSlab;
   final double? weight;
-  final String? bomVariantName;
-  final String? imageUrl;
   final bool isNew;
+
+  final String? classify;
+  final String? description;
+  final double? price;
+  final String? layingWith;
+  final String? imageUrl;
 
   Jewellery({
     required this.itemId,
     required this.itemNumber,
-    required this.oldVariant,
+    this.oldVariant,
     required this.productCategory,
-    required this.solitaireSlab,
-    required this.weight,
-    required this.bomVariantName,
-    required this.imageUrl,
+    this.solitaireSlab,
+    this.weight,
     required this.isNew,
+    this.classify,
+    this.description,
+    this.price,
+    this.layingWith,
+    this.imageUrl,
   });
 
   factory Jewellery.fromJson(Map<String, dynamic> json) {
@@ -32,7 +39,6 @@ class Jewellery {
     String? _cleanUrl(dynamic v) {
       if (v == null) return null;
       var s = v.toString().trim();
-      // Remove markdown-style [url]()
       if (s.startsWith('[') && s.contains('](')) {
         final start = s.indexOf('[') + 1;
         final end = s.indexOf(']');
@@ -40,24 +46,29 @@ class Jewellery {
           s = s.substring(start, end);
         }
       }
-      return s;
+      return s.isEmpty ? null : s;
     }
 
     return Jewellery(
       itemId: json['Item_id'] is int
-          ? json['Item_id'] as int
-          : int.tryParse(json['Item_id'].toString()) ?? 0,
+          ? json['Item_id']
+          : int.tryParse(json['Item_id']?.toString() ?? '') ?? 0,
+
       itemNumber: json['item_number']?.toString() ?? '',
       oldVariant: json['old_varient']?.toString(),
       productCategory: json['product_category']?.toString() ?? '',
       solitaireSlab: json['solitaire_slab']?.toString(),
       weight: _toDouble(json['weight']),
-      bomVariantName: json['bom_variant_name']?.toString(),
-      imageUrl: _cleanUrl(json['image_url']),
       isNew:
           json['isnew'] == true ||
           json['isnew'] == 1 ||
-          json['isnew']?.toString() == 'true',
+          json['isnew']?.toString().toLowerCase() == 'true',
+
+      classify: json['classify']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      price: _toDouble(json['price']),
+      layingWith: json['laying_with']?.toString() ?? '',
+      imageUrl: _cleanUrl(json['image_url']),
     );
   }
 
@@ -68,8 +79,11 @@ class Jewellery {
     'product_category': productCategory,
     'solitaire_slab': solitaireSlab,
     'weight': weight,
-    'bom_variant_name': bomVariantName,
-    'image_url': imageUrl,
     'isnew': isNew,
+    'classify': classify,
+    'description': description,
+    'price': price,
+    'laying_with': layingWith,
+    'image_url': imageUrl,
   };
 }

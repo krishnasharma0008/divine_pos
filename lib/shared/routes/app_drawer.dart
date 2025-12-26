@@ -9,6 +9,7 @@ import '../themes.dart';
 import '../widgets/text.dart';
 import 'drawer_provider.dart';
 import 'route_pages.dart';
+import '../../shared/data/category_data.dart';
 
 class SideDrawer extends ConsumerWidget {
   const SideDrawer({super.key});
@@ -77,7 +78,6 @@ class SideDrawer extends ConsumerWidget {
                           context: context,
                           fem: fem,
                           label: "Catalogue",
-                          //icon: Icons.menu_book_outlined,
                           iconPath: 'assets/icons/menu_catalouge.svg',
                           routePage: RoutePages.jewellerylisting,
                           drawerState: drawerState,
@@ -89,7 +89,6 @@ class SideDrawer extends ConsumerWidget {
                           context: context,
                           fem: fem,
                           label: "Feedback Form",
-                          //icon: Icons.star_border,
                           iconPath: 'assets/icons/menu_feedback.svg',
                           routePage: RoutePages.feedback,
                           drawerState: drawerState,
@@ -101,7 +100,6 @@ class SideDrawer extends ConsumerWidget {
                           context: context,
                           fem: fem,
                           label: "Know Your Diamond Value",
-                          //icon: Icons.diamond_outlined,
                           iconPath: 'assets/icons/menu_kydv.svg',
                           routePage: RoutePages.knowDiamond,
                           drawerState: drawerState,
@@ -113,7 +111,6 @@ class SideDrawer extends ConsumerWidget {
                           context: context,
                           fem: fem,
                           label: "Verify & Track",
-                          //icon: Icons.track_changes_outlined,
                           iconPath: 'assets/icons/menu_vt.svg',
                           routePage: RoutePages.verifyTrack,
                           drawerState: drawerState,
@@ -125,28 +122,19 @@ class SideDrawer extends ConsumerWidget {
                           fem: fem,
                           context: context,
                           routePage: RoutePages.jewellerylisting,
-                          //icon: Icons.layers_outlined,
                           iconPath: 'assets/icons/menu_vt.svg',
                           title: "Categories",
-                          items: [
-                            'Necklaces',
-                            'Bangles',
-                            'Mangalsutra',
-                            'Rings',
-                            'Solitaire',
-                            'Bracelets',
-                            'Earrings',
-                          ],
+                          items: categories,
                         ),
 
                         sectionCard(
                           fem: fem,
                           context: context,
                           routePage: RoutePages.jewellerylisting,
-                          //icon: Icons.collections_outlined,
                           iconPath: 'assets/icons/menu_vt.svg',
                           title: 'Collection',
-                          items: ['Ballerina', 'Souls', 'Setu'],
+                          items: Collection,
+                          isSubcategory: true,
                         ),
 
                         _nav(
@@ -154,7 +142,6 @@ class SideDrawer extends ConsumerWidget {
                           context: context,
                           fem: fem,
                           label: "Cart",
-                          //icon: Icons.shopping_cart_outlined,
                           iconPath: 'assets/icons/menu_cart.svg',
                           routePage: RoutePages.cart,
                           drawerState: drawerState,
@@ -166,7 +153,6 @@ class SideDrawer extends ConsumerWidget {
                           context: context,
                           fem: fem,
                           label: "Account",
-                          //icon: Icons.person_outline,
                           iconPath: 'assets/icons/menu_account.svg',
                           routePage: RoutePages.account,
                           drawerState: drawerState,
@@ -193,13 +179,19 @@ class SideDrawer extends ConsumerWidget {
     required RoutePages routePage,
     required String iconPath,
     required String title,
-    required List<String> items,
+    required Map<String, String> items,
+    bool isSubcategory = false,
   }) {
-    Widget categoryItem(String title) {
+    Widget categoryItem(MapEntry<String, String> item) {
       return InkWell(
         onTap: () {
           Navigator.of(context).pop();
-          GoRouter.of(context).push(routePage.routePath);
+          final paramKey = isSubcategory ? 'Collection' : 'category';
+          debugPrint(paramKey);
+          GoRouter.of(context).push(
+            '${routePage.routePath}?$paramKey=${Uri.encodeComponent(item.value)}',
+          );
+          //GoRouter.of(context).push(routePage.routePath);RoutePages.jewellerylisting.routePath
         },
         child: Container(
           width: double.infinity,
@@ -209,7 +201,7 @@ class SideDrawer extends ConsumerWidget {
             bottom: fem * 12,
           ),
           margin: EdgeInsets.only(bottom: fem * 4),
-          child: MyText(title, style: TextStyle(fontSize: fem * 16)),
+          child: MyText(item.value, style: TextStyle(fontSize: fem * 16)),
         ),
       );
     }
@@ -272,7 +264,7 @@ class SideDrawer extends ConsumerWidget {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [for (var item in items) categoryItem(item)],
+              children: [for (var item in items.entries) categoryItem(item)],
             ),
           ),
         ],
@@ -332,64 +324,6 @@ class SideDrawer extends ConsumerWidget {
       ),
     );
   }
-
-  // Widget _nav(
-  //   WidgetRef ref, {
-  //   required BuildContext context,
-  //   required double fem,
-  //   required String label,
-  //   required IconData icon,
-  //   required RoutePages routePage,
-  //   required DrawerState drawerState,
-  //   required DrawerNotifier drawerNotifier,
-  // }) {
-  //   //final drawerState = ref.watch(drawerProvider);
-  //   //final drawerNotifier = ref.read(drawerProvider.notifier);
-
-  //   final isActive = drawerState.routePage == routePage;
-
-  //   final activeColor = isActive ? Colors.blue : Color(0xFF232323);
-  //   final activeFontweight = isActive ? FontWeight.w600 : FontWeight.w400;
-
-  //   return InkWell(
-  //     onTap: () {
-  //       Navigator.of(context).pop();
-  //       drawerNotifier.routePage = routePage;
-  //       GoRouter.of(context).push(routePage.routePath);
-  //     },
-  //     //borderRadius: BorderRadius.circular(8),
-  //     child: Container(
-  //       //color: label == "Verify & Track" ? Colors.pink : null,
-  //       padding: EdgeInsets.only(
-  //         top: fem * 25,
-  //         bottom: fem * 25,
-  //         left: fem * 24,
-  //       ),
-  //       child: Row(
-  //         children: [
-  //           Container(
-  //             width: fem * 36,
-  //             height: fem * 36,
-  //             decoration: BoxDecoration(
-  //               color: Colors.white,
-  //               borderRadius: BorderRadius.circular(999),
-  //             ),
-  //             child: Icon(icon, size: fem * 18, color: activeColor),
-  //           ),
-  //           SizedBox(width: fem * 16),
-  //           MyText(
-  //             label,
-  //             style: TextStyle(
-  //               fontSize: fem * 16,
-  //               color: activeColor,
-  //               fontWeight: activeFontweight,
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   dynamic header({required BuildContext context, required double fem}) {
     return Padding(
@@ -457,95 +391,3 @@ class SideDrawer extends ConsumerWidget {
     );
   }
 }
-
-// class _SectionCard extends StatelessWidget {
-//   final IconData icon;
-//   final String title;
-//   final List<String> items;
-
-//   const _SectionCard({
-//     required this.icon,
-//     required this.title,
-//     required this.items,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final fem = ScaleSize.aspectRatio;
-
-//     return Container(
-//       // decoration: BoxDecoration(
-//       //   color: const Color(0xFFEFF4F3),
-//       //   borderRadius: BorderRadius.circular(12),
-//       // ),
-//       //padding: EdgeInsets.symmetric(vertical: fem * 12, horizontal: fem * 10),
-//       padding: EdgeInsets.only(top: fem * 25, bottom: fem * 25, left: fem * 24),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Row(
-//             children: [
-//               Icon(icon, size: fem * 18, color: Colors.black87),
-//               SizedBox(width: fem * 8),
-//               MyText(
-//                 title,
-//                 style: TextStyle(
-//                   fontSize: fem * 13,
-//                   fontWeight: FontWeight.w600,
-//                 ),
-//               ),
-//               const Spacer(),
-//               Icon(Icons.expand_less, size: fem * 18, color: Colors.black87),
-//             ],
-//           ),
-
-//           SizedBox(height: fem * 25),
-
-//           Container(
-//             width: double.infinity,
-//             decoration: BoxDecoration(
-//               color: Colors.white,
-//               borderRadius: BorderRadius.circular(8),
-//             ),
-//             padding: EdgeInsets.symmetric(vertical: fem * 6),
-//             child: Column(
-//               children: items.map((text) {
-//                 final isFirst = text == items.first;
-
-//                 return Container(
-//                   margin: EdgeInsets.symmetric(
-//                     vertical: fem * 3,
-//                     horizontal: fem * 8,
-//                   ),
-//                   padding: EdgeInsets.symmetric(
-//                     horizontal: fem * 10,
-//                     vertical: fem * 8,
-//                   ),
-//                   decoration: isFirst
-//                       ? BoxDecoration(
-//                           borderRadius: BorderRadius.circular(6),
-//                           border: Border.all(
-//                             color: const Color(0xFFCED4D1),
-//                             width: 1,
-//                           ),
-//                         )
-//                       : null,
-//                   child: Align(
-//                     alignment: Alignment.centerLeft,
-//                     child: MyText(
-//                       text,
-//                       style: TextStyle(
-//                         fontSize: fem * 13,
-//                         color: Colors.black87,
-//                       ),
-//                     ),
-//                   ),
-//                 );
-//               }).toList(),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }

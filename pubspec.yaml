@@ -96,6 +96,7 @@ flutter:
     - assets/jewellery/filters/metal/
     # filter tag jewellery listing
     - assets/jewellery/filter_tags/
+    - assets/jewellery/
     # - assets/images/
     # - assets/config/
     # - .env

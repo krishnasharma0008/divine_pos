@@ -3,6 +3,7 @@ import 'product_card.dart';
 import '../data/jewellery_model.dart';
 import '../../../shared/utils/jewellery_helpers.dart';
 import '../../../shared/utils/scale_size.dart';
+import '../../../shared/utils/currency_formatter.dart';
 
 class ProductGrid extends StatelessWidget {
   final List<Jewellery> jewellery;
@@ -62,6 +63,7 @@ class ProductGrid extends StatelessWidget {
                 padding: EdgeInsets.symmetric(
                   horizontal: _horizontalPadding * r,
                 ),
+
                 child: Row(
                   children: [
                     Expanded(
@@ -75,13 +77,16 @@ class ProductGrid extends StatelessWidget {
                       ),
                     ),
                     if (jewellery.length > 4)
-                      Expanded(
-                        flex: 1,
-                        child: SizedBox(
-                          height: _cardHeight * r,
-                          child: _buildCard(jewellery[4]),
-                        ),
+                      SizedBox(
+                        width: 48 * r,
+                      ), // adjust value as needed space between column
+                    Expanded(
+                      flex: 1,
+                      child: SizedBox(
+                        height: _cardHeight * r,
+                        child: _buildCard(jewellery[4]),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -125,8 +130,8 @@ class ProductGrid extends StatelessWidget {
     return ProductCard(
       isWide: isWide,
       image: item.imageUrl ?? '',
-      title: item.bomVariantName ?? '',
-      price: formatWeight(item.weight),
+      description: item.description ?? '',
+      price: item.price ?? 0,
       tagText: tagText,
       tagColor: getTagColor(tagText),
       isSoldOut: false,

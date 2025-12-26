@@ -76,20 +76,20 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
 
     String? layingWith;
 
-    if (filter.allDesigns) {
-      layingWith = null;
-    } else if (filter.isInStore) {
+    if (filter.isInStore) {
       layingWith = pjcode;
     } else if (filter.productBranch != null) {
       layingWith = filter.productBranch;
-    } else {
+    } else if (filter.allDesigns) {
       layingWith = null;
+    } else {
+      layingWith = pjcode;
     }
 
-    // debugPrint("is_in_store: ${filter.isInStore}");
-    // debugPrint("branch_at_code: ${filter.productBranch}");
-    // debugPrint("all_designs: ${filter.allDesigns}");
-    // debugPrint("sort_by: ${filter.sortBy}");
+    debugPrint("is_in_store: ${filter.isInStore}");
+    debugPrint("branch_at_code: ${filter.productBranch}");
+    debugPrint("all_designs: ${filter.allDesigns}");
+    debugPrint("sort_by: ${filter.sortBy}");
 
     final postData = {
       "item_number": null,
@@ -111,8 +111,8 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
           ? null
           : filter.selectedGender.join(","),
 
-      "price_from": filter.selectedPriceRange.start,
-      "price_to": filter.selectedPriceRange.end,
+      "price_from": null, //filter.selectedPriceRange.start,
+      "price_to": null, //filter.selectedPriceRange.end,
       "order_for": null, //"Stock",
       "cts_from": null,
       "cts_to": null,
@@ -123,9 +123,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       "laying_with": layingWith,
     };
 
-    // debugPrint("postData: $postData");
-    // debugPrint("Login PjCode: $pjcode");
-    // debugPrint("laying_with: $layingWith");
+    debugPrint(" Post Data : ${postData}");
 
     final response = await dio.post(
       ApiEndPoint.get_jewellery_listing,

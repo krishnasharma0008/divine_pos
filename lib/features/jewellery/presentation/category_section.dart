@@ -21,7 +21,7 @@ class CategorySection extends ConsumerWidget {
       ),
       CategoryItem(
         image: 'assets/jewellery/filter_tags/earrings.png',
-        label: 'Earring',
+        label: 'EARRING',
       ),
       CategoryItem(
         image: 'assets/jewellery/filter_tags/pendant.png',

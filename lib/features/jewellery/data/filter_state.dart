@@ -36,9 +36,9 @@ class FilterState {
     required this.selectedOccasions,
 
     // top button filters
-    this.isInStore = false, // ✅ default in-store
+    this.isInStore = true, // ✅ default in-store
     this.productBranch, // null = no branch filter
-    this.allDesigns = true,
+    this.allDesigns = false,
     this.sortBy,
   });
 

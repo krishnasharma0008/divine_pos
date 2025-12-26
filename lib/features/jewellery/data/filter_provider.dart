@@ -119,6 +119,16 @@ class FilterNotifier extends StateNotifier<FilterState> {
   void setCaratRange(String s, String e) =>
       state = state.copyWith(caratStartLabel: s, caratEndLabel: e);
 
+  // ───────────────── Route setters (single select) ─────────────────
+
+  void setCategory(String value) {
+    state = state.copyWith(selectedCategory: {value});
+  }
+
+  void setSubCategory(String value) {
+    state = state.copyWith(selectedSubCategory: {value});
+  }
+
   // ───────────────── Reset ─────────────────
 
   void resetFilters() {

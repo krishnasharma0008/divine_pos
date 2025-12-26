@@ -1,11 +1,13 @@
+import 'package:divine_pos/shared/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../shared/utils/scale_size.dart';
+import '../../../shared/widgets/text.dart';
 
 class ProductCard extends StatelessWidget {
   final String image;
-  final String title;
-  final String price;
+  final String description;
+  final double price;
   final String tagText;
   final Color tagColor;
   final bool isSoldOut;
@@ -13,11 +15,11 @@ class ProductCard extends StatelessWidget {
   final VoidCallback? onAddToCart;
   final VoidCallback? onTryOn;
   final VoidCallback? onHaertTap;
-
+  //"Eternal Radiance Ring for Hera symbol of brilliance, balance."
   const ProductCard({
     super.key,
     required this.image,
-    required this.title,
+    required this.description,
     required this.price,
     this.tagText = "",
     this.tagColor = Colors.transparent,
@@ -39,7 +41,7 @@ class ProductCard extends StatelessWidget {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.80),
+                color: Colors.white.withValues(alpha: 0.80),
                 borderRadius: BorderRadius.circular(0),
               ),
               child: Center(
@@ -53,7 +55,7 @@ class ProductCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(0),
                     border: Border.all(color: Colors.grey.shade400),
                   ),
-                  child: Text(
+                  child: MyText(
                     "Sold out",
                     style: TextStyle(
                       fontSize: 14 * r,
@@ -74,7 +76,7 @@ class ProductCard extends StatelessWidget {
       children: [
         _imageStack(r),
         SizedBox(height: 10 * r),
-        _title(r),
+        _description(r),
         SizedBox(height: 8 * r),
 
         Column(
@@ -114,7 +116,7 @@ class ProductCard extends StatelessWidget {
         SizedBox(height: 10 * r),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16 * r),
-          child: _title(r),
+          child: _description(r),
         ),
         SizedBox(height: 8 * r),
         Column(
@@ -140,10 +142,10 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _imageStack(double r) {
-    final ImageProvider provider = image.startsWith('http')
-        ? NetworkImage(image)
-        : AssetImage(image) as ImageProvider;
-
+    // final ImageProvider provider = image.startsWith('http')
+    //     ? NetworkImage(image)
+    //     : AssetImage(image) as ImageProvider;
+    final bool isNetwork = image.startsWith('http');
     return Stack(
       children: [
         Container(
@@ -152,9 +154,31 @@ class ProductCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xffF7F7F7),
             //borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-            image: DecorationImage(image: provider, fit: BoxFit.contain),
+            //image: DecorationImage(image: provider, fit: BoxFit.contain),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFFCECECE).withValues(alpha: 0.25),
+                blurRadius: 4,
+                offset: Offset(2, 2),
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: Center(
+            child: isNetwork
+                ? Image.network(
+                    image,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => _noImageAsset(r),
+                  )
+                : Image.asset(
+                    image,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => _noImageAsset(r),
+                  ),
           ),
         ),
+
         if (tagText.isNotEmpty)
           Positioned(
             left: 14 * r,
@@ -168,10 +192,10 @@ class ProductCard extends StatelessWidget {
                 color: Colors.transparent,
                 //borderRadius: BorderRadius.circular(20),
               ),
-              child: Text(
+              child: MyText(
                 tagText,
                 style: TextStyle(
-                  fontSize: 15 * r,
+                  fontSize: 13 * r,
                   fontWeight: FontWeight.w300,
                   color: tagColor,
                 ),
@@ -194,18 +218,27 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _title(double r) => Padding(
+  Widget _noImageAsset(double r) {
+    return Image.asset(
+      'assets/jewellery/No_Image_Available.jpg',
+      fit: BoxFit.contain,
+      width: 120 * r,
+      opacity: const AlwaysStoppedAnimation(0.6),
+    );
+  }
+
+  Widget _description(double r) => Padding(
     padding: EdgeInsets.symmetric(horizontal: 9 * r),
     child: SizedBox(
       height: 36 * r,
-      child: Text(
-        title,
+      child: MyText(
+        description,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: Colors.black,
           fontSize: 13 * r,
-          fontFamily: 'Montserrat',
+
           fontWeight: FontWeight.w300,
           height: 1.54,
         ),
@@ -215,12 +248,11 @@ class ProductCard extends StatelessWidget {
 
   Widget _price(double r) => Padding(
     padding: EdgeInsets.symmetric(horizontal: 9 * r),
-    child: Text(
-      price,
+    child: MyText(
+      price.inRupeesFormat(),
       style: TextStyle(
         color: const Color(0xFF212121),
         fontSize: 12 * r,
-        fontFamily: 'Montserrat',
         fontWeight: FontWeight.w500,
       ),
     ),

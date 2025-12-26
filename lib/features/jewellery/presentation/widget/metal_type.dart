@@ -10,7 +10,7 @@ class MetalTypeList extends StatelessWidget {
 
   const MetalTypeList({
     super.key,
-    this.fem = 1.0,
+    required this.fem,
     this.itemWidth = 190, // 🎯 matches your image
     required this.items,
     required this.selected,
@@ -27,7 +27,7 @@ class MetalTypeList extends StatelessWidget {
         final bool isSelected = selected.contains(label);
 
         return Padding(
-          padding: EdgeInsets.only(bottom: 12 * fem, left: 15),
+          padding: EdgeInsets.only(left: 5 * fem, bottom: 28 * fem),
           child: GestureDetector(
             onTap: () => onSelected?.call(label),
             child: SizedBox(
@@ -37,12 +37,15 @@ class MetalTypeList extends StatelessWidget {
                 duration: const Duration(milliseconds: 150),
                 padding: EdgeInsets.symmetric(horizontal: 16 * fem),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  //color: Colors.white,
+                  color: isSelected
+                      ? const Color(0xFFF3FBFA)
+                      : Colors.white, // Color(0xFFFBFBFB),
                   borderRadius: BorderRadius.circular(15 * fem),
                   border: Border.all(
                     color: isSelected
                         ? const Color(0xFFD6B37C)
-                        : const Color(0xFFE6E6E6),
+                        : Colors.transparent,
                     width: 1.2,
                   ),
                 ),

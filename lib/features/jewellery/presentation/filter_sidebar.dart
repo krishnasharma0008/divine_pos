@@ -88,6 +88,8 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
   //carat
   final _caratOptions = [
     '0.10',
+    '0.14',
+    '0.18',
     '0.25',
     '0.50',
     '0.75',
@@ -130,13 +132,13 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const double spacing = 10; // same as before
+        final double spacing = fem * 10; // same as before
         // width for 2 items per row inside available width
         final double cellWidth = (constraints.maxWidth - spacing) / 2;
 
         return Wrap(
           spacing: spacing,
-          runSpacing: 10,
+          runSpacing: fem * 10,
           children: items.map((item) {
             return SizedBox(
               width: cellWidth,
@@ -166,7 +168,8 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
     final notifier = ref.read(filterProvider.notifier); // FilterNotifier
 
     return Container(
-      width: 380 * fem,
+      width: fem * 310,
+      padding: EdgeInsets.symmetric(horizontal: fem * 4, vertical: fem * 4),
       color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,21 +178,15 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
           // FIXED HEADER (NON-SCROLLABLE)
           //------------------------------------------------------
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              28 * fem,
-              24 * fem,
-              213.5 * fem,
-              43 * fem,
-            ),
+            padding: EdgeInsets.only(top: fem * 24, bottom: fem * 43),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 MyText(
                   'Filters',
                   style: TextStyle(
-                    fontSize: 24 * fem,
+                    fontSize: fem * 24,
                     fontWeight: FontWeight.w600,
-                    fontFamily: 'Montserrat',
                   ),
                 ),
                 // Icon(Icons.close, size: 22 * fem),
@@ -197,19 +194,14 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
             ),
           ),
 
-          Divider(height: 1, color: Colors.black.withOpacity(0.08)),
+          Divider(height: 1, color: Colors.black.withValues(alpha: 0.08)),
 
           //------------------------------------------------------
           // SCROLLABLE FILTER SECTIONS
           //------------------------------------------------------
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                8 * fem,
-                20 * fem,
-                8 * fem,
-                18 * fem,
-              ),
+              padding: EdgeInsets.only(top: fem * 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -232,6 +224,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //------------------------------------------------------
                   // DIAMOND SHAPE
                   //------------------------------------------------------
+                  divider(fem),
                   FilterSection(
                     title: 'Diamond Shape',
                     fem: fem,
@@ -247,6 +240,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //------------------------------------------------------
                   // CARAT RANGE
                   //------------------------------------------------------
+                  divider(fem),
                   FilterSection(
                     title: 'Carat Weight',
                     fem: fem,
@@ -271,6 +265,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //------------------------------------------------------
                   // CATEGORY
                   //------------------------------------------------------
+                  divider(fem),
                   FilterSection(
                     title: 'Category',
                     fem: fem,
@@ -297,6 +292,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //------------------------------------------------------
                   // SUB CATEGORY
                   //------------------------------------------------------
+                  divider(fem),
                   FilterSection(
                     title: 'Sub Category',
                     fem: fem,
@@ -318,6 +314,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //------------------------------------------------------
                   // METAL
                   //------------------------------------------------------
+                  divider(fem),
                   FilterSection(
                     title: 'Metal',
                     fem: fem,
@@ -332,6 +329,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //------------------------------------------------------
                   // GENDER
                   //------------------------------------------------------
+                  divider(fem),
                   FilterSection(
                     title: 'Gender',
                     fem: fem,
@@ -347,6 +345,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //------------------------------------------------------
                   // OCCASION
                   //------------------------------------------------------
+                  divider(fem),
                   FilterSection(
                     title: 'Occasion',
                     fem: fem,
@@ -371,5 +370,9 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
         ],
       ),
     );
+  }
+
+  Divider divider(double fem) {
+    return Divider(height: 1, color: Colors.black.withValues(alpha: 0.08));
   }
 }

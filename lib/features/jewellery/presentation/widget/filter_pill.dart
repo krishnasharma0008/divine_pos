@@ -13,7 +13,7 @@ class FilterPill extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    this.fem = 1.0,
+    required this.fem,
   });
 
   @override
@@ -26,15 +26,15 @@ class FilterPill extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.symmetric(horizontal: 12 * fem, vertical: 8 * fem),
+        padding: EdgeInsets.symmetric(horizontal: 10 * fem, vertical: 8 * fem),
         decoration: BoxDecoration(
-          color: selected ? Color(0xFFF3FBFA) : Colors.transparent,
+          color: selected ? Color(0xFFF3FBFA) : Color(0xFFFBFBFB),
           borderRadius: BorderRadius.circular(15 * fem),
           // ONLY selected has border
           border: selected
               ? Border.all(color: borderColor, width: 1 * fem)
               : Border.all(color: Colors.transparent, width: 1 * fem),
-
+          // Color(0xFF90DCD0).withValues(alpha: 0.11)
           boxShadow: selected
               ? [
                   BoxShadow(
@@ -49,13 +49,12 @@ class FilterPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _checkbox(selected, fem),
-            SizedBox(width: 6 * fem),
+            SizedBox(width: 8 * fem),
             MyText(
               label,
               style: TextStyle(
                 fontSize: 14 * fem,
                 fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-                fontFamily: 'Montserrat',
                 color: Color(0xFF4B4B4B),
               ),
             ),

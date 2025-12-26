@@ -43,39 +43,47 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
       children: [
         /// TITLE
         if (hasTitle) ...[
-          Text(
+          MyText(
             widget.title,
-            style: TextStyle(fontSize: 18 * fem, fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 16 * fem, fontWeight: FontWeight.w400),
           ),
-          SizedBox(height: 12 * fem),
+          //SizedBox(height: 12 * fem),
         ],
 
         /// SELECTED VALUES
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Expanded(child: _valueBox(widget.options[startIndex], fem)),
+        Padding(
+          padding: EdgeInsets.only(left: 5 * fem),
+          child: Row(
+            //mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _valueBox(widget.options[startIndex], fem),
 
-            SizedBox(width: 12 * fem),
+              SizedBox(width: 12 * fem),
 
-            Text(
-              '–',
-              style: TextStyle(fontSize: 20 * fem, fontWeight: FontWeight.w500),
-            ),
+              Text(
+                "-",
+                style: TextStyle(
+                  fontSize: 12 * fem,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF4B4B4B),
+                ),
+              ),
 
-            SizedBox(width: 12 * fem),
+              SizedBox(width: 12 * fem),
 
-            Expanded(child: _valueBox(widget.options[endIndex], fem)),
-          ],
+              _valueBox(widget.options[endIndex], fem),
+            ],
+          ),
         ),
 
-        SizedBox(height: 20 * fem),
+        SizedBox(height: 8 * fem),
 
         /// CLICKABLE SCALE
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24 * fem),
+          padding: EdgeInsets.only(right: 30 * fem),
           child: SizedBox(
-            height: 55 * fem,
+            height: 40 * fem,
+            //width: 257 * fem,
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -83,9 +91,9 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
                 Positioned(
                   left: 8 * fem,
                   right: 8 * fem,
-                  top: 18 * fem,
+                  top: 13 * fem,
                   child: Container(
-                    height: 4,
+                    height: fem * 6,
                     decoration: BoxDecoration(
                       color: const Color(0xFFEDEDED),
                       borderRadius: BorderRadius.circular(20),
@@ -97,98 +105,92 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
                 Positioned.fill(
                   child: Column(
                     children: [
-                      SizedBox(height: 10 * fem),
+                      SizedBox(height: 11 * fem),
                       Expanded(
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: 6 * fem,
                           ), // 👈 inset ticks
                           child: Row(
-                            //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: List.generate(widget.options.length, (
                               index,
                             ) {
                               final bool selected =
                                   index >= startIndex && index <= endIndex;
 
-                              return Row(
-                                children: [
-                                  GestureDetector(
-                                    behavior: HitTestBehavior.translucent,
-                                    onTap: () {
-                                      setState(() {
-                                        final s = startIndex;
-                                        final e = endIndex;
+                              return Expanded(
+                                child: GestureDetector(
+                                  //behavior: HitTestBehavior.translucent,
+                                  behavior: HitTestBehavior
+                                      .opaque, // 👈 VERY IMPORTANT
+                                  onTap: () {
+                                    setState(() {
+                                      final s = startIndex;
+                                      final e = endIndex;
 
-                                        if (index <= s) {
-                                          startIndex = index;
-                                        } else if (index >= e) {
-                                          endIndex = index;
-                                        } else {
-                                          final closerToStart =
-                                              (index - s).abs() <=
-                                              (index - e).abs();
-                                          closerToStart
-                                              ? startIndex = index
-                                              : endIndex = index;
-                                        }
+                                      if (index <= s) {
+                                        startIndex = index;
+                                      } else if (index >= e) {
+                                        endIndex = index;
+                                      } else {
+                                        final closerToStart =
+                                            (index - s).abs() <=
+                                            (index - e).abs();
+                                        closerToStart
+                                            ? startIndex = index
+                                            : endIndex = index;
+                                      }
 
-                                        if (endIndex < startIndex) {
-                                          final t = startIndex;
-                                          startIndex = endIndex;
-                                          endIndex = t;
-                                        }
+                                      if (endIndex < startIndex) {
+                                        final t = startIndex;
+                                        startIndex = endIndex;
+                                        endIndex = t;
+                                      }
 
-                                        widget.onChanged?.call(
-                                          RangeValues(
-                                            startIndex.toDouble(),
-                                            endIndex.toDouble(),
-                                          ),
-                                        );
-                                      });
-                                    },
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          width: 6,
-                                          height: selected
-                                              ? 18 * fem
-                                              : 12 * fem,
+                                      widget.onChanged?.call(
+                                        RangeValues(
+                                          startIndex.toDouble(),
+                                          endIndex.toDouble(),
+                                        ),
+                                      );
+                                    });
+                                  },
+                                  child: Column(
+                                    children: [
+                                      Center(
+                                        child: Container(
+                                          width: fem * 4,
+                                          height: 10 * fem,
                                           decoration: BoxDecoration(
                                             color: selected
                                                 ? const Color(0xFF90DCD0)
                                                 : const Color(
                                                     0xFF90DCD0,
-                                                  ).withOpacity(0.4),
+                                                  ).withValues(alpha: 0.4),
                                             borderRadius: BorderRadius.circular(
                                               20,
                                             ),
                                           ),
                                         ),
-                                        SizedBox(height: 6 * fem),
+                                      ),
+                                      SizedBox(height: 2 * fem),
 
-                                        /// ONLY FROM & TO LABELS
-                                        if (index == startIndex ||
-                                            index == endIndex)
-                                          Text(
-                                            widget.options[index],
-                                            style: TextStyle(
-                                              fontSize: 12 * fem,
-                                              fontFamily: 'Montserrat',
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          )
-                                        else
-                                          SizedBox(height: 14 * fem),
-                                      ],
-                                    ),
+                                      /// ONLY FROM & TO LABELS
+                                      if (index == startIndex ||
+                                          index == endIndex)
+                                        MyText(
+                                          widget.options[index],
+                                          style: TextStyle(
+                                            fontSize: 10 * fem,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        )
+                                      else
+                                        SizedBox(height: 14 * fem),
+                                    ],
                                   ),
-
-                                  /// ✅ EXACT 20px spacing (not after last)
-                                  if (index != widget.options.length - 1)
-                                    SizedBox(width: 20 * fem),
-                                ],
+                                ),
                               );
                             }),
                           ),
@@ -207,23 +209,23 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
 
   /// VALUE BOX
   Widget _valueBox(String text, double fem) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16 * fem, vertical: 12 * fem),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF8F7),
-        borderRadius: BorderRadius.circular(15 * fem),
-        border: Border.all(color: const Color(0xFFE5C289), width: 1 * fem),
-      ),
-      alignment: Alignment.center,
-      child: MyText(
-        text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 14 * fem,
-          fontFamily: 'Montserrat',
-          fontWeight: FontWeight.w600,
+    return SizedBox(
+      width: 114 * fem,
+      child: Container(
+        //padding: EdgeInsets.symmetric(horizontal: 16 * fem, vertical: 12 * fem),
+        padding: EdgeInsets.all(10 * fem),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3FBFA),
+          borderRadius: BorderRadius.circular(15 * fem),
+          border: Border.all(color: const Color(0xFFE5C289), width: 1 * fem),
+        ),
+        alignment: Alignment.center,
+        child: MyText(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14 * fem, fontWeight: FontWeight.w600),
         ),
       ),
     );

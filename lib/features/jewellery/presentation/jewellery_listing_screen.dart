@@ -1,19 +1,17 @@
+import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_bar.dart';
 import '../../../shared/routes/app_drawer.dart';
-import '../../../shared/utils/scale_size.dart';
 import '../../../shared/utils/enums.dart';
 import '../../../shared/widgets/text.dart';
 
 import '../../auth/data/auth_notifier.dart';
 import '../data/listing_provider.dart';
 import '../data/jewellery_notifier.dart';
-import '../data/jewellery_model.dart';
 import '../data/filter_provider.dart';
-import '../data/ui_providers.dart';
 
 import 'top_buttons_row.dart';
 import 'filter_sidebar.dart';
@@ -76,6 +74,8 @@ class _JewelleryListingScreenState
     final jewelleryNotifier = ref.read(jewelleryProvider.notifier);
     final filterNotifier = ref.read(filterProvider.notifier);
 
+    final fem = ScaleSize.aspectRatio;
+
     return Scaffold(
       appBar: MyAppBar(
         appBarLeading: AppBarLeading.drawer,
@@ -135,67 +135,78 @@ class _JewelleryListingScreenState
                     jewelleryNotifier.resetAndFetch();
                   },
                 ),
+                //Container(height: fem * 29, color: Colors.pink),
 
                 /// 🔹 MAIN CONTENT
                 Expanded(
-                  child: Row(
-                    children: [
-                      const FilterSidebar(),
+                  child: Container(
+                    color: Colors.white,
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(
+                            left: fem * 28,
+                            right: fem * 40,
+                          ),
+                          child: const FilterSidebar(),
+                        ),
 
-                      Expanded(
-                        child: Column(
-                          children: [
-                            const CategorySection(),
-                            const FilterTagsSection(),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              CategorySection(),
+                              FilterTagsSection(),
+                              SizedBox(height: fem * 20),
 
-                            /// 🔹 LIST
-                            Expanded(
-                              child: jewelleryAsync.when(
-                                loading: () => const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                                error: (err, _) => Center(
-                                  child: MyText(
-                                    err.toString(),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
+                              /// 🔹 LIST
+                              Expanded(
+                                child: jewelleryAsync.when(
+                                  loading: () => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                  error: (err, _) => Center(
+                                    child: MyText(
+                                      err.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                data: (jewellery) {
-                                  if (jewellery.isEmpty) {
-                                    return const Center(
-                                      child: MyText(
-                                        "No jewellery found",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
+                                  data: (jewellery) {
+                                    if (jewellery.isEmpty) {
+                                      return const Center(
+                                        child: MyText(
+                                          "No search results found, please try a different filter.",
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
-                                      ),
+                                      );
+                                    }
+
+                                    return ProductGrid(
+                                      jewellery: jewellery,
+                                      controller: _scrollController,
+                                      isLoadingMore:
+                                          jewelleryNotifier.isLoadingMore,
                                     );
-                                  }
-
-                                  return ProductGrid(
-                                    jewellery: jewellery,
-                                    controller: _scrollController,
-                                    isLoadingMore:
-                                        jewelleryNotifier.isLoadingMore,
-                                  );
-                                },
+                                  },
+                                ),
                               ),
-                            ),
 
-                            /// 🔹 LOAD MORE INDICATOR
-                            if (jewelleryNotifier.isLoadingMore)
-                              const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: CircularProgressIndicator(),
-                              ),
-                          ],
+                              /// 🔹 LOAD MORE INDICATOR
+                              if (jewelleryNotifier.isLoadingMore)
+                                const Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(),
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -204,7 +215,7 @@ class _JewelleryListingScreenState
 
           if (storeState.isLoading)
             Container(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: .15),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],

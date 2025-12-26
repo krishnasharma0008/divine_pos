@@ -1,9 +1,7 @@
 import 'dart:ui';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
 import '../../../../shared/widgets/text.dart';
-
 
 const Color kMint = Color(0xFF90DCD0);
 
@@ -53,9 +51,6 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
   OverlayEntry? _overlayEntry;
   bool isOpen = false;
 
-  /// Tracks whether we've registered the global pointer route.
-  bool _isRouteAdded = false;
-
   late AnimationController _controller;
   late Animation<double> _fade;
   late Animation<Offset> _slide;
@@ -74,66 +69,22 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
   }
 
-  void _toggleDropdown() {
-    if (!mounted) return;
-
-    if (isOpen) {
-      // Close: reverse animation, then remove overlay next frame (safe).
-      _controller.reverse();
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        try {
-          _overlayEntry?.remove();
-        } catch (_) {}
-        _overlayEntry = null;
-      });
-
-      if (_isRouteAdded) {
-        try {
-          GestureBinding.instance.pointerRouter.removeGlobalRoute(
-            _tapOutsideHandler,
-          );
-        } catch (_) {}
-        _isRouteAdded = false;
-      }
-    } else {
-      // Open: avoid creating multiple overlays
-      if (_overlayEntry == null) {
-        _overlayEntry = _createOverlay();
-        Overlay.of(context)?.insert(_overlayEntry!);
-      }
-
-      if (!_isRouteAdded) {
-        GestureBinding.instance.pointerRouter.addGlobalRoute(
-          _tapOutsideHandler,
-        );
-        _isRouteAdded = true;
-      }
-
-      _controller.forward();
-    }
-
-    if (mounted) setState(() => isOpen = !isOpen);
-  }
-
-  void _tapOutsideHandler(PointerEvent event) {
-    // Only close on pointer down and if dropdown is open.
-    if (!isOpen) return;
-    if (event is PointerDownEvent) {
-      // Defer toggling to avoid interfering with current event dispatch
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && isOpen) _toggleDropdown();
+  /// Rebuild when parent updates selectedItem
+  @override
+  void didUpdateWidget(covariant UltraDropdown<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedItem != oldWidget.selectedItem) {
+      setState(() {
+        // Forces rebuild to update displayed label
       });
     }
   }
 
   String _canonicalString(T? item) {
-    // Prefer explicit comparator if provided
-    if (widget.itemAsString != null) {
-      return widget.itemAsString!(item) ?? '';
-    }
-    // Fallback: use itemBuilder for canonical comparison (works for many cases)
     if (item == null) return '';
+    if (widget.itemAsString != null) {
+      return widget.itemAsString!(item);
+    }
     try {
       return widget.itemBuilder(item);
     } catch (_) {
@@ -141,48 +92,91 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
     }
   }
 
+  void _toggleDropdown() {
+    if (!mounted) return;
+
+    if (isOpen) {
+      _controller.reverse();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          _overlayEntry?.remove();
+        } catch (_) {}
+        _overlayEntry = null;
+      });
+    } else {
+      if (_overlayEntry == null) {
+        _overlayEntry = _createOverlay();
+        Overlay.of(context)?.insert(_overlayEntry!);
+      }
+      _controller.forward();
+    }
+
+    setState(() => isOpen = !isOpen);
+  }
+
   OverlayEntry _createOverlay() {
+    final renderBox = context.findRenderObject() as RenderBox;
+    final targetPosition = renderBox.localToGlobal(Offset.zero);
+    final targetSize = renderBox.size;
+
     return OverlayEntry(
-      builder: (context) => Positioned(
-        width: widget.width,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: Offset(0, widget.height + 8),
-          child: Material(
-            color: Colors.transparent,
-            child: FadeTransition(
-              opacity: _fade,
-              child: SlideTransition(
-                position: _slide,
-                child: Container(
-                  constraints: BoxConstraints(maxHeight: widget.maxHeight),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      BoxShadow(
-                        color: kMint.withOpacity(0.28),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: widget.items == null
-                      ? const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: SizedBox(
-                            height: 40,
-                            child: Center(child: CircularProgressIndicator()),
+      builder: (context) {
+        return Stack(
+          children: [
+            // Full-screen transparent layer to detect outside taps
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  if (mounted && isOpen) _toggleDropdown();
+                },
+                child: const SizedBox(),
+              ),
+            ),
+
+            // The dropdown itself, anchored to the field
+            Positioned(
+              left: targetPosition.dx,
+              top: targetPosition.dy + targetSize.height + 8,
+              width: widget.width,
+              child: Material(
+                color: Colors.transparent,
+                child: FadeTransition(
+                  opacity: _fade,
+                  child: SlideTransition(
+                    position: _slide,
+                    child: Container(
+                      constraints: BoxConstraints(maxHeight: widget.maxHeight),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kMint.withOpacity(0.28),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           ),
-                        )
-                      : _buildList(widget.items!),
+                        ],
+                      ),
+                      child: widget.items == null
+                          ? const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: SizedBox(
+                                height: 40,
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                            )
+                          : _buildList(widget.items!),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-      ),
+          ],
+        );
+      },
     );
   }
 
@@ -208,7 +202,6 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
         final item = items[index];
         final label = widget.itemBuilder(item);
 
-        // Compare by canonical string (uses itemAsString if provided).
         final selected =
             selectedCanonical.isNotEmpty &&
             selectedCanonical == _canonicalString(item);
@@ -216,7 +209,6 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
         return InkWell(
           onTap: () {
             widget.onSelected(item);
-            // Defer closing to next frame to avoid pointer-routing issues.
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted && isOpen) _toggleDropdown();
             });
@@ -224,24 +216,22 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
-              color: selected ? Color(0xFF90DCD0) : Colors.transparent,
+              color: selected ? const Color(0xFF90DCD0) : Colors.transparent,
             ),
             child: Row(
               children: [
-                //Expanded(child: Text(label, overflow: TextOverflow.ellipsis)),
                 Expanded(
                   child: MyText(
                     label,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: selected ? Colors.white : Color(0xFF90DCD0),
+                      color: selected ? Colors.white : const Color(0xFF90DCD0),
                       fontWeight: FontWeight.w600,
                       fontFamily: 'Montserrat',
                       fontSize: 16 * fem,
                     ),
                   ),
                 ),
-
                 if (selected)
                   const Icon(Icons.check, size: 18, color: Colors.white),
               ],
@@ -254,17 +244,6 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
 
   @override
   void dispose() {
-    // Only remove the global route if we actually added it.
-    if (_isRouteAdded) {
-      try {
-        GestureBinding.instance.pointerRouter.removeGlobalRoute(
-          _tapOutsideHandler,
-        );
-      } catch (_) {}
-      _isRouteAdded = false;
-    }
-
-    // Remove overlay safely (attempt immediate removal).
     try {
       _overlayEntry?.remove();
     } catch (_) {}
@@ -297,13 +276,12 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
           ),
           child: Row(
             children: [
-              //Expanded(child: Text(display, overflow: TextOverflow.ellipsis)),
               Expanded(
                 child: MyText(
                   display,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: const Color(0xFF90DCD0), // ✅ mint when selected
+                    color: const Color(0xFF90DCD0),
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Montserrat',
                     fontSize: 16 * fem,

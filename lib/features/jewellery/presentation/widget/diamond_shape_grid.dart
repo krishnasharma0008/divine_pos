@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/widgets/text.dart';
+
 class DiamondShapeGrid extends StatelessWidget {
   final double fem;
   final List<Map<String, String>> items; // [{label, asset}]
@@ -8,7 +10,7 @@ class DiamondShapeGrid extends StatelessWidget {
 
   const DiamondShapeGrid({
     super.key,
-    this.fem = 1.0,
+    required this.fem,
     required this.items,
     required this.selected,
     this.onSelected,
@@ -20,9 +22,10 @@ class DiamondShapeGrid extends StatelessWidget {
       crossAxisCount: 2,
       mainAxisSpacing: 12 * fem,
       crossAxisSpacing: 12 * fem,
-      childAspectRatio: 2.8,
+      childAspectRatio: 3.5,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.only(left: fem * 12, right: fem * 23),
       children: items.map((it) {
         final String label = it['label']!;
         final String asset = it['asset']!;
@@ -34,10 +37,12 @@ class DiamondShapeGrid extends StatelessWidget {
             duration: const Duration(milliseconds: 150),
             padding: EdgeInsets.symmetric(
               horizontal: 14 * fem,
-              vertical: 10 * fem,
+              vertical: 4 * fem,
             ),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFEFF8F7) : Colors.white,
+              color: isSelected
+                  ? const Color(0xFFF3FBFA) //.withValues(alpha: 0.11)
+                  : const Color(0xFFFBFBFB),
               borderRadius: BorderRadius.circular(15 * fem),
               border: Border.all(
                 color: isSelected
@@ -49,22 +54,22 @@ class DiamondShapeGrid extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 48 * fem,
-                  height: 48 * fem,
-                  decoration: const BoxDecoration(shape: BoxShape.circle),
-                  child: Image.asset(asset, fit: BoxFit.contain),
+                SizedBox(
+                  width: 29 * fem,
+                  height: 29 * fem,
+                  //decoration: const BoxDecoration(shape: BoxShape.circle),
+                  child: Image.asset(asset, fit: BoxFit.cover),
                 ),
+                SizedBox(width: fem * 10),
                 Expanded(
-                  child: Text(
+                  child: MyText(
                     label,
                     style: TextStyle(
-                      fontFamily: 'Montserrat',
                       fontSize: 14 * fem,
                       fontWeight: isSelected
                           ? FontWeight.w500
                           : FontWeight.w400,
-                      color: const Color(0xFF555555),
+                      color: Color(0xFF4B4B4B),
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),

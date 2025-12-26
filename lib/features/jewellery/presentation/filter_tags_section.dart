@@ -13,16 +13,29 @@ class FilterTagsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(filterProvider);
     final notifier = ref.read(filterProvider.notifier);
+    final fem = ScaleSize.aspectRatio;
 
     final tags = <String>[];
 
     // Multi-select sets
-    for (final o in filter.selectedCategory) tags.add(o);
-    for (final o in filter.selectedSubCategory) tags.add(o);
-    for (final o in filter.selectedGender) tags.add(o);
-    for (final o in filter.selectedMetal) tags.add(o);
-    for (final o in filter.selectedShape) tags.add(o);
-    for (final o in filter.selectedOccasions) tags.add(o);
+    for (final o in filter.selectedCategory) {
+      tags.add(o);
+    }
+    for (final o in filter.selectedSubCategory) {
+      tags.add(o);
+    }
+    for (final o in filter.selectedGender) {
+      tags.add(o);
+    }
+    for (final o in filter.selectedMetal) {
+      tags.add(o);
+    }
+    for (final o in filter.selectedShape) {
+      tags.add(o);
+    }
+    for (final o in filter.selectedOccasions) {
+      tags.add(o);
+    }
 
     // Price range
     if (filter.selectedPriceRange.start != 10000 ||
@@ -52,8 +65,8 @@ class FilterTagsSection extends ConsumerWidget {
     if (tags.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 15),
+      //color: Colors.black,
+      padding: EdgeInsets.only(right: fem * 15),
       child: FilterTagsRow(
         selectedFilters: tags,
         //onClearAll: () => notifier.resetFilters(),

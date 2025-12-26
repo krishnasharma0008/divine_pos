@@ -1,7 +1,6 @@
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
-import '../../../../shared/widgets/text.dart';
 
 class RangeSelector extends StatelessWidget {
   final double min;
@@ -47,106 +46,133 @@ class RangeSelector extends StatelessWidget {
     final fem = ScaleSize.aspectRatio;
     final hasTitle = title.trim().isNotEmpty;
 
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12 * fem),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 🔹 Title
-          if (hasTitle) ...[
-            Row(
-              children: [
-                MyText(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16 * fem,
-                    fontWeight: FontWeight.w400, // matches Figma
-                    color: Colors.black,
-                  ),
-                ),
-                const Spacer(),
-              ],
-            ),
-            SizedBox(height: 14 * fem),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
 
-          // 🔹 Price chips
-          Padding(
-            padding: EdgeInsets.only(left: 12 * fem),
+      children: [
+        // 🔹 Title
+        if (hasTitle) ...[
+          Row(
+            children: [
+              MyText(
+                title,
+                style: TextStyle(
+                  fontSize: 16 * fem,
+                  fontWeight: FontWeight.w400, // matches Figma
+                  color: Colors.black,
+                ),
+              ),
+              const Spacer(),
+            ],
+          ),
+          //SizedBox(height: 17 * fem),
+        ],
+
+        // 🔹 Price chips
+        Padding(
+          padding: EdgeInsets.only(left: 5 * fem),
+          child: Center(
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              // mainAxisSize: MainAxisSize.min,
+              // mainAxisAlignment: MainAxisAlignment.center,
+              // crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
+              //spacing: 10 * fem,
               children: [
                 _priceChip(formatter(values.start), fem),
-                SizedBox(width: 10 * fem),
+                SizedBox(width: 7 * fem),
                 MyText(
-                  '–',
+                  '-',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 20 * fem,
-                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF4A4A4A),
+                    fontSize: 12,
+                    fontFamily: 'Montserrat',
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
-                SizedBox(width: 10 * fem),
+
+                SizedBox(width: 11 * fem),
                 _priceChip(formatter(values.end), fem),
               ],
             ),
           ),
+        ),
 
-          SizedBox(height: 10 * fem),
+        //SizedBox(height: 5 * fem),
 
-          // 🔹 Range Slider
-          SliderTheme(
-            data: SliderThemeData(
-              trackHeight: 3, // use larger height (Flutter limitation)
-              inactiveTrackColor: const Color(0xFFF1F1F1),
-              activeTrackColor: const Color(0xFFD0F5EE),
-              thumbColor: const Color(0xFFA9E7DF),
-              overlayColor: const Color(0xFFBFE8E3).withOpacity(0.25),
-              rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
-              rangeThumbShape: DiamondRangeThumbShape(
-                width: 10 * fem,
-                height: 15 * fem,
-              ),
-              overlayShape: RoundSliderOverlayShape(overlayRadius: 16 * fem),
+        // 🔹 Range Slider
+        SliderTheme(
+          data: SliderThemeData(
+            trackHeight: 4, // use larger height (Flutter limitation)
+            inactiveTrackColor: const Color(0xFFF1F1F1),
+            activeTrackColor: const Color(0xFFD0F5EE),
+            thumbColor: const Color(0xFFA9E7DF),
+            overlayColor: const Color(0xFFBFE8E3).withValues(alpha: 0.25),
+            rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
+            rangeThumbShape: DiamondRangeThumbShape(
+              width: 10 * fem,
+              height: 15 * fem,
             ),
-            child: RangeSlider(
-              min: min,
-              max: max,
-              values: values,
-              divisions: 12,
-              onChanged: onChanged,
+            overlayShape: RoundSliderOverlayShape(overlayRadius: 16 * fem),
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(left: 5 * fem),
+            child: SizedBox(
+              width: 240 * fem, // 🎯 fixed Figma width
+              child: RangeSlider(
+                min: min,
+                max: max,
+                values: values,
+                divisions: 12,
+                onChanged: onChanged,
+              ),
             ),
           ),
-        ],
-      ),
+
+          // child: RangeSlider(
+          //   min: min,
+          //   max: max,
+          //   values: values,
+          //   divisions: 12,
+          //   onChanged: onChanged,
+          // ),
+        ),
+      ],
     );
   }
 
   // 🔹 Price chip widget
   Widget _priceChip(String text, double fem) {
-    return SizedBox(
+    return Container(
       width: 114 * fem,
-      child: Container(
-        padding: EdgeInsets.all(10 * fem),
-        decoration: BoxDecoration(
-          color: const Color(0x1C90DCD0),
+      padding: EdgeInsets.all(10 * fem),
+      decoration: ShapeDecoration(
+        color: const Color(0xFF90DCD0).withOpacity(0.11), // 0x1C = 11%
+        shape: RoundedRectangleBorder(
+          side: BorderSide(width: 1 * fem, color: const Color(0xFFC8AC7D)),
           borderRadius: BorderRadius.circular(15 * fem),
-          border: Border.all(color: const Color(0xFFC8AC7D), width: 1 * fem),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x3FC5C5C5),
-              blurRadius: 4,
-              offset: Offset(2, 2),
-            ),
-          ],
         ),
-        alignment: Alignment.center,
-        child: MyText(
-          text,
-          style: TextStyle(
-            fontSize: 14 * fem,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF4A4A4A),
+        shadows: const [
+          BoxShadow(
+            color: Color(0x3FC5C5C5),
+            blurRadius: 4,
+            offset: Offset(2, 2),
+            spreadRadius: 0,
           ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: MyText(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Color(0xFF4A4A4A),
+          fontSize: 14 * fem,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Montserrat',
         ),
       ),
     );

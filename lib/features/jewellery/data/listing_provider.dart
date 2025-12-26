@@ -63,7 +63,7 @@ class StoreNotifier extends StateNotifier<StoreDetailState> {
 
       final response = await dio.post(ApiEndPoint.get_branch, data: postData);
 
-      debugPrint('getPJStore response: ${response.data}');
+      //debugPrint('getPJStore response: ${response.data}');
 
       if (response.statusCode == HttpStatus.ok) {
         final success = response.data["success"] ?? false;

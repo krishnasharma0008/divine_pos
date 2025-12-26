@@ -51,11 +51,6 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // @override
-  // void didChangeMetrics() {
-  //   //ScaleSize.refresh();
-  // }
-
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);

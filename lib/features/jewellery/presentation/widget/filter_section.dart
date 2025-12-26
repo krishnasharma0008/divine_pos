@@ -38,31 +38,35 @@ class _FilterSectionState extends State<FilterSection> {
       children: [
         InkWell(
           onTap: () => setState(() => expanded = !expanded),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(16.0 * fem, 8.0, 8.0, 8.0),
-                child: MyText(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 15 * fem),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                MyText(
                   widget.title,
                   style: TextStyle(
                     fontSize: 16 * fem,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-              ),
-              Icon(
-                expanded ? Icons.expand_less : Icons.expand_more,
-                size: 20 * fem,
-              ),
-            ],
+                Icon(
+                  expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 20 * fem,
+                ),
+              ],
+            ),
           ),
         ),
-        SizedBox(height: 10 * fem),
-        if (expanded) widget.child,
-        SizedBox(height: 12 * fem),
-        Divider(height: 1, color: Colors.black.withValues(alpha: 0.08)),
-        SizedBox(height: 13 * fem),
+        //SizedBox(height: 13 * fem),
+        if (expanded)
+          Padding(
+            padding: EdgeInsets.only(bottom: fem * 15),
+            child: widget.child,
+          ),
+        // SizedBox(height: 15 * fem),
+        // Divider(height: 1, color: Colors.black.withValues(alpha: 0.08)),
+        // SizedBox(height: 15 * fem),
       ],
     );
   }

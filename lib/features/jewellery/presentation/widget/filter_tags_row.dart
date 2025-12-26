@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
+import '../../../../shared/widgets/text.dart';
 
 class FilterTagsRow extends StatelessWidget {
   final List<String> selectedFilters;
@@ -28,15 +29,16 @@ class FilterTagsRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             /// FIXED LABEL
-            Text(
+            MyText(
               'Filtered By:',
               style: TextStyle(
-                fontSize: 16 * r,
-                fontWeight: FontWeight.w500,
+                fontSize: 14 * r,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF222222),
               ),
             ),
 
-            SizedBox(width: 12 * r),
+            SizedBox(width: 15 * r),
 
             /// FIXED CLEAR ALL PILL
             _pill(
@@ -54,17 +56,19 @@ class FilterTagsRow extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: Row(
-                  children: selectedFilters.map(
-                    (tag) => Padding(
-                      padding: EdgeInsets.only(right: 8 * r),
-                      child: _pill(
-                        label: tag,
-                        showClose: true,
-                        onTap: () => onRemoveTag(tag),
-                        r: r,
-                      ),
-                    ),
-                  ).toList(),
+                  children: selectedFilters
+                      .map(
+                        (tag) => Padding(
+                          padding: EdgeInsets.only(right: 8 * r),
+                          child: _pill(
+                            label: tag,
+                            showClose: true,
+                            onTap: () => onRemoveTag(tag),
+                            r: r,
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
             ),
@@ -87,14 +91,14 @@ class FilterTagsRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(10 * r),
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 20 * r,
-            vertical: 10 * r,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 12 * r, vertical: 9 * r),
           decoration: BoxDecoration(
+            color: showClose ? null : Color(0xFFEBEBEB),
             borderRadius: BorderRadius.circular(10 * r),
             border: Border.all(
-              color: const Color(0xFFE2D4BF),
+              color: showClose
+                  ? const Color(0xFFC3C3C3)
+                  : const Color(0xFFC8AC7D),
             ),
             boxShadow: [
               BoxShadow(
@@ -108,22 +112,19 @@ class FilterTagsRow extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
+                MyText(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 15 * r,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 14 * r,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF222222),
                   ),
                 ),
                 if (showClose) ...[
                   SizedBox(width: 8 * r),
-                  Icon(
-                    Icons.close,
-                    size: 16 * r,
-                    color: Colors.grey,
-                  ),
+                  Icon(Icons.close, size: 14 * r, color: Color(0xFFE3E3E3)),
                 ],
               ],
             ),
