@@ -38,53 +38,27 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final storeState = ref.watch(StoreProvider);
 
+    Widget body;
+
     if (storeState.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+      body = const Center(child: CircularProgressIndicator());
+    } else if (storeState.stores.isEmpty) {
+      body = const Center(child: Text('Store not found'));
+    } else {
+      final mainBranch = storeState.stores.firstWhere(
+        (s) => s.locationType?.toUpperCase() == 'MAIN BRANCH',
+      );
 
-    if (storeState.stores.isEmpty) {
-      return const Scaffold(body: Center(child: Text('Store not found')));
-    }
+      final subBranches = storeState.stores.where((s) {
+        return s.locationType?.toUpperCase() == 'OUTLET' &&
+            s.pCustomerCode == mainBranch.code;
+      }).toList();
 
-    /// ✅ MAIN BRANCH
-    final mainBranch = storeState.stores.firstWhere(
-      (s) => s.locationType?.toUpperCase() == 'MAIN BRANCH',
-    );
-
-    /// ✅ SUB BRANCHES (OUTLETS linked via PCustomerCode)
-    final subBranches = storeState.stores.where((s) {
-      return s.locationType?.toUpperCase() == 'OUTLET' &&
-          s.pCustomerCode == mainBranch.code;
-    }).toList();
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: MyAppBar(
-        appBarLeading: AppBarLeading.back,
-        showLogo: false,
-        // actions: [
-        //   AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
-        //   AppBarActionConfig(
-        //     type: AppBarAction.notification,
-        //     badgeCount: 1,
-        //     onTap: () => context.push('/notifications'),
-        //   ),
-        //   AppBarActionConfig(
-        //     type: AppBarAction.profile,
-        //     onTap: () => context.push('/profile'),
-        //   ),
-        //   AppBarActionConfig(
-        //     type: AppBarAction.cart,
-        //     badgeCount: 2,
-        //     onTap: () => context.push('/cart'),
-        //   ),
-        // ],
-      ),
-      //drawer: const SideDrawer(),
-      body: SingleChildScrollView(
+      body = SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Center(
           child: ConstrainedBox(
@@ -92,7 +66,13 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
             child: _StoreCard(store: mainBranch, subBranches: subBranches),
           ),
         ),
-      ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
+      body: body,
     );
   }
 }
