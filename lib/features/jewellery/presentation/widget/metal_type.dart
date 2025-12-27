@@ -27,7 +27,7 @@ class MetalTypeList extends StatelessWidget {
         final bool isSelected = selected.contains(label);
 
         return Padding(
-          padding: EdgeInsets.only(left: 5 * fem, bottom: 28 * fem),
+          padding: EdgeInsets.only(left: 0 * fem, bottom: 28 * fem),
           child: GestureDetector(
             onTap: () => onSelected?.call(label),
             child: SizedBox(

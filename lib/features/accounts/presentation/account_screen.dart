@@ -10,6 +10,7 @@ import '../../../shared/widgets/text.dart';
 import '../../auth/data/auth_notifier.dart';
 import '../../jewellery/data/listing_provider.dart';
 import '../../jewellery/data/store_details.dart';
+import '../../../shared/utils/scale_size.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
@@ -38,62 +39,99 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     final storeState = ref.watch(StoreProvider);
 
-    Widget body;
+    final fem = ScaleSize.aspectRatio;
 
-    if (storeState.isLoading) {
-      body = const Center(child: CircularProgressIndicator());
-    } else if (storeState.stores.isEmpty) {
-      body = const Center(child: Text('Store not found'));
-    } else {
-      final mainBranch = storeState.stores.firstWhere(
-        (s) => s.locationType?.toUpperCase() == 'MAIN BRANCH',
-      );
+    // if (storeState.isLoading) {
+    //   return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    // }
 
-      final subBranches = storeState.stores.where((s) {
-        return s.locationType?.toUpperCase() == 'OUTLET' &&
-            s.pCustomerCode == mainBranch.code;
-      }).toList();
-
-      body = SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: _StoreCard(store: mainBranch, subBranches: subBranches),
-          ),
-        ),
-      );
-    }
+    // if (storeState.stores.isEmpty) {
+    //   return const Scaffold(body: Center(child: Text('Store not found')));
+    // }
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
-      body: body,
+      appBar: MyAppBar(
+        appBarLeading: AppBarLeading.back,
+        showLogo: false,
+        // actions: [
+        //   AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
+        //   AppBarActionConfig(
+        //     type: AppBarAction.notification,
+        //     badgeCount: 1,
+        //     onTap: () => context.push('/notifications'),
+        //   ),
+        //   AppBarActionConfig(
+        //     type: AppBarAction.profile,
+        //     onTap: () => context.push('/profile'),
+        //   ),
+        //   AppBarActionConfig(
+        //     type: AppBarAction.cart,
+        //     badgeCount: 2,
+        //     onTap: () => context.push('/cart'),
+        //   ),
+        // ],
+      ),
+      //drawer: const SideDrawer(),
+      body: storeState.isLoading
+          ? Center(child: CircularProgressIndicator())
+          : storeState.stores.isEmpty
+          ? Center(
+              child: MyText(
+                'Store not found',
+                style: TextStyle(fontSize: 20 * fem),
+              ),
+            )
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(16 * fem),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 640 * fem),
+                  //child: _StoreCard(store: mainBranch, subBranches: subBranches),
+                  child: _StoreCard(stores: storeState.stores, fem: fem),
+                ),
+              ),
+            ),
     );
   }
 }
 
 class _StoreCard extends StatelessWidget {
-  final StoreDetail store;
-  final List<StoreDetail> subBranches;
+  // final StoreDetail store;
+  // final List<StoreDetail> subBranches;
 
-  const _StoreCard({required this.store, required this.subBranches});
+  // const _StoreCard({required this.store, required this.subBranches});
+  final double fem;
+
+  final List<StoreDetail> stores;
+  _StoreCard({required this.stores, required this.fem}) {
+    store = stores.firstWhere(
+      (s) => s.locationType.toUpperCase() == 'MAIN BRANCH',
+    );
+
+    subBranches = stores.where((s) {
+      return s.locationType.toUpperCase() == 'OUTLET' &&
+          s.pCustomerCode == store.code;
+    }).toList();
+  }
+
+  late final StoreDetail store;
+  late final List<StoreDetail> subBranches;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+      padding: EdgeInsets.fromLTRB(24 * fem, 32 * fem, 24 * fem, 24 * fem),
       decoration: BoxDecoration(
         color: MyThemes.White,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: MyThemes.Black.withOpacity(0.08),
-            blurRadius: 24,
+            color: MyThemes.Black.withValues(alpha: 0.08),
+            blurRadius: 24 * fem,
             offset: const Offset(0, 12),
           ),
         ],
@@ -101,32 +139,42 @@ class _StoreCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _StoreHeader(store: store),
-          const SizedBox(height: 24),
-          _JewellerContact(store: store),
-          const SizedBox(height: 16),
+          _StoreHeader(store: store, fem: fem),
+          SizedBox(height: 24 * fem),
+          _JewellerContact(store: store, fem: fem),
+          SizedBox(height: 16 * fem),
           const _SectionDivider(),
-          const SizedBox(height: 12),
-          const SectionTitle(
+          SizedBox(height: 12 * fem),
+          SectionTitle(
             icon: Icons.person_outline,
             title: 'Customer Service Executive',
             suffix: '(DIVINE SOLITAIRES MEMBER)',
+            fem: fem,
           ),
-          const SizedBox(height: 12),
-          _InfoField(label: 'Name', value: store.salesPerson ?? 'N/A'),
-          const SizedBox(height: 8),
-          const _InfoField(label: 'Mobile', value: 'N/A'),
-          const SizedBox(height: 24),
+          SizedBox(height: 12 * fem),
+          _InfoField(
+            label: 'Name',
+            value: store.salesPerson ?? 'N/A',
+            fem: fem,
+          ),
+          SizedBox(height: 8 * fem),
+          _InfoField(label: 'Mobile', value: 'N/A', fem: fem),
+          SizedBox(height: 24 * fem),
           const _SectionDivider(),
-          const SizedBox(height: 12),
-          const SectionTitle(icon: Icons.store_outlined, title: 'Sub Branches'),
-          const SizedBox(height: 12),
+          SizedBox(height: 12 * fem),
+          SectionTitle(
+            icon: Icons.store_outlined,
+            title: 'Sub Branches',
+            fem: fem,
+          ),
+          SizedBox(height: 12 * fem),
           if (subBranches.isNotEmpty)
             Column(
               children: subBranches.map((branch) {
                 return BranchTile(
                   title: branch.nickName ?? branch.name,
                   address: branch.address ?? 'Address not available',
+                  fem: fem,
                 );
               }).toList(),
             ),
@@ -138,35 +186,36 @@ class _StoreCard extends StatelessWidget {
 
 class _StoreHeader extends StatelessWidget {
   final StoreDetail store;
-  const _StoreHeader({required this.store});
+  final double fem;
+  const _StoreHeader({required this.store, required this.fem});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         CircleAvatar(
-          radius: 28,
+          radius: 28 * fem,
           backgroundColor: MyThemes.Light_Mint,
-          child: Icon(Icons.store, size: 26, color: MyThemes.Deep_Teal),
+          child: Icon(Icons.store, size: 26 * fem, color: MyThemes.Deep_Teal),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12 * fem),
         MyText(
           store.name,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Montserrat',
-            fontSize: 16,
+            fontSize: 16 * fem,
             fontWeight: FontWeight.w400,
             letterSpacing: 0.4,
             color: Color(0xFF697282),
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4 * fem),
         MyText(
           store.locationType ?? '',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: MyThemes.labelFontFamily,
-            fontSize: 13,
+            fontSize: 13 * fem,
             color: MyThemes.Muted_grey,
           ),
         ),
@@ -177,7 +226,8 @@ class _StoreHeader extends StatelessWidget {
 
 class _JewellerContact extends StatelessWidget {
   final StoreDetail store;
-  const _JewellerContact({required this.store});
+  final double fem;
+  const _JewellerContact({required this.store, required this.fem});
 
   @override
   Widget build(BuildContext context) {
@@ -186,42 +236,42 @@ class _JewellerContact extends StatelessWidget {
         : 'N/A';
 
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 64 * fem,
+      padding: EdgeInsets.symmetric(horizontal: 16 * fem),
       decoration: BoxDecoration(
         color: const Color(0x33BEE4DD),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(10 * fem),
       ),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 44 * fem,
+            height: 44 * fem,
             decoration: const BoxDecoration(
               color: Color(0xFFBEE4DD),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.call, size: 20, color: Color(0xFF1D2838)),
+            child: Icon(Icons.call, size: 20 * fem, color: Color(0xFF1D2838)),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16 * fem),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const MyText(
+                MyText(
                   'Jeweller Contact',
                   style: TextStyle(
                     color: Color(0xFF697282),
-                    fontSize: 16,
+                    fontSize: 16 * fem,
                     fontFamily: 'Montserrat',
                   ),
                 ),
                 MyText(
                   contact,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFF1D2838),
-                    fontSize: 16,
+                    fontSize: 16 * fem,
                     fontFamily: 'Montserrat',
                   ),
                 ),
@@ -247,23 +297,30 @@ class SectionTitle extends StatelessWidget {
   final IconData? icon;
   final String title;
   final String? suffix;
+  final double fem;
 
-  const SectionTitle({super.key, this.icon, required this.title, this.suffix});
+  const SectionTitle({
+    super.key,
+    this.icon,
+    required this.title,
+    this.suffix,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 18, color: const Color(0xFF354152)),
-          const SizedBox(width: 8),
+          Icon(icon, size: 18 * fem, color: const Color(0xFF354152)),
+          SizedBox(width: 8 * fem),
         ],
         Expanded(
           child: MyText(
             suffix == null ? title : '$title $suffix',
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFF354152),
-              fontSize: 16,
+              fontSize: 16 * fem,
               fontFamily: 'Montserrat',
             ),
             maxLines: 2,
@@ -278,13 +335,17 @@ class SectionTitle extends StatelessWidget {
 class _InfoField extends StatelessWidget {
   final String label;
   final String value;
-
-  const _InfoField({required this.label, required this.value});
+  final double fem;
+  const _InfoField({
+    required this.label,
+    required this.value,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 12 * fem, vertical: 10 * fem),
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(8),
@@ -294,17 +355,17 @@ class _InfoField extends StatelessWidget {
         children: [
           MyText(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: MyThemes.labelFontFamily,
-              fontSize: 13,
+              fontSize: 13 * fem,
               color: MyThemes.Muted_grey,
             ),
           ),
           MyText(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: MyThemes.inputFontFamily,
-              fontSize: 13,
+              fontSize: 13 * fem,
               fontWeight: FontWeight.w500,
               color: MyThemes.fontColor,
             ),
@@ -318,14 +379,19 @@ class _InfoField extends StatelessWidget {
 class BranchTile extends StatelessWidget {
   final String title;
   final String address;
-
-  const BranchTile({super.key, required this.title, required this.address});
+  final double fem;
+  const BranchTile({
+    super.key,
+    required this.title,
+    required this.address,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      margin: EdgeInsets.only(bottom: 8 * fem),
+      padding: EdgeInsets.fromLTRB(16 * fem, 16 * fem, 16 * fem, 12 * fem),
       decoration: BoxDecoration(
         color: const Color(0x19BEE4DD),
         borderRadius: BorderRadius.circular(10),
@@ -336,18 +402,18 @@ class BranchTile extends StatelessWidget {
         children: [
           MyText(
             title.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFF1D2838),
-              fontSize: 16,
+              fontSize: 16 * fem,
               fontFamily: 'Montserrat',
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4 * fem),
           MyText(
             address,
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFF495565),
-              fontSize: 16,
+              fontSize: 16 * fem,
               fontFamily: 'Montserrat',
             ),
           ),

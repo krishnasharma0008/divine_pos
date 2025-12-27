@@ -25,7 +25,7 @@ class DiamondShapeGrid extends StatelessWidget {
       childAspectRatio: 3.5,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.only(left: fem * 12, right: fem * 23),
+      padding: EdgeInsets.only(left: fem * 0, right: fem * 23),
       children: items.map((it) {
         final String label = it['label']!;
         final String asset = it['asset']!;

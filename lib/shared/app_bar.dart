@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import '../shared/routes/route_pages.dart';
 
 import '../shared/themes.dart';
 import '../shared/utils/enums.dart';
@@ -151,7 +152,11 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
           break;
 
         case AppBarAction.profile:
-          widgets.add(_profileAction(fem: fem, onTap: action.onTap));
+          //widgets.add(_profileAction(fem: fem, onTap: action.onTap));
+          widgets.add(
+            _profileAction(context: context, fem: fem, onTap: action.onTap),
+          );
+
           break;
 
         case AppBarAction.cart:
@@ -226,11 +231,17 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 
   // profile action
-  Widget _profileAction({required double fem, required VoidCallback? onTap}) {
+  Widget _profileAction({
+    required BuildContext context,
+    required double fem,
+    required VoidCallback? onTap,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 4 * fem),
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          context.push(RoutePages.account.routePath);
+        },
         child: Container(
           width: 54 * fem,
           height: 54 * fem,
