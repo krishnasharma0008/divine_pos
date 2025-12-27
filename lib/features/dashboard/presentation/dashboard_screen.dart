@@ -61,7 +61,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           AppBarActionConfig(
             type: AppBarAction.notification,
-            badgeCount: 1,
+            badgeCount: 0,
             onTap: () {
               context.push('/notifications');
             },
@@ -74,7 +74,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           AppBarActionConfig(
             type: AppBarAction.cart,
-            badgeCount: 2,
+            badgeCount: 0,
             onTap: () {
               context.push('/cart');
             },

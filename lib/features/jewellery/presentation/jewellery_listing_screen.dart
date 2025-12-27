@@ -120,7 +120,7 @@ class _JewelleryListingScreenState
           AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
           AppBarActionConfig(
             type: AppBarAction.notification,
-            badgeCount: 1,
+            badgeCount: 0,
             onTap: () => context.push('/notifications'),
           ),
           AppBarActionConfig(
@@ -129,7 +129,7 @@ class _JewelleryListingScreenState
           ),
           AppBarActionConfig(
             type: AppBarAction.cart,
-            badgeCount: 2,
+            badgeCount: 0,
             onTap: () => context.push('/cart'),
           ),
         ],
