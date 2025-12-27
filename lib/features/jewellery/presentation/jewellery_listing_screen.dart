@@ -66,6 +66,42 @@ class _JewelleryListingScreenState
     super.dispose();
   }
 
+  bool _routeApplied = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_routeApplied) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final params = GoRouterState.of(context).uri.queryParameters;
+
+      debugPrint("data from menu ${params}");
+
+      final category = params['category'];
+      final collection = params['Collection'];
+
+      bool shouldFetch = false;
+
+      if (category != null) {
+        ref.read(filterProvider.notifier).setCategory(category);
+        shouldFetch = true;
+      }
+
+      if (collection != null) {
+        ref.read(filterProvider.notifier).setSubCategory(collection);
+        shouldFetch = true;
+      }
+
+      if (shouldFetch) {
+        ref.read(jewelleryProvider.notifier).resetAndFetch();
+      }
+
+      _routeApplied = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final storeState = ref.watch(StoreProvider);

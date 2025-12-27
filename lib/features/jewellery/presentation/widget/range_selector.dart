@@ -116,28 +116,28 @@ class RangeSelector extends StatelessWidget {
             ),
             overlayShape: RoundSliderOverlayShape(overlayRadius: 16 * fem),
           ),
-          child: Padding(
-            padding: EdgeInsets.only(left: 5 * fem),
-            child: SizedBox(
-              width: 240 * fem, // 🎯 fixed Figma width
-              child: RangeSlider(
-                min: min,
-                max: max,
-                values: values,
-                divisions: 12,
-                onChanged: onChanged,
-              ),
+          // child: Padding(
+          //   padding: EdgeInsets.only(left: 0 * fem),
+          child: SizedBox(
+            width: 270 * fem, // 🎯 fixed Figma width
+            child: RangeSlider(
+              min: min,
+              max: max,
+              values: values,
+              divisions: 12,
+              onChanged: onChanged,
             ),
           ),
-
-          // child: RangeSlider(
-          //   min: min,
-          //   max: max,
-          //   values: values,
-          //   divisions: 12,
-          //   onChanged: onChanged,
-          // ),
         ),
+
+        // child: RangeSlider(
+        //   min: min,
+        //   max: max,
+        //   values: values,
+        //   divisions: 12,
+        //   onChanged: onChanged,
+        // ),
+        //),
       ],
     );
   }

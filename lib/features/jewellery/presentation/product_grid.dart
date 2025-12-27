@@ -30,7 +30,7 @@ class ProductGrid extends StatelessWidget {
     }
 
     return Container(
-      color: Colors.white, // ✅ background color added
+      color: Colors.white,
       child: SingleChildScrollView(
         controller: controller,
         child: Column(
@@ -55,17 +55,18 @@ class ProductGrid extends StatelessWidget {
               },
             ),
 
+            /// spacing after first grid
             if (jewellery.length > 3) SizedBox(height: _rowSpacing * r),
 
-            /// 🔹 4th + 5th
-            if (jewellery.length > 3)
+            /// 🔹 4th (wide) + 5th (normal)
+            if (jewellery.length >= 4)
               Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: _horizontalPadding * r,
                 ),
-
                 child: Row(
                   children: [
+                    /// 4th item → index 3 (always safe here)
                     Expanded(
                       flex: 2,
                       child: SizedBox(
@@ -76,24 +77,27 @@ class ProductGrid extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (jewellery.length > 4)
-                      SizedBox(
-                        width: 48 * r,
-                      ), // adjust value as needed space between column
-                    Expanded(
-                      flex: 1,
-                      child: SizedBox(
-                        height: _cardHeight * r,
-                        child: _buildCard(jewellery[4]),
+
+                    /// spacing only if 5th exists
+                    if (jewellery.length >= 5) SizedBox(width: 48 * r),
+
+                    /// 5th item → index 4 (guarded)
+                    if (jewellery.length >= 5)
+                      Expanded(
+                        flex: 1,
+                        child: SizedBox(
+                          height: _cardHeight * r,
+                          child: _buildCard(jewellery[4]),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
 
+            /// spacing after wide row
             if (jewellery.length > 5) SizedBox(height: _rowSpacing * r),
 
-            /// 🔹 REMAINING ITEMS
+            /// 🔹 REMAINING ITEMS (index 5+)
             if (jewellery.length > 5)
               GridView.builder(
                 padding: EdgeInsets.symmetric(
@@ -113,6 +117,7 @@ class ProductGrid extends StatelessWidget {
                 },
               ),
 
+            /// loading indicator
             if (isLoadingMore)
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 24 * r),
