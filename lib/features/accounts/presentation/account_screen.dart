@@ -63,26 +63,27 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: MyAppBar(
-        appBarLeading: AppBarLeading.drawer,
+        appBarLeading: AppBarLeading.back,
         showLogo: false,
-        actions: [
-          AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
-          AppBarActionConfig(
-            type: AppBarAction.notification,
-            badgeCount: 1,
-            onTap: () => context.push('/notifications'),
-          ),
-          AppBarActionConfig(
-            type: AppBarAction.profile,
-            onTap: () => context.push('/profile'),
-          ),
-          AppBarActionConfig(
-            type: AppBarAction.cart,
-            badgeCount: 2,
-            onTap: () => context.push('/cart'),
-          ),
-        ],
+        // actions: [
+        //   AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
+        //   AppBarActionConfig(
+        //     type: AppBarAction.notification,
+        //     badgeCount: 1,
+        //     onTap: () => context.push('/notifications'),
+        //   ),
+        //   AppBarActionConfig(
+        //     type: AppBarAction.profile,
+        //     onTap: () => context.push('/profile'),
+        //   ),
+        //   AppBarActionConfig(
+        //     type: AppBarAction.cart,
+        //     badgeCount: 2,
+        //     onTap: () => context.push('/cart'),
+        //   ),
+        // ],
       ),
+      //drawer: const SideDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Center(
