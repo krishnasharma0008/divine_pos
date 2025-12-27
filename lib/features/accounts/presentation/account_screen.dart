@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../../shared/app_bar.dart';
+import '../../../shared/app_bar.dart';
+import '../../../shared/routes/app_drawer.dart';
+import '../../../shared/utils/enums.dart';
 import '../../../shared/themes.dart';
 import '../../../shared/widgets/text.dart';
-import '../../../shared/utils/enums.dart';
 import '../../auth/data/auth_notifier.dart';
 import '../../jewellery/data/listing_provider.dart';
 import '../../jewellery/data/store_details.dart';
@@ -17,7 +19,7 @@ class AccountScreen extends ConsumerStatefulWidget {
 }
 
 class _AccountScreenState extends ConsumerState<AccountScreen> {
-  bool isStoreApiCalled = false;
+  bool _isStoreApiCalled = false;
 
   @override
   void initState() {
@@ -28,51 +30,64 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       final authRepo = ref.read(authProvider);
       final pjcode = authRepo.user?.pjcode;
 
-      if (pjcode != null && !isStoreApiCalled) {
+      if (pjcode != null && !_isStoreApiCalled) {
         ref.read(StoreProvider.notifier).getPJStore(pjcode: pjcode);
-        isStoreApiCalled = true;
+        _isStoreApiCalled = true;
       }
     });
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final storeState = ref.watch(StoreProvider);
-    final store = storeState.selectedStore;
 
     if (storeState.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (storeState.selectedStore == null) {
+    if (storeState.stores.isEmpty) {
       return const Scaffold(body: Center(child: Text('Store not found')));
     }
 
-    // main branch (or first as fallback)
+    /// ✅ MAIN BRANCH
     final mainBranch = storeState.stores.firstWhere(
-      (s) => s.locationType.toUpperCase() == 'MAIN BRANCH',
-      orElse: () => storeState.stores.first,
+      (s) => s.locationType?.toUpperCase() == 'MAIN BRANCH',
     );
 
-    // all other branches
-    final subBranches = storeState.stores
-        .where((s) => s != mainBranch)
-        .toList();
+    /// ✅ SUB BRANCHES (OUTLETS linked via PCustomerCode)
+    final subBranches = storeState.stores.where((s) {
+      return s.locationType?.toUpperCase() == 'OUTLET' &&
+          s.pCustomerCode == mainBranch.code;
+    }).toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: MyAppBar(showLogo: false, appBarLeading: AppBarLeading.back),
-      body: Padding(
+      appBar: MyAppBar(
+        appBarLeading: AppBarLeading.drawer,
+        showLogo: false,
+        actions: [
+          AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
+          AppBarActionConfig(
+            type: AppBarAction.notification,
+            badgeCount: 1,
+            onTap: () => context.push('/notifications'),
+          ),
+          AppBarActionConfig(
+            type: AppBarAction.profile,
+            onTap: () => context.push('/profile'),
+          ),
+          AppBarActionConfig(
+            type: AppBarAction.cart,
+            badgeCount: 2,
+            onTap: () => context.push('/cart'),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
-            //child: _StoreCard(store: mainBranch),
             child: _StoreCard(store: mainBranch, subBranches: subBranches),
           ),
         ),
@@ -106,49 +121,34 @@ class _StoreCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _StoreHeader(store: store),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           _JewellerContact(store: store),
-          SizedBox(height: 16),
-          _SectionDivider(),
-          SizedBox(height: 12),
-          SectionTitle(
+          const SizedBox(height: 16),
+          const _SectionDivider(),
+          const SizedBox(height: 12),
+          const SectionTitle(
             icon: Icons.person_outline,
             title: 'Customer Service Executive',
             suffix: '(DIVINE SOLITAIRES MEMBER)',
           ),
-
-          SizedBox(height: 12),
-          _InfoField(label: 'Name', value: 'Rajesh Kumar'),
-          SizedBox(height: 8),
-          _InfoField(label: 'Mobile', value: '+91 98765 43210'),
-          SizedBox(height: 24),
-          _SectionDivider(),
-          SizedBox(height: 12),
-          SectionTitle(icon: Icons.store_outlined, title: 'Sub Branches'),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
+          _InfoField(label: 'Name', value: store.salesPerson ?? 'N/A'),
+          const SizedBox(height: 8),
+          const _InfoField(label: 'Mobile', value: 'N/A'),
+          const SizedBox(height: 24),
+          const _SectionDivider(),
+          const SizedBox(height: 12),
+          const SectionTitle(icon: Icons.store_outlined, title: 'Sub Branches'),
+          const SizedBox(height: 12),
           if (subBranches.isNotEmpty)
             Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: subBranches
-                  .map(
-                    (branch) => BranchTile(
-                      title: branch.name,
-                      address: branch.address, // adapt to your field names
-                    ),
-                  )
-                  .toList(),
+              children: subBranches.map((branch) {
+                return BranchTile(
+                  title: branch.nickName ?? branch.name,
+                  address: branch.address ?? 'Address not available',
+                );
+              }).toList(),
             ),
-          // BranchTile(
-          //   title: 'KHIMJI - SOAUBHAGYA NAGAR',
-          //   address: '123 Main Street',
-          // ),
-
-          // BranchTile(
-          //   title: 'KHIMJI - SAMANTARAPUR',
-          //   address: '456 West Avenue',
-          // ),
-
-          // BranchTile(title: 'KHIMJI - PURI', address: '789 East Boulevard'),
         ],
       ),
     );
@@ -168,10 +168,10 @@ class _StoreHeader extends StatelessWidget {
           backgroundColor: MyThemes.Light_Mint,
           child: Icon(Icons.store, size: 26, color: MyThemes.Deep_Teal),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         MyText(
           store.name,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'Montserrat',
             fontSize: 16,
             fontWeight: FontWeight.w400,
@@ -180,10 +180,10 @@ class _StoreHeader extends StatelessWidget {
             height: 1.5,
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         MyText(
-          store.locationType,
-          style: TextStyle(
+          store.locationType ?? '',
+          style: const TextStyle(
             fontFamily: MyThemes.labelFontFamily,
             fontSize: 13,
             color: MyThemes.Muted_grey,
@@ -200,19 +200,19 @@ class _JewellerContact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final contact = (store.contactNo?.isNotEmpty == true)
+        ? store.contactNo!
+        : 'N/A';
+
     return Container(
-      // width will stretch inside parent, no fixed 624
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0x33BEE4DD), // same mint with opacity
+        color: const Color(0x33BEE4DD),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // circular icon
           Container(
             width: 44,
             height: 44,
@@ -223,33 +223,25 @@ class _JewellerContact extends StatelessWidget {
             child: const Icon(Icons.call, size: 20, color: Color(0xFF1D2838)),
           ),
           const SizedBox(width: 16),
-          // texts
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                MyText(
+                const MyText(
                   'Jeweller Contact',
                   style: TextStyle(
                     color: Color(0xFF697282),
                     fontSize: 16,
                     fontFamily: 'Montserrat',
-                    fontWeight: FontWeight.w400,
-                    height: 1.5,
                   ),
                 ),
-                SizedBox(height: 2),
                 MyText(
-                  store.contactNo?.isNotEmpty == true
-                      ? store.contactNo!
-                      : 'N/A',
-                  style: TextStyle(
+                  contact,
+                  style: const TextStyle(
                     color: Color(0xFF1D2838),
                     fontSize: 16,
                     fontFamily: 'Montserrat',
-                    fontWeight: FontWeight.w400,
-                    height: 1.5,
                   ),
                 ),
               ],
@@ -266,25 +258,20 @@ class _SectionDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      color: MyThemes.Light_Mint.withOpacity(0.5),
-      height: 1,
-      thickness: 1,
-    );
+    return Divider(color: MyThemes.Light_Mint.withOpacity(0.5), thickness: 1);
   }
 }
 
 class SectionTitle extends StatelessWidget {
   final IconData? icon;
   final String title;
-  final String? suffix; // e.g. "(DIVINE SOLITAIRES MEMBER)"
+  final String? suffix;
 
   const SectionTitle({super.key, this.icon, required this.title, this.suffix});
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (icon != null) ...[
           Icon(icon, size: 18, color: const Color(0xFF354152)),
@@ -297,8 +284,6 @@ class SectionTitle extends StatelessWidget {
               color: Color(0xFF354152),
               fontSize: 16,
               fontFamily: 'Montserrat',
-              fontWeight: FontWeight.w400,
-              height: 1.5,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -320,7 +305,7 @@ class _InfoField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Color(0xFFF9FAFB),
+        color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -358,13 +343,12 @@ class BranchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       decoration: BoxDecoration(
-        color: const Color(0x19BEE4DD), // same as Figma
+        color: const Color(0x19BEE4DD),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0x4CBEE4DD), width: 1),
+        border: Border.all(color: const Color(0x4CBEE4DD)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,8 +359,6 @@ class BranchTile extends StatelessWidget {
               color: Color(0xFF1D2838),
               fontSize: 16,
               fontFamily: 'Montserrat',
-              fontWeight: FontWeight.w400,
-              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
@@ -386,8 +368,6 @@ class BranchTile extends StatelessWidget {
               color: Color(0xFF495565),
               fontSize: 16,
               fontFamily: 'Montserrat',
-              fontWeight: FontWeight.w400,
-              height: 1.5,
             ),
           ),
         ],
