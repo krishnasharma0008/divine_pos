@@ -73,6 +73,17 @@ class SideDrawer extends ConsumerWidget {
                           drawerNotifier: drawerNotifier,
                         ),
 
+                        // _nav(
+                        //   ref,
+                        //   context: context,
+                        //   fem: fem,
+                        //   label: "Demo Checking page",
+                        //   //icon: Icons.home_outlined,
+                        //   iconPath: 'assets/icons/menu_home.svg',
+                        //   routePage: RoutePages.home,
+                        //   drawerState: drawerState,
+                        //   drawerNotifier: drawerNotifier,
+                        // ),
                         _nav(
                           ref,
                           context: context,

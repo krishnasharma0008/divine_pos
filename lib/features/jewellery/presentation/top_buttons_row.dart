@@ -53,7 +53,7 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
   /// Title, Type, Width
   final items = [
     ("Products In Store", "tab", 178.0),
-    ("Products At Other Branches", "branch", 285.0),
+    ("Products At Other Branches", "branch", 420.0),
     ("All Designs", "tab", 155.0),
     ("Sort by", "sort", 200.0),
   ];

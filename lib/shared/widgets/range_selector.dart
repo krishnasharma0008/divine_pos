@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/utils/scale_size.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 
 class RangeSelector extends StatefulWidget {
   final String label;
@@ -24,6 +26,7 @@ class RangeSelector extends StatefulWidget {
 
 class _RangeSelectorState extends State<RangeSelector> {
   late RangeValues _range;
+
   final Color tickColor = const Color(0xFFBEE4DD);
   final Color activeTrackColor = const Color(0xFFCFF4EE);
 
@@ -41,176 +44,207 @@ class _RangeSelectorState extends State<RangeSelector> {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     final String startValue = widget.values[_startIndex];
     final String endValue = widget.values[_endIndex];
     final chipFormatter = widget.valueToChipText ?? (String v) => v;
 
+    /// 🎯 EXACT thumb radius used by slider
+    final double thumbRadius = (10 * fem) / 2;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 8 * fem, vertical: 10 * fem),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: const Color(0xFFDDE9E5), width: 1.5),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16 * fem),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label
+          /// Label
           Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: Text(
+            padding: EdgeInsets.only(left: 8 * fem),
+            child: MyText(
               widget.label,
 
-              //style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              // style: TextStyle(
+              //   color: const Color(0xFF303030),
+              //   fontSize: 14 * fem,
+              //   fontWeight: FontWeight.w400,
+              // ),
               style: TextStyle(
-                color: const Color(0xFF303030),
-                fontSize: 14,
+                color: Color(0xFF303030),
+                fontSize: 14 * fem,
                 fontFamily: 'Rushter Glory',
                 fontWeight: FontWeight.w400,
               ),
             ),
           ),
-          const SizedBox(height: 8),
 
-          // Chips
+          SizedBox(height: 8 * fem),
+
+          /// Chips
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              _buildValueChip(chipFormatter(startValue)),
-              const SizedBox(width: 6),
+              _buildValueChip(chipFormatter(startValue), fem),
+              SizedBox(width: 6 * fem),
               const Text('-'),
-              const SizedBox(width: 6),
-              _buildValueChip(chipFormatter(endValue)),
+              SizedBox(width: 6 * fem),
+              _buildValueChip(chipFormatter(endValue), fem),
             ],
           ),
-          const SizedBox(height: 10),
 
-          // Labels row
-          Row(
-            children: List.generate(
-              widget.values.length,
-              (index) => Expanded(
-                child: Text(
-                  widget.values[index],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: (index >= _startIndex && index <= _endIndex)
-                        ? Colors.black
-                        : const Color(0xFFD9D9D9), // non-selected
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
+          SizedBox(height: 18 * fem),
 
-          // Ticks row
-          Row(
-            children: List.generate(
-              widget.values.length,
-              (index) => Expanded(
-                child: Center(
-                  child: Container(
-                    width: 3,
-                    height: 11,
-                    decoration: BoxDecoration(
+          /// LABELS — PERFECTLY MATCH SLIDER DOTS
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: thumbRadius),
+            child: Row(
+              children: List.generate(
+                widget.values.length,
+                (index) => Expanded(
+                  child: Text(
+                    widget.values[index],
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11 * fem,
+                      fontWeight: FontWeight.w500,
                       color: (index >= _startIndex && index <= _endIndex)
-                          ? tickColor
-                          : const Color(0xFFD9D9D9), // non-selected tick
-                      borderRadius: BorderRadius.circular(1.5),
+                          ? Colors.black
+                          : const Color(0xFFD9D9D9),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 10),
 
-          // Track + slider
-          Stack(
-            children: [
-              Container(
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(3),
-                  border: Border.all(color: tickColor, width: 1),
-                ),
-              ),
-              SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: 6,
-                  activeTrackColor: activeTrackColor,
-                  inactiveTrackColor: Colors.transparent,
-                  // inactiveTrackColor: const Color(
-                  //   0xFFD9D9D9,
-                  // ), // non-selected range
-                  thumbColor: activeTrackColor,
-                  overlayColor: activeTrackColor.withOpacity(0.25),
-                  rangeThumbShape: const DiamondRangeThumbShape(
-                    thumbRadius: 11,
+          SizedBox(height: 10 * fem),
+
+          /// TICKS — MATCH LABELS & SLIDER
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: thumbRadius),
+            child: Row(
+              children: List.generate(
+                widget.values.length,
+                (index) => Expanded(
+                  child: Center(
+                    child: Container(
+                      width: 3 * fem,
+                      height: 11 * fem,
+                      decoration: BoxDecoration(
+                        color: (index >= _startIndex && index <= _endIndex)
+                            ? tickColor
+                            : const Color(0xFFD9D9D9),
+                        borderRadius: BorderRadius.circular(1.5 * fem),
+                      ),
+                    ),
                   ),
                 ),
-                child: RangeSlider(
-                  min: 0,
-                  max: (widget.values.length - 1).toDouble(),
-                  divisions: widget.values.length - 1,
-                  values: _range,
-                  onChanged: (v) {
-                    setState(() {
-                      _range = RangeValues(
-                        v.start.roundToDouble(),
-                        v.end.roundToDouble(),
-                      );
-                    });
-                    widget.onRangeChanged(
-                      widget.values[_startIndex],
-                      widget.values[_endIndex],
-                    );
-                  },
-                ),
               ),
-            ],
+            ),
+          ),
+
+          SizedBox(height: 10 * fem),
+
+          /// TRACK + SLIDER — SAME GEOMETRY
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: thumbRadius),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                /// Base bar
+                Container(
+                  height: 6 * fem,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(3 * fem),
+                    border: Border.all(color: tickColor, width: 1),
+                  ),
+                ),
+
+                /// Slider
+                SliderTheme(
+                  data: SliderThemeData(
+                    trackHeight: 4 * fem,
+                    inactiveTrackColor: Colors.transparent,
+                    activeTrackColor: activeTrackColor,
+                    thumbColor: const Color(0xFFA9E7DF),
+                    overlayColor: const Color(0xFFBFE8E3).withOpacity(0.25),
+                    rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
+                    rangeThumbShape: DiamondRangeThumbShape(
+                      width: 10 * fem,
+                      height: 15 * fem,
+                    ),
+                    overlayShape: RoundSliderOverlayShape(
+                      overlayRadius: 16 * fem,
+                    ),
+                  ),
+                  child: RangeSlider(
+                    min: 0,
+                    max: (widget.values.length - 1).toDouble(),
+                    divisions: widget.values.length - 1,
+                    values: _range,
+                    onChanged: (v) {
+                      setState(() {
+                        _range = RangeValues(
+                          v.start.roundToDouble(),
+                          v.end.roundToDouble(),
+                        );
+                      });
+                      widget.onRangeChanged(
+                        widget.values[_startIndex],
+                        widget.values[_endIndex],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildValueChip(String text) {
+  Widget _buildValueChip(String text, double fem) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0x1C90DCD0),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFC8AC7D)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 4,
-            offset: const Offset(2, 2),
-          ),
-        ],
+      width: 114 * fem,
+      padding: EdgeInsets.all(10 * fem),
+      alignment: Alignment.center,
+      decoration: ShapeDecoration(
+        color: const Color(0xFF90DCD0).withOpacity(0.11),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: const Color(0xFFC8AC7D), width: 1 * fem),
+          borderRadius: BorderRadius.circular(15 * fem),
+        ),
       ),
-      child: Text(
+      child: MyText(
         text,
-        style: const TextStyle(fontSize: 14, color: Color(0xFF4A4A4A)),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 14 * fem,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF4A4A4A),
+        ),
       ),
     );
   }
 }
 
-/// Diamond thumb
+/// 🔷 Diamond Thumb
 class DiamondRangeThumbShape extends RangeSliderThumbShape {
-  final double thumbRadius;
+  final double width;
+  final double height;
 
-  const DiamondRangeThumbShape({this.thumbRadius = 12});
+  const DiamondRangeThumbShape({this.width = 10, this.height = 15});
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
-      Size.fromRadius(thumbRadius);
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size(width, height);
 
   @override
   void paint(
@@ -218,36 +252,29 @@ class DiamondRangeThumbShape extends RangeSliderThumbShape {
     Offset center, {
     required Animation<double> activationAnimation,
     required Animation<double> enableAnimation,
+    required SliderThemeData sliderTheme,
+    Thumb thumb = Thumb.start,
     bool isDiscrete = false,
     bool isEnabled = false,
-    bool isOnTop = false,
-    TextDirection? textDirection,
-    required SliderThemeData sliderTheme,
-    Thumb? thumb,
+    bool isOnTop = true,
     bool isPressed = false,
+    TextDirection textDirection = TextDirection.ltr,
   }) {
-    final Canvas canvas = context.canvas;
-
-    final Paint fillPaint = Paint()
-      ..color = sliderTheme.thumbColor ?? const Color(0xFFCFF4EE)
+    final canvas = context.canvas;
+    final paint = Paint()
+      ..color = sliderTheme.thumbColor!
       ..style = PaintingStyle.fill;
 
-    final double r = thumbRadius;
+    final halfW = width / 2;
+    final halfH = height / 2;
 
-    final Path diamond = Path()
-      ..moveTo(center.dx, center.dy - r)
-      ..lineTo(center.dx + r, center.dy)
-      ..lineTo(center.dx, center.dy + r)
-      ..lineTo(center.dx - r, center.dy)
+    final path = Path()
+      ..moveTo(center.dx, center.dy - halfH)
+      ..lineTo(center.dx + halfW, center.dy)
+      ..lineTo(center.dx, center.dy + halfH)
+      ..lineTo(center.dx - halfW, center.dy)
       ..close();
 
-    canvas.drawPath(diamond, fillPaint);
-
-    final Paint borderPaint = Paint()
-      ..color = Colors.grey.shade400
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    canvas.drawPath(diamond, borderPaint);
+    canvas.drawPath(path, paint);
   }
 }

@@ -112,6 +112,8 @@ class _JewelleryListingScreenState
 
     final fem = ScaleSize.aspectRatio;
 
+    final bool showLoader = storeState.isLoading || jewelleryAsync.isLoading;
+
     return Scaffold(
       appBar: MyAppBar(
         appBarLeading: AppBarLeading.drawer,
@@ -134,24 +136,20 @@ class _JewelleryListingScreenState
           ),
         ],
       ),
-
       drawer: const SideDrawer(),
 
       body: Stack(
         children: [
+          /// 🔹 MAIN UI
           SafeArea(
             child: Column(
               children: [
-                if (storeState.isLoading)
-                  const LinearProgressIndicator(minHeight: 3),
-
                 /// 🔹 TOP CONTROLS
                 TopButtonsRow(
                   branchStores: storeState.stores,
 
                   onBranchSelected: (store) {
                     ref.read(StoreProvider.notifier).selectStore(store);
-
                     filterNotifier.setProductsAtOtherBranch(store.code);
                     jewelleryNotifier.resetAndFetch();
                   },
@@ -167,11 +165,9 @@ class _JewelleryListingScreenState
                     } else if (tab == 2) {
                       filterNotifier.setAllDesigns();
                     }
-
                     jewelleryNotifier.resetAndFetch();
                   },
                 ),
-                //Container(height: fem * 29, color: Colors.pink),
 
                 /// 🔹 MAIN CONTENT
                 Expanded(
@@ -194,12 +190,10 @@ class _JewelleryListingScreenState
                               FilterTagsSection(),
                               SizedBox(height: fem * 20),
 
-                              /// 🔹 LIST
                               Expanded(
                                 child: jewelleryAsync.when(
-                                  loading: () => const Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
+                                  loading: () =>
+                                      const SizedBox(), // 🔹 no loader here
                                   error: (err, _) => Center(
                                     child: MyText(
                                       err.toString(),
@@ -231,13 +225,6 @@ class _JewelleryListingScreenState
                                   },
                                 ),
                               ),
-
-                              /// 🔹 LOAD MORE INDICATOR
-                              if (jewelleryNotifier.isLoadingMore)
-                                const Padding(
-                                  padding: EdgeInsets.all(16),
-                                  child: CircularProgressIndicator(),
-                                ),
                             ],
                           ),
                         ),
@@ -249,9 +236,10 @@ class _JewelleryListingScreenState
             ),
           ),
 
-          if (storeState.isLoading)
+          /// 🔹 SINGLE GLOBAL LOADER
+          if (showLoader)
             Container(
-              color: Colors.black.withValues(alpha: .15),
+              color: Colors.black.withOpacity(0.15),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],
