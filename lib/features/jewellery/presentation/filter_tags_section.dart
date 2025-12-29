@@ -53,12 +53,12 @@ class FilterTagsSection extends ConsumerWidget {
     }
 
     // Price range
-    if (filter.selectedPriceRange.start != 10000 ||
-        filter.selectedPriceRange.end != 1000000) {
-      tags.add(
-        'Price: ₹${filter.selectedPriceRange.start.toInt()} - ₹${filter.selectedPriceRange.end.toInt()}',
-      );
-    }
+    // if (filter.selectedPriceRange.start != 10000 ||
+    //     filter.selectedPriceRange.end != 1000000) {
+    tags.add(
+      'Price: ₹${filter.selectedPriceRange.start.toInt()} - ₹${filter.selectedPriceRange.end.toInt()}',
+    );
+    //}
 
     // // Color range
     // if (filter.colorStartLabel != filter.colorEndLabel) {

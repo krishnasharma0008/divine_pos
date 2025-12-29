@@ -116,12 +116,12 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
             ? filter.selectedPriceRange.end.toInt()
             : null,
         "order_for": null,
-        "cts_from": null, // filter.caratStartLabel.isEmpty
-        // ? null
-        // : double.tryParse(filter.caratStartLabel),
-        "cts_to": null, // filter.caratEndLabel.isEmpty
-        // ? null
-        // : double.tryParse(filter.caratEndLabel),
+        "cts_from": filter.caratStartLabel.isEmpty
+            ? null
+            : double.tryParse(filter.caratStartLabel),
+        "cts_to": filter.caratEndLabel.isEmpty
+            ? null
+            : double.tryParse(filter.caratEndLabel),
         "shapes": filter.selectedShape.isEmpty
             ? null
             : filter.selectedShape.join(",").toLowerCase(),
