@@ -86,10 +86,18 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       layingWith = pjcode;
     }
 
-    debugPrint("is_in_store: ${filter.isInStore}");
-    debugPrint("branch_at_code: ${filter.productBranch}");
-    debugPrint("all_designs: ${filter.allDesigns}");
-    debugPrint("sort_by: ${filter.sortBy}");
+    // debugPrint("is_in_store: ${filter.isInStore}");
+    // debugPrint("branch_at_code: ${filter.productBranch}");
+    // debugPrint("all_designs: ${filter.allDesigns}");
+    // debugPrint("sort_by: ${filter.sortBy}");
+
+    //debugPrint("Selected Shape: ${filter.selectedShape}");
+    if (filter.selectedMetal.isNotEmpty) {
+      final firstMetal = filter.selectedMetal.first; // e.g., "18KT Yellow Gold"
+      debugPrint(
+        "Selected Metal: ${firstMetal.split(' ')[0]}",
+      ); // prints "18KT"
+    }
 
     final postData = {
       "item_number": null,
@@ -100,7 +108,9 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
           ? null
           : filter.selectedSubCategory.join(","),
       "collection": null,
-      "metal_purity": null,
+      "metal_purity": filter.selectedMetal.isEmpty
+          ? null
+          : filter.selectedMetal.first.split(' ')[0],
       "portfolio_type": null,
 
       "pageno": _page,
@@ -111,13 +121,36 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
           ? null
           : filter.selectedGender.join(","),
 
-      "price_from": null, //filter.selectedPriceRange.start,
-      "price_to": null, //filter.selectedPriceRange.end,
+      "price_from": filter.selectedPriceRange.start > 0
+          ? filter.selectedPriceRange.start.toInt()
+          : null,
+
+      "price_to": filter.selectedPriceRange.end > 0
+          ? filter.selectedPriceRange.end.toInt()
+          : null,
+
+      // "price_from": filter.selectedPriceRange.start == 10000
+      //     ? null
+      //     : filter.selectedPriceRange.start.toInt(),
+
+      // "price_to": filter.selectedPriceRange.end == 1000000
+      //     ? null
+      //     : filter.selectedPriceRange.end.toInt(),
       "order_for": null, //"Stock",
-      "cts_from": null,
-      "cts_to": null,
-      "shapes": null,
-      "occasions": null,
+      "cts_from": filter.caratStartLabel.isEmpty
+          ? null
+          : double.tryParse(filter.caratStartLabel),
+
+      "cts_to": filter.caratEndLabel.isEmpty
+          ? null
+          : double.tryParse(filter.caratEndLabel),
+
+      "shapes": filter.selectedShape.isEmpty
+          ? null
+          : filter.selectedShape.join(",").toLowerCase(),
+      "occasions": filter.selectedOccasions.isEmpty
+          ? null
+          : filter.selectedOccasions,
       "sort_by": filter.sortBy,
 
       "laying_with": layingWith,

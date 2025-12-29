@@ -74,15 +74,52 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
   // -----------------------------------------------------------
   // DIAMOND SHAPE
   // -----------------------------------------------------------
+  // final _diamondItems = [
+  //   {'label': 'Round', 'asset': 'assets/jewellery/filters/round.png'},
+  //   {'label': 'Princess', 'asset': 'assets/jewellery/filters/princess.png'},
+  //   //{'label': 'Cushion', 'asset': 'assets/jewellery/filters/cushion.png'},
+  //   {'label': 'Oval', 'asset': 'assets/jewellery/filters/oval.png'},
+  //   {'label': 'Pear', 'asset': 'assets/jewellery/filters/pear.png'},
+  //   {'label': 'Radiant', 'asset': 'assets/jewellery/filters/radiant.png'},
+  //   {'label': 'Cushion', 'asset': 'assets/jewellery/filters/fancy_cushion.png'},
+  //   {'label': 'Heart', 'asset': 'assets/jewellery/filters/heart.png'},
+  // ];
   final _diamondItems = [
-    {'label': 'Round', 'asset': 'assets/jewellery/filters/round.png'},
-    {'label': 'Princess', 'asset': 'assets/jewellery/filters/princess.png'},
-    //{'label': 'Cushion', 'asset': 'assets/jewellery/filters/cushion.png'},
-    {'label': 'Oval', 'asset': 'assets/jewellery/filters/oval.png'},
-    {'label': 'Pear', 'asset': 'assets/jewellery/filters/pear.png'},
-    {'label': 'Radiant', 'asset': 'assets/jewellery/filters/radiant.png'},
-    {'label': 'Cushion', 'asset': 'assets/jewellery/filters/fancy_cushion.png'},
-    {'label': 'Heart', 'asset': 'assets/jewellery/filters/heart.png'},
+    {
+      'code': 'RND',
+      'label': 'Round',
+      'asset': 'assets/jewellery/filters/round.png',
+    },
+    {
+      'code': 'PRN',
+      'label': 'Princess',
+      'asset': 'assets/jewellery/filters/princess.png',
+    },
+    {
+      'code': 'OVL',
+      'label': 'Oval',
+      'asset': 'assets/jewellery/filters/oval.png',
+    },
+    {
+      'code': 'PER',
+      'label': 'Pear',
+      'asset': 'assets/jewellery/filters/pear.png',
+    },
+    {
+      'code': 'RADQ',
+      'label': 'Radiant',
+      'asset': 'assets/jewellery/filters/radiant.png',
+    },
+    {
+      'code': 'CUSQ',
+      'label': 'Cushion',
+      'asset': 'assets/jewellery/filters/fancy_cushion.png',
+    },
+    {
+      'code': 'HRT',
+      'label': 'Heart',
+      'asset': 'assets/jewellery/filters/heart.png',
+    },
   ];
 
   //carat
@@ -232,8 +269,8 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                     child: DiamondShapeGrid(
                       fem: fem,
                       items: _diamondItems,
-                      selected: filter.selectedShape,
-                      onSelected: notifier.toggleShape,
+                      selected: filter.selectedShape, // Set<String> of codes
+                      onSelected: notifier.toggleShape, // now passes code
                     ),
                   ),
 

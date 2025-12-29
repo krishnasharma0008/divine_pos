@@ -112,7 +112,11 @@ class _JewelleryListingScreenState
 
     final fem = ScaleSize.aspectRatio;
 
-    final bool showLoader = storeState.isLoading || jewelleryAsync.isLoading;
+    //final bool showLoader = storeState.isLoading || jewelleryAsync.isLoading;
+    // 🔹 Show full-screen loader only on initial load
+    final bool showInitialLoader =
+        storeState.isLoading ||
+        (jewelleryAsync.isLoading && !jewelleryNotifier.isLoadingMore);
 
     return Scaffold(
       appBar: MyAppBar(
@@ -236,8 +240,8 @@ class _JewelleryListingScreenState
             ),
           ),
 
-          /// 🔹 SINGLE GLOBAL LOADER
-          if (showLoader)
+          /// 🔹 Full-screen loader for initial load
+          if (showInitialLoader)
             Container(
               color: Colors.black.withOpacity(0.15),
               child: const Center(child: CircularProgressIndicator()),

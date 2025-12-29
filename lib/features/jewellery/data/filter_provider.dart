@@ -19,7 +19,7 @@ class FilterNotifier extends StateNotifier<FilterState> {
           caratStartLabel: '0.10',
           caratEndLabel: '2.99',
           selectedShape: {},
-          selectedMetal: {},
+          selectedMetal: {'18KT Yellow Gold'},
           selectedOccasions: {},
         ),
       );

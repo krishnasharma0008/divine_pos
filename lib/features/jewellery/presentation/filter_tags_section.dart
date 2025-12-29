@@ -6,6 +6,17 @@ import 'widget/filter_tags_row.dart';
 import '../../../shared/utils/scale_size.dart';
 import '../data/ui_providers.dart';
 
+// Map codes to labels for diamond shapes
+const Map<String, String> diamondShapeLabels = {
+  "RND": "Round",
+  "PRN": "Princess",
+  "OVL": "Oval",
+  "PER": "Pear",
+  "RADQ": "Radiant",
+  "CUSQ": "Cushion",
+  "HRT": "Heart",
+};
+
 class FilterTagsSection extends ConsumerWidget {
   const FilterTagsSection({super.key});
 
@@ -30,8 +41,12 @@ class FilterTagsSection extends ConsumerWidget {
     for (final o in filter.selectedMetal) {
       tags.add(o);
     }
+    // for (final o in filter.selectedShape) {
+    //   tags.add(o);
+    // }
+    // Map diamond shapes from code → label
     for (final o in filter.selectedShape) {
-      tags.add(o);
+      tags.add(diamondShapeLabels[o] ?? o);
     }
     for (final o in filter.selectedOccasions) {
       tags.add(o);
@@ -78,6 +93,11 @@ class FilterTagsSection extends ConsumerWidget {
         },
 
         onRemoveTag: (tag) {
+          // Map back label → code to remove from filter
+          final shapeCode = diamondShapeLabels.entries
+              .firstWhere((e) => e.value == tag, orElse: () => MapEntry('', ''))
+              .key;
+
           // Map tag back to filter and clear it
           if (filter.selectedCategory.contains(tag)) {
             notifier.toggleCategory(tag);
@@ -87,9 +107,14 @@ class FilterTagsSection extends ConsumerWidget {
             notifier.toggleGender(tag);
           } else if (filter.selectedMetal.contains(tag)) {
             notifier.toggleMetal(tag);
-          } else if (filter.selectedShape.contains(tag)) {
-            notifier.toggleShape(tag);
-          } else if (filter.selectedOccasions.contains(tag)) {
+          } else if (shapeCode.isNotEmpty &&
+              filter.selectedShape.contains(shapeCode)) {
+            notifier.toggleShape(shapeCode);
+          }
+          //  if (filter.selectedShape.contains(tag)) {
+          //   notifier.toggleShape(tag);
+          // }
+          else if (filter.selectedOccasions.contains(tag)) {
             notifier.toggleOccasion(tag);
           } else if (tag.startsWith('Price:')) {
             notifier.setPrice(const RangeValues(10000, 1000000));
