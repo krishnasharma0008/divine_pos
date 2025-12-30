@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/filter_provider.dart';
 import 'widget/filter_tags_row.dart';
 import '../../../shared/utils/scale_size.dart';
-import '../data/ui_providers.dart';
+//import '../data/ui_providers.dart';
 
 // Map codes to labels for diamond shapes
 const Map<String, String> diamondShapeLabels = {
@@ -89,7 +89,7 @@ class FilterTagsSection extends ConsumerWidget {
           notifier.resetFilters(); // Reset filter state
 
           // 🔹 Trigger TopButtonsRow reset
-          ref.read(topButtonsResetProvider.notifier).trigger();
+          //ref.read(topButtonsResetProvider.notifier).trigger();
         },
 
         onRemoveTag: (tag) {

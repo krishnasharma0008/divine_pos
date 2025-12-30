@@ -101,7 +101,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         "metal_purity": filter.selectedMetal.isEmpty
             ? null
             : filter.selectedMetal.first.split(' ')[0],
-        "Metal_color": filter.selectedMetal.isEmpty
+        "metal_color": filter.selectedMetal.isEmpty
             ? null
             : filter.selectedMetal.first.split(' ')[1],
         "portfolio_type": null,

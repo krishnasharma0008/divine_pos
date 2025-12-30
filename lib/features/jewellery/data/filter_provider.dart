@@ -1,32 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
-
 import 'filter_state.dart';
 
-class FilterNotifier extends StateNotifier<FilterState> {
-  FilterNotifier()
-    : super(
-        const FilterState(
-          selectedGender: {},
-          selectedPriceRange: RangeValues(10000, 1000000),
-          selectedCategory: {},
-          selectedSubCategory: {},
-          colorStartLabel: 'D',
-          colorEndLabel: 'J',
-          clarityStartLabel: 'IF',
-          clarityEndLabel: 'SI2',
-          caratStartLabel: '0.10',
-          caratEndLabel: '2.99',
-          selectedShape: {},
-          selectedMetal: {'18KT Yellow Gold'},
-          selectedOccasions: {},
-        ),
-      );
+class FilterNotifier extends Notifier<FilterState> {
+  @override
+  FilterState build() {
+    return const FilterState(
+      selectedGender: {},
+      selectedPriceRange: RangeValues(10000, 1000000),
+      selectedCategory: {},
+      selectedSubCategory: {},
+      colorStartLabel: 'D',
+      colorEndLabel: 'J',
+      clarityStartLabel: 'IF',
+      clarityEndLabel: 'SI2',
+      caratStartLabel: '0.10',
+      caratEndLabel: '2.99',
+      selectedShape: {},
+      selectedMetal: {'18KT Yellow Gold'},
+      selectedOccasions: {},
+    );
+  }
 
   // ───────────────── Top buttons ─────────────────
 
-  /// 🔹 Products in current store
   void setProductsInStore() {
     state = state.copyWith(
       isInStore: true,
@@ -35,7 +32,6 @@ class FilterNotifier extends StateNotifier<FilterState> {
     );
   }
 
-  /// 🔹 Products at other branch (single branch)
   void setProductsAtOtherBranch(String branchCode) {
     state = state.copyWith(
       isInStore: false,
@@ -44,7 +40,6 @@ class FilterNotifier extends StateNotifier<FilterState> {
     );
   }
 
-  /// 🔹 All designs
   void setAllDesigns() {
     state = state.copyWith(
       isInStore: false,
@@ -53,7 +48,6 @@ class FilterNotifier extends StateNotifier<FilterState> {
     );
   }
 
-  /// 🔹 Sort
   void setSort(String? value) {
     state = state.copyWith(sortBy: value);
   }
@@ -130,16 +124,29 @@ class FilterNotifier extends StateNotifier<FilterState> {
   }
 
   // ───────────────── Reset ─────────────────
-
   void resetFilters() {
-    state = FilterNotifier().state;
+    state = state.copyWith(
+      selectedGender: {},
+      selectedPriceRange: const RangeValues(10000, 1000000),
+      selectedCategory: {},
+      selectedSubCategory: {},
+      colorStartLabel: 'D',
+      colorEndLabel: 'J',
+      clarityStartLabel: 'IF',
+      clarityEndLabel: 'SI2',
+      caratStartLabel: '0.10',
+      caratEndLabel: '2.99',
+      selectedShape: {},
+      selectedMetal: {'18KT Yellow Gold'},
+      selectedOccasions: {},
+      // Top buttons remain untouched
+    );
   }
 }
 
 // ───────────────── Provider ─────────────────
 
-final filterProvider = StateNotifierProvider<FilterNotifier, FilterState>((
-  ref,
-) {
-  return FilterNotifier();
-});
+final filterProvider = NotifierProvider<FilterNotifier, FilterState>(
+  FilterNotifier.new,
+);
+   

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
 import '../../../../shared/widgets/text.dart';
@@ -12,19 +11,10 @@ class UltraDropdown<T> extends StatefulWidget {
   final List<T>? items;
   final T? selectedItem;
 
-  /// Converts item → label for list
   final String Function(T item) itemBuilder;
-
-  /// Converts item → label for main box
   final String Function(T? item) displayBuilder;
-
-  /// Optional: converts item → canonical string used for equality comparison.
-  /// If not provided, `itemBuilder` is used as the comparator.
   final String Function(T? item)? itemAsString;
-
-  /// Callback
   final ValueChanged<T> onSelected;
-
   final String placeholder;
 
   const UltraDropdown({
@@ -32,8 +22,8 @@ class UltraDropdown<T> extends StatefulWidget {
     required this.width,
     required this.height,
     this.maxHeight = 240,
-    required this.items,
-    required this.selectedItem,
+    this.items,
+    this.selectedItem,
     required this.itemBuilder,
     required this.displayBuilder,
     required this.onSelected,
@@ -49,140 +39,94 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
     with SingleTickerProviderStateMixin {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
-  bool isOpen = false;
+  bool _isOpen = false;
 
-  late AnimationController _controller;
-  late Animation<double> _fade;
-  late Animation<Offset> _slide;
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 180),
+  );
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 180),
-    );
-    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _slide = Tween(
-      begin: const Offset(0, -0.05),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-  }
+  late final Animation<double> _fade = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOut,
+  );
 
-  /// Rebuild when parent updates selectedItem
-  @override
-  void didUpdateWidget(covariant UltraDropdown<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.selectedItem != oldWidget.selectedItem) {
-      setState(() {
-        // Forces rebuild to update displayed label
-      });
-    }
-  }
+  late final Animation<Offset> _slide = Tween(
+    begin: const Offset(0, -0.04),
+    end: Offset.zero,
+  ).animate(_fade);
 
-  String _canonicalString(T? item) {
+  String _canon(T? item) {
     if (item == null) return '';
-    if (widget.itemAsString != null) {
-      return widget.itemAsString!(item);
-    }
-    try {
-      return widget.itemBuilder(item);
-    } catch (_) {
-      return item.toString();
-    }
+    return widget.itemAsString?.call(item) ?? widget.itemBuilder(item);
   }
 
-  void _toggleDropdown() {
-    if (!mounted) return;
-
-    if (isOpen) {
+  void _toggle() {
+    if (_isOpen) {
       _controller.reverse();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        try {
-          _overlayEntry?.remove();
-        } catch (_) {}
-        _overlayEntry = null;
-      });
+      _overlayEntry?.remove();
+      _overlayEntry = null;
     } else {
-      if (_overlayEntry == null) {
-        _overlayEntry = _createOverlay();
-        Overlay.of(context)?.insert(_overlayEntry!);
-      }
+      _overlayEntry = _createOverlay();
+      Overlay.of(context).insert(_overlayEntry!);
       _controller.forward();
     }
-
-    setState(() => isOpen = !isOpen);
+    setState(() => _isOpen = !_isOpen);
   }
 
   OverlayEntry _createOverlay() {
-    final renderBox = context.findRenderObject() as RenderBox;
-    final targetPosition = renderBox.localToGlobal(Offset.zero);
-    final targetSize = renderBox.size;
+    final fem = ScaleSize.aspectRatio;
 
     return OverlayEntry(
-      builder: (context) {
-        return Stack(
-          children: [
-            // Full-screen transparent layer to detect outside taps
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: () {
-                  if (mounted && isOpen) _toggleDropdown();
-                },
-                child: const SizedBox(),
-              ),
+      builder: (_) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _toggle,
+              behavior: HitTestBehavior.translucent,
             ),
-
-            // The dropdown itself, anchored to the field
-            Positioned(
-              left: targetPosition.dx,
-              top: targetPosition.dy + targetSize.height + 8,
-              width: widget.width,
-              child: Material(
-                color: Colors.transparent,
-                child: FadeTransition(
-                  opacity: _fade,
-                  child: SlideTransition(
-                    position: _slide,
-                    child: Container(
-                      constraints: BoxConstraints(maxHeight: widget.maxHeight),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: kMint.withOpacity(0.28),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: widget.items == null
-                          ? const Padding(
-                              padding: EdgeInsets.all(16),
-                              child: SizedBox(
-                                height: 40,
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                            )
-                          : _buildList(widget.items!),
+          ),
+          CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: const Offset(0, 58),
+            child: Material(
+              color: Colors.transparent,
+              child: FadeTransition(
+                opacity: _fade,
+                child: SlideTransition(
+                  position: _slide,
+                  child: Container(
+                    width: widget.width * fem,
+                    constraints: BoxConstraints(maxHeight: widget.maxHeight),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: kMint.withOpacity(0.25),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
+                    child: widget.items == null
+                        ? const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+                        : _buildList(widget.items!),
                   ),
                 ),
               ),
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildList(List<T> items) {
-    final fem = ScaleSize.aspectRatio;
-
     if (items.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(14),
@@ -190,50 +134,42 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
       );
     }
 
-    final selectedCanonical = _canonicalString(widget.selectedItem);
+    final selected = _canon(widget.selectedItem);
 
     return ListView.separated(
-      shrinkWrap: true,
       padding: const EdgeInsets.symmetric(vertical: 6),
+      shrinkWrap: true,
       itemCount: items.length,
       separatorBuilder: (_, __) =>
           const Divider(height: 1, color: Colors.black12),
-      itemBuilder: (_, index) {
-        final item = items[index];
+      itemBuilder: (_, i) {
+        final item = items[i];
         final label = widget.itemBuilder(item);
-
-        final selected =
-            selectedCanonical.isNotEmpty &&
-            selectedCanonical == _canonicalString(item);
+        final isSelected = selected == _canon(item);
 
         return InkWell(
           onTap: () {
             widget.onSelected(item);
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted && isOpen) _toggleDropdown();
-            });
+            _toggle();
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: selected ? const Color(0xFF90DCD0) : Colors.transparent,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            color: isSelected ? kMint : Colors.transparent,
             child: Row(
               children: [
                 Expanded(
                   child: MyText(
                     label,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: selected ? Colors.white : const Color(0xFF90DCD0),
+                      color: isSelected ? Colors.white : kMint,
                       fontWeight: FontWeight.w600,
+                      fontSize: 16,
                       fontFamily: 'Montserrat',
-                      fontSize: 16 * fem,
                     ),
                   ),
                 ),
-                if (selected)
-                  const Icon(Icons.check, size: 18, color: Colors.white),
+                if (isSelected)
+                  const Icon(Icons.check, color: Colors.white, size: 18),
               ],
             ),
           ),
@@ -244,11 +180,7 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
 
   @override
   void dispose() {
-    try {
-      _overlayEntry?.remove();
-    } catch (_) {}
-    _overlayEntry = null;
-
+    _overlayEntry?.remove();
     _controller.dispose();
     super.dispose();
   }
@@ -257,14 +189,14 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
 
-    final display = widget.selectedItem == null
+    final text = widget.selectedItem == null
         ? widget.placeholder
         : widget.displayBuilder(widget.selectedItem);
 
     return CompositedTransformTarget(
       link: _layerLink,
       child: GestureDetector(
-        onTap: _toggleDropdown,
+        onTap: _toggle,
         child: Container(
           width: widget.width * fem,
           height: widget.height,
@@ -278,18 +210,16 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
             children: [
               Expanded(
                 child: MyText(
-                  display,
+                  text,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: const Color(0xFF90DCD0),
+                  style: const TextStyle(
+                    color: kMint,
                     fontWeight: FontWeight.w600,
-                    fontFamily: 'Montserrat',
-                    fontSize: 16 * fem,
                   ),
                 ),
               ),
               Icon(
-                isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                _isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                 color: kMint,
               ),
             ],
