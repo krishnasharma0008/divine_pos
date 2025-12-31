@@ -115,7 +115,7 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
                             padding: EdgeInsets.all(20),
                             child: Center(child: CircularProgressIndicator()),
                           )
-                        : _buildList(widget.items!),
+                        : _buildList(widget.items!, fem),
                   ),
                 ),
               ),
@@ -126,7 +126,7 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
     );
   }
 
-  Widget _buildList(List<T> items) {
+  Widget _buildList(List<T> items, double fem) {
     if (items.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(14),
@@ -163,7 +163,7 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
                     style: TextStyle(
                       color: isSelected ? Colors.white : kMint,
                       fontWeight: FontWeight.w600,
-                      fontSize: 16,
+                      fontSize: 16 * fem,
                       fontFamily: 'Montserrat',
                     ),
                   ),

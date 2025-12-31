@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/filter_provider.dart';
 import 'widget/filter_tags_row.dart';
 import '../../../shared/utils/scale_size.dart';
-//import '../data/ui_providers.dart';
 
 // Map codes to labels for diamond shapes
 const Map<String, String> diamondShapeLabels = {
@@ -16,6 +15,11 @@ const Map<String, String> diamondShapeLabels = {
   "CUSQ": "Cushion",
   "HRT": "Heart",
 };
+
+// Same defaults used in FilterNotifier
+const RangeValues kDefaultPriceRange = RangeValues(10000, 1000000);
+const String kDefaultCaratStart = '0.10';
+const String kDefaultCaratEnd = '2.99';
 
 class FilterTagsSection extends ConsumerWidget {
   const FilterTagsSection({super.key});
@@ -41,61 +45,46 @@ class FilterTagsSection extends ConsumerWidget {
     for (final o in filter.selectedMetal) {
       tags.add(o);
     }
-    // for (final o in filter.selectedShape) {
-    //   tags.add(o);
-    // }
+
     // Map diamond shapes from code → label
     for (final o in filter.selectedShape) {
       tags.add(diamondShapeLabels[o] ?? o);
     }
+
     for (final o in filter.selectedOccasions) {
       tags.add(o);
     }
 
-    // Price range
-    // if (filter.selectedPriceRange.start != 10000 ||
-    //     filter.selectedPriceRange.end != 1000000) {
-    tags.add(
-      'Price: ₹${filter.selectedPriceRange.start.toInt()} - ₹${filter.selectedPriceRange.end.toInt()}',
-    );
-    //}
+    // Price range tag ONLY when changed from default
+    if (filter.selectedPriceRange != kDefaultPriceRange) {
+      tags.add(
+        'Price: ₹${filter.selectedPriceRange.start.toInt()} - ₹${filter.selectedPriceRange.end.toInt()}',
+      );
+    }
 
-    // // Color range
-    // if (filter.colorStartLabel != filter.colorEndLabel) {
-    //   tags.add('Color: ${filter.colorStartLabel}-${filter.colorEndLabel}');
-    // }
-
-    // // Clarity range
-    // if (filter.clarityStartLabel != filter.clarityEndLabel) {
-    //   tags.add(
-    //     'Clarity: ${filter.clarityStartLabel}-${filter.clarityEndLabel}',
-    //   );
-    // }
-
-    // Carat range
-    if (filter.caratStartLabel != filter.caratEndLabel) {
+    // Carat range tag ONLY when changed from default
+    if (filter.caratStartLabel != kDefaultCaratStart ||
+        filter.caratEndLabel != kDefaultCaratEnd) {
       tags.add('Carat: ${filter.caratStartLabel}-${filter.caratEndLabel}');
     }
 
     if (tags.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      //color: Colors.black,
       padding: EdgeInsets.only(right: fem * 15),
       child: FilterTagsRow(
         selectedFilters: tags,
-        //onClearAll: () => notifier.resetFilters(),
         onClearAll: () {
           notifier.resetFilters(); // Reset filter state
-
-          // 🔹 Trigger TopButtonsRow reset
-          //ref.read(topButtonsResetProvider.notifier).trigger();
+          // You can also trigger top buttons reset here if needed.
         },
-
         onRemoveTag: (tag) {
           // Map back label → code to remove from filter
           final shapeCode = diamondShapeLabels.entries
-              .firstWhere((e) => e.value == tag, orElse: () => MapEntry('', ''))
+              .firstWhere(
+                (e) => e.value == tag,
+                orElse: () => const MapEntry('', ''),
+              )
               .key;
 
           // Map tag back to filter and clear it
@@ -110,22 +99,16 @@ class FilterTagsSection extends ConsumerWidget {
           } else if (shapeCode.isNotEmpty &&
               filter.selectedShape.contains(shapeCode)) {
             notifier.toggleShape(shapeCode);
-          }
-          //  if (filter.selectedShape.contains(tag)) {
-          //   notifier.toggleShape(tag);
-          // }
-          else if (filter.selectedOccasions.contains(tag)) {
+          } else if (filter.selectedOccasions.contains(tag)) {
             notifier.toggleOccasion(tag);
+
+            // Reset price only when the price tag is removed
           } else if (tag.startsWith('Price:')) {
-            notifier.setPrice(const RangeValues(10000, 1000000));
-          } else
-          //  if (tag.startsWith('Color:')) {
-          //   notifier.setColorRange('D', 'J');
-          // } else if (tag.startsWith('Clarity:')) {
-          //   notifier.setClarityRange('IF', 'SI2');
-          // } else
-          if (tag.startsWith('Carat:')) {
-            notifier.setCaratRange('0.10', '2.99');
+            notifier.setPrice(kDefaultPriceRange);
+
+            // Reset carat only when the carat tag is removed
+          } else if (tag.startsWith('Carat:')) {
+            notifier.setCaratRange(kDefaultCaratStart, kDefaultCaratEnd);
           }
         },
       ),

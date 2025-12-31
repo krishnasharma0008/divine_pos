@@ -149,4 +149,3 @@ class FilterNotifier extends Notifier<FilterState> {
 final filterProvider = NotifierProvider<FilterNotifier, FilterState>(
   FilterNotifier.new,
 );
-   
