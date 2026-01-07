@@ -1,49 +1,288 @@
 import 'package:flutter/material.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 
-class TabRowWidget extends StatelessWidget {
+/// ================= MAIN SCREEN =================
+
+class DetailsScreen extends StatefulWidget {
+  final double r;
+  const DetailsScreen({super.key, required this.r});
+
+  @override
+  State<DetailsScreen> createState() => _DetailsScreenState();
+}
+
+class _DetailsScreenState extends State<DetailsScreen> {
+  int activeTab = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = widget.r;
+
+    return Container(
+      color: Colors.white,
+      //padding: EdgeInsets.all(16 * r),
+      padding: EdgeInsets.fromLTRB(0, 90 * r, 30 * r, 15 * r),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _TabHeader(
+            r: r,
+            activeTab: activeTab,
+            onTabChange: (v) => setState(() => activeTab = v),
+          ),
+          SizedBox(height: 16 * r),
+          // NO Expanded here -> parent controls height
+          activeTab == 1 ? ProductDetailsTab(r) : PriceBreakupTab(r),
+        ],
+      ),
+    );
+  }
+}
+
+/// ================= TAB HEADER =================
+
+class _TabHeader extends StatelessWidget {
   final double r;
   final int activeTab;
-  final ValueChanged<int> onTabSelected;
+  final ValueChanged<int> onTabChange;
 
-  const TabRowWidget(
-    this.r, {
-    super.key,
+  const _TabHeader({
+    required this.r,
     required this.activeTab,
-    required this.onTabSelected,
+    required this.onTabChange,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        _tabChip("Mount & Side Dia Selection", 0),
-        SizedBox(width: 8 * r),
-        _tabChip("Product Details", 1),
-        SizedBox(width: 8 * r),
-        _tabChip("Price Breakup", 2),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _tab(
+              'Product Details',
+              isActive: activeTab == 1,
+              onTap: () => onTabChange(1),
+            ),
+            _tab(
+              'Price Breakup',
+              isActive: activeTab == 2,
+              onTap: () => onTabChange(2),
+            ),
+          ],
+        ),
+        SizedBox(height: 6 * r),
+        Stack(
+          children: [
+            Container(height: 1, color: const Color(0xFFEDEDED)),
+            Align(
+              alignment: activeTab == 1
+                  ? Alignment.centerLeft
+                  : Alignment.centerRight,
+              child: Container(
+                width: 120 * r,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF90DCD0),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _tabChip(String title, int index) {
-    final active = activeTab == index;
-
+  Widget _tab(
+    String title, {
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () => onTabSelected(index),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14 * r, vertical: 8 * r),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFFD6F1EC) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20 * r),
-        ),
-        child: Text(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 130 * r,
+        child: MyText(
           title,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12 * r,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+            fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
+            height: 2.2,
           ),
         ),
       ),
     );
   }
+}
+
+/// ================= LEGEND CARD =================
+
+Widget legendCard({
+  required double r,
+  required String title,
+  required Widget child,
+}) {
+  return Stack(
+    children: [
+      Container(
+        margin: EdgeInsets.only(top: 18 * r),
+        padding: EdgeInsets.fromLTRB(18 * r, 28 * r, 20 * r, 24 * r),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15 * r),
+          border: Border.all(color: const Color(0xFF90DCD0)),
+        ),
+        child: child,
+      ),
+      Positioned(
+        left: 0 * r,
+        top: 0,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14 * r, vertical: 6 * r),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF90DCD0), Color(0xFFE1E4E4)],
+            ),
+            //borderRadius: BorderRadius.circular(8 * r),
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(8 * r),
+              bottomRight: Radius.circular(8 * r),
+              topLeft: Radius.zero,
+              bottomLeft: Radius.zero,
+            ),
+          ),
+          child: MyText(
+            title,
+            style: TextStyle(fontSize: 14 * r, fontWeight: FontWeight.w500),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+/// ================= PRODUCT DETAILS TAB =================
+
+class ProductDetailsTab extends StatelessWidget {
+  final double r;
+  const ProductDetailsTab(this.r, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return legendCard(
+      r: r,
+      title: 'Divine Solitaires',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MyText(
+            'Round 0.15–0.18ct F-G VVS1-VS1 (2 Pcs)',
+            style: TextStyle(fontSize: 12 * r),
+          ),
+          SizedBox(height: 24 * r),
+          _sectionHeader(r, 'Divine Mount'),
+          SizedBox(height: 16 * r),
+          _row(r, 'Metal Type', '18KT Yellow Gold'),
+          _row(r, 'Net Weight', '3.74 Gms'),
+          _row(r, 'Side Diamond', 'Qty 48 / 0.234ct GH VS'),
+          _row(r, 'Ring Size', '12'),
+        ],
+      ),
+    );
+  }
+}
+
+/// ================= PRICE BREAKUP TAB =================
+
+class PriceBreakupTab extends StatelessWidget {
+  final double r;
+  const PriceBreakupTab(this.r, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return legendCard(
+      r: r,
+      title: 'Divine Solitaires',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _priceRow(r, 'Solitaire Value', '₹57,900'),
+          SizedBox(height: 16 * r),
+          _sectionHeader(r, 'Divine Mount'),
+          SizedBox(height: 16 * r),
+          _priceRow(r, 'Metal + Side Diamonds', '₹41,275'),
+          Divider(height: 32 * r),
+          _priceRow(r, 'Grand Total', '₹1,02,150', bold: true),
+        ],
+      ),
+    );
+  }
+}
+
+/// ================= HELPERS =================
+
+Widget _sectionHeader(double r, String title) {
+  return Transform.translate(
+    offset: Offset(-18 * r, 0), // cancel legend left padding
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 14 * r, vertical: 6 * r),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF90DCD0), Color(0xFFE1E4E4)],
+        ),
+        //borderRadius: BorderRadius.circular(8 * r),
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(8 * r),
+          bottomRight: Radius.circular(8 * r),
+          topLeft: Radius.zero,
+          bottomLeft: Radius.zero,
+        ),
+      ),
+      child: MyText(
+        title,
+        style: TextStyle(fontSize: 14 * r, fontWeight: FontWeight.w500),
+      ),
+    ),
+  );
+}
+
+Widget _row(double r, String label, String value) {
+  return Padding(
+    padding: EdgeInsets.only(bottom: 12 * r),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        MyText(label, style: TextStyle(fontSize: 12 * r)),
+        MyText(
+          value,
+          style: TextStyle(fontSize: 12 * r, fontWeight: FontWeight.w500),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _priceRow(double r, String label, String value, {bool bold = false}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      MyText(
+        label,
+        style: TextStyle(
+          fontSize: 12 * r,
+          fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+        ),
+      ),
+      MyText(
+        value,
+        style: TextStyle(
+          fontSize: 12 * r,
+          fontWeight: bold ? FontWeight.w600 : FontWeight.w500,
+        ),
+      ),
+    ],
+  );
 }

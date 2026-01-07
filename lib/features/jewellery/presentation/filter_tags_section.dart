@@ -72,6 +72,7 @@ class FilterTagsSection extends ConsumerWidget {
 
     return Container(
       padding: EdgeInsets.only(right: fem * 15),
+      //color: Colors.red,
       child: FilterTagsRow(
         selectedFilters: tags,
         onClearAll: () {

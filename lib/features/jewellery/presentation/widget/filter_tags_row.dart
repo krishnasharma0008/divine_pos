@@ -23,7 +23,7 @@ class FilterTagsRow extends StatelessWidget {
     return SizedBox(
       width: MediaQuery.of(context).size.width,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12 * r, horizontal: 12 * r),
+        padding: EdgeInsets.symmetric(vertical: 0 * r, horizontal: 12 * r),
         alignment: Alignment.centerLeft,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -91,7 +91,7 @@ class FilterTagsRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(10 * r),
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12 * r, vertical: 9 * r),
+          padding: EdgeInsets.symmetric(horizontal: 12 * r, vertical: 7 * r),
           decoration: BoxDecoration(
             color: showClose ? null : Color(0xFFEBEBEB),
             borderRadius: BorderRadius.circular(10 * r),

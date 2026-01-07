@@ -14,6 +14,7 @@ import '../../features/home/presentation/loading_screen.dart';
 //import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart'; // import your OTP screen
 import '../../features/jewellery/presentation/jewellery_listing_screen.dart';
+import '../../shared/utils/enums.dart';
 
 //import '../../shared/shared_layout.dart';
 import 'route_pages.dart';
@@ -81,10 +82,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RoutePages.dashboard.routeName,
         builder: (context, state) => DashboardScreen(),
       ),
+      // GoRoute(
+      //   path: RoutePages.jewellerylisting.routePath,
+      //   name: RoutePages.jewellerylisting.routeName,
+      //   builder: (context, state) => JewelleryListingScreen(),
+      // ),
       GoRoute(
         path: RoutePages.jewellerylisting.routePath,
         name: RoutePages.jewellerylisting.routeName,
-        builder: (context, state) => JewelleryListingScreen(),
+        pageBuilder: (context, state) {
+          return CustomTransitionPage<void>(
+            key: UniqueKey(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+            child: JewelleryListingScreen(
+              paramKey: state.uri.queryParameters.isNotEmpty
+                  ? JewelleryProductKey.fromValue(
+                      state.uri.queryParameters.keys.first,
+                    )
+                  : null,
+              paramValue: state.uri.queryParameters.isNotEmpty
+                  ? state.uri.queryParameters.values.first
+                  : null,
+            ),
+          );
+        },
       ),
       GoRoute(
         path: RoutePages.jewelleryjourney.routePath,

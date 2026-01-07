@@ -89,7 +89,7 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
           CompositedTransformFollower(
             link: _layerLink,
             showWhenUnlinked: false,
-            offset: const Offset(0, 58),
+            offset: const Offset(0, 40),
             child: Material(
               color: Colors.transparent,
               child: FadeTransition(
@@ -99,12 +99,13 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
                   child: Container(
                     width: widget.width * fem,
                     constraints: BoxConstraints(maxHeight: widget.maxHeight),
+                    padding: EdgeInsets.symmetric(vertical: fem * 8),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(15),
                       boxShadow: [
                         BoxShadow(
-                          color: kMint.withOpacity(0.25),
+                          color: kMint.withValues(alpha: 0.25),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -163,8 +164,7 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
                     style: TextStyle(
                       color: isSelected ? Colors.white : kMint,
                       fontWeight: FontWeight.w600,
-                      fontSize: 16 * fem,
-                      fontFamily: 'Montserrat',
+                      fontSize: 15 * fem,
                     ),
                   ),
                 ),
@@ -178,12 +178,12 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
     );
   }
 
-  @override
-  void dispose() {
-    _overlayEntry?.remove();
-    _controller.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _overlayEntry?.remove();
+  //   _controller.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -212,8 +212,9 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
                 child: MyText(
                   text,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: kMint,
+                    fontSize: 15 * fem,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

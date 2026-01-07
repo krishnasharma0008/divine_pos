@@ -37,64 +37,70 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
 
     return Container(
       color: const Color(0xFFF6F6F6),
-      padding: EdgeInsets.symmetric(horizontal: 21 * fem, vertical: 11 * fem),
-      child: SingleChildScrollView(
+      height: fem * 50,
+      padding: EdgeInsets.symmetric(horizontal: 16 * fem, vertical: 7 * fem),
+      child: CustomScrollView(
         scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            SizedBox(width: 48 * fem),
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Row(
+              children: [
+                SizedBox(width: 14 * fem),
 
-            _PillButton(
-              title: 'Products In Store',
-              selected: _selectedTab == 0,
-              width: 178 * fem,
-              onTap: () => _selectTab(0),
+                _PillButton(
+                  title: 'Products In Store',
+                  selected: _selectedTab == 0,
+                  width: 178 * fem,
+                  onTap: () => _selectTab(0),
+                ),
+
+                SizedBox(width: 14),
+
+                UltraDropdown<StoreDetail>(
+                  width: 420 * fem,
+                  height: 50 * fem,
+                  items: widget.branchStores,
+                  selectedItem: _selectedBranch,
+                  placeholder: 'Products At Other Branches',
+                  itemBuilder: _branchLabel,
+                  displayBuilder: (item) => item == null
+                      ? 'Products At Other Branches'
+                      : _branchLabel(item),
+                  onSelected: (store) {
+                    setState(() => _selectedBranch = store);
+                    widget.onBranchSelected?.call(store);
+                  },
+                ),
+
+                SizedBox(width: 14),
+
+                _PillButton(
+                  title: 'All Designs',
+                  selected: _selectedTab == 2,
+                  width: 155 * fem,
+                  onTap: () => _selectTab(2),
+                ),
+                //SizedBox(width: 251),
+                Spacer(),
+
+                UltraDropdown<String>(
+                  width: 200 * fem,
+                  height: 50 * fem,
+                  items: const ['Best Sellers', 'New Arrivals'],
+                  selectedItem: _selectedSort,
+                  placeholder: 'Sort by',
+                  itemBuilder: (s) => s,
+                  displayBuilder: (s) => s ?? 'Sort by',
+                  onSelected: (value) {
+                    setState(() => _selectedSort = value);
+                    widget.onSortSelected?.call(value);
+                  },
+                ),
+              ],
             ),
-
-            SizedBox(width: 14),
-
-            UltraDropdown<StoreDetail>(
-              width: 420 * fem,
-              height: 50 * fem,
-              items: widget.branchStores,
-              selectedItem: _selectedBranch,
-              placeholder: 'Products At Other Branches',
-              itemBuilder: _branchLabel,
-              displayBuilder: (item) => item == null
-                  ? 'Products At Other Branches'
-                  : _branchLabel(item),
-              onSelected: (store) {
-                setState(() => _selectedBranch = store);
-                widget.onBranchSelected?.call(store);
-              },
-            ),
-
-            SizedBox(width: 14),
-
-            _PillButton(
-              title: 'All Designs',
-              selected: _selectedTab == 2,
-              width: 155 * fem,
-              onTap: () => _selectTab(2),
-            ),
-
-            SizedBox(width: 251),
-
-            UltraDropdown<String>(
-              width: 200 * fem,
-              height: 50 * fem,
-              items: const ['Best Sellers', 'New Arrivals'],
-              selectedItem: _selectedSort,
-              placeholder: 'Sort by',
-              itemBuilder: (s) => s,
-              displayBuilder: (s) => s ?? 'Sort by',
-              onSelected: (value) {
-                setState(() => _selectedSort = value);
-                widget.onSortSelected?.call(value);
-              },
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -133,12 +139,13 @@ class _PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         width: width,
-        height: 50 * ScaleSize.aspectRatio,
+        height: 50 * fem,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: selected ? kMint : Colors.white,
@@ -148,7 +155,7 @@ class _PillButton extends StatelessWidget {
         child: MyText(
           title,
           style: TextStyle(
-            fontSize: 16 * ScaleSize.aspectRatio,
+            fontSize: 15 * fem,
             fontWeight: FontWeight.w600,
             color: selected ? Colors.white : kMint,
           ),

@@ -146,6 +146,7 @@ class FilterNotifier extends Notifier<FilterState> {
 
 // ───────────────── Provider ─────────────────
 
-final filterProvider = NotifierProvider<FilterNotifier, FilterState>(
-  FilterNotifier.new,
-);
+final filterProvider =
+    NotifierProvider.autoDispose<FilterNotifier, FilterState>(
+      FilterNotifier.new,
+    );

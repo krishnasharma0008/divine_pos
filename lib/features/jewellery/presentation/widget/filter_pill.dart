@@ -26,7 +26,7 @@ class FilterPill extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.symmetric(horizontal: 0 * fem, vertical: 8 * fem),
+        padding: EdgeInsets.symmetric(horizontal: 8 * fem, vertical: 8 * fem),
         decoration: BoxDecoration(
           color: selected ? Color(0xFFF3FBFA) : Color(0xFFFBFBFB),
           borderRadius: BorderRadius.circular(15 * fem),

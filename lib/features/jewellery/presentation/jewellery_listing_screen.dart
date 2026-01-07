@@ -20,7 +20,14 @@ import 'filter_tags_section.dart';
 import 'product_grid.dart';
 
 class JewelleryListingScreen extends ConsumerStatefulWidget {
-  const JewelleryListingScreen({super.key});
+  const JewelleryListingScreen({
+    super.key,
+    required this.paramKey,
+    required this.paramValue,
+  });
+
+  final JewelleryProductKey? paramKey;
+  final String? paramValue;
 
   @override
   ConsumerState<JewelleryListingScreen> createState() =>
@@ -62,32 +69,37 @@ class _JewelleryListingScreenState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_routeApplied) return;
+    //if (_routeApplied) return;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final params = GoRouterState.of(context).uri.queryParameters;
+    //WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future.microtask(() {
+      print("Called");
+      ref.read(filterProvider.notifier).resetFilters();
 
-      final category = params['category'];
-      final collection = params['Collection'];
+      // final params = GoRouterState.of(context).uri.queryParameters;
+
+      // final category = params['category'];
+      // final collection = params['Collection'];
 
       final filter = ref.read(filterProvider.notifier);
-      bool shouldFetch = false;
+      // bool shouldFetch = false;
 
-      if (category != null) {
-        filter.setCategory(category);
-        shouldFetch = true;
+      if (widget.paramKey != null && widget.paramValue != null) {
+        if (widget.paramKey == JewelleryProductKey.category) {
+          filter.setCategory(widget.paramValue!);
+          //shouldFetch = true;
+        }
+
+        if (widget.paramKey == JewelleryProductKey.collection) {
+          filter.setSubCategory(widget.paramValue!);
+          //shouldFetch = true;
+        }
       }
+      // if (shouldFetch) {
+      //   ref.read(jewelleryProvider.notifier).resetAndFetch();
+      // }
 
-      if (collection != null) {
-        filter.setSubCategory(collection);
-        shouldFetch = true;
-      }
-
-      if (shouldFetch) {
-        ref.read(jewelleryProvider.notifier).resetAndFetch();
-      }
-
-      _routeApplied = true;
+      //_routeApplied = true;
     });
   }
 
@@ -99,6 +111,7 @@ class _JewelleryListingScreenState
 
   @override
   Widget build(BuildContext context) {
+    print("xx: ${widget.paramKey}: ${widget.paramValue}");
     final fem = ScaleSize.aspectRatio;
 
     final storeState = ref.watch(StoreProvider);
@@ -114,6 +127,7 @@ class _JewelleryListingScreenState
       backgroundColor: Colors.white,
       appBar: MyAppBar(
         appBarLeading: AppBarLeading.drawer,
+        //appBarLeading: AppBarLeading.back,
         showLogo: false,
         actions: [
           AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
@@ -145,11 +159,11 @@ class _JewelleryListingScreenState
                   onBranchSelected: (store) {
                     ref.read(StoreProvider.notifier).selectStore(store);
                     filterNotifier.setProductsAtOtherBranch(store.code);
-                    jewelleryNotifier.resetAndFetch();
+                    //jewelleryNotifier.resetAndFetch();
                   },
                   onSortSelected: (sort) {
                     filterNotifier.setSort(sort);
-                    jewelleryNotifier.resetAndFetch();
+                    //jewelleryNotifier.resetAndFetch();
                   },
                   onTabSelected: (tab) {
                     if (tab == 0) {
@@ -157,7 +171,7 @@ class _JewelleryListingScreenState
                     } else if (tab == 2) {
                       filterNotifier.setAllDesigns();
                     }
-                    jewelleryNotifier.resetAndFetch();
+                    //jewelleryNotifier.resetAndFetch();
                   },
                 ),
 
@@ -177,15 +191,15 @@ class _JewelleryListingScreenState
                           children: [
                             CategorySection(),
                             FilterTagsSection(),
-                            SizedBox(height: fem * 20),
+                            SizedBox(height: fem * 10),
                             Expanded(
                               child: jewelleryAsync.when(
                                 loading: () => const SizedBox(),
                                 error: (err, _) => Center(
                                   child: MyText(
                                     err.toString(),
-                                    style: const TextStyle(
-                                      fontSize: 16,
+                                    style: TextStyle(
+                                      fontSize: 16 * fem,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -225,7 +239,7 @@ class _JewelleryListingScreenState
           /// 🔹 Initial loader only
           if (showInitialLoader)
             Container(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],

@@ -7,7 +7,7 @@ import '../../../shared/widgets/text.dart';
 class ProductCard extends StatelessWidget {
   final String image;
   final String description;
-  final double price;
+  final double? price;
   final String tagText;
   final Color tagColor;
   final bool isSoldOut;
@@ -169,12 +169,24 @@ class ProductCard extends StatelessWidget {
                 ? Image.network(
                     image,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => _noImageAsset(r),
+                    //errorBuilder: (_, __, ___) => _noImageAsset(r),
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint(
+                        '📸 Network image error: $error',
+                      ); // keep but accept it's frequent
+                      return _noImageAsset(r);
+                    },
                   )
                 : Image.asset(
                     image,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => _noImageAsset(r),
+                    //errorBuilder: (_, __, ___) => _noImageAsset(r),
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint(
+                        '📸 Network image error: $error',
+                      ); // keep but accept it's frequent
+                      return _noImageAsset(r);
+                    },
                   ),
           ),
         ),
@@ -249,7 +261,8 @@ class ProductCard extends StatelessWidget {
   Widget _price(double r) => Padding(
     padding: EdgeInsets.symmetric(horizontal: 9 * r),
     child: MyText(
-      price.inRupeesFormat(),
+      //price.inRupeesFormat(),
+      price == null ? 'Price on request' : price!.inRupeesFormat(),
       style: TextStyle(
         color: const Color(0xFF212121),
         fontSize: 12 * r,

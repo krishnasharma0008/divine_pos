@@ -24,26 +24,53 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
   final int _limit = 8;
   bool _hasMore = true;
   bool _isLoadingMore = false;
+  //bool _firstBuild = true; // ✅ flag to prevent duplicate fetch
 
   bool get hasMore => _hasMore;
   bool get isLoadingMore => _isLoadingMore;
 
   @override
   Future<List<Jewellery>> build() async {
-    /// cleanup
     ref.onDispose(() {
       _debounce?.cancel();
     });
 
-    /// filter change → debounce → reload
+    // Listen to filter changes ONLY
     ref.listen(filterProvider, (_, __) {
+      if (_isLoadingMore) return;
+
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 500), resetAndFetch);
     });
 
-    /// initial load (page load)
-    return _fetchJewellery();
+    //return _fetchJewellery();
+    // ❌ DO NOT FETCH HERE
+    return [];
   }
+
+  // @override
+  // Future<List<Jewellery>> build() async {
+  //   // /// cleanup
+  //   // ref.onDispose(() {
+  //   //   _debounce?.cancel();
+  //   // });
+
+  //   // /// filter change → debounce → reload
+  //   // ref.listen(filterProvider, (_, __) {
+  //   //   _debounce?.cancel();
+  //   //   _debounce = Timer(const Duration(milliseconds: 500), resetAndFetch);
+  //   // });
+
+  //   ref.listen(filterProvider, (_, __) {
+  //     if (_isLoadingMore) return; // 🔥 CRITICAL GUARD
+
+  //     _debounce?.cancel();
+  //     _debounce = Timer(const Duration(milliseconds: 500), resetAndFetch);
+  //   });
+
+  //   /// initial load (page load)
+  //   return _fetchJewellery();
+  // }
 
   /// reset + reload
   Future<void> resetAndFetch() async {
@@ -59,17 +86,38 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
     if (!_hasMore || _isLoadingMore) return;
 
     _isLoadingMore = true;
-    _page++;
 
     try {
-      final nextPage = await _fetchJewellery();
+      final nextPage = await _fetchJewellery(page: _page + 1);
+
+      if (nextPage.isEmpty) {
+        _hasMore = false;
+        return;
+      }
+
+      _page++; // move to next page AFTER success
       state = state.whenData((current) => [...current, ...nextPage]);
     } finally {
       _isLoadingMore = false;
     }
   }
 
-  Future<List<Jewellery>> _fetchJewellery() async {
+  // Future<void> loadMore() async {
+  //   if (!_hasMore || _isLoadingMore) return;
+
+  //   _isLoadingMore = true;
+
+  //   try {
+  //     final nextPage = await _fetchJewellery();
+  //     _page++;
+  //     state = state.whenData((current) => [...current, ...nextPage]);
+  //   } finally {
+  //     _isLoadingMore = false;
+  //   }
+  // }
+
+  Future<List<Jewellery>> _fetchJewellery({int? page}) async {
+    final effectivePage = page ?? _page;
     try {
       final dio = ref.read(httpClientProvider);
       final filter = ref.read(filterProvider);
@@ -89,6 +137,38 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         layingWith = pjcode;
       }
 
+      String? gender;
+
+      if (filter.selectedGender.isNotEmpty) {
+        final mapped = filter.selectedGender
+            .map((g) {
+              switch (g.toLowerCase()) {
+                case 'men':
+                case 'male':
+                  return 'male';
+
+                case 'women':
+                case 'female':
+                  return 'female';
+
+                case 'unisex':
+                  return 'Unisex';
+
+                case 'children':
+                case 'kids':
+                  return 'Children';
+
+                default:
+                  return null;
+              }
+            })
+            .whereType<String>()
+            .toSet(); // remove nulls & duplicates
+
+        gender = mapped.isEmpty ? null : mapped.join(',');
+      }
+      //debugPrint("Selected gender: $gender");
+      //debugPrint(filter.selectedGender.join(","));
       final postData = {
         "item_number": null,
         "product_category": filter.selectedCategory.isEmpty
@@ -105,12 +185,13 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
             ? null
             : filter.selectedMetal.first.split(' ')[1],
         "portfolio_type": null,
-        "pageno": _page,
+        "pageno": effectivePage,
         "is_new_launch": false,
         "discarded": false,
-        "gender": filter.selectedGender.isEmpty
-            ? null
-            : filter.selectedGender.join(","),
+        // "gender": filter.selectedGender.isEmpty
+        //     ? null
+        //     : filter.selectedGender.join(","),
+        "gender": gender,
         "price_from": filter.selectedPriceRange.start > 0
             ? filter.selectedPriceRange.start.toInt()
             : null,
@@ -132,11 +213,12 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
             ? null
             : filter.selectedOccasions.join(","),
         "sort_by": filter.sortBy,
-        "laying_with": layingWith,
+        if (layingWith != null)
+          "laying_with": layingWith, //"laying_with": layingWith,
       };
 
-      debugPrint("🔄 Fetching jewellery - Page: $_page");
-      debugPrint("📦 Post Data: ${jsonEncode(postData)}");
+      // debugPrint("🔄 Fetching jewellery - Page: $_page");
+      // debugPrint("📦 Post Data: ${jsonEncode(postData)}");
 
       final response = await dio
           .post(ApiEndPoint.get_jewellery_listing, data: postData)
@@ -152,7 +234,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
           'HTTP ${response.statusCode}: ${response.statusMessage}',
         );
       }
-
+      //debugPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
       // ✅ Response data validation
       if (response.data == null) {
         throw Exception('Empty response from server');
@@ -165,8 +247,14 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       }
 
       final rawData = responseData['data'];
+      //debugPrint("📦 Page $effectivePage → ${rawData.length} items");
+
       if (rawData == null || rawData is! List) {
-        debugPrint('⚠️ No data or invalid data format: $rawData');
+        _hasMore = false;
+        return [];
+      }
+
+      if (rawData.isEmpty) {
         _hasMore = false;
         return [];
       }
@@ -218,103 +306,4 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       // isLoadingNotifier.value = false; // if you have one
     }
   }
-
-  // Future<List<Jewellery>> _fetchJewellery() async {
-  //   final dio = ref.read(httpClientProvider);
-  //   final filter = ref.read(filterProvider);
-
-  //   final authRepo = ref.read(authProvider);
-  //   final pjcode = authRepo.user?.pjcode;
-
-  //   String? layingWith;
-
-  //   if (filter.isInStore) {
-  //     layingWith = pjcode;
-  //   } else if (filter.productBranch != null) {
-  //     layingWith = filter.productBranch;
-  //   } else if (filter.allDesigns) {
-  //     layingWith = null;
-  //   } else {
-  //     layingWith = pjcode;
-  //   }
-
-  //   // debugPrint("is_in_store: ${filter.isInStore}");
-  //   // debugPrint("branch_at_code: ${filter.productBranch}");
-  //   // debugPrint("all_designs: ${filter.allDesigns}");
-  //   // debugPrint("sort_by: ${filter.sortBy}");
-
-  //   //debugPrint("Selected Shape: ${filter.selectedShape}");
-
-  //   final postData = {
-  //     "item_number": null,
-  //     "product_category": filter.selectedCategory.isEmpty
-  //         ? null
-  //         : filter.selectedCategory.join(",").toLowerCase(),
-  //     "product_sub_category": filter.selectedSubCategory.isEmpty
-  //         ? null
-  //         : filter.selectedSubCategory.join(","),
-  //     "collection": null,
-  //     "metal_purity": filter.selectedMetal.isEmpty
-  //         ? null
-  //         : filter.selectedMetal.first.split(' ')[0],
-  //     "portfolio_type": null,
-
-  //     "pageno": _page,
-  //     "is_new_launch": false,
-  //     "discarded": false,
-
-  //     "gender": filter.selectedGender.isEmpty
-  //         ? null
-  //         : filter.selectedGender.join(","),
-
-  //     "price_from": null, //filter.selectedPriceRange.start,
-  //     "price_to": null, //filter.selectedPriceRange.end,
-  //     "order_for": null, //"Stock",
-  //     "cts_from": filter.caratStartLabel.isEmpty
-  //         ? null
-  //         : double.tryParse(filter.caratStartLabel),
-
-  //     "cts_to": filter.caratEndLabel.isEmpty
-  //         ? null
-  //         : double.tryParse(filter.caratEndLabel),
-
-  //     //"shapes": null,
-  //     "shapes": filter.selectedShape.isEmpty
-  //         ? null
-  //         : filter.selectedShape.join(",").toLowerCase(),
-  //     "occasions": filter.selectedOccasions.isEmpty
-  //         ? null
-  //         : filter.selectedOccasions.join(","),
-  //     "sort_by": filter.sortBy,
-
-  //     "laying_with": layingWith,
-  //   };
-
-  //   debugPrint(" Post Data : ${postData}");
-
-  //   final response = await dio.post(
-  //     ApiEndPoint.get_jewellery_listing,
-  //     data: postData,
-  //   );
-
-  //   if (response.statusCode != HttpStatus.ok ||
-  //       response.data == null ||
-  //       response.data["success"] != true) {
-  //     throw Exception("Failed to load jewellery");
-  //   }
-
-  //   final rawData = response.data["data"];
-  //   if (rawData == null || rawData is! List) {
-  //     _hasMore = false;
-  //     return [];
-  //   }
-
-  //   final data = rawData.map<Jewellery>((e) => Jewellery.fromJson(e)).toList();
-
-  //   if (data.length < _limit) {
-  //     _hasMore = false;
-  //   }
-
-  //   return data;
-  // }
 }

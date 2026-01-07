@@ -32,26 +32,28 @@ class CategoryRow extends StatelessWidget {
               onTap: () => onSelect(index),
               child: Container(
                 margin: const EdgeInsets.only(right: 18),
+
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 80 * fem,
-                      height: 80 * fem,
+                      width: 55 * fem,
+                      height: 55 * fem,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFFD4AF37)
+                              ? const Color(0xFFEEEEEE)
                               : Colors.transparent,
                           width: 3 * fem,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
+                            color: Color(0xFFE9E9E9),
+                            blurRadius: 4,
+                            offset: Offset(2, 1),
+                            spreadRadius: 0,
                           ),
                         ],
                       ),

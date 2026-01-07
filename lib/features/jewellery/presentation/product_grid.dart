@@ -135,7 +135,7 @@ class ProductGrid extends StatelessWidget {
     return ProductCard(
       isWide: isWide,
       image: item.imageUrl ?? '',
-      description: item.description ?? '',
+      description: item.itemNumber ?? '', //item.description ?? '',
       price: item.price ?? 0,
       tagText: tagText,
       tagColor: getTagColor(tagText),

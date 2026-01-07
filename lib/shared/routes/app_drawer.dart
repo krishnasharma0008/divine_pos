@@ -1,3 +1,4 @@
+import 'package:divine_pos/shared/utils/enums.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -197,11 +198,15 @@ class SideDrawer extends ConsumerWidget {
       return InkWell(
         onTap: () {
           Navigator.of(context).pop();
-          final paramKey = isSubcategory ? 'Collection' : 'category';
-          debugPrint(paramKey);
-          GoRouter.of(context).push(
-            '${routePage.routePath}?$paramKey=${Uri.encodeComponent(item.value)}',
+          final paramKey = isSubcategory
+              ? JewelleryProductKey.collection
+              : JewelleryProductKey.category; //'collection' : 'category';
+          //debugPrint(paramKey);
+
+          GoRouter.of(context).pushReplacement(
+            '${routePage.routePath}?${paramKey.value}=${Uri.encodeComponent(item.value)}',
           );
+
           //GoRouter.of(context).push(routePage.routePath);RoutePages.jewellerylisting.routePath
         },
         child: Container(
@@ -302,7 +307,7 @@ class SideDrawer extends ConsumerWidget {
       onTap: () {
         Navigator.of(context).pop();
         drawerNotifier.routePage = routePage;
-        GoRouter.of(context).push(routePage.routePath);
+        GoRouter.of(context).pushReplacement(routePage.routePath);
       },
       child: Container(
         padding: EdgeInsets.only(

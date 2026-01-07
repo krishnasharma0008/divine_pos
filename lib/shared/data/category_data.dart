@@ -7,7 +7,7 @@ final Map<String, String> categories = {
   'RING': 'Ring',
   'solitaire': 'Solitaire',
   'bracelets': 'Bracelets',
-  'EARRING': 'EARRING',
+  'Earring': 'Earring',
 };
 
 // Subcategories as key-value pairs

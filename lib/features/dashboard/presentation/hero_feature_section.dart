@@ -139,6 +139,7 @@ class HeroAndFeaturesSection extends ConsumerWidget {
                   image: "catalouge.png",
                   routePage: RoutePages.jewellerylisting,
                 ),
+                SizedBox(width: 12 * ar),
                 featureCard(
                   context: context,
                   fem: ar,
@@ -146,6 +147,7 @@ class HeroAndFeaturesSection extends ConsumerWidget {
                   image: "feedback-form.png",
                   routePage: RoutePages.feedback,
                 ),
+                SizedBox(width: 12 * ar),
                 featureCard(
                   context: context,
                   fem: ar,
@@ -153,6 +155,7 @@ class HeroAndFeaturesSection extends ConsumerWidget {
                   image: "know_your_diamond_value.png",
                   routePage: RoutePages.knowDiamond,
                 ),
+                SizedBox(width: 12 * ar),
                 featureCard(
                   context: context,
                   fem: ar,
@@ -160,6 +163,7 @@ class HeroAndFeaturesSection extends ConsumerWidget {
                   image: "verify-track.png",
                   routePage: RoutePages.verifyTrack,
                 ),
+                SizedBox(width: 12 * ar),
                 featureCard(
                   context: context,
                   fem: ar,
@@ -206,7 +210,8 @@ class HeroAndFeaturesSection extends ConsumerWidget {
   }) {
     return GestureDetector(
       onTap: () {
-        GoRouter.of(context).push(routePage.routePath);
+        //GoRouter.of(context).push(routePage.routePath);
+        GoRouter.of(context).pushReplacement(routePage.routePath);
       },
       child: Container(
         width: 232 * fem,

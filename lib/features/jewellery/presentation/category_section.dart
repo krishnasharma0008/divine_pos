@@ -7,7 +7,34 @@ import '../data/category_item.dart';
 import 'widget/category_row.dart';
 
 class CategorySection extends ConsumerWidget {
-  const CategorySection({super.key});
+  CategorySection({super.key});
+
+  final categories = <CategoryItem>[
+    CategoryItem(
+      image: 'assets/jewellery/filter_tags/rings.jpg',
+      label: 'Ring',
+    ),
+    CategoryItem(
+      image: 'assets/jewellery/filter_tags/earrings.png',
+      label: 'Earring',
+    ),
+    CategoryItem(
+      image: 'assets/jewellery/filter_tags/pendant.png',
+      label: 'Pendant',
+    ),
+    CategoryItem(
+      image: 'assets/jewellery/filter_tags/mangalsutra.jpg',
+      label: 'Mangalsutra',
+    ),
+    CategoryItem(
+      image: 'assets/jewellery/filter_tags/solitaires.png',
+      label: 'Solitaires',
+    ),
+    CategoryItem(
+      image: 'assets/jewellery/filter_tags/bangles.jpg',
+      label: 'Bangles',
+    ),
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,7 +48,7 @@ class CategorySection extends ConsumerWidget {
       ),
       CategoryItem(
         image: 'assets/jewellery/filter_tags/earrings.png',
-        label: 'EARRING',
+        label: 'Earring',
       ),
       CategoryItem(
         image: 'assets/jewellery/filter_tags/pendant.png',
@@ -51,7 +78,7 @@ class CategorySection extends ConsumerWidget {
     return Container(
       color: Colors.white, // ✅ background color added
       padding: const EdgeInsets.symmetric(
-        vertical: 12,
+        vertical: 10,
         horizontal: 15,
       ), // optional spacing
       child: CategoryRow(

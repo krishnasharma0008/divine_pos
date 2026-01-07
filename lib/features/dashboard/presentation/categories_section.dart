@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/widgets/text.dart';
 import '../../../shared/utils/scale_size.dart';
+import '../../../shared/utils/enums.dart';
 import '../../../shared/widgets/text.dart';
 import '../../jewellery/data/filter_provider.dart';
 
@@ -12,7 +13,7 @@ class CategoriesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(filterProvider.notifier);
+    //final notifier = ref.read(filterProvider.notifier);
 
     final ar = ScaleSize.aspectRatio.clamp(0.7, 1.3);
     final tiles = [
@@ -23,10 +24,14 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 132,
         productHeight: 125,
         onTap: () {
-          notifier.resetFilters(); // optional
-          notifier.toggleCategory('Ring'); // ✅ set category
+          // notifier.resetFilters(); // optional
+          // notifier.toggleCategory('Ring'); // ✅ set category
 
-          context.go(RoutePages.jewellerylisting.routePath);
+          // context.go(RoutePages.jewellerylisting.routePath);
+          //GoRouter.of(context).pushReplacement(
+          context.push(
+            '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Ring')}',
+          );
         },
       ),
       CategoryTile(
@@ -36,10 +41,14 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 160,
         productHeight: 90,
         onTap: () {
-          notifier.resetFilters(); // optional
-          notifier.toggleCategory('Earrings'); // ✅ set category
+          // notifier.resetFilters(); // optional
+          // notifier.toggleCategory('Earrings'); // ✅ set category
 
-          context.go(RoutePages.jewellerylisting.routePath);
+          // context.go(RoutePages.jewellerylisting.routePath);
+          GoRouter.of(context).pushReplacement(
+            //context.push(
+            '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Earring')}',
+          );
         },
       ),
       CategoryTile(
@@ -49,10 +58,14 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 210,
         productHeight: 210,
         onTap: () {
-          notifier.resetFilters(); // optional
-          notifier.toggleCategory('Necklaces'); // ✅ set category
+          // notifier.resetFilters(); // optional
+          // notifier.toggleCategory('Necklaces'); // ✅ set category
 
-          context.go(RoutePages.jewellerylisting.routePath);
+          // context.go(RoutePages.jewellerylisting.routePath);
+          GoRouter.of(context).pushReplacement(
+            //context.push(
+            '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Necklaces')}',
+          );
         },
       ),
       CategoryTile(
@@ -62,10 +75,14 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 134,
         productHeight: 205,
         onTap: () {
-          notifier.resetFilters(); // optional
-          notifier.toggleCategory('Pendants'); // ✅ set category
+          // notifier.resetFilters(); // optional
+          // notifier.toggleCategory('Pendants'); // ✅ set category
 
-          context.go(RoutePages.jewellerylisting.routePath);
+          // context.go(RoutePages.jewellerylisting.routePath);
+          GoRouter.of(context).pushReplacement(
+            //context.push(
+            '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Pendants')}',
+          );
         },
       ),
       CategoryTile(
@@ -75,10 +92,14 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 169,
         productHeight: 169,
         onTap: () {
-          notifier.resetFilters(); // optional
-          notifier.toggleCategory('Bangles'); // ✅ set category
+          // notifier.resetFilters(); // optional
+          // notifier.toggleCategory('Bangles'); // ✅ set category
 
-          context.go(RoutePages.jewellerylisting.routePath);
+          // context.go(RoutePages.jewellerylisting.routePath);
+          GoRouter.of(context).pushReplacement(
+            //context.push(
+            '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Bangles')}',
+          );
         },
       ),
 
@@ -89,10 +110,14 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 111,
         productHeight: 99,
         onTap: () {
-          notifier.resetFilters(); // optional
-          notifier.toggleCategory('Solitaire'); // ✅ set category
+          // notifier.resetFilters(); // optional
+          // notifier.toggleCategory('Solitaire'); // ✅ set category
 
-          context.go(RoutePages.jewellerylisting.routePath);
+          // context.go(RoutePages.jewellerylisting.routePath);
+          GoRouter.of(context).pushReplacement(
+            //context.push(
+            '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Solitaire')}',
+          );
         },
       ),
       CategoryTile(
@@ -102,10 +127,14 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 120,
         productHeight: 120,
         onTap: () {
-          notifier.resetFilters(); // optional
-          notifier.toggleCategory('Bracelet'); // ✅ set category
+          // notifier.resetFilters(); // optional
+          // notifier.toggleCategory('Bracelet'); // ✅ set category
 
-          context.go(RoutePages.jewellerylisting.routePath);
+          // context.go(RoutePages.jewellerylisting.routePath);
+          GoRouter.of(context).pushReplacement(
+            //context.push(
+            '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Bracelet')}',
+          );
         },
       ),
       CategoryTile(
@@ -115,10 +144,14 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 210,
         productHeight: 165,
         onTap: () {
-          notifier.resetFilters(); // optional
-          notifier.toggleCategory('Mangalsutra'); // ✅ set category
+          // notifier.resetFilters(); // optional
+          // notifier.toggleCategory('Mangalsutra'); // ✅ set category
 
-          context.go(RoutePages.jewellerylisting.routePath);
+          // context.go(RoutePages.jewellerylisting.routePath);
+          GoRouter.of(context).pushReplacement(
+            //context.push(
+            '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Mangalsutra')}',
+          );
         },
       ),
 
@@ -129,10 +162,14 @@ class CategoriesSection extends ConsumerWidget {
         productWidth: 210,
         productHeight: 94,
         onTap: () {
-          notifier.resetFilters(); // optional
-          notifier.toggleCategory('Male Earring'); // ✅ set category
+          // notifier.resetFilters(); // optional
+          // notifier.toggleCategory('Male Earring'); // ✅ set category
 
-          context.go(RoutePages.jewellerylisting.routePath);
+          // context.go(RoutePages.jewellerylisting.routePath);
+          GoRouter.of(context).pushReplacement(
+            //context.push(
+            '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Male Earring')}',
+          );
         },
       ),
       CategoryTile(
@@ -143,7 +180,7 @@ class CategoriesSection extends ConsumerWidget {
         productHeight: 24,
         isCta: true,
         onTap: () {
-          notifier.resetFilters(); // optional
+          //notifier.resetFilters(); // optional
 
           context.go(RoutePages.jewellerylisting.routePath);
         },
