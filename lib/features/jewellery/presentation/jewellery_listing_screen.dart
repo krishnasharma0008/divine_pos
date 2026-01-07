@@ -176,7 +176,7 @@ class _JewelleryListingScreenState
                   onBranchSelected: (store) {
                     ref.read(StoreProvider.notifier).selectStore(store);
                     filterNotifier.setProductsAtOtherBranch(store.code);
-                    jewelleryNotifier.resetAndFetch();
+                    //jewelleryNotifier.resetAndFetch();
                   },
                   onSortSelected: (sort) {
                     filterNotifier.setSort(sort);
@@ -188,7 +188,7 @@ class _JewelleryListingScreenState
                     } else if (tab == 2) {
                       filterNotifier.setAllDesigns();
                     }
-                    jewelleryNotifier.resetAndFetch();
+                    //jewelleryNotifier.resetAndFetch();
                   },
                 ),
 
