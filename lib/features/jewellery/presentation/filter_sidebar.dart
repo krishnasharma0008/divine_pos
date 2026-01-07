@@ -204,6 +204,20 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
     final filter = ref.watch(filterProvider); // FilterState
     final notifier = ref.read(filterProvider.notifier); // FilterNotifier
 
+    const String kDefaultCaratStart = '0.10';
+    const String kDefaultCaratEnd = '2.99';
+
+    final int defaultStartIndex = _caratOptions.indexOf(kDefaultCaratStart);
+    final int defaultEndIndex = _caratOptions.indexOf(kDefaultCaratEnd);
+
+    final int startIndex = filter.caratStartLabel != null
+        ? _caratOptions.indexOf(filter.caratStartLabel!)
+        : defaultStartIndex;
+
+    final int endIndex = filter.caratEndLabel != null
+        ? _caratOptions.indexOf(filter.caratEndLabel!)
+        : defaultEndIndex;
+
     return Container(
       width: fem * 310,
       padding: EdgeInsets.symmetric(horizontal: fem * 4, vertical: fem * 4),
@@ -253,8 +267,14 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                       min: 10000,
                       max: 1000000,
                       title: '',
-                      values: filter.selectedPriceRange,
-                      onChanged: notifier.setPrice,
+                      //values: filter.selectedPriceRange,
+                      values:
+                          filter.selectedPriceRange ??
+                          const RangeValues(10000, 1000000), // UI default ONLY
+                      onChanged: (v) {
+                        notifier.setPrice(v); // state set ONLY on interaction
+                      },
+                      //onChanged: notifier.setPrice,
                     ),
                   ),
 
@@ -284,12 +304,14 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                     child: DiscreteClickRange(
                       title: '',
                       options: _caratOptions,
-                      initialStartIndex: _caratOptions.indexOf(
-                        filter.caratStartLabel,
-                      ),
-                      initialEndIndex: _caratOptions.indexOf(
-                        filter.caratEndLabel,
-                      ),
+                      // initialStartIndex: _caratOptions.indexOf(
+                      //   filter.caratStartLabel,
+                      // ),
+                      // initialEndIndex: _caratOptions.indexOf(
+                      //   filter.caratEndLabel,
+                      // ),
+                      initialStartIndex: startIndex,
+                      initialEndIndex: endIndex,
                       onChanged: (range) {
                         notifier.setCaratRange(
                           _caratOptions[range.start.toInt()],

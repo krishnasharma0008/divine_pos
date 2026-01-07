@@ -178,12 +178,12 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
     );
   }
 
-  // @override
-  // void dispose() {
-  //   _overlayEntry?.remove();
-  //   _controller.dispose();
-  //   super.dispose();
-  // }
+  @override
+  void dispose() {
+    _overlayEntry?.remove();
+    //_controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

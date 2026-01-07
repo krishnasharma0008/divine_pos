@@ -77,8 +77,8 @@ class ProductCard extends StatelessWidget {
         _imageStack(r),
         SizedBox(height: 10 * r),
         _description(r),
-        SizedBox(height: 8 * r),
 
+        SizedBox(height: 8 * r),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

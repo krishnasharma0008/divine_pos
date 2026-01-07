@@ -13,7 +13,7 @@ import 'jewellery_model.dart';
 import '../../auth/data/auth_notifier.dart';
 
 final jewelleryProvider =
-    AsyncNotifierProvider<JewelleryNotifier, List<Jewellery>>(
+    AsyncNotifierProvider.autoDispose<JewelleryNotifier, List<Jewellery>>(
       JewelleryNotifier.new,
     );
 
@@ -126,7 +126,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       final pjcode = authRepo.user?.pjcode;
 
       String? layingWith;
-
+      //debugPrint("Top Button row: $filter.isInStore");
       if (filter.isInStore) {
         layingWith = pjcode;
       } else if (filter.productBranch != null) {
@@ -136,6 +136,8 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       } else {
         layingWith = pjcode;
       }
+
+      debugPrint("layingWith : $layingWith");
 
       String? gender;
 
@@ -192,20 +194,37 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         //     ? null
         //     : filter.selectedGender.join(","),
         "gender": gender,
-        "price_from": filter.selectedPriceRange.start > 0
-            ? filter.selectedPriceRange.start.toInt()
+
+        // "price_from": filter.selectedPriceRange.start > 0
+        //     ? filter.selectedPriceRange.start.toInt()
+        //     : null,
+
+        // "price_to": filter.selectedPriceRange.end > 0
+        //     ? filter.selectedPriceRange.end.toInt()
+        //     : null,
+        "price_from": filter.selectedPriceRange != null
+            ? filter.selectedPriceRange!.start.toInt()
             : null,
 
-        "price_to": filter.selectedPriceRange.end > 0
-            ? filter.selectedPriceRange.end.toInt()
+        "price_to": filter.selectedPriceRange != null
+            ? filter.selectedPriceRange!.end.toInt()
             : null,
         "order_for": null,
-        "cts_from": filter.caratStartLabel.isEmpty
-            ? null
-            : double.tryParse(filter.caratStartLabel),
-        "cts_to": filter.caratEndLabel.isEmpty
-            ? null
-            : double.tryParse(filter.caratEndLabel),
+
+        // "cts_from": filter.caratStartLabel.isEmpty
+        //     ? null
+        //     : double.tryParse(filter.caratStartLabel),
+        // "cts_to": filter.caratEndLabel.isEmpty
+        //     ? null
+        //     : double.tryParse(filter.caratEndLabel),
+        "cts_from": filter.caratStartLabel != null
+            ? double.tryParse(filter.caratStartLabel!)
+            : null,
+
+        "cts_to": filter.caratEndLabel != null
+            ? double.tryParse(filter.caratEndLabel!)
+            : null,
+
         "shapes": filter.selectedShape.isEmpty
             ? null
             : filter.selectedShape.join(",").toLowerCase(),
@@ -218,7 +237,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       };
 
       // debugPrint("🔄 Fetching jewellery - Page: $_page");
-      // debugPrint("📦 Post Data: ${jsonEncode(postData)}");
+      debugPrint("📦 Post Data: ${jsonEncode(postData)}");
 
       final response = await dio
           .post(ApiEndPoint.get_jewellery_listing, data: postData)
@@ -272,7 +291,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         }
       }
 
-      debugPrint('✅ Loaded ${data.length} jewellery items');
+      //debugPrint('✅ Loaded ${data.length} jewellery items');
 
       if (data.length < _limit) {
         _hasMore = false;

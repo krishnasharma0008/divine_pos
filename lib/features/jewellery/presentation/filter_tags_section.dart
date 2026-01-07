@@ -17,9 +17,9 @@ const Map<String, String> diamondShapeLabels = {
 };
 
 // Same defaults used in FilterNotifier
-const RangeValues kDefaultPriceRange = RangeValues(10000, 1000000);
-const String kDefaultCaratStart = '0.10';
-const String kDefaultCaratEnd = '2.99';
+// const RangeValues kDefaultPriceRange = RangeValues(10000, 1000000);
+// const String kDefaultCaratStart = '0.10';
+// const String kDefaultCaratEnd = '2.99';
 
 class FilterTagsSection extends ConsumerWidget {
   const FilterTagsSection({super.key});
@@ -55,18 +55,30 @@ class FilterTagsSection extends ConsumerWidget {
       tags.add(o);
     }
 
-    // Price range tag ONLY when changed from default
-    if (filter.selectedPriceRange != kDefaultPriceRange) {
+    // // Price range tag ONLY when changed from default
+    // if (filter.selectedPriceRange != kDefaultPriceRange) {
+    //   tags.add(
+    //     'Price: ₹${filter.selectedPriceRange.start.toInt()} - ₹${filter.selectedPriceRange.end.toInt()}',
+    //   );
+    // }
+
+    // Price tag — only if set
+    if (filter.selectedPriceRange != null) {
       tags.add(
-        'Price: ₹${filter.selectedPriceRange.start.toInt()} - ₹${filter.selectedPriceRange.end.toInt()}',
+        'Price: ₹${filter.selectedPriceRange!.start.toInt()} - ₹${filter.selectedPriceRange!.end.toInt()}',
       );
     }
 
-    // Carat range tag ONLY when changed from default
-    if (filter.caratStartLabel != kDefaultCaratStart ||
-        filter.caratEndLabel != kDefaultCaratEnd) {
+    // Carat tag — only if set
+    if (filter.caratStartLabel != null && filter.caratEndLabel != null) {
       tags.add('Carat: ${filter.caratStartLabel}-${filter.caratEndLabel}');
     }
+
+    // // Carat range tag ONLY when changed from default
+    // if (filter.caratStartLabel != kDefaultCaratStart ||
+    //     filter.caratEndLabel != kDefaultCaratEnd) {
+    //   tags.add('Carat: ${filter.caratStartLabel}-${filter.caratEndLabel}');
+    // }
 
     if (tags.isEmpty) return const SizedBox.shrink();
 
@@ -104,13 +116,19 @@ class FilterTagsSection extends ConsumerWidget {
             notifier.toggleOccasion(tag);
 
             // Reset price only when the price tag is removed
-          } else if (tag.startsWith('Price:')) {
-            notifier.setPrice(kDefaultPriceRange);
-
-            // Reset carat only when the carat tag is removed
-          } else if (tag.startsWith('Carat:')) {
-            notifier.setCaratRange(kDefaultCaratStart, kDefaultCaratEnd);
           }
+           else if (tag.startsWith('Price:')) {
+            notifier.removePrice(); // ✅ use the nullable remove function
+          } else if (tag.startsWith('Carat:')) {
+            notifier.removeCarat(); // ✅ use the nullable remove function
+          }
+          //  else if (tag.startsWith('Price:')) {
+          //   notifier.setPrice(kDefaultPriceRange);
+
+          //   // Reset carat only when the carat tag is removed
+          // } else if (tag.startsWith('Carat:')) {
+          //   notifier.setCaratRange(kDefaultCaratStart, kDefaultCaratEnd);
+          // }
         },
       ),
     );

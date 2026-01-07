@@ -81,7 +81,7 @@ class SideDrawer extends ConsumerWidget {
                         //   label: "Demo Checking page",
                         //   //icon: Icons.home_outlined,
                         //   iconPath: 'assets/icons/menu_home.svg',
-                        //   routePage: RoutePages.home,
+                        //   routePage: RoutePages.jewelleryjourney,
                         //   drawerState: drawerState,
                         //   drawerNotifier: drawerNotifier,
                         // ),
@@ -199,12 +199,12 @@ class SideDrawer extends ConsumerWidget {
         onTap: () {
           Navigator.of(context).pop();
           final paramKey = isSubcategory
-              ? JewelleryProductKey.collection
-              : JewelleryProductKey.category; //'collection' : 'category';
+              ? JewelleryProductKey.collection.value
+              : JewelleryProductKey.category.value; //'collection' : 'category';
           //debugPrint(paramKey);
 
           GoRouter.of(context).pushReplacement(
-            '${routePage.routePath}?${paramKey.value}=${Uri.encodeComponent(item.value)}',
+            '${routePage.routePath}?$paramKey=${Uri.encodeComponent(item.value)}',
           );
 
           //GoRouter.of(context).push(routePage.routePath);RoutePages.jewellerylisting.routePath

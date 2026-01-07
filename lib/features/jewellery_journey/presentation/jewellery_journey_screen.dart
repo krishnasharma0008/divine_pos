@@ -8,11 +8,13 @@ import '../../../shared/utils/enums.dart';
 import 'top_header.dart';
 import 'image_preview_with_thumbnails_old.dart'; //gallery
 import "../data/product_images.dart";
-import 'customization_panel_old.dart'; //customization_panel
+//import 'customization_panel_old.dart'; //customization_panel
 import 'button_bar.dart';
 import 'tab_row.dart'; //tab panel
 
 import 'solitaire_details_panel.dart';
+
+import 'customize_solitaire.dart';
 
 final dummyProductImages = [
   ProductImage(
@@ -92,7 +94,6 @@ class _JewelleryJourneyScreenState extends State<JewelleryJourneyScreen> {
             //Divider(height: 1 * r),
 
             /// SCROLLABLE MIDDLE
-            /// SCROLLABLE MIDDLE
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
@@ -146,11 +147,65 @@ class _JewelleryJourneyScreenState extends State<JewelleryJourneyScreen> {
                                     borderRadius: BorderRadius.circular(20 * r),
 
                                     // ✅ THIS IS THE onTap
-                                    onTap: () {
-                                      debugPrint('Start customizing clicked');
-                                      // TODO: navigate / open customization
+                                    onTap: () async {
+                                      final result =
+                                          await showDialog<
+                                            Map<String, dynamic>
+                                          >(
+                                            context: context,
+                                            barrierDismissible: true,
+                                            builder: (_) =>
+                                                const CustomizeSolitaire(),
+                                          );
+
+                                      if (result != null) {
+                                        final priceStart =
+                                            result['price']['start'] as String;
+                                        final priceEnd =
+                                            result['price']['end'] as String;
+                                        final caratStart =
+                                            result['carat']['start'] as String;
+                                        final caratEnd =
+                                            result['carat']['end'] as String;
+                                        final colorStart =
+                                            result['color']['start'] as String;
+                                        final colorEnd =
+                                            result['color']['end'] as String;
+                                        final clarityStart =
+                                            result['clarity']['start']
+                                                as String;
+                                        final clarityEnd =
+                                            result['clarity']['end'] as String;
+
+                                        debugPrint(
+                                          '✅ Applied Filters:\n'
+                                          '💎 Price: ₹$priceStart - ₹$priceEnd\n'
+                                          '💍 Carat: $caratStart - $caratEnd\n'
+                                          '🎨 Color: $colorStart - $colorEnd\n'
+                                          '✨ Clarity: $clarityStart - $clarityEnd',
+                                        );
+
+                                        // ✅ Safe snackbar (works in ConsumerWidget)
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Applied: $caratStart-$caratEnd carat',
+                                              ),
+                                              backgroundColor: const Color(
+                                                0xFF90DCD0,
+                                              ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                        }
+                                      }
                                     },
 
+                                    //child: const Text('Customize Solitaire'),
                                     child: Stack(
                                       children: [
                                         /// Outer border

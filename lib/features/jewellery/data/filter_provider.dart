@@ -7,15 +7,15 @@ class FilterNotifier extends Notifier<FilterState> {
   FilterState build() {
     return const FilterState(
       selectedGender: {},
-      selectedPriceRange: RangeValues(10000, 1000000),
+      selectedPriceRange: null, // RangeValues(10000, 1000000),
       selectedCategory: {},
       selectedSubCategory: {},
       colorStartLabel: 'D',
       colorEndLabel: 'J',
       clarityStartLabel: 'IF',
       clarityEndLabel: 'SI2',
-      caratStartLabel: '0.10',
-      caratEndLabel: '2.99',
+      caratStartLabel: null, // '0.10',
+      caratEndLabel: null, // '2.99',
       selectedShape: {},
       selectedMetal: {'18KT Yellow Gold'},
       selectedOccasions: {},
@@ -27,7 +27,8 @@ class FilterNotifier extends Notifier<FilterState> {
   void setProductsInStore() {
     state = state.copyWith(
       isInStore: true,
-      productBranch: null,
+      //productBranch: null,
+      productBranch: const Nullable(null), // clear
       allDesigns: false,
     );
   }
@@ -35,7 +36,8 @@ class FilterNotifier extends Notifier<FilterState> {
   void setProductsAtOtherBranch(String branchCode) {
     state = state.copyWith(
       isInStore: false,
-      productBranch: branchCode,
+      //productBranch: branchCode,
+      productBranch: Nullable(branchCode), // ✅ SET
       allDesigns: false,
     );
   }
@@ -43,7 +45,8 @@ class FilterNotifier extends Notifier<FilterState> {
   void setAllDesigns() {
     state = state.copyWith(
       isInStore: false,
-      productBranch: null,
+      //productBranch: null,
+      productBranch: const Nullable(null), // ✅ now REALLY null
       allDesigns: true,
     );
   }
@@ -102,7 +105,24 @@ class FilterNotifier extends Notifier<FilterState> {
 
   // ───────────────── Ranges ─────────────────
 
-  void setPrice(RangeValues v) => state = state.copyWith(selectedPriceRange: v);
+  void setPrice(RangeValues v) =>
+      state = state.copyWith(selectedPriceRange: Nullable(v));
+
+  void removePrice() =>
+      state = state.copyWith(selectedPriceRange: const Nullable(null));
+
+  // void setCaratRange(String s, String e) =>
+  //     state = state.copyWith(caratStartLabel: s, caratEndLabel: e);
+
+  void setCaratRange(String s, String e) => state = state.copyWith(
+    caratStartLabel: Nullable(s),
+    caratEndLabel: Nullable(e),
+  );
+
+  void removeCarat() => state = state.copyWith(
+    caratStartLabel: const Nullable(null),
+    caratEndLabel: const Nullable(null),
+  );
 
   void setColorRange(String s, String e) =>
       state = state.copyWith(colorStartLabel: s, colorEndLabel: e);
@@ -110,8 +130,8 @@ class FilterNotifier extends Notifier<FilterState> {
   void setClarityRange(String s, String e) =>
       state = state.copyWith(clarityStartLabel: s, clarityEndLabel: e);
 
-  void setCaratRange(String s, String e) =>
-      state = state.copyWith(caratStartLabel: s, caratEndLabel: e);
+  // void setCaratRange(String s, String e) =>
+  //     state = state.copyWith(caratStartLabel: s, caratEndLabel: e);
 
   // ───────────────── Route setters (single select) ─────────────────
 
@@ -127,15 +147,15 @@ class FilterNotifier extends Notifier<FilterState> {
   void resetFilters() {
     state = state.copyWith(
       selectedGender: {},
-      selectedPriceRange: const RangeValues(10000, 1000000),
+      selectedPriceRange: null, // const RangeValues(10000, 1000000),
       selectedCategory: {},
       selectedSubCategory: {},
       colorStartLabel: 'D',
       colorEndLabel: 'J',
       clarityStartLabel: 'IF',
       clarityEndLabel: 'SI2',
-      caratStartLabel: '0.10',
-      caratEndLabel: '2.99',
+      caratStartLabel: null, // '0.10',
+      caratEndLabel: null, // '2.99',
       selectedShape: {},
       selectedMetal: {'18KT Yellow Gold'},
       selectedOccasions: {},
@@ -146,7 +166,6 @@ class FilterNotifier extends Notifier<FilterState> {
 
 // ───────────────── Provider ─────────────────
 
-final filterProvider =
-    NotifierProvider.autoDispose<FilterNotifier, FilterState>(
-      FilterNotifier.new,
-    );
+final filterProvider = NotifierProvider<FilterNotifier, FilterState>(
+  FilterNotifier.new,
+);
