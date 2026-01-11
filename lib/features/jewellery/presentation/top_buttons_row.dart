@@ -87,7 +87,7 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
                 UltraDropdown<String>(
                   width: 200 * fem,
                   height: 50 * fem,
-                  items: const ['Best Sellers', 'New Arrivals'],
+                  items: const ['Low to high', 'High to low', 'New Arrivals'],
                   selectedItem: _selectedSort,
                   placeholder: 'Sort by',
                   itemBuilder: (s) => s,

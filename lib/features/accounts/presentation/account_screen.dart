@@ -30,7 +30,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       final pjcode = authRepo.user?.pjcode;
 
       if (pjcode != null && !_isStoreApiCalled) {
-        ref.read(StoreProvider.notifier).getPJStore(pjcode: pjcode);
+        ref.read(storeProvider.notifier).getPJStore(pjcode: pjcode);
         _isStoreApiCalled = true;
       }
     });
@@ -38,7 +38,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final storeState = ref.watch(StoreProvider);
+    final storeState = ref.watch(storeProvider);
 
     final fem = ScaleSize.aspectRatio;
 

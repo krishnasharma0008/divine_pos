@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:divine_pos/features/accounts/presentation/account_screen.dart';
 import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart';
-import 'package:divine_pos/features/jewellery_journey/presentation/jewellery_journey_screen.dart';
+import 'package:divine_pos/features/jewellery_customize/presentation/jewellery_journey_screen.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +14,7 @@ import '../../features/home/presentation/loading_screen.dart';
 //import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart'; // import your OTP screen
 import '../../features/jewellery/presentation/jewellery_listing_screen.dart';
+import '../../features/feedback_form/presentation/feedback_form_screen.dart';
 import '../../shared/utils/enums.dart';
 
 //import '../../shared/shared_layout.dart';
@@ -121,6 +122,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RoutePages.account.routeName,
         //builder: (context, state) => const ProfileScreen(),
         builder: (context, state) => const AccountScreen(),
+      ),
+      GoRoute(
+        path: RoutePages.feedbackform.routePath,
+        name: RoutePages.feedbackform.routeName,
+        //builder: (context, state) => const ProfileScreen(),
+        builder: (context, state) => const DivineFeedbackScreen(),
       ),
 
       // ⭐ MAIN APP LAYOUT (Bottom Navigation)

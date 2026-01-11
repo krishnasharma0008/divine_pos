@@ -9,9 +9,19 @@ import '../presentation/widget/discrete_range_filter.dart';
 import '../presentation/widget/metal_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/filter_provider.dart';
+import '../presentation/widget/carat_selector.dart';
 
 class FilterSidebar extends ConsumerStatefulWidget {
-  const FilterSidebar({super.key});
+  final List<String> categories;
+  final List<String> subCategories;
+  final List<String> collections;
+
+  const FilterSidebar({
+    super.key,
+    required this.categories,
+    required this.subCategories,
+    required this.collections,
+  });
 
   @override
   ConsumerState<FilterSidebar> createState() => _FilterSidebarState();
@@ -71,19 +81,6 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
     print("[$group] → $s");
   }
 
-  // -----------------------------------------------------------
-  // DIAMOND SHAPE
-  // -----------------------------------------------------------
-  // final _diamondItems = [
-  //   {'label': 'Round', 'asset': 'assets/jewellery/filters/round.png'},
-  //   {'label': 'Princess', 'asset': 'assets/jewellery/filters/princess.png'},
-  //   //{'label': 'Cushion', 'asset': 'assets/jewellery/filters/cushion.png'},
-  //   {'label': 'Oval', 'asset': 'assets/jewellery/filters/oval.png'},
-  //   {'label': 'Pear', 'asset': 'assets/jewellery/filters/pear.png'},
-  //   {'label': 'Radiant', 'asset': 'assets/jewellery/filters/radiant.png'},
-  //   {'label': 'Cushion', 'asset': 'assets/jewellery/filters/fancy_cushion.png'},
-  //   {'label': 'Heart', 'asset': 'assets/jewellery/filters/heart.png'},
-  // ];
   final _diamondItems = [
     {
       'code': 'RND',
@@ -139,23 +136,15 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
   // -----------------------------------------------------------
   // Metal
   // -----------------------------------------------------------
-  final List<Map<String, String>> _metalItems = [
-    {
-      'label': '18KT Yellow Gold',
-      'asset': 'assets/jewellery/filters/metal/yellow_gold.png',
-    },
-    // {
-    //   'label': 'White Gold',
-    //   'asset': 'assets/jewellery/filters/metal/white_gold.png',
-    // },
-    // {
-    //   'label': 'Rose Gold',
-    //   'asset': 'assets/jewellery/filters/metal/rose_gold.png',
-    // },
-    // {
-    //   'label': 'Platinum',
-    //   'asset': 'assets/jewellery/filters/metal/platinum.png',
-    // },
+  final List<Map<String, String>> _metalPurity = [
+    {'label': '18KT'},
+    {'label': '950PT'},
+  ];
+
+  final List<Map<String, String>> _metalColor = [
+    {'label': 'Yellow'},
+    {'label': 'White'},
+    {'label': 'Rose Gold'},
   ];
 
   String? selectedMetal;
@@ -298,10 +287,11 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   // CARAT RANGE
                   //------------------------------------------------------
                   divider(fem),
+
                   FilterSection(
                     title: 'Carat Weight',
                     fem: fem,
-                    child: DiscreteClickRange(
+                    child: DiscreteRangeSlider(
                       title: '',
                       options: _caratOptions,
                       // initialStartIndex: _caratOptions.indexOf(
@@ -320,27 +310,66 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                       },
                     ),
                   ),
+                  // FilterSection(
+                  //   title: 'Carat Weight',
+                  //   fem: fem,
+                  //   initiallyExpanded: true,
+                  //   child: RangeSelector(
+                  //     min: startIndex.toDouble(),
+                  //     max: endIndex.toDouble(),
+                  //     title: '',
+                  //     values: RangeValues(
+                  //       startIndex.toDouble(),
+                  //       endIndex.toDouble(),
+                  //     ),
+                  //     onChanged: (range) {
+                  //       notifier.setCaratRange(
+                  //         _caratOptions[range.start.toInt()],
+                  //         _caratOptions[range.end.toInt()],
+                  //       );
+                  //     },
+                  //     // values:
+                  //     //     filter.selectedPriceRange ??
+                  //     //     const RangeValues(10000, 1000000), // UI default ONLY
+                  //     // onChanged: (v) {
+                  //     //   notifier.setPrice(v); // state set ONLY on interaction
+                  //     // },
+                  //     //onChanged: notifier.setPrice,
+                  //   ),
+                  // ),
 
                   //------------------------------------------------------
                   // CATEGORY
                   //------------------------------------------------------
                   divider(fem),
+
+                  // FilterSection(
+                  //   title: 'Category',
+                  //   fem: fem,
+                  //   child: twoColumnGrid(
+                  //     items: [
+                  //       'Ring',
+                  //       'Earrings',
+                  //       'Necklaces',
+                  //       'Pendants',
+                  //       'Bangles',
+                  //       'Solitaire',
+                  //       'Bracelets',
+                  //       'Mangalsutra',
+                  //       'Nosepin',
+                  //       'Male Earring',
+                  //     ],
+                  //     selectedSet: filter.selectedCategory,
+                  //     fem: fem,
+                  //     groupName: "Category",
+                  //     onTapItem: notifier.toggleCategory,
+                  //   ),
+                  // ),
                   FilterSection(
                     title: 'Category',
                     fem: fem,
                     child: twoColumnGrid(
-                      items: [
-                        'Ring',
-                        'Earrings',
-                        'Necklaces',
-                        'Pendants',
-                        'Bangles',
-                        'Solitaire',
-                        'Bracelets',
-                        'Mangalsutra',
-                        'Nosepin',
-                        'Male Earring',
-                      ],
+                      items: widget.categories,
                       selectedSet: filter.selectedCategory,
                       fem: fem,
                       groupName: "Category",
@@ -352,17 +381,29 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   // SUB CATEGORY
                   //------------------------------------------------------
                   divider(fem),
+
+                  // FilterSection(
+                  //   title: 'Sub Category',
+                  //   fem: fem,
+                  //   child: twoColumnGrid(
+                  //     items: [
+                  //       'Classic Rings',
+                  //       'Band Rings',
+                  //       'Couple Rings',
+                  //       'Daily Wear',
+                  //       'Office Wear',
+                  //     ],
+                  //     selectedSet: filter.selectedSubCategory,
+                  //     fem: fem,
+                  //     groupName: "Sub Category",
+                  //     onTapItem: notifier.toggleSubCategory,
+                  //   ),
+                  // ),
                   FilterSection(
                     title: 'Sub Category',
                     fem: fem,
                     child: twoColumnGrid(
-                      items: [
-                        'Classic Rings',
-                        'Band Rings',
-                        'Couple Rings',
-                        'Daily Wear',
-                        'Office Wear',
-                      ],
+                      items: widget.subCategories,
                       selectedSet: filter.selectedSubCategory,
                       fem: fem,
                       groupName: "Sub Category",
@@ -371,17 +412,56 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   ),
 
                   //------------------------------------------------------
-                  // METAL
+                  // METAL Purity
                   //------------------------------------------------------
                   divider(fem),
+                  // FilterSection(
+                  //   title: 'Metal Purity',
+                  //   fem: fem,
+                  //   child: MetalTypeList(
+                  //     fem: fem,
+                  //     items: _metalPurity,
+                  //     selected: filter.selectedMetalPurity,
+                  //     onSelected: notifier.toggleMetalPurity,
+                  //   ),
+                  // ),
                   FilterSection(
-                    title: 'Metal',
+                    title: 'Metal Purity',
                     fem: fem,
-                    child: MetalTypeList(
+                    child: twoColumnGrid(
+                      items: _metalPurity.map((e) => e['label']!).toList(),
+                      selectedSet: filter.selectedMetalPurity,
                       fem: fem,
-                      items: _metalItems,
-                      selected: filter.selectedMetal,
-                      onSelected: notifier.toggleMetal,
+                      groupName: "Metal Purity",
+                      onTapItem: notifier.toggleMetalPurity,
+                    ),
+                  ),
+
+                  //------------------------------------------------------
+                  // METAL
+                  //------------------------------------------------------
+                  //------------------------------------------------------
+                  divider(fem),
+
+                  // FilterSection(
+                  //   title: 'Metal Color',
+                  //   fem: fem,
+                  //   child: MetalTypeList(
+                  //     fem: fem,
+                  //     items: _metalColor,
+                  //     selected: filter.selectedMetalColor,
+                  //     onSelected: notifier.toggleMetalColor,
+                  //   ),
+                  // ),
+                  FilterSection(
+                    title: 'Metal Color',
+                    fem: fem,
+                    child: twoColumnGrid(
+                      items: _metalColor.map((e) => e['label']!).toList(),
+                      selectedSet: filter.selectedMetalColor,
+                      fem: fem,
+                      groupName: "Metal Color",
+                      onTapItem: notifier.toggleMetalColor,
                     ),
                   ),
 
@@ -393,7 +473,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                     title: 'Gender',
                     fem: fem,
                     child: twoColumnGrid(
-                      items: ['Men', 'Women', 'Unisex', 'Children'],
+                      items: ['Men', 'Women', 'Children'],
                       selectedSet: filter.selectedGender,
                       fem: fem,
                       groupName: "Gender",

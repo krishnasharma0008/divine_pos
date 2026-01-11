@@ -180,12 +180,12 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
             ? null
             : filter.selectedSubCategory.join(","),
         "collection": null,
-        "metal_purity": filter.selectedMetal.isEmpty
+        "metal_purity": filter.selectedMetalPurity.isEmpty
             ? null
-            : filter.selectedMetal.first.split(' ')[0],
-        "metal_color": filter.selectedMetal.isEmpty
+            : filter.selectedMetalPurity.join(","),
+        "metal_color": filter.selectedMetalColor.isEmpty
             ? null
-            : filter.selectedMetal.first.split(' ')[1],
+            : filter.selectedMetalColor.join(","),
         "portfolio_type": null,
         "pageno": effectivePage,
         "is_new_launch": false,
@@ -238,6 +238,10 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
 
       // debugPrint("🔄 Fetching jewellery - Page: $_page");
       debugPrint("📦 Post Data: ${jsonEncode(postData)}");
+
+      // debugPrint(
+      //   '🌐 URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_listing}',
+      // );
 
       final response = await dio
           .post(ApiEndPoint.get_jewellery_listing, data: postData)

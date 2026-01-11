@@ -66,7 +66,11 @@ class _JewelleryListingScreenState
       final pjcode = auth.user?.pjcode;
 
       if (pjcode != null) {
-        ref.read(StoreProvider.notifier).getPJStore(pjcode: pjcode);
+        //ref.read(storeProvider.notifier).getPJStore(pjcode: pjcode);
+        final storeNotifier = ref.read(storeProvider.notifier);
+
+        storeNotifier.getPJStore(pjcode: pjcode);
+        storeNotifier.getFilters(); // ✅ ADD THIS
       }
     });
 
@@ -83,43 +87,6 @@ class _JewelleryListingScreenState
     });
   }
 
-  // @override
-  // void didChangeDependencies() {
-  //   super.didChangeDependencies();
-  //   //if (_routeApplied) return;
-
-  //   //WidgetsBinding.instance.addPostFrameCallback((_) {
-  //   Future.microtask(() {
-  //     print("Called");
-  //     ref.read(filterProvider.notifier).resetFilters();
-
-  //     // final params = GoRouterState.of(context).uri.queryParameters;
-
-  //     // final category = params['category'];
-  //     // final collection = params['Collection'];
-
-  //     final filter = ref.read(filterProvider.notifier);
-  //     // bool shouldFetch = false;
-
-  //     if (widget.paramKey != null && widget.paramValue != null) {
-  //       if (widget.paramKey == JewelleryProductKey.category) {
-  //         filter.setCategory(widget.paramValue!);
-  //         //shouldFetch = true;
-  //       }
-
-  //       if (widget.paramKey == JewelleryProductKey.collection) {
-  //         filter.setSubCategory(widget.paramValue!);
-  //         //shouldFetch = true;
-  //       }
-  //     }
-  //     // if (shouldFetch) {
-  //     //   ref.read(jewelleryProvider.notifier).resetAndFetch();
-  //     // }
-
-  //     //_routeApplied = true;
-  //   });
-  // }
-
   @override
   void dispose() {
     _scrollController.dispose();
@@ -131,7 +98,9 @@ class _JewelleryListingScreenState
     //print("xx: ${widget.paramKey}: ${widget.paramValue}");
     final fem = ScaleSize.aspectRatio;
 
-    final storeState = ref.watch(StoreProvider);
+    final storeState = ref.watch(storeProvider);
+    final filters =
+        storeState.filters; // for categories, sub-categories, collections
     final jewelleryAsync = ref.watch(jewelleryProvider);
     final jewelleryNotifier = ref.read(jewelleryProvider.notifier);
     final filterNotifier = ref.read(filterProvider.notifier);
@@ -139,6 +108,10 @@ class _JewelleryListingScreenState
     final showInitialLoader =
         storeState.isLoading ||
         (jewelleryAsync.isLoading && !jewelleryNotifier.isLoadingMore);
+
+    // final categories = filters.categories;
+    // final subCategories = filters.subCategories;
+    // final collections = filters.collections;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -174,7 +147,7 @@ class _JewelleryListingScreenState
                 TopButtonsRow(
                   branchStores: storeState.stores,
                   onBranchSelected: (store) {
-                    ref.read(StoreProvider.notifier).selectStore(store);
+                    ref.read(storeProvider.notifier).selectStore(store);
                     filterNotifier.setProductsAtOtherBranch(store.code);
                     //jewelleryNotifier.resetAndFetch();
                   },
@@ -201,7 +174,12 @@ class _JewelleryListingScreenState
                           left: fem * 28,
                           right: fem * 40,
                         ),
-                        child: const FilterSidebar(),
+                        //child: const FilterSidebar(),
+                        child: FilterSidebar(
+                          categories: filters.categories,
+                          subCategories: filters.subCategories,
+                          collections: filters.collections,
+                        ),
                       ),
                       Expanded(
                         child: Column(

@@ -42,7 +42,10 @@ class FilterTagsSection extends ConsumerWidget {
     for (final o in filter.selectedGender) {
       tags.add(o);
     }
-    for (final o in filter.selectedMetal) {
+    for (final o in filter.selectedMetalPurity) {
+      tags.add(o);
+    }
+    for (final o in filter.selectedMetalColor) {
       tags.add(o);
     }
 
@@ -107,9 +110,11 @@ class FilterTagsSection extends ConsumerWidget {
             notifier.toggleSubCategory(tag);
           } else if (filter.selectedGender.contains(tag)) {
             notifier.toggleGender(tag);
-          } else if (filter.selectedMetal.contains(tag)) {
-            notifier.toggleMetal(tag);
-          } else if (shapeCode.isNotEmpty &&
+          } else if (filter.selectedMetalPurity.contains(tag)) {
+            notifier.toggleMetalPurity(tag);
+          }else if (filter.selectedMetalColor.contains(tag)) {
+            notifier.toggleMetalColor(tag);
+          }  else if (shapeCode.isNotEmpty &&
               filter.selectedShape.contains(shapeCode)) {
             notifier.toggleShape(shapeCode);
           } else if (filter.selectedOccasions.contains(tag)) {

@@ -17,7 +17,8 @@ class FilterNotifier extends Notifier<FilterState> {
       caratStartLabel: null, // '0.10',
       caratEndLabel: null, // '2.99',
       selectedShape: {},
-      selectedMetal: {'18KT Yellow Gold'},
+      selectedMetalPurity: {'18KT'},
+      selectedMetalColor: {}, // {'Yellow'},
       selectedOccasions: {},
     );
   }
@@ -91,10 +92,16 @@ class FilterNotifier extends Notifier<FilterState> {
     (s) => state = state.copyWith(selectedShape: s),
   );
 
-  void toggleMetal(String v) => _toggleSet(
-    state.selectedMetal,
+  void toggleMetalPurity(String v) => _toggleSet(
+    state.selectedMetalPurity,
     v,
-    (s) => state = state.copyWith(selectedMetal: s),
+    (s) => state = state.copyWith(selectedMetalPurity: s),
+  );
+
+  void toggleMetalColor(String v) => _toggleSet(
+    state.selectedMetalColor,
+    v,
+    (s) => state = state.copyWith(selectedMetalColor: s),
   );
 
   void toggleOccasion(String v) => _toggleSet(
@@ -157,7 +164,8 @@ class FilterNotifier extends Notifier<FilterState> {
       caratStartLabel: null, // '0.10',
       caratEndLabel: null, // '2.99',
       selectedShape: {},
-      selectedMetal: {'18KT Yellow Gold'},
+      selectedMetalPurity: {'18KT'},
+      selectedMetalColor: {}, // {'Yellow'},
       selectedOccasions: {},
       // Top buttons remain untouched
     );

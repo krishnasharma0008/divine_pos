@@ -15,6 +15,7 @@ enum RoutePages {
   verifyTrack,
   cart,
   account,
+  feedbackform,
 }
 
 extension RoutePagesExtension on RoutePages {
@@ -67,6 +68,9 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.estimate:
         return "/estimate";
+
+      case RoutePages.feedbackform:
+        return "/feedback_form";
     }
   }
 
@@ -119,6 +123,9 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.estimate:
         return "estimate";
+
+      case RoutePages.feedbackform:
+        return "/feedback_form";
     }
   }
 
@@ -171,6 +178,9 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.estimate:
         return "Estimate";
+
+      case RoutePages.feedbackform:
+        return "/feedback_form";
     }
   }
 }

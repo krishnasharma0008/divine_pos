@@ -7,9 +7,9 @@ String getTagText(Jewellery item) {
     return "New Arrival ✨";
   }
 
-  if (item.productCategory.toLowerCase().contains('ring')) {
-    return "Best Seller 🔥";
-  }
+  // if (item.productCategory.toLowerCase().contains('ring')) {
+  //   return "Best Seller 🔥";
+  // }
 
   return "";
 }
@@ -20,9 +20,9 @@ Color getTagColor(String tagText) {
     return Colors.teal;
   }
 
-  if (tagText.contains("Best")) {
-    return Colors.orange;
-  }
+  // if (tagText.contains("Best")) {
+  //   return Colors.orange;
+  // }
 
   return Colors.transparent;
 }

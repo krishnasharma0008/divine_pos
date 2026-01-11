@@ -50,22 +50,22 @@ class CategorySection extends ConsumerWidget {
         image: 'assets/jewellery/filter_tags/earrings.png',
         label: 'Earring',
       ),
-      CategoryItem(
-        image: 'assets/jewellery/filter_tags/pendant.png',
-        label: 'Pendant',
-      ),
-      CategoryItem(
-        image: 'assets/jewellery/filter_tags/mangalsutra.jpg',
-        label: 'Mangalsutra',
-      ),
-      CategoryItem(
-        image: 'assets/jewellery/filter_tags/solitaires.png',
-        label: 'Solitaires',
-      ),
-      CategoryItem(
-        image: 'assets/jewellery/filter_tags/bangles.jpg',
-        label: 'Bangles',
-      ),
+      // CategoryItem(
+      //   image: 'assets/jewellery/filter_tags/pendant.png',
+      //   label: 'Pendant',
+      // ),
+      // CategoryItem(
+      //   image: 'assets/jewellery/filter_tags/mangalsutra.jpg',
+      //   label: 'Mangalsutra',
+      // ),
+      // CategoryItem(
+      //   image: 'assets/jewellery/filter_tags/solitaires.png',
+      //   label: 'Solitaires',
+      // ),
+      // CategoryItem(
+      //   image: 'assets/jewellery/filter_tags/bangles.jpg',
+      //   label: 'Bangles',
+      // ),
     ];
 
     final selectedIndexes = categories

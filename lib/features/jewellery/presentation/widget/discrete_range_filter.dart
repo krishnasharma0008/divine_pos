@@ -1,15 +1,15 @@
-import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 import '../../../../shared/utils/scale_size.dart';
 
-class DiscreteClickRange extends StatefulWidget {
+class DiscreteRangeSlider extends StatefulWidget {
   final String title;
   final List<String> options;
   final int initialStartIndex;
   final int initialEndIndex;
   final ValueChanged<RangeValues>? onChanged;
 
-  const DiscreteClickRange({
+  const DiscreteRangeSlider({
     super.key,
     required this.title,
     required this.options,
@@ -19,36 +19,47 @@ class DiscreteClickRange extends StatefulWidget {
   });
 
   @override
-  State<DiscreteClickRange> createState() => _DiscreteClickRangeState();
+  State<DiscreteRangeSlider> createState() => _DiscreteRangeSliderState();
 }
 
-class _DiscreteClickRangeState extends State<DiscreteClickRange> {
-  late int startIndex;
-  late int endIndex;
+class _DiscreteRangeSliderState extends State<DiscreteRangeSlider> {
+  late double startIndex;
+  late double endIndex;
 
   @override
   void initState() {
     super.initState();
-    startIndex = widget.initialStartIndex;
-    endIndex = widget.initialEndIndex;
+    startIndex = widget.initialStartIndex.toDouble();
+    endIndex = widget.initialEndIndex.toDouble();
   }
 
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio.clamp(0.7, 1.3);
-    final bool hasTitle = widget.title.trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// TITLE
-        if (hasTitle) ...[
-          MyText(
-            widget.title,
-            style: TextStyle(fontSize: 16 * fem, fontWeight: FontWeight.w400),
+        if (widget.title.trim().isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(bottom: 8 * fem),
+            child: MyText(
+              widget.title,
+              style: TextStyle(fontSize: 16 * fem, fontWeight: FontWeight.w400),
+            ),
           ),
-          //SizedBox(height: 12 * fem),
-        ],
+
+        // /// VALUE BOXES
+        // Padding(
+        //   padding: EdgeInsets.symmetric(horizontal: 5 * fem),
+        //   child: Row(
+        //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //     children: [
+        //       _valueBox(widget.options[startIndex.toInt()], fem),
+        //       _valueBox(widget.options[endIndex.toInt()], fem),
+        //     ],
+        //   ),
+        // ),
 
         /// SELECTED VALUES
         Padding(
@@ -56,7 +67,7 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
           child: Row(
             //mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _valueBox(widget.options[startIndex], fem),
+              _valueBox(widget.options[startIndex.toInt()], fem),
 
               SizedBox(width: 12 * fem),
 
@@ -71,136 +82,44 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
 
               SizedBox(width: 12 * fem),
 
-              _valueBox(widget.options[endIndex], fem),
+              _valueBox(widget.options[endIndex.toInt()], fem),
             ],
           ),
         ),
 
-        SizedBox(height: 8 * fem),
+        SizedBox(height: 12 * fem),
 
-        /// CLICKABLE SCALE
-        Padding(
-          padding: EdgeInsets.only(right: 30 * fem),
-          child: SizedBox(
-            height: 40 * fem,
-            //width: 257 * fem,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                /// BASE LINE
-                Positioned(
-                  left: 8 * fem,
-                  right: 8 * fem,
-                  top: 13 * fem,
-                  child: Container(
-                    height: fem * 6,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEDEDED),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                ),
-
-                /// TICKS + LABELS
-                Positioned.fill(
-                  child: Column(
-                    children: [
-                      SizedBox(height: 11 * fem),
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 6 * fem,
-                          ), // 👈 inset ticks
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: List.generate(widget.options.length, (
-                              index,
-                            ) {
-                              final bool selected =
-                                  index >= startIndex && index <= endIndex;
-
-                              return Expanded(
-                                child: GestureDetector(
-                                  //behavior: HitTestBehavior.translucent,
-                                  behavior: HitTestBehavior
-                                      .opaque, // 👈 VERY IMPORTANT
-                                  onTap: () {
-                                    setState(() {
-                                      final s = startIndex;
-                                      final e = endIndex;
-
-                                      if (index <= s) {
-                                        startIndex = index;
-                                      } else if (index >= e) {
-                                        endIndex = index;
-                                      } else {
-                                        final closerToStart =
-                                            (index - s).abs() <=
-                                            (index - e).abs();
-                                        closerToStart
-                                            ? startIndex = index
-                                            : endIndex = index;
-                                      }
-
-                                      if (endIndex < startIndex) {
-                                        final t = startIndex;
-                                        startIndex = endIndex;
-                                        endIndex = t;
-                                      }
-
-                                      widget.onChanged?.call(
-                                        RangeValues(
-                                          startIndex.toDouble(),
-                                          endIndex.toDouble(),
-                                        ),
-                                      );
-                                    });
-                                  },
-                                  child: Column(
-                                    children: [
-                                      Center(
-                                        child: Container(
-                                          width: fem * 4,
-                                          height: 10 * fem,
-                                          decoration: BoxDecoration(
-                                            color: selected
-                                                ? const Color(0xFF90DCD0)
-                                                : const Color(
-                                                    0xFF90DCD0,
-                                                  ).withValues(alpha: 0.4),
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: 2 * fem),
-
-                                      /// ONLY FROM & TO LABELS
-                                      if (index == startIndex ||
-                                          index == endIndex)
-                                        MyText(
-                                          widget.options[index],
-                                          style: TextStyle(
-                                            fontSize: 10 * fem,
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        )
-                                      else
-                                        SizedBox(height: 14 * fem),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+        /// RANGE SLIDER
+        SliderTheme(
+          data: SliderThemeData(
+            trackHeight: 4,
+            inactiveTrackColor: const Color(0xFFF1F1F1),
+            activeTrackColor: const Color(0xFFD0F5EE),
+            thumbColor: const Color(0xFFA9E7DF),
+            overlayColor: const Color(0xFFBFE8E3).withOpacity(0.25),
+            rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
+            rangeThumbShape: DiamondRangeThumbShape(
+              width: 10 * fem,
+              height: 15 * fem,
             ),
+            overlayShape: RoundSliderOverlayShape(overlayRadius: 16 * fem),
+          ),
+          child: RangeSlider(
+            min: 0,
+            max: (widget.options.length - 1).toDouble(),
+            divisions: widget.options.length - 1,
+            values: RangeValues(startIndex, endIndex),
+            // labels: RangeLabels(
+            //   widget.options[startIndex.toInt()],
+            //   widget.options[endIndex.toInt()],
+            // ),
+            onChanged: (values) {
+              setState(() {
+                startIndex = values.start.roundToDouble();
+                endIndex = values.end.roundToDouble();
+                widget.onChanged?.call(values);
+              });
+            },
           ),
         ),
       ],
@@ -229,5 +148,48 @@ class _DiscreteClickRangeState extends State<DiscreteClickRange> {
         ),
       ),
     );
+  }
+}
+
+/// Diamond-shaped thumb for RangeSlider
+class DiamondRangeThumbShape extends RangeSliderThumbShape {
+  final double width;
+  final double height;
+
+  const DiamondRangeThumbShape({this.width = 10, this.height = 15});
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size(width, height);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    bool isOnTop = false,
+    bool isPressed = false,
+    required SliderThemeData sliderTheme,
+    TextDirection textDirection = TextDirection.ltr,
+    Thumb thumb = Thumb.start,
+  }) {
+    final canvas = context.canvas;
+    final paint = Paint()
+      ..color = sliderTheme.thumbColor!
+      ..style = PaintingStyle.fill;
+
+    final halfW = width / 2;
+    final halfH = height / 2;
+
+    final path = Path()
+      ..moveTo(center.dx, center.dy - halfH) // top
+      ..lineTo(center.dx + halfW, center.dy) // right
+      ..lineTo(center.dx, center.dy + halfH) // bottom
+      ..lineTo(center.dx - halfW, center.dy) // left
+      ..close();
+
+    canvas.drawPath(path, paint);
   }
 }

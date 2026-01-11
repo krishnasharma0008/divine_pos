@@ -7,12 +7,15 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../../../shared/utils/api_endpointen.dart';
 import '../../../shared/utils/http_client.dart';
 import 'store_details.dart';
+import 'filter_model.dart';
 
 /// STATE MODEL
 class StoreDetailState {
   final bool isLoading;
   final List<StoreDetail> stores; // list of all stores
   final StoreDetail? selectedStore; // currently selected store
+  /// ✅ Filters data (categories, subCategories, collections)
+  final FilterModelState filters;
   final Object? error;
   final String? errorMessage;
 
@@ -20,6 +23,7 @@ class StoreDetailState {
     this.isLoading = false,
     this.stores = const [],
     this.selectedStore,
+    this.filters = const FilterModelState(),
     this.error,
     this.errorMessage,
   });
@@ -28,6 +32,7 @@ class StoreDetailState {
     bool? isLoading,
     List<StoreDetail>? stores,
     StoreDetail? selectedStore,
+    FilterModelState? filters,
     Object? error,
     String? errorMessage,
   }) {
@@ -36,6 +41,7 @@ class StoreDetailState {
       stores: stores ?? this.stores,
       // only override selectedStore when a non-null value is passed
       selectedStore: selectedStore ?? this.selectedStore,
+      filters: filters ?? this.filters,
       error: error,
       errorMessage: errorMessage,
     );
@@ -43,7 +49,7 @@ class StoreDetailState {
 }
 
 /// PROVIDER
-final StoreProvider =
+final storeProvider =
     StateNotifierProvider.autoDispose<StoreNotifier, StoreDetailState>((ref) {
       return StoreNotifier(ref);
     });
@@ -117,8 +123,85 @@ class StoreNotifier extends StateNotifier<StoreDetailState> {
     }
   }
 
-  /// Update selected store (e.g. when user taps a branch)
+  /// ─────────────────────────────────────────────
+  /// FETCH FILTERS
+  /// ─────────────────────────────────────────────
+  Future<bool> getFilters() async {
+    state = state.copyWith(
+      filters: state.filters.copyWith(
+        isLoading: true,
+        error: null,
+        errorMessage: null,
+      ),
+    );
+
+    try {
+      final dio = ref.read(httpClientProvider);
+      final response = await dio.get(ApiEndPoint.get_jewellery_filters);
+
+      //debugPrint('getFilters response: ${response.data}');
+
+      if (response.statusCode == HttpStatus.ok) {
+        final success = response.data["success"] ?? false;
+
+        if (success) {
+          final data = response.data;
+
+          state = state.copyWith(
+            filters: state.filters.copyWith(
+              isLoading: false,
+              categories: List<String>.from(data["category"] ?? const []),
+              subCategories: List<String>.from(
+                data["sub_category"] ?? const [],
+              ),
+              collections: List<String>.from(data["collection"] ?? const []),
+            ),
+          );
+          return true;
+        }
+      }
+
+      state = state.copyWith(
+        filters: state.filters.copyWith(
+          isLoading: false,
+          errorMessage: "Filters not found",
+        ),
+      );
+      return false;
+    } catch (e, st) {
+      debugPrint('getFilters error: $e');
+      debugPrintStack(stackTrace: st);
+
+      state = state.copyWith(
+        filters: state.filters.copyWith(
+          isLoading: false,
+          error: e,
+          errorMessage: "Failed to load filters",
+        ),
+      );
+      return false;
+    }
+  }
+
+  /// ─────────────────────────────────────────────
+  /// SELECT STORE
+  /// ─────────────────────────────────────────────
   void selectStore(StoreDetail store) {
     state = state.copyWith(selectedStore: store);
   }
+}
+
+// ───────────────────────────────
+// UTILITY FUNCTION
+// ───────────────────────────────
+String capitalizeWords(String input) {
+  return input
+      .toLowerCase()
+      .split(' ')
+      .map(
+        (word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1)}'
+            : '',
+      )
+      .join(' ');
 }

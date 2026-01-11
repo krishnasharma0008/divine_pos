@@ -7,6 +7,7 @@ import '../../jewellery/data/filter_provider.dart';
 import '../../../shared/widgets/text.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../shared/utils/currency_formatter.dart';
+import 'widget/ringsize_selector.dart';
 
 class CustomizeSolitaire extends ConsumerStatefulWidget {
   const CustomizeSolitaire({super.key});
@@ -51,8 +52,8 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
   // 🔹 Track current indices
   int _priceStartIndex = 1;
   int _priceEndIndex = 4;
-  int _caratStartIndex = 1;
-  int _caratEndIndex = 2;
+  int _caratStartIndex = 0;
+  int _caratEndIndex = 10;
   int _colorStartIndex = 2;
   int _colorEndIndex = 4;
   int _clarityStartIndex = 1;
@@ -233,6 +234,33 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                             ),
                           ),
                           SizedBox(height: 20 * fem),
+
+                          // 🔹 RING SIZE SELECTOR
+                          RingSizeSelector(
+                            values: [
+                              '6',
+                              '7',
+                              '8',
+                              '9',
+                              '10',
+                              '11',
+                              '12',
+                              '13',
+                              '14',
+                              '15',
+                              '16',
+                              '17',
+                              '18',
+                              '19',
+                              '20',
+                              '21',
+                            ],
+                            initialIndex: 2,
+                            onChanged: (size) {
+                              print('Selected ring size: $size');
+                            },
+                          ),
+                          SizedBox(height: 20 * fem),
                         ],
                       ),
                     ),
@@ -323,6 +351,18 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                   'price': {
                                     'start': priceSteps[_priceStartIndex],
                                     'end': priceSteps[_priceEndIndex],
+                                  },
+                                  'carat': {
+                                    'start': caratSteps[_caratStartIndex],
+                                    'end': caratSteps[_caratEndIndex],
+                                  },
+                                  'color': {
+                                    'start': colorSteps[_colorStartIndex],
+                                    'end': colorSteps[_colorEndIndex],
+                                  },
+                                  'clarity': {
+                                    'start': claritySteps[_clarityStartIndex],
+                                    'end': claritySteps[_clarityEndIndex],
                                   },
                                 });
                               },

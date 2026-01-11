@@ -55,6 +55,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   sms_autofill: ^2.3.0
+  flutter_rating_bar: ^4.0.1
 
 flutter:
   uses-material-design: true
@@ -98,6 +99,7 @@ flutter:
     - assets/jewellery/filter_tags/
     - assets/jewellery/
     - assets/jewellery_pdp/
+    - assets/feedback_form/
     # - assets/config/
     # - .env
 

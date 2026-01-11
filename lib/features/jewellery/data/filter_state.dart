@@ -12,7 +12,8 @@ class FilterState {
   final String? caratStartLabel;
   final String? caratEndLabel;
   final Set<String> selectedShape;
-  final Set<String> selectedMetal;
+  final Set<String> selectedMetalPurity;
+  final Set<String> selectedMetalColor;
   final Set<String> selectedOccasions;
 
   final bool isInStore;
@@ -32,7 +33,8 @@ class FilterState {
     this.caratStartLabel,
     this.caratEndLabel,
     required this.selectedShape,
-    required this.selectedMetal,
+    required this.selectedMetalPurity,
+    required this.selectedMetalColor,
     required this.selectedOccasions,
 
     // top button filters
@@ -55,7 +57,8 @@ class FilterState {
     Nullable<String>? caratStartLabel,
     Nullable<String>? caratEndLabel,
     Set<String>? selectedShape,
-    Set<String>? selectedMetal,
+    Set<String>? selectedMetalPurity,
+    Set<String>? selectedMetalColor,
     Set<String>? selectedOccasions,
     //top button filters
     bool? isInStore,
@@ -86,7 +89,8 @@ class FilterState {
           : this.caratEndLabel,
       //caratEndLabel: caratEndLabel ?? this.caratEndLabel,
       selectedShape: selectedShape ?? this.selectedShape,
-      selectedMetal: selectedMetal ?? this.selectedMetal,
+      selectedMetalPurity: selectedMetalPurity ?? this.selectedMetalPurity,
+      selectedMetalColor: selectedMetalColor ?? this.selectedMetalColor,
       selectedOccasions: selectedOccasions ?? this.selectedOccasions,
 
       //top button filters

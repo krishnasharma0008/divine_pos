@@ -17,9 +17,9 @@ class ProductGrid extends StatelessWidget {
     required this.isLoadingMore,
   });
 
-  static const double _rowSpacing = 50;
+  static const double _rowSpacing = 20;
   static const double _horizontalPadding = 24;
-  static const double _cardHeight = 424;
+  static const double _cardHeight = 400;
 
   @override
   Widget build(BuildContext context) {

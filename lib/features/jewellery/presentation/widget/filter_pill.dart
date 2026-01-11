@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/text.dart';
+import '../../../../shared/utils/string_utils.dart';
 
 class FilterPill extends StatelessWidget {
   final String label;
@@ -50,16 +51,40 @@ class FilterPill extends StatelessWidget {
           children: [
             _checkbox(selected, fem),
             SizedBox(width: 8 * fem),
-            MyText(
-              label,
-              style: TextStyle(
-                fontSize: 14 * fem,
-                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-                color: Color(0xFF4B4B4B),
+
+            Flexible(
+              child: Text(
+                capitalizeWords(label),
+                softWrap: true,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14 * fem,
+                  fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                  color: const Color(0xFF4B4B4B),
+                ),
               ),
             ),
           ],
         ),
+
+        // child: Row(
+        //   mainAxisSize: MainAxisSize.min,
+        //   children: [
+        //     _checkbox(selected, fem),
+        //     SizedBox(width: 8 * fem),
+        //     Text(
+        //       label,
+        //       softWrap: true,
+        //       maxLines: 2,
+        //       style: TextStyle(
+        //         fontSize: 14 * fem,
+        //         fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+        //         color: Color(0xFF4B4B4B),
+        //       ),
+        //     ),
+        //   ],
+        // ),
       ),
     );
   }
