@@ -59,14 +59,14 @@ class _ProductCardState extends State<ProductCard> {
         boxShadow: _isHovered
             ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
+                  color: Colors.black.withValues(alpha: 0.18),
                   blurRadius: 28,
                   offset: const Offset(0, 14),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 6,
                   offset: const Offset(0, 3),
                 ),
@@ -118,11 +118,11 @@ class _ProductCardState extends State<ProductCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _imageStack(r),
-        SizedBox(height: 10 * r),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16 * r),
-          child: _description(r),
-        ),
+        // SizedBox(height: 10 * r),
+        // Padding(
+        //   padding: EdgeInsets.symmetric(horizontal: 16 * r),
+        //   child: _description(r),
+        // ),
         SizedBox(height: 8 * r),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -132,6 +132,7 @@ class _ProductCardState extends State<ProductCard> {
               _actionsRow(mainAxisAlignment: MainAxisAlignment.end, r: r),
           ],
         ),
+        SizedBox(height: 8 * r),
       ],
     );
   }
@@ -146,6 +147,7 @@ class _ProductCardState extends State<ProductCard> {
         Container(
           height: 287 * r,
           width: double.infinity,
+          //color: Colors.amber,
           child: Center(
             child: isNetwork
                 ? Image.network(

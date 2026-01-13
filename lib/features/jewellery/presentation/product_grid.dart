@@ -3,7 +3,6 @@ import 'product_card.dart';
 import '../data/jewellery_model.dart';
 import '../../../shared/utils/jewellery_helpers.dart';
 import '../../../shared/utils/scale_size.dart';
-import '../../../shared/utils/currency_formatter.dart';
 
 class ProductGrid extends StatelessWidget {
   final List<Jewellery> jewellery;
@@ -19,7 +18,7 @@ class ProductGrid extends StatelessWidget {
 
   static const double _rowSpacing = 20;
   static const double _horizontalPadding = 24;
-  static const double _cardHeight = 400;
+  static const double _cardHeight = 352;
 
   @override
   Widget build(BuildContext context) {

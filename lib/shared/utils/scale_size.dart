@@ -12,7 +12,7 @@ class ScaleSize {
 
   static double get aspectRatio => _aspectratio;
 
-  static double get appBarHeight => 76.0 * _aspectratio;
+  static double get appBarHeight => 56.0 * _aspectratio;
 
   // static String get getDeviceType {
   //   final MediaQueryData data = MediaQueryData.fromView(

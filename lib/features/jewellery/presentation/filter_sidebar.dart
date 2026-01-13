@@ -6,10 +6,8 @@ import '../presentation/widget/filter_pill.dart';
 import '../presentation/widget/range_selector.dart';
 import '../presentation/widget/diamond_shape_grid.dart';
 import '../presentation/widget/discrete_range_filter.dart';
-import '../presentation/widget/metal_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/filter_provider.dart';
-import '../presentation/widget/carat_selector.dart';
 
 class FilterSidebar extends ConsumerStatefulWidget {
   final List<String> categories;
@@ -78,7 +76,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
     setState(() {
       s.contains(value) ? s.remove(value) : s.add(value);
     });
-    print("[$group] → $s");
+    //print("[$group] → $s");
   }
 
   final _diamondItems = [
@@ -137,20 +135,24 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
   // Metal
   // -----------------------------------------------------------
   final List<Map<String, String>> _metalPurity = [
+    {'label': '10KT'},
+    {'label': '14KT'},
     {'label': '18KT'},
+    {'label': '22KT'},
     {'label': '950PT'},
   ];
 
   final List<Map<String, String>> _metalColor = [
     {'label': 'Yellow'},
     {'label': 'White'},
-    {'label': 'Rose Gold'},
+    {'label': 'Rose'},
   ];
 
   String? selectedMetal;
 
   Widget twoColumnGrid({
     required List<String> items,
+    bool isCorrectLabel = true,
     required Set<String> selectedSet,
     required double fem,
     required String groupName,
@@ -170,6 +172,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
               width: cellWidth,
               child: FilterPill(
                 label: item,
+                isCorrectLabel: isCorrectLabel,
                 selected: selectedSet.contains(item),
                 //onTap: () => toggleSet(selectedSet, item, groupName),
                 onTap: () => onTapItem(item),
@@ -218,15 +221,15 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
           // FIXED HEADER (NON-SCROLLABLE)
           //------------------------------------------------------
           Padding(
-            padding: EdgeInsets.only(top: fem * 24, bottom: fem * 43),
+            padding: EdgeInsets.only(top: fem * 5, bottom: fem * 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 MyText(
                   'Filters',
                   style: TextStyle(
-                    fontSize: fem * 24,
-                    fontWeight: FontWeight.w600,
+                    fontSize: fem * 22,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 // Icon(Icons.close, size: 22 * fem),
@@ -241,7 +244,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
           //------------------------------------------------------
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.only(top: fem * 10),
+              //padding: EdgeInsets.only(top: fem * 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -430,6 +433,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                     fem: fem,
                     child: twoColumnGrid(
                       items: _metalPurity.map((e) => e['label']!).toList(),
+                      isCorrectLabel: false,
                       selectedSet: filter.selectedMetalPurity,
                       fem: fem,
                       groupName: "Metal Purity",

@@ -5,6 +5,7 @@ import '../../../../shared/utils/string_utils.dart';
 
 class FilterPill extends StatelessWidget {
   final String label;
+  final bool isCorrectLabel;
   final bool selected;
   final VoidCallback? onTap;
   final double fem;
@@ -12,6 +13,7 @@ class FilterPill extends StatelessWidget {
   const FilterPill({
     super.key,
     required this.label,
+    this.isCorrectLabel = true,
     required this.selected,
     required this.onTap,
     required this.fem,
@@ -53,8 +55,9 @@ class FilterPill extends StatelessWidget {
             SizedBox(width: 8 * fem),
 
             Flexible(
-              child: Text(
-                capitalizeWords(label),
+              child: MyText(
+                isCorrectLabel ? capitalizeWords(label) : label,
+
                 softWrap: true,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

@@ -58,10 +58,10 @@ class CategorySection extends ConsumerWidget {
       //   image: 'assets/jewellery/filter_tags/mangalsutra.jpg',
       //   label: 'Mangalsutra',
       // ),
-      // CategoryItem(
-      //   image: 'assets/jewellery/filter_tags/solitaires.png',
-      //   label: 'Solitaires',
-      // ),
+      CategoryItem(
+        image: 'assets/jewellery/filter_tags/solitaires.png',
+        label: 'Solitaires',
+      ),
       // CategoryItem(
       //   image: 'assets/jewellery/filter_tags/bangles.jpg',
       //   label: 'Bangles',

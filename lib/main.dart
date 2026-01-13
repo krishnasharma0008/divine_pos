@@ -14,14 +14,14 @@ final hiveBoxProvider = Provider<Box>((ref) {
 Future<void> main() async {
   //WidgetsFlutterBinding.ensureInitialized();
 
-  /// Init Hive              
+  /// Init Hive
   await Hive.initFlutter();
 
   /// Open the auth box before runApp
   //final authBox = await Hive.openBox('authBox');
 
   /// Provide the opened box to Riverpodad
-  runApp(  
+  runApp(
     ProviderScope(
       // overrides: [
       //   hiveBoxProvider.overrideWithValue(authBox),

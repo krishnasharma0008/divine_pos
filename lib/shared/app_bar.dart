@@ -8,6 +8,7 @@ import '../shared/routes/route_pages.dart';
 import '../shared/themes.dart';
 import '../shared/utils/enums.dart';
 import '../shared/utils/scale_size.dart';
+import 'widgets/text.dart';
 
 //////////////////////////////////////////////////
 /// ACTION CONFIG
@@ -63,22 +64,18 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
         leadingWidth: ScaleSize.appBarHeight,
         leading: _buildLeading(context, fem),
+        actionsPadding: EdgeInsets.only(right: fem * 5),
 
         /// LOGO ONLY (NO TITLE)
         title: Row(
           children: [
             if (showLogo) ...[
               Padding(
-                padding: EdgeInsets.only(
-                  left: fem * 28,
-                  top: fem * 50,
-                  bottom: fem * 50,
-                ),
-                child: Image.asset(
-                  "assets/Login/logo.png",
-                  //height: fem * 55,
-                  width: fem * 72,
-                  fit: BoxFit.scaleDown,
+                padding: EdgeInsets.only(left: fem * 28),
+                child: SvgPicture.asset(
+                  "assets/Login/logo.svg",
+                  height: fem * 45,
+                  fit: BoxFit.contain,
                 ),
               ),
             ],
@@ -169,9 +166,9 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
           );
           break;
 
-          /// ✅ 27 PX SPACE AFTER CART
-          widgets.add(SizedBox(width: 27 * fem));
-          break;
+        /// ✅ 27 PX SPACE AFTER CART
+        // widgets.add(SizedBox(width: 27 * fem));
+        // break;
       }
     }
 
@@ -185,16 +182,16 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
     int badgeCount = 0,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4 * fem),
+      padding: EdgeInsets.symmetric(horizontal: 6 * fem, vertical: 9 * fem),
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 53 * fem,
-          height: 53 * fem,
-          padding: EdgeInsets.all(4 * fem),
+          //width: 53 * fem,
+          //height: 53 * fem,
+          padding: EdgeInsets.symmetric(vertical: 4 * fem, horizontal: fem * 8),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20 * fem),
+            borderRadius: BorderRadius.circular(10 * fem),
             border: Border.all(width: 1, color: const Color(0xFF90DCD0)),
           ),
           child: Stack(
@@ -204,7 +201,7 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
               Center(
                 child: Icon(
                   Icons.notifications_none_outlined,
-                  size: 24 * fem,
+                  size: 20 * fem,
                   color: Colors.black87,
                 ),
               ),
@@ -237,18 +234,18 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
     required VoidCallback? onTap,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4 * fem),
+      padding: EdgeInsets.symmetric(horizontal: 6 * fem, vertical: 9 * fem),
       child: GestureDetector(
         onTap: () {
           context.push(RoutePages.account.routePath);
         },
         child: Container(
-          width: 54 * fem,
-          height: 54 * fem,
-          padding: EdgeInsets.all(4 * fem),
+          //width: 54 * fem,
+          //height: 54 * fem,
+          padding: EdgeInsets.symmetric(vertical: 4 * fem, horizontal: fem * 8),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20 * fem),
+            borderRadius: BorderRadius.circular(10 * fem),
             border: Border.all(width: 1, color: const Color(0xFF90DCD0)),
           ),
           child: Center(
@@ -270,16 +267,16 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
     int badgeCount = 0,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4 * fem),
+      padding: EdgeInsets.symmetric(horizontal: 6 * fem, vertical: 9 * fem),
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 53 * fem,
-          height: 54 * fem,
-          padding: EdgeInsets.all(4 * fem),
+          //width: 53 * fem,
+          //height: 54 * fem,
+          padding: EdgeInsets.symmetric(vertical: 4 * fem, horizontal: fem * 8),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20 * fem),
+            borderRadius: BorderRadius.circular(10 * fem),
             border: Border.all(width: 1, color: const Color(0xFF90DCD0)),
           ),
           child: Stack(
@@ -289,7 +286,7 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
               Center(
                 child: Icon(
                   Icons.shopping_cart_outlined,
-                  size: 28 * fem,
+                  size: 20 * fem,
                   color: Colors.black87,
                 ),
               ),
@@ -337,18 +334,19 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   Widget _searchAction(double fem, VoidCallback? onTap) {
     return Padding(
-      //padding: EdgeInsets.symmetric(horizontal: 6 * fem, vertical: 8 * fem),
-      padding: EdgeInsets.symmetric(horizontal: 4 * fem), // ✅ 8px gap
+      padding: EdgeInsets.symmetric(horizontal: 6 * fem, vertical: 10 * fem),
+      //padding: EdgeInsets.symmetric(horizontal: 4 * fem), // ✅ 8px gap
       child: SizedBox(
-        width: 254 * fem,
-        height: 56 * fem,
+        width: 280 * fem,
+        //height: 33 * fem,
+        height: double.infinity,
         child: GestureDetector(
           onTap: onTap,
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 10 * fem),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(15 * fem),
+              borderRadius: BorderRadius.circular(10 * fem),
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
@@ -361,28 +359,28 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
               children: [
                 SvgPicture.asset(
                   'assets/icons/magnifying-glass.svg',
-                  width: 18 * fem,
-                  height: 18 * fem,
+                  width: 15 * fem,
+                  height: 15 * fem,
                   colorFilter: const ColorFilter.mode(
                     Colors.black54,
                     BlendMode.srcIn,
                   ),
                 ),
                 SizedBox(width: 10 * fem),
-                const Expanded(
-                  child: Text(
+                Expanded(
+                  child: MyText(
                     'Search',
                     style: TextStyle(
-                      fontFamily: "Montserrat",
-                      fontSize: 16,
+                      //fontFamily: "Montserrat",
+                      fontSize: 15 * fem,
                       color: Color(0xFF959595),
                     ),
                   ),
                 ),
                 SvgPicture.asset(
                   'assets/icons/si_barcode-scan-line.svg',
-                  width: 33 * fem,
-                  height: 33 * fem,
+                  width: 23 * fem,
+                  height: 23 * fem,
                   colorFilter: const ColorFilter.mode(
                     Colors.brown,
                     BlendMode.srcIn,

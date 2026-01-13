@@ -1,3 +1,4 @@
+import 'package:divine_pos/shared/themes.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
@@ -44,16 +45,19 @@ class CategoryRow extends StatelessWidget {
                         color: Colors.white,
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFFEEEEEE)
+                              ? MyThemes
+                                    .appbarBgColoue //const Color(0xFFEEEEEE)
                               : Colors.transparent,
                           width: 3 * fem,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0xFFE9E9E9),
+                            color: MyThemes.appbarBgColoue.withValues(
+                              alpha: 0.6,
+                            ), //Color(0xFFE9E9E9),
                             blurRadius: 4,
-                            offset: Offset(2, 1),
-                            spreadRadius: 0,
+                            offset: Offset(0, 1),
+                            spreadRadius: 1,
                           ),
                         ],
                       ),

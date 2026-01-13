@@ -10,6 +10,7 @@ class MyText extends StatelessWidget {
     this.textAlign,
     this.overflow,
     this.maxLines,
+    this.softWrap,
   });
 
   /// The text to display.
@@ -44,6 +45,11 @@ class MyText extends StatelessWidget {
   /// widget directly to entirely override the [DefaultTextStyle].
   final int? maxLines;
 
+  /// Whether the text should break at soft line breaks.
+  ///
+  /// If false, the glyphs in the text will be positioned as if there was unlimited horizontal space.
+  final bool? softWrap;
+
   @override
   Widget build(BuildContext context) => Text(
     data,
@@ -54,5 +60,6 @@ class MyText extends StatelessWidget {
     textScaler: const TextScaler.linear(1),
     overflow: overflow,
     maxLines: maxLines,
+    softWrap: softWrap,
   );
 }

@@ -171,8 +171,8 @@ class _JewelleryListingScreenState
                     children: [
                       Padding(
                         padding: EdgeInsets.only(
-                          left: fem * 28,
-                          right: fem * 40,
+                          left: fem * 5,
+                          //right: fem * 20,
                         ),
                         //child: const FilterSidebar(),
                         child: FilterSidebar(
