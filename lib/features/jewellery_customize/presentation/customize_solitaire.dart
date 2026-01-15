@@ -10,7 +10,9 @@ import '../../../shared/utils/currency_formatter.dart';
 import 'widget/ringsize_selector.dart';
 
 class CustomizeSolitaire extends ConsumerStatefulWidget {
-  const CustomizeSolitaire({super.key});
+  final Map<String, dynamic>? initialValues;
+
+  const CustomizeSolitaire({super.key, this.initialValues});
 
   @override
   ConsumerState<CustomizeSolitaire> createState() => _CustomizeSolitaireState();
@@ -49,6 +51,25 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
 
   final claritySteps = ['IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
 
+  final ringSizes = [
+    '6',
+    '7',
+    '8',
+    '9',
+    '10',
+    '11',
+    '12',
+    '13',
+    '14',
+    '15',
+    '16',
+    '17',
+    '18',
+    '19',
+    '20',
+    '21',
+  ];
+
   // 🔹 Track current indices
   int _priceStartIndex = 1;
   int _priceEndIndex = 4;
@@ -58,6 +79,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
   int _colorEndIndex = 4;
   int _clarityStartIndex = 1;
   int _clarityEndIndex = 4;
+  String _selectedRingSize = '8';
 
   String priceRangeText = '';
   String caratRangeText = '';
@@ -83,13 +105,59 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
     },
   ];
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   priceRangeText = '₹ ${priceSteps[1]} - ₹ ${priceSteps[4]}';
+  //   caratRangeText = '${caratSteps[1]} - ${caratSteps[2]}';
+  //   colorRangeText = '${colorSteps[2]} - ${colorSteps[4]}';
+  //   clarityRangeText = '${claritySteps[1]} - ${claritySteps[4]}';
+  // }
+
+  String _clean(String v) => v.replaceAll('₹', '').replaceAll('ct', '').trim();
+
   @override
   void initState() {
     super.initState();
-    priceRangeText = '₹ ${priceSteps[1]} - ₹ ${priceSteps[4]}';
-    caratRangeText = '${caratSteps[1]} - ${caratSteps[2]}';
-    colorRangeText = '${colorSteps[2]} - ${colorSteps[4]}';
-    clarityRangeText = '${claritySteps[1]} - ${claritySteps[4]}';
+
+    final init = widget.initialValues;
+    //print('CustomizeSolitaire initState, initialValues: $init');
+
+    if (init == null) return;
+
+    // PRICE
+    if (init['price'] != null) {
+      _priceStartIndex = init['price']['startIndex'] ?? _priceStartIndex;
+      _priceEndIndex = init['price']['endIndex'] ?? _priceEndIndex;
+    }
+    //print('Price indices: $_priceStartIndex - $_priceEndIndex');
+
+    // CARAT
+    if (init['carat'] != null) {
+      _caratStartIndex = init['carat']['startIndex'] ?? _caratStartIndex;
+      _caratEndIndex = init['carat']['endIndex'] ?? _caratEndIndex;
+    }
+    //print('Carat indices: $_caratStartIndex - $_caratEndIndex');
+
+    // COLOR
+    if (init['color'] != null) {
+      _colorStartIndex = init['color']['startIndex'] ?? _colorStartIndex;
+      _colorEndIndex = init['color']['endIndex'] ?? _colorEndIndex;
+    }
+   // print('Color indices: $_colorStartIndex - $_colorEndIndex');
+
+    // CLARITY
+    if (init['clarity'] != null) {
+      _clarityStartIndex = init['clarity']['startIndex'] ?? _clarityStartIndex;
+      _clarityEndIndex = init['clarity']['endIndex'] ?? _clarityEndIndex;
+    }
+    //print('Clarity indices: $_clarityStartIndex - $_clarityEndIndex');
+
+    // RING SIZE
+    if (init['ringSize'] != null) {
+      _selectedRingSize = init['ringSize'];
+    }
+    //print('Selected ring size: $_selectedRingSize');
   }
 
   @override
@@ -158,6 +226,9 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
 
                           // PRICE RangeSelector
                           RangeSelector(
+                            key: ValueKey(
+                              'price_${_priceStartIndex}_${_priceEndIndex}',
+                            ),
                             label: 'Price Range',
                             values: priceSteps,
                             initialStartIndex: _priceStartIndex,
@@ -175,6 +246,9 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
 
                           // CARAT RangeSelector
                           RangeSelector(
+                            key: ValueKey(
+                              'carat_${_caratStartIndex}_${_caratEndIndex}',
+                            ),
                             label: 'Carat',
                             values: caratSteps,
                             initialStartIndex: _caratStartIndex,
@@ -191,6 +265,9 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
 
                           // COLOR RangeSelector
                           RangeSelector(
+                            key: ValueKey(
+                              'color_${_colorStartIndex}_${_colorEndIndex}',
+                            ),
                             label: 'Color',
                             values: colorSteps,
                             initialStartIndex: _colorStartIndex,
@@ -207,6 +284,9 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
 
                           // CLARITY RangeSelector
                           RangeSelector(
+                            key: ValueKey(
+                              'clarity_${_clarityStartIndex}_${_clarityEndIndex}',
+                            ),
                             label: 'Clarity',
                             values: claritySteps,
                             initialStartIndex: _clarityStartIndex,
@@ -237,29 +317,16 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
 
                           // 🔹 RING SIZE SELECTOR
                           RingSizeSelector(
-                            values: [
-                              '6',
-                              '7',
-                              '8',
-                              '9',
-                              '10',
-                              '11',
-                              '12',
-                              '13',
-                              '14',
-                              '15',
-                              '16',
-                              '17',
-                              '18',
-                              '19',
-                              '20',
-                              '21',
-                            ],
-                            initialIndex: 2,
+                            key: ValueKey(_selectedRingSize), // ✅ ADD THIS
+                            values: ringSizes,
+                            initialIndex: ringSizes.indexOf(_selectedRingSize),
                             onChanged: (size) {
-                              print('Selected ring size: $size');
+                              setState(() {
+                                _selectedRingSize = size;
+                              });
                             },
                           ),
+
                           SizedBox(height: 20 * fem),
                         ],
                       ),
@@ -349,21 +416,30 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                               onTap: () {
                                 Navigator.of(context).pop({
                                   'price': {
-                                    'start': priceSteps[_priceStartIndex],
-                                    'end': priceSteps[_priceEndIndex],
+                                    'startIndex': _priceStartIndex,
+                                    'endIndex': _priceEndIndex,
+                                    'startValue': priceSteps[_priceStartIndex],
+                                    'endValue': priceSteps[_priceEndIndex],
                                   },
                                   'carat': {
-                                    'start': caratSteps[_caratStartIndex],
-                                    'end': caratSteps[_caratEndIndex],
+                                    'startIndex': _caratStartIndex,
+                                    'endIndex': _caratEndIndex,
+                                    'startValue': caratSteps[_caratStartIndex],
+                                    'endValue': caratSteps[_caratEndIndex],
                                   },
                                   'color': {
+                                    'startIndex': _colorStartIndex,
+                                    'endIndex': _colorEndIndex,
                                     'start': colorSteps[_colorStartIndex],
                                     'end': colorSteps[_colorEndIndex],
                                   },
                                   'clarity': {
+                                    'startIndex': _clarityStartIndex,
+                                    'endIndex': _clarityEndIndex,
                                     'start': claritySteps[_clarityStartIndex],
                                     'end': claritySteps[_clarityEndIndex],
                                   },
+                                  'ringSize': _selectedRingSize,
                                 });
                               },
                               child: Container(

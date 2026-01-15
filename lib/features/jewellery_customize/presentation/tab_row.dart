@@ -5,7 +5,22 @@ import 'package:divine_pos/shared/widgets/text.dart';
 
 class DetailsScreen extends StatefulWidget {
   final double r;
-  const DetailsScreen({super.key, required this.r});
+  final String? priceRange;
+  final String? caratRange;
+  final String? colorRange;
+  final String? clarityRange;
+  final String? ringSize;
+  //const DetailsScreen({super.key, required this.r});
+
+  const DetailsScreen({
+    super.key,
+    required this.r,
+    this.priceRange,
+    this.caratRange,
+    this.colorRange,
+    this.clarityRange,
+    this.ringSize,
+  });
 
   @override
   State<DetailsScreen> createState() => _DetailsScreenState();
@@ -21,10 +36,21 @@ class _DetailsScreenState extends State<DetailsScreen> {
     return Container(
       color: Colors.white,
       //padding: EdgeInsets.all(16 * r),
-      padding: EdgeInsets.fromLTRB(0, 90 * r, 30 * r, 15 * r),
+      padding: EdgeInsets.fromLTRB(0, 0 * r, 30 * r, 15 * r),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 🔹 SELECTED VALUES (shown only if present)
+          // if (widget.priceRange != null) MyText('Price: ${widget.priceRange}'),
+
+          // if (widget.caratRange != null) MyText('Carat: ${widget.caratRange}'),
+
+          // if (widget.colorRange != null) MyText('Color: ${widget.colorRange}'),
+
+          // if (widget.clarityRange != null)
+          //   MyText('Clarity: ${widget.clarityRange}'),
+
+          // if (widget.ringSize != null) MyText('Ring Size: ${widget.ringSize}'),
           _TabHeader(
             r: r,
             activeTab: activeTab,
@@ -32,7 +58,16 @@ class _DetailsScreenState extends State<DetailsScreen> {
           ),
           SizedBox(height: 16 * r),
           // NO Expanded here -> parent controls height
-          activeTab == 1 ? ProductDetailsTab(r) : PriceBreakupTab(r),
+          activeTab == 1
+              ? ProductDetailsTab(
+                  r: r,
+                  //priceRange: widget.priceRange,
+                  caratRange: widget.caratRange,
+                  colorRange: widget.colorRange,
+                  clarityRange: widget.clarityRange,
+                  ringSize: widget.ringSize,
+                )
+              : PriceBreakupTab(r),
         ],
       ),
     );
@@ -168,7 +203,21 @@ Widget legendCard({
 
 class ProductDetailsTab extends StatelessWidget {
   final double r;
-  const ProductDetailsTab(this.r, {super.key});
+  final String? priceRange;
+  final String? caratRange;
+  final String? colorRange;
+  final String? clarityRange;
+  final String? ringSize;
+
+  const ProductDetailsTab({
+    super.key,
+    required this.r,
+    this.priceRange,
+    this.caratRange,
+    this.colorRange,
+    this.clarityRange,
+    this.ringSize,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -178,20 +227,27 @@ class ProductDetailsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MyText(
-            'Round 0.15–0.18ct F-G VVS1-VS1 (2 Pcs)',
-            style: TextStyle(fontSize: 12 * r),
-          ),
+          MyText(_buildSolitaireLine(), style: TextStyle(fontSize: 12 * r)),
           SizedBox(height: 24 * r),
           _sectionHeader(r, 'Divine Mount'),
           SizedBox(height: 16 * r),
           _row(r, 'Metal Type', '18KT Yellow Gold'),
           _row(r, 'Net Weight', '3.74 Gms'),
           _row(r, 'Side Diamond', 'Qty 48 / 0.234ct GH VS'),
-          _row(r, 'Ring Size', '12'),
+          _row(r, 'Ring Size', ringSize ?? '12'),
         ],
       ),
     );
+  }
+
+  String _buildSolitaireLine() {
+    final price = '₹${caratRange ?? '57,900'}';
+    final carat = caratRange ?? '0.15–0.18 ct';
+    final color = colorRange ?? 'F-G';
+    final clarity = clarityRange ?? 'VVS1-VS1';
+    final ringsize = 'Size 12';
+
+    return 'Round $carat $color $clarity (2 Pcs)';
   }
 }
 

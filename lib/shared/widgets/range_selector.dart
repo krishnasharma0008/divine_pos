@@ -36,10 +36,30 @@ class _RangeSelectorState extends State<RangeSelector> {
   @override
   void initState() {
     super.initState();
+    // _range = RangeValues(
+    //   widget.initialStartIndex.toDouble(),
+    //   widget.initialEndIndex.toDouble(),
+    // );
     _range = RangeValues(
-      widget.initialStartIndex.toDouble(),
-      widget.initialEndIndex.toDouble(),
+      widget.initialStartIndex.clamp(0, widget.values.length - 1).toDouble(),
+      widget.initialEndIndex.clamp(0, widget.values.length - 1).toDouble(),
     );
+  }
+
+  // ✅ THIS MUST BE HERE
+  @override
+  void didUpdateWidget(covariant RangeSelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.initialStartIndex != widget.initialStartIndex ||
+        oldWidget.initialEndIndex != widget.initialEndIndex) {
+      setState(() {
+        _range = RangeValues(
+          widget.initialStartIndex.toDouble(),
+          widget.initialEndIndex.toDouble(),
+        );
+      });
+    }
   }
 
   @override
@@ -56,38 +76,60 @@ class _RangeSelectorState extends State<RangeSelector> {
       padding: EdgeInsets.symmetric(horizontal: 8 * fem, vertical: 10 * fem),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: const Color(0xFFDDE9E5), width: 1.5),
+        //border: Border.all(color: const Color(0xFFDDE9E5), width: 1.5),
+        border: Border.all(color: Colors.transparent, width: 1.5),
         borderRadius: BorderRadius.circular(16 * fem),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Label
-          Padding(
-            padding: EdgeInsets.only(left: 8 * fem),
-            child: MyText(
-              widget.label,
+          // Padding(
+          //   padding: EdgeInsets.only(left: 8 * fem),
+          //   child: MyText(
+          //     widget.label,
 
-              // style: TextStyle(
-              //   color: const Color(0xFF303030),
-              //   fontSize: 14 * fem,
-              //   fontWeight: FontWeight.w400,
-              // ),
-              style: TextStyle(
-                color: Color(0xFF303030),
-                fontSize: 14 * fem,
-                fontFamily: 'Rushter Glory',
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
+          //     // style: TextStyle(
+          //     //   color: const Color(0xFF303030),
+          //     //   fontSize: 14 * fem,
+          //     //   fontWeight: FontWeight.w400,
+          //     // ),
+          //     style: TextStyle(
+          //       color: Color(0xFF303030),
+          //       fontSize: 14 * fem,
+          //       fontFamily: 'Rushter Glory',
+          //       fontWeight: FontWeight.w400,
+          //     ),
+          //   ),
+          // ),
 
-          SizedBox(height: 8 * fem),
+          // SizedBox(height: 8 * fem),
 
-          /// Chips
+          // /// Chips
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.end,
+          //   children: [
+          //     _buildValueChip(chipFormatter(startValue), fem),
+          //     SizedBox(width: 6 * fem),
+          //     const Text('-'),
+          //     SizedBox(width: 6 * fem),
+          //     _buildValueChip(chipFormatter(endValue), fem),
+          //   ],
+          // ),
+
+          /// HEADER
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              MyText(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 14 * fem,
+                  fontFamily: 'Rushter Glory',
+                ),
+              ),
+              const Spacer(),
+
+              /// VALUE CHIP
               _buildValueChip(chipFormatter(startValue), fem),
               SizedBox(width: 6 * fem),
               const Text('-'),
@@ -187,16 +229,29 @@ class _RangeSelectorState extends State<RangeSelector> {
                     max: (widget.values.length - 1).toDouble(),
                     divisions: widget.values.length - 1,
                     values: _range,
+                    // onChanged: (v) {
+                    //   setState(() {
+                    //     _range = RangeValues(
+                    //       v.start.roundToDouble(),
+                    //       v.end.roundToDouble(),
+                    //     );
+                    //   });
+                    //   widget.onRangeChanged(
+                    //     widget.values[_startIndex],
+                    //     widget.values[_endIndex],
+                    //   );
+                    // },
                     onChanged: (v) {
+                      final start = v.start.round();
+                      final end = v.end.round();
+
                       setState(() {
-                        _range = RangeValues(
-                          v.start.roundToDouble(),
-                          v.end.roundToDouble(),
-                        );
+                        _range = RangeValues(start.toDouble(), end.toDouble());
                       });
+
                       widget.onRangeChanged(
-                        widget.values[_startIndex],
-                        widget.values[_endIndex],
+                        widget.values[start],
+                        widget.values[end],
                       );
                     },
                   ),
