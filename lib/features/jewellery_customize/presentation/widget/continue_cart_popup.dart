@@ -19,7 +19,7 @@ class ContinueCartPopup extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(56 * r, 61 * r, 56 * r, 61 * r),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16 * r),
             ),
             child: SingleChildScrollView(
               child: Column(
@@ -36,17 +36,17 @@ class ContinueCartPopup extends StatelessWidget {
                   ),
                   SizedBox(height: 8 * r),
                   TextField(
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: 16 * r,
                       fontFamily: 'Montserrat',
                       fontWeight: FontWeight.w400,
                       color: Colors.black,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Search here for existing customer',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         color: Color(0xFFB0B0B0),
-                        fontSize: 16,
+                        fontSize: 16 * r,
                         fontFamily: 'Montserrat',
                         fontWeight: FontWeight.w400,
                       ),
@@ -60,9 +60,9 @@ class ContinueCartPopup extends StatelessWidget {
                       filled: true,
                       fillColor: Colors.white,
 
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 14, // controls height (≈52)
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 10 * r,
+                        vertical: 14 * r, // controls height (≈52)
                       ),
 
                       enabledBorder: OutlineInputBorder(
@@ -74,7 +74,7 @@ class ContinueCartPopup extends StatelessWidget {
                       ),
 
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(10 * r),
                         borderSide: const BorderSide(
                           color: Color(0xFFAEAEAE),
                           width: 0.5,
@@ -82,7 +82,7 @@ class ContinueCartPopup extends StatelessWidget {
                       ),
 
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(10 * r),
                         borderSide: const BorderSide(
                           color: Color(0xFFAEAEAE),
                           width: 0.5,
@@ -127,27 +127,27 @@ class ContinueCartPopup extends StatelessWidget {
                         child: TextField(
                           decoration: InputDecoration(
                             hintText: 'Enter customer Name',
-                            hintStyle: const TextStyle(
+                            hintStyle: TextStyle(
                               color: Color(0xFFB0B0B0),
-                              fontSize: 14,
+                              fontSize: 14 * r,
                               fontFamily: 'Montserrat',
                               fontWeight: FontWeight.w400,
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 14,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 10 * r,
+                              vertical: 14 * r,
                             ),
                             filled: true,
                             fillColor: Colors.white,
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(10 * r),
                               borderSide: const BorderSide(
                                 color: Color(0xFFAEAEAE),
                                 width: 0.5,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(10 * r),
                               borderSide: const BorderSide(
                                 color: Color(0xFFAEAEAE),
                                 width: 0.5,
@@ -165,27 +165,27 @@ class ContinueCartPopup extends StatelessWidget {
                           keyboardType: TextInputType.phone,
                           decoration: InputDecoration(
                             hintText: 'Enter Mobile Number',
-                            hintStyle: const TextStyle(
+                            hintStyle: TextStyle(
                               color: Color(0xFFB0B0B0),
-                              fontSize: 14,
+                              fontSize: 14 * r,
                               fontFamily: 'Montserrat',
                               fontWeight: FontWeight.w400,
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 14,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 10 * r,
+                              vertical: 14 * r,
                             ),
                             filled: true,
                             fillColor: Colors.white,
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(10 * r),
                               borderSide: const BorderSide(
                                 color: Color(0xFFAEAEAE),
                                 width: 0.5,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(10 * r),
                               borderSide: const BorderSide(
                                 color: Color(0xFFAEAEAE),
                                 width: 0.5,
@@ -268,11 +268,11 @@ class ContinueCartPopup extends StatelessWidget {
                               ),
                               borderRadius: BorderRadius.circular(20 * r),
                             ),
-                            shadows: const [
+                            shadows: [
                               BoxShadow(
                                 color: Color(0x7C000000),
-                                blurRadius: 4,
-                                offset: Offset(2, 2),
+                                blurRadius: 4 * r,
+                                offset: Offset(2 * r, 2 * r),
                               ),
                             ],
                           ),
