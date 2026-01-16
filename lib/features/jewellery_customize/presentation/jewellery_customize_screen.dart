@@ -15,6 +15,7 @@ import 'tab_row.dart'; //tab panel
 import 'solitaire_details_panel.dart';
 
 import 'customize_solitaire.dart';
+import '../presentation/widget/continue_cart_popup.dart';
 
 final dummyProductImages = [
   ProductImage(
@@ -95,7 +96,8 @@ class _JewelleryCustomiseScreenState extends State<JewelleryCustomiseScreen> {
     final r = ScaleSize.aspectRatio;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E1E),
+      //extendBody: true,
+      backgroundColor: Colors.white,
       appBar: MyAppBar(
         appBarLeading: AppBarLeading.back,
         showLogo: false,
@@ -112,7 +114,7 @@ class _JewelleryCustomiseScreenState extends State<JewelleryCustomiseScreen> {
           //   ),
           AppBarActionConfig(
             type: AppBarAction.cart,
-            badgeCount: 2,
+            badgeCount: 0,
             onTap: () => context.push('/cart'),
           ),
         ],
@@ -408,132 +410,157 @@ class _JewelleryCustomiseScreenState extends State<JewelleryCustomiseScreen> {
         ),
       ),
 
-      bottomNavigationBar: Container(
-        height: 82 * r,
-        padding: EdgeInsets.symmetric(horizontal: 40 * r),
-        decoration: BoxDecoration(
-          color: Color(0xFFBEE4DD),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(25 * r),
-            topRight: Radius.circular(25 * r),
-          ),
-          border: Border(top: BorderSide(color: Color(0xFF90DCD0), width: 1)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            /// PRICE TEXT
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                //const Spacer(),
-                MyText(
-                  'Approx.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20 * r,
-                    color: const Color(0xFF757575),
-                    fontFamily: 'Montserrat',
-                    height: 1.35 * r,
-                    letterSpacing: 0.40 * r,
-                  ),
-                ),
-                SizedBox(width: 30 * r),
-                Row(
-                  children: [
-                    MyText(
-                      '₹1,02,150',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 30 * r,
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w500,
-                        height: 0.90 * r,
-                        letterSpacing: 0.60 * r,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    MyText(
-                      '-',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 30 * r,
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w500,
-                        height: 0.90 * r,
-                        letterSpacing: 0.60 * r,
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      '₹1,30,150',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 30 * r,
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w500,
-                        height: 0.90 * r,
-                        letterSpacing: 0.60 * r,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          /// MAIN BOTTOM BAR
+          ClipRRect(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(25 * r),
+              topRight: Radius.circular(25 * r),
             ),
-
-            /// CONTINUE BUTTON
-            InkWell(
-              onTap: () {
-                // TODO: navigate to next screen
-              },
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: 258 * r,
-                height: 52 * r,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 30 * r,
-                  vertical: 6 * r,
-                ),
-                decoration: ShapeDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment(0.0, 0.5),
-                    end: Alignment(0.96, 1.12),
-                    colors: [Color(0xFFBEE4DD), Color(0xA5D1B193)],
-                  ),
-                  shape: RoundedRectangleBorder(
-                    side: const BorderSide(width: 1, color: Color(0xFFACA584)),
-                    borderRadius: BorderRadius.circular(20 * r),
-                  ),
-                  shadows: const [
-                    BoxShadow(
-                      color: Color(0x7C000000),
-                      blurRadius: 4,
-                      offset: Offset(2, 2),
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: MyText(
-                    'Continue ',
-                    style: TextStyle(
-                      color: const Color(0xFF6C5022),
-                      fontSize: 20 * r,
-                      fontFamily: 'Montserrat',
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+            child: Container(
+              height: 82 * r,
+              padding: EdgeInsets.symmetric(horizontal: 40 * r),
+              decoration: BoxDecoration(
+                color: const Color(0xFFBEE4DD),
+                border: Border(
+                  top: BorderSide(color: Color(0xFF90DCD0), width: 1),
                 ),
               ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  /// PRICE TEXT
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      //const Spacer(),
+                      MyText(
+                        'Approx.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20 * r,
+                          color: const Color(0xFF757575),
+                          fontFamily: 'Montserrat',
+                          height: 1.35 * r,
+                          letterSpacing: 0.40 * r,
+                        ),
+                      ),
+                      SizedBox(width: 30 * r),
+                      Row(
+                        children: [
+                          MyText(
+                            '₹1,02,150',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 30 * r,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w500,
+                              height: 0.90 * r,
+                              letterSpacing: 0.60 * r,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          MyText(
+                            '-',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 30 * r,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w500,
+                              height: 0.90 * r,
+                              letterSpacing: 0.60 * r,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            '₹1,30,150',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 30 * r,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w500,
+                              height: 0.90 * r,
+                              letterSpacing: 0.60 * r,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  /// CONTINUE BUTTON
+                  InkWell(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        builder: (_) => const ContinueCartPopup(),
+                      );
+                    },
+
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 258 * r,
+                      height: 52 * r,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 30 * r,
+                        vertical: 6 * r,
+                      ),
+                      decoration: ShapeDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment(0.0, 0.5),
+                          end: Alignment(0.96, 1.12),
+                          colors: [Color(0xFFBEE4DD), Color(0xA5D1B193)],
+                        ),
+                        shape: RoundedRectangleBorder(
+                          side: const BorderSide(
+                            width: 1,
+                            color: Color(0xFFACA584),
+                          ),
+                          borderRadius: BorderRadius.circular(20 * r),
+                        ),
+                        shadows: const [
+                          BoxShadow(
+                            color: Color(0x7C000000),
+                            blurRadius: 4,
+                            offset: Offset(2, 2),
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: MyText(
+                          'Continue ',
+                          style: TextStyle(
+                            color: const Color(0xFF6C5022),
+                            fontSize: 20 * r,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  /// ✅ WHITE GAP (8px) BELOW BOTTOM BAR
+                  //Container(height: 8, width: double.infinity, color: Colors.white),
+                ],
+              ),
             ),
-            //SizedBox(width: 28 * r),
-          ],
-        ),
+
+            //white  backgroundColor: Colors.white
+          ),
+
+          // 8 px white gap below bottom bar
+          const SizedBox(height: 4, child: ColoredBox(color: Colors.white)),
+        ],
       ),
     );
   }
