@@ -3,6 +3,8 @@ import 'product_card.dart';
 import '../data/jewellery_model.dart';
 import '../../../shared/utils/jewellery_helpers.dart';
 import '../../../shared/utils/scale_size.dart';
+import 'package:go_router/go_router.dart';
+import '../../../shared/routes/route_pages.dart';
 
 class ProductGrid extends StatelessWidget {
   final List<Jewellery> jewellery;
@@ -50,7 +52,7 @@ class ProductGrid extends StatelessWidget {
                 mainAxisExtent: _cardHeight * r,
               ),
               itemBuilder: (context, index) {
-                return _buildCard(jewellery[index]);
+                return _buildCard(context, jewellery[index]);
               },
             ),
 
@@ -72,7 +74,11 @@ class ProductGrid extends StatelessWidget {
                         height: _cardHeight * r,
                         child: Padding(
                           padding: EdgeInsets.only(right: 5 * r),
-                          child: _buildCard(jewellery[3], isWide: true),
+                          child: _buildCard(
+                            context,
+                            jewellery[3],
+                            isWide: true,
+                          ),
                         ),
                       ),
                     ),
@@ -86,7 +92,7 @@ class ProductGrid extends StatelessWidget {
                         flex: 1,
                         child: SizedBox(
                           height: _cardHeight * r,
-                          child: _buildCard(jewellery[4]),
+                          child: _buildCard(context, jewellery[4]),
                         ),
                       ),
                   ],
@@ -112,7 +118,7 @@ class ProductGrid extends StatelessWidget {
                   mainAxisExtent: _cardHeight * r,
                 ),
                 itemBuilder: (context, index) {
-                  return _buildCard(jewellery[index + 5]);
+                  return _buildCard(context, jewellery[index + 5]);
                 },
               ),
 
@@ -128,7 +134,11 @@ class ProductGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(Jewellery item, {bool isWide = false}) {
+  Widget _buildCard(
+    BuildContext context,
+    Jewellery item, {
+    bool isWide = false,
+  }) {
     final tagText = getTagText(item);
 
     return ProductCard(
@@ -141,7 +151,18 @@ class ProductGrid extends StatelessWidget {
       tagColor: getTagColor(tagText),
       isSoldOut: false,
       onAddToCart: () => debugPrint("Add → ${item.itemNumber}"),
-      onTryOn: () => debugPrint("Try → ${item.itemNumber}"),
+      //onTryOn: () => debugPrint("Try → ${item.itemNumber}"),
+      onTryOn: () {
+        debugPrint("Try → ${item.itemNumber}");
+        // context.pushNamed(
+        //   RoutePages.jewellerycustomize.routeName,
+        //   queryParameters: {'code': item.itemNumber ?? ''},
+        // );
+        context.pushNamed(
+          RoutePages.jewellerycustomize.routeName,
+          extra: item.itemNumber,
+        );
+      },
       onHaertTap: () => debugPrint("❤️ ${item.itemNumber}"),
     );
   }

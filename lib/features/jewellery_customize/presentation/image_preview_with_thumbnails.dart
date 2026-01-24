@@ -5,12 +5,19 @@ import '../data/product_images.dart';
 import 'fullscreen_gallery.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 
+/// ------------------------------------------------------------
+/// IMAGE BUILDER
+/// ------------------------------------------------------------
 Widget buildProductImage(
   String url, {
   double? width,
   double? height,
   BoxFit fit = BoxFit.contain,
 }) {
+  if (url.isEmpty) {
+    return const Icon(Icons.image_not_supported, size: 40);
+  }
+
   final isAsset = !url.startsWith('http');
 
   if (isAsset) {
@@ -28,10 +35,27 @@ Widget buildProductImage(
   );
 }
 
+/// ------------------------------------------------------------
+/// IMAGE PREVIEW WITH THUMBNAILS
+/// ------------------------------------------------------------
 class ImagePreviewWithThumbnails extends StatefulWidget {
+  /// Each ProductImage = one metal color
   final List<ProductImage> images;
+  final String? title;
+  final String? description;
+  final String? productCode;
+  final String? uid;
+  final double? r;
 
-  const ImagePreviewWithThumbnails({super.key, required this.images});
+  const ImagePreviewWithThumbnails({
+    super.key,
+    required this.images,
+    this.title,
+    this.description,
+    this.productCode,
+    this.uid,
+    this.r,
+  });
 
   @override
   State<ImagePreviewWithThumbnails> createState() =>
@@ -40,22 +64,27 @@ class ImagePreviewWithThumbnails extends StatefulWidget {
 
 class _ImagePreviewWithThumbnailsState
     extends State<ImagePreviewWithThumbnails> {
-  int selectedIndex = 0;
+  int selectedImageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final r = ScaleSize.aspectRatio;
+    final r = widget.r ?? ScaleSize.aspectRatio;
 
-    if (widget.images.isEmpty) {
+    if (widget.images.isEmpty || widget.images.first.imageUrls.isEmpty) {
       return const Center(child: Text('No images'));
     }
 
-    final current = widget.images[selectedIndex];
+    /// 🔥 Flatten all images for thumbnails
+    final allImages = widget.images.first.imageUrls;
+    final safeIndex = selectedImageIndex.clamp(0, allImages.length - 1);
+    final currentUrl = allImages[safeIndex];
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// LEFT THUMBNAILS
+        /// --------------------------------------------------
+        /// LEFT — THUMBNAILS
+        /// --------------------------------------------------
         Container(
           width: 90 * r,
           padding: EdgeInsets.fromLTRB(22 * r, 67 * r, 0, 0),
@@ -63,12 +92,12 @@ class _ImagePreviewWithThumbnailsState
             height: 426 * r,
             child: ListView.builder(
               padding: EdgeInsets.zero,
-              itemCount: widget.images.length,
+              itemCount: allImages.length,
               itemBuilder: (context, index) {
-                final active = selectedIndex == index;
+                final active = safeIndex == index;
 
                 return GestureDetector(
-                  onTap: () => setState(() => selectedIndex = index),
+                  onTap: () => setState(() => selectedImageIndex = index),
                   child: Container(
                     margin: EdgeInsets.only(bottom: 20 * r),
                     padding: EdgeInsets.all(3 * r),
@@ -82,7 +111,7 @@ class _ImagePreviewWithThumbnailsState
                       borderRadius: BorderRadius.circular(12 * r),
                     ),
                     child: buildProductImage(
-                      widget.images[index].url,
+                      allImages[index],
                       width: 62 * r,
                       height: 62 * r,
                       fit: BoxFit.cover,
@@ -94,15 +123,18 @@ class _ImagePreviewWithThumbnailsState
           ),
         ),
 
-        /// RIGHT SIDE: MAIN IMAGE + DETAILS
+        /// --------------------------------------------------
+        /// RIGHT — MAIN IMAGE + DESCRIPTION
+        /// --------------------------------------------------
         Expanded(
           child: GestureDetector(
-            onTap: () => _openFullscreen(context),
+            onTap: () => _openFullscreen(context, allImages),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    /// + ICON
                     // + ICON ABOVE IMAGE
                     Padding(
                       padding: EdgeInsets.only(top: 20 * r),
@@ -140,125 +172,67 @@ class _ImagePreviewWithThumbnailsState
                       ),
                     ),
 
-                    //SizedBox(height: 4 * r),
-
-                    /// MAIN IMAGE + OVERLAYS
-                    // Padding(
-                    //   padding: EdgeInsets.only(top: 0 * r),
-                    //   child:
+                    /// MAIN IMAGE
                     Hero(
-                      tag: 'preview_${current.id}',
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: constraints.maxWidth,
-                            height: 426 * r,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.transparent,
-                                //color: Colors.black,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(12 * r),
-                            ),
-                            child: InteractiveViewer(
-                              minScale: 1,
-                              maxScale: 4,
-                              child: buildProductImage(
-                                current.url,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
+                      tag: 'preview_$safeIndex',
+                      child: Container(
+                        width: constraints.maxWidth,
+                        height: 426 * r,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12 * r),
+                        ),
+                        child: InteractiveViewer(
+                          minScale: 1,
+                          maxScale: 4,
+                          child: buildProductImage(
+                            currentUrl,
+                            fit: BoxFit.contain,
                           ),
-
-                          /// TAG
-                          if (current.tagText.isNotEmpty)
-                            Positioned(
-                              left: 20 * r,
-                              //top: 67 * r,
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12 * r,
-                                  vertical: 5 * r,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: current.tagColor.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(20 * r),
-                                ),
-                                child: Text(
-                                  current.tagText,
-                                  style: TextStyle(
-                                    fontSize: 12 * r,
-                                    color: current.tagColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
                     ),
 
-                    //),
                     SizedBox(height: 16 * r),
 
-                    /// TITLE
+                    /// --------------------------------------------------
+                    /// DESCRIPTION (FROM OLD CODE)
+                    /// --------------------------------------------------
                     MyText(
-                      'Eternal Radiance Ring for her',
+                      widget.title ?? '',
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 20 * r,
                         fontFamily: 'Rushter Glory',
                         fontWeight: FontWeight.w400,
-                        height: 1.35 * r,
-                        letterSpacing: 0.40 * r,
                       ),
                     ),
 
                     SizedBox(height: 8 * r),
 
-                    /// DESCRIPTION
                     SizedBox(
                       width: 458 * r,
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'G',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 11 * r,
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w500,
-                                height: 2 * r,
-                                letterSpacing: 0.22 * r,
-                              ),
-                            ),
-                            TextSpan(
-                              text:
-                                  'racefully crafted in 18kt gold, this solitaire ring features a precision-cut heart & arrows diamond — a symbol of brilliance, balance, and timeless elegance.',
-                              style: TextStyle(fontSize: 11 * r, height: 2 * r),
-                            ),
-                          ],
+                      child: Text(
+                        widget.description ?? '',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11 * r,
+                          fontFamily: 'Montserrat',
+                          height: 2 * r,
                         ),
                       ),
                     ),
 
                     SizedBox(height: 6 * r),
 
-                    /// CODE
                     MyText(
-                      'RF3189 | UID: DT123',
+                      '${widget.productCode ?? ''} | UID: ${widget.uid ?? ''}',
                       style: TextStyle(
-                        color: Colors.black,
                         fontSize: 11 * r,
                         fontFamily: 'Rushter Glory',
-                        fontWeight: FontWeight.w400,
-                        height: 2.45 * r,
-                        letterSpacing: 0.22 * r,
                       ),
                     ),
+
+                    SizedBox(height: 26 * r),
                   ],
                 );
               },
@@ -269,12 +243,12 @@ class _ImagePreviewWithThumbnailsState
     );
   }
 
-  void _openFullscreen(BuildContext context) {
+  void _openFullscreen(BuildContext context, List<String> images) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => FullscreenGallery(
           images: widget.images,
-          initialIndex: selectedIndex,
+          initialIndex: selectedImageIndex,
         ),
       ),
     );

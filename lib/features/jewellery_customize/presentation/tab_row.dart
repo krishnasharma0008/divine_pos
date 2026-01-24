@@ -11,6 +11,20 @@ class DetailsScreen extends StatefulWidget {
   final String? clarityRange;
   final String? ringSize;
   //const DetailsScreen({super.key, required this.r});
+  final String metalColors; // ✅ from database
+  final String metalPurity;
+  final double totalMetalWeight;
+  final int totalSidePcs;
+  final double totalSideWeight;
+  final String? sideDiamondQuality;
+
+  // all amount presen
+  final double? metalAmount;
+  final double? sideDiamondAmount;
+  final double? solitaireAmountFrom;
+  final double? solitaireAmountTo;
+  final double? approxPriceFrom;
+  final double? approxPriceTo;
 
   const DetailsScreen({
     super.key,
@@ -20,6 +34,19 @@ class DetailsScreen extends StatefulWidget {
     this.colorRange,
     this.clarityRange,
     this.ringSize,
+    required this.metalColors,
+    required this.metalPurity,
+    required this.totalMetalWeight,
+    required this.totalSidePcs,
+    required this.totalSideWeight,
+    required this.sideDiamondQuality,
+    //
+    required this.metalAmount,
+    required this.sideDiamondAmount,
+    required this.solitaireAmountFrom,
+    required this.solitaireAmountTo,
+    required this.approxPriceFrom,
+    required this.approxPriceTo,
   });
 
   @override
@@ -66,8 +93,22 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   colorRange: widget.colorRange,
                   clarityRange: widget.clarityRange,
                   ringSize: widget.ringSize,
+                  metalColors: widget.metalColors,
+                  metalPurity: widget.metalPurity,
+                  totalMetalWeight: widget.totalMetalWeight,
+                  totalSidePcs: widget.totalSidePcs,
+                  sideDiamondQuality: widget.sideDiamondQuality,
+                  totalSideWeight: widget.totalSideWeight,
                 )
-              : PriceBreakupTab(r),
+              : PriceBreakupTab(
+                  r,
+                  metalAmount: widget.metalAmount,
+                  sideDiamondAmount: widget.sideDiamondAmount,
+                  solitaireAmountFrom: widget.solitaireAmountFrom,
+                  solitaireAmountTo: widget.solitaireAmountTo,
+                  approxPriceFrom: widget.approxPriceFrom,
+                  approxPriceTo: widget.approxPriceTo,
+                ),
         ],
       ),
     );
@@ -208,6 +249,12 @@ class ProductDetailsTab extends StatelessWidget {
   final String? colorRange;
   final String? clarityRange;
   final String? ringSize;
+  final String metalColors; // ✅ from database
+  final String metalPurity;
+  final int totalSidePcs;
+  final double totalSideWeight;
+  final String? sideDiamondQuality;
+  final double totalMetalWeight;
 
   const ProductDetailsTab({
     super.key,
@@ -217,6 +264,13 @@ class ProductDetailsTab extends StatelessWidget {
     this.colorRange,
     this.clarityRange,
     this.ringSize,
+    required this.metalColors,
+    required this.metalPurity,
+    required this.totalSidePcs,
+    required this.totalSideWeight,
+    required this.sideDiamondQuality,
+
+    required this.totalMetalWeight,
   });
 
   @override
@@ -231,10 +285,15 @@ class ProductDetailsTab extends StatelessWidget {
           SizedBox(height: 24 * r),
           _sectionHeader(r, 'Divine Mount'),
           SizedBox(height: 16 * r),
-          _row(r, 'Metal Type', '18KT Yellow Gold'),
-          _row(r, 'Net Weight', '3.74 Gms'),
-          _row(r, 'Side Diamond', 'Qty 48 / 0.234ct GH VS'),
-          _row(r, 'Ring Size', ringSize ?? '12'),
+          _row(r, 'Metal Type', '$metalPurity $metalColors Gold'),
+          _row(r, 'Net Weight', '${totalMetalWeight.toStringAsFixed(2)} Gms'),
+          _row(
+            r,
+            'Side Diamond',
+            'Qty  $totalSidePcs / $totalSideWeight ct $sideDiamondQuality',
+          ),
+          if (ringSize != null && ringSize != "")
+            _row(r, 'Ring Size', ringSize ?? ''),
         ],
       ),
     );
@@ -255,23 +314,51 @@ class ProductDetailsTab extends StatelessWidget {
 
 class PriceBreakupTab extends StatelessWidget {
   final double r;
-  const PriceBreakupTab(this.r, {super.key});
+  final double? metalAmount;
+  final double? sideDiamondAmount;
+  final double? solitaireAmountFrom;
+  final double? solitaireAmountTo;
+  final double? approxPriceFrom;
+  final double? approxPriceTo;
+
+  const PriceBreakupTab(
+    this.r, {
+    super.key,
+    // all amount presen
+    required this.metalAmount,
+    required this.sideDiamondAmount,
+    required this.solitaireAmountFrom,
+    required this.solitaireAmountTo,
+    required this.approxPriceFrom,
+    required this.approxPriceTo,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final grandFrom = (approxPriceFrom ?? 0).toStringAsFixed(0);
+    final grandTo = (approxPriceTo ?? 0).toStringAsFixed(0);
+
     return legendCard(
       r: r,
       title: 'Divine Solitaires',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _priceRow(r, 'Solitaire Value', '₹57,900'),
+          _priceRow(
+            r,
+            'Solitaire Value',
+            '$solitaireAmountFrom  - $solitaireAmountTo',
+          ),
           SizedBox(height: 16 * r),
           _sectionHeader(r, 'Divine Mount'),
           SizedBox(height: 16 * r),
-          _priceRow(r, 'Metal + Side Diamonds', '₹41,275'),
+          _priceRow(
+            r,
+            'Metal + Side Diamonds',
+            '$metalAmount - $sideDiamondAmount',
+          ),
           Divider(height: 32 * r),
-          _priceRow(r, 'Grand Total', '₹1,02,150', bold: true),
+          _priceRow(r, 'Grand Total', '₹$grandFrom - ₹$grandTo', bold: true),
         ],
       ),
     );

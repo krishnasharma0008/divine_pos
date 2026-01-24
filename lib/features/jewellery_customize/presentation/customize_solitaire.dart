@@ -1,18 +1,38 @@
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/range_selector.dart';
 import '../../../shared/utils/scale_size.dart';
-import '../../jewellery/presentation/widget/metal_type.dart';
+//import '../../jewellery/presentation/widget/metal_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../jewellery/data/filter_provider.dart';
+//import '../../jewellery/data/filter_provider.dart';
 import '../../../shared/widgets/text.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../shared/utils/currency_formatter.dart';
 import 'widget/ringsize_selector.dart';
+import '../../../shared/utils/ring_size_utils.dart';
+import '../data/jewellery_detail_model.dart';
+
+import 'widget/side_diamond_selector.dart';
+import '../../../shared/widgets/styled_dropdown.dart';
 
 class CustomizeSolitaire extends ConsumerStatefulWidget {
   final Map<String, dynamic>? initialValues;
+  final List<String>? metalColors; // ✅ from database
+  final List<String>? metalPurity;
+  final JewelleryDetail detail;
+  //final String? sideDiamondQuality;
+  final int totalSidePcs; // ✅ add
+  final double totalSideWeight; // ✅ add
 
-  const CustomizeSolitaire({super.key, this.initialValues});
+  const CustomizeSolitaire({
+    super.key,
+    this.initialValues,
+    this.metalColors,
+    this.metalPurity,
+    required this.detail,
+    //this.sideDiamondQuality,
+    required this.totalSidePcs, // ✅ add
+    required this.totalSideWeight, // ✅ add
+  });
 
   @override
   ConsumerState<CustomizeSolitaire> createState() => _CustomizeSolitaireState();
@@ -51,25 +71,6 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
 
   final claritySteps = ['IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
 
-  final ringSizes = [
-    '6',
-    '7',
-    '8',
-    '9',
-    '10',
-    '11',
-    '12',
-    '13',
-    '14',
-    '15',
-    '16',
-    '17',
-    '18',
-    '19',
-    '20',
-    '21',
-  ];
-
   // 🔹 Track current indices
   int _priceStartIndex = 1;
   int _priceEndIndex = 4;
@@ -79,40 +80,18 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
   int _colorEndIndex = 4;
   int _clarityStartIndex = 1;
   int _clarityEndIndex = 4;
-  String _selectedRingSize = '8';
+  //String _selectedRingSize = '8';
 
   String priceRangeText = '';
   String caratRangeText = '';
   String colorRangeText = '';
   String clarityRangeText = '';
-
-  final List<Map<String, String>> _metalItems = [
-    {
-      'label': 'Yellow Gold',
-      'asset': 'assets/jewellery/filters/metal/yellow_gold.png',
-    },
-    {
-      'label': 'Rose Gold',
-      'asset': 'assets/jewellery/filters/metal/rose_gold.png',
-    },
-    {
-      'label': 'White Gold',
-      'asset': 'assets/jewellery/filters/metal/white_gold.png',
-    },
-    {
-      'label': 'Platinum',
-      'asset': 'assets/jewellery/filters/metal/platinum.png',
-    },
-  ];
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   priceRangeText = '₹ ${priceSteps[1]} - ₹ ${priceSteps[4]}';
-  //   caratRangeText = '${caratSteps[1]} - ${caratSteps[2]}';
-  //   colorRangeText = '${colorSteps[2]} - ${colorSteps[4]}';
-  //   clarityRangeText = '${claritySteps[1]} - ${claritySteps[4]}';
-  // }
+  String? selectedMetalColor; // for color (from ProductImage.color)
+  String? selectedMetalPurity; // for purity (18K, 22K, etc.)
+  //List<ProductImage> displayedImages = []; // currently visible images
+  late List<String> ringSizes;
+  String _selectedRingSize = '';
+  String? selectedSideDiamondQuality;
 
   String _clean(String v) => v.replaceAll('₹', '').replaceAll('ct', '').trim();
 
@@ -144,7 +123,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
       _colorStartIndex = init['color']['startIndex'] ?? _colorStartIndex;
       _colorEndIndex = init['color']['endIndex'] ?? _colorEndIndex;
     }
-   // print('Color indices: $_colorStartIndex - $_colorEndIndex');
+    // print('Color indices: $_colorStartIndex - $_colorEndIndex');
 
     // CLARITY
     if (init['clarity'] != null) {
@@ -153,19 +132,50 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
     }
     //print('Clarity indices: $_clarityStartIndex - $_clarityEndIndex');
 
-    // RING SIZE
-    if (init['ringSize'] != null) {
-      _selectedRingSize = init['ringSize'];
+    // build list
+    ringSizes = buildRingSizes(
+      widget.detail.productSizeFrom,
+      widget.detail.productSizeTo,
+    );
+
+    // default to first
+    if (ringSizes.isNotEmpty) {
+      _selectedRingSize = ringSizes.first;
     }
+
+    // override with initial ring size if present
+    final initRing = widget.initialValues?['ringSize']?.toString();
+    if (initRing != null && ringSizes.contains(initRing)) {
+      _selectedRingSize = initRing;
+    }
+
     //print('Selected ring size: $_selectedRingSize');
+
+    // Set default metal Color selection
+    if (widget.metalColors != null && widget.metalColors!.isNotEmpty) {
+      selectedMetalColor =
+          widget.initialValues?['metalColor'] ?? widget.metalColors!.first;
+    }
+
+    // Set default metal Purity selection
+    if (widget.metalPurity != null && widget.metalPurity!.isNotEmpty) {
+      selectedMetalPurity =
+          widget.initialValues?['metalPurity'] ?? widget.metalPurity!.first;
+    }
+
+    // Set default side diamond quality selection
+    selectedSideDiamondQuality =
+        widget.initialValues?['sideDiamondQuality'] ?? 'IJ-SI';
   }
 
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
 
-    final filter = ref.watch(filterProvider);
-    final notifier = ref.read(filterProvider.notifier);
+    // just before RingSizeSelector
+    final currentIndex = ringSizes.indexOf(_selectedRingSize);
+    final safeIndex = currentIndex < 0 ? 0 : currentIndex;
+    final bool showPriceRange = false;
 
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
@@ -222,26 +232,28 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 10 * fem),
+                          if (showPriceRange) ...[
+                            SizedBox(height: 10 * fem),
 
-                          // PRICE RangeSelector
-                          RangeSelector(
-                            key: ValueKey(
-                              'price_${_priceStartIndex}_${_priceEndIndex}',
+                            // PRICE RangeSelector
+                            RangeSelector(
+                              key: ValueKey(
+                                'price_${_priceStartIndex}_${_priceEndIndex}',
+                              ),
+                              label: 'Price Range',
+                              values: priceSteps,
+                              initialStartIndex: _priceStartIndex,
+                              initialEndIndex: _priceEndIndex,
+                              valueToChipText: (v) => '₹ $v',
+                              onRangeChanged: (start, end) {
+                                setState(() {
+                                  priceRangeText = ' $start, - $end';
+                                  _priceStartIndex = priceSteps.indexOf(start);
+                                  _priceEndIndex = priceSteps.indexOf(end);
+                                });
+                              },
                             ),
-                            label: 'Price Range',
-                            values: priceSteps,
-                            initialStartIndex: _priceStartIndex,
-                            initialEndIndex: _priceEndIndex,
-                            valueToChipText: (v) => '₹ $v',
-                            onRangeChanged: (start, end) {
-                              setState(() {
-                                priceRangeText = ' $start, - $end';
-                                _priceStartIndex = priceSteps.indexOf(start);
-                                _priceEndIndex = priceSteps.indexOf(end);
-                              });
-                            },
-                          ),
+                          ],
                           SizedBox(height: 16 * fem),
 
                           // CARAT RangeSelector
@@ -315,17 +327,101 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                           ),
                           SizedBox(height: 20 * fem),
 
-                          // 🔹 RING SIZE SELECTOR
-                          RingSizeSelector(
-                            key: ValueKey(_selectedRingSize), // ✅ ADD THIS
-                            values: ringSizes,
-                            initialIndex: ringSizes.indexOf(_selectedRingSize),
-                            onChanged: (size) {
-                              setState(() {
-                                _selectedRingSize = size;
-                              });
-                            },
-                          ),
+                          //add dropdown for metal color  here
+                          if ((widget.metalColors?.isNotEmpty ?? false) ||
+                              (widget.metalPurity?.isNotEmpty ?? false))
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // 🔹 METAL LABEL (CENTERED ABOVE DROPDOWNS)
+                                Column(
+                                  children: [
+                                    Center(
+                                      child: Text(
+                                        'Metal',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14 * fem,
+                                          fontFamily: 'Rushter Glory',
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 6),
+
+                                    // 🔹 METAL DROPDOWNS
+                                    Row(
+                                      children: [
+                                        if (widget.metalColors?.isNotEmpty ??
+                                            false)
+                                          StyledDropdown(
+                                            label: '',
+                                            value: selectedMetalColor,
+                                            items: widget.metalColors!,
+                                            onChanged: (value) {
+                                              setState(
+                                                () =>
+                                                    selectedMetalColor = value,
+                                              );
+                                            },
+                                            width: 140,
+                                          ),
+
+                                        const SizedBox(width: 10),
+
+                                        if (widget.metalPurity?.isNotEmpty ??
+                                            false)
+                                          StyledDropdown(
+                                            label: '',
+                                            value: selectedMetalPurity,
+                                            items: widget.metalPurity!,
+                                            onChanged: (value) {
+                                              setState(
+                                                () =>
+                                                    selectedMetalPurity = value,
+                                              );
+                                            },
+                                            width: 100,
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(width: 16),
+
+                                // 🔹 SIDE DIAMOND SELECTOR (FIGMA CARD)
+                                SideDiamondSelector(
+                                  title:
+                                      'Side Diamond : ${widget.totalSidePcs} / ${widget.totalSideWeight.toStringAsFixed(3)} ct',
+                                  options: const ['IJ-SI', 'GH-VS', 'EF-VVS'],
+                                  selectedValue: selectedSideDiamondQuality,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      selectedSideDiamondQuality = value;
+                                    });
+                                  },
+                                  r: fem,
+                                ),
+                              ],
+                            ),
+
+                          SizedBox(height: 16 * fem),
+
+                          if (ringSizes.isNotEmpty)
+                            RingSizeSelector(
+                              key: ValueKey(_selectedRingSize),
+                              values: ringSizes,
+                              initialIndex: ringSizes.indexOf(
+                                _selectedRingSize,
+                              ),
+                              onChanged: (size) {
+                                setState(() {
+                                  _selectedRingSize = size;
+                                });
+                              },
+                            ),
 
                           SizedBox(height: 20 * fem),
                         ],
@@ -333,24 +429,6 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                     ),
                   ),
 
-                  // 🔹 FIXED BOTTOM BAR with Figma Apply button
-                  // Container(
-                  //   width: 569 * fem,
-                  //   height: 82 * fem,
-                  //   decoration: ShapeDecoration(
-                  //     color: const Color(0xFFBEE4DD),
-                  //     shape: RoundedRectangleBorder(
-                  //       side: BorderSide(
-                  //         width: 1,
-                  //         color: const Color(0xFF90DCD0),
-                  //       ),
-                  //       borderRadius: BorderRadius.only(
-                  //         topLeft: Radius.circular(25),
-                  //         topRight: Radius.circular(25),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
                   Container(
                     height: 82 * fem,
                     //padding: EdgeInsets.symmetric(horizontal: 18 * fem),
@@ -440,6 +518,13 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                     'end': claritySteps[_clarityEndIndex],
                                   },
                                   'ringSize': _selectedRingSize,
+                                  'metalColor':
+                                      selectedMetalColor, // ✅ added here
+                                  'metalPurity':
+                                      selectedMetalPurity, // ✅ added here
+
+                                  'sideDiamondQuality':
+                                      selectedSideDiamondQuality,
                                 });
                               },
                               child: Container(

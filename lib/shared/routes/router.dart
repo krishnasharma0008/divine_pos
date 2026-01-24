@@ -112,11 +112,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: RoutePages.jewelleryjourney.routePath,
-        name: RoutePages.jewelleryjourney.routeName,
-        builder: (context, state) => JewelleryCustomiseScreen(),
+        path: RoutePages.jewellerycustomize.routePath,
+        name: RoutePages.jewellerycustomize.routeName,
+        builder: (context, state) {
+          final productCode = state.extra as String? ?? '';
+          return JewelleryCustomiseScreen(productCode: productCode);
+        },
       ),
 
+      // GoRoute(
+      //   path: RoutePages.jewelleryjourney.routePath,
+      //   name: RoutePages.jewelleryjourney.routeName,
+      //   builder: (context, state) => JewelleryCustomiseScreen(),
+      // ),
       GoRoute(
         path: RoutePages.account.routePath,
         name: RoutePages.account.routeName,

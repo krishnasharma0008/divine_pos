@@ -48,30 +48,6 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
     return [];
   }
 
-  // @override
-  // Future<List<Jewellery>> build() async {
-  //   // /// cleanup
-  //   // ref.onDispose(() {
-  //   //   _debounce?.cancel();
-  //   // });
-
-  //   // /// filter change → debounce → reload
-  //   // ref.listen(filterProvider, (_, __) {
-  //   //   _debounce?.cancel();
-  //   //   _debounce = Timer(const Duration(milliseconds: 500), resetAndFetch);
-  //   // });
-
-  //   ref.listen(filterProvider, (_, __) {
-  //     if (_isLoadingMore) return; // 🔥 CRITICAL GUARD
-
-  //     _debounce?.cancel();
-  //     _debounce = Timer(const Duration(milliseconds: 500), resetAndFetch);
-  //   });
-
-  //   /// initial load (page load)
-  //   return _fetchJewellery();
-  // }
-
   /// reset + reload
   Future<void> resetAndFetch() async {
     _page = 1;
@@ -101,20 +77,6 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       _isLoadingMore = false;
     }
   }
-
-  // Future<void> loadMore() async {
-  //   if (!_hasMore || _isLoadingMore) return;
-
-  //   _isLoadingMore = true;
-
-  //   try {
-  //     final nextPage = await _fetchJewellery();
-  //     _page++;
-  //     state = state.whenData((current) => [...current, ...nextPage]);
-  //   } finally {
-  //     _isLoadingMore = false;
-  //   }
-  // }
 
   Future<List<Jewellery>> _fetchJewellery({int? page}) async {
     final effectivePage = page ?? _page;

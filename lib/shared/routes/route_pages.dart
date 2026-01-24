@@ -8,7 +8,7 @@ enum RoutePages {
   priceList,
   estimate,
   jewellerylisting,
-  jewelleryjourney,
+  jewellerycustomize,
   catalogue,
   feedback,
   knowDiamond,
@@ -33,8 +33,8 @@ extension RoutePagesExtension on RoutePages {
       case RoutePages.jewellerylisting:
         return "/jewellery_listing";
 
-      case RoutePages.jewelleryjourney:
-        return "/jewellery_journey";
+      case RoutePages.jewellerycustomize:
+        return "/jewellery_customize";
 
       case RoutePages.catalogue:
         return "/catalogue";
@@ -88,8 +88,8 @@ extension RoutePagesExtension on RoutePages {
       case RoutePages.jewellerylisting:
         return "jewellery_listing";
 
-      case RoutePages.jewelleryjourney:
-        return "jewellery_journey";
+      case RoutePages.jewellerycustomize:
+        return "jewellery_customize";
 
       case RoutePages.catalogue:
         return "catalogue";
@@ -143,8 +143,8 @@ extension RoutePagesExtension on RoutePages {
       case RoutePages.jewellerylisting:
         return "Jewellery Listing";
 
-      case RoutePages.jewelleryjourney:
-        return "Jewellery Journey";
+      case RoutePages.jewellerycustomize:
+        return "Jewellery Customize";
 
       case RoutePages.catalogue:
         return "Catalogue";

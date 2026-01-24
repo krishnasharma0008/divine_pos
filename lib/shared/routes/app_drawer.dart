@@ -81,7 +81,7 @@ class SideDrawer extends ConsumerWidget {
                           label: "Demo Checking page",
                           //icon: Icons.home_outlined,
                           iconPath: 'assets/icons/menu_home.svg',
-                          routePage: RoutePages.jewelleryjourney,
+                          routePage: RoutePages.jewellerycustomize,
                           drawerState: drawerState,
                           drawerNotifier: drawerNotifier,
                         ),

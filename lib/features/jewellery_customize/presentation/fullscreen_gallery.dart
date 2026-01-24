@@ -2,36 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../data/product_images.dart';
 
-/// ✅ Shared helper: uses asset for non-http, network otherwise
-Widget buildProductImage(
-  String url, {
-  double? width,
-  double? height,
-  BoxFit fit = BoxFit.contain,
-}) {
-  final isAsset = !url.startsWith('http') && !url.startsWith('https');
-
-  if (isAsset) {
-    return Image.asset(url, width: width, height: height, fit: fit);
-  }
-
-  return CachedNetworkImage(
-    imageUrl: url,
-    width: width,
-    height: height,
-    fit: fit,
-    placeholder: (_, __) => const Center(
-      child: SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
-    ),
-    errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
-  );
-}
-
 class FullscreenGallery extends StatefulWidget {
+  /// ProductImage list (each color → multiple images)
   final List<ProductImage> images;
   final int initialIndex;
 
@@ -46,33 +18,39 @@ class FullscreenGallery extends StatefulWidget {
 }
 
 class _FullscreenGalleryState extends State<FullscreenGallery> {
-  late final PageController _pageController;
-  late int _currentIndex;
+  late final PageController _controller;
+  late final List<String> _flatUrls;
+  late int _current;
 
   @override
   void initState() {
     super.initState();
 
-    // ✅ Safety: clamp initial index to valid range
-    final safeIndex = widget.images.isEmpty
-        ? 0
-        : widget.initialIndex.clamp(0, widget.images.length - 1);
+    // ✅ Flatten + clean all URLs
+    _flatUrls = widget.images
+        .expand((e) => e.imageUrls)
+        .map(_extractPlainUrl)
+        .where((url) => url.isNotEmpty)
+        .toList();
 
-    _currentIndex = safeIndex;
-    _pageController = PageController(initialPage: safeIndex);
+    // ✅ Safe initial index
+    _current = _flatUrls.isEmpty
+        ? 0
+        : widget.initialIndex.clamp(0, _flatUrls.length - 1);
+
+    _controller = PageController(initialPage: _current);
   }
 
   @override
   void dispose() {
-    // ✅ Avoid memory leaks
-    _pageController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Empty-safety: if no images, just show a black screen with close button
-    if (widget.images.isEmpty) {
+    // ✅ Handle empty image list
+    if (_flatUrls.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(
@@ -85,8 +63,7 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
                 top: 8,
                 right: 8,
                 child: IconButton(
-                  color: Colors.white,
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -101,63 +78,42 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
       body: SafeArea(
         child: Stack(
           children: [
-            /// ✅ Swipeable, zoomable pages
+            /// FULLSCREEN IMAGE PAGER
             PageView.builder(
-              controller: _pageController,
-              itemCount: widget.images.length,
-              onPageChanged: (index) {
-                setState(() => _currentIndex = index);
-              },
-              itemBuilder: (context, index) {
-                final image = widget.images[index];
+              controller: _controller,
+              itemCount: _flatUrls.length,
+              onPageChanged: (i) => setState(() => _current = i),
+              itemBuilder: (_, i) {
+                final url = _flatUrls[i];
+                final isAsset = !url.startsWith('http');
 
                 return Center(
-                  child: Hero(
-                    tag: image.id,
-                    child: Stack(
-                      children: [
-                        // Main fullscreen image with zoom
-                        InteractiveViewer(
-                          minScale: 1,
-                          maxScale: 4,
-                          child: buildProductImage(
-                            image.url,
+                  child: InteractiveViewer(
+                    minScale: 1,
+                    maxScale: 4,
+                    child: isAsset
+                        ? Image.asset(url, fit: BoxFit.contain)
+                        : CachedNetworkImage(
+                            imageUrl: url,
                             fit: BoxFit.contain,
-                          ),
-                        ),
-
-                        // TAG (top-right over fullscreen image)
-                        if (image.tagText.isNotEmpty)
-                          Positioned(
-                            right: 16,
-                            top: 16,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: image.tagColor.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                image.tagText,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: image.tagColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            placeholder: (_, __) => const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
                               ),
                             ),
+                            errorWidget: (_, __, ___) => const Icon(
+                              Icons.broken_image,
+                              color: Colors.white,
+                              size: 40,
+                            ),
                           ),
-                      ],
-                    ),
                   ),
                 );
               },
             ),
 
-            /// ✅ Top bar: back/close + index
+            /// TOP BAR (CLOSE + INDEX)
             Positioned(
               top: 8,
               left: 8,
@@ -166,8 +122,7 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    color: Colors.white,
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
                   Container(
@@ -180,7 +135,7 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '${_currentIndex + 1}/${widget.images.length}',
+                      '${_current + 1}/${_flatUrls.length}',
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ),
@@ -192,4 +147,17 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
       ),
     );
   }
+}
+
+/// --------------------
+/// URL CLEANER (shared logic)
+/// --------------------
+String _extractPlainUrl(String raw) {
+  // markdown-style [alt](url)
+  final markdown = RegExp(r'\[([^\]]+)\]\(([^)]+)\)').firstMatch(raw);
+  if (markdown != null) {
+    return markdown.group(2)!.trim();
+  }
+
+  return raw.replaceAll('[', '').replaceAll(']', '').trim();
 }

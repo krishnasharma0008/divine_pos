@@ -1,16 +1,29 @@
-import 'package:flutter/material.dart';
-//import 'package:flutter_svg/flutter_svg.dart';
-
 class ProductImage {
-  final String id;
-  final String url;
-  final String tagText;
-  final Color tagColor;
+  final String color;
+  final List<String> imageUrls;
 
-  ProductImage({
-    required this.id,
-    required this.url,
-    this.tagText = "",
-    this.tagColor = Colors.transparent,
-  });
+  ProductImage({required this.color, required this.imageUrls});
+
+  factory ProductImage.fromJson(Map<String, dynamic> json) {
+    return ProductImage(
+      color: json['color']?.toString() ?? '',
+      imageUrls: (json['image_url'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'color': color, 'image_url': imageUrls};
+  }
+
+  ProductImage copyWith({String? color, List<String>? imageUrls}) {
+    return ProductImage(
+      color: color ?? this.color,
+      imageUrls: imageUrls ?? this.imageUrls,
+    );
+  }
+
+  @override
+  String toString() => 'ProductImage(color: $color, imageUrls: $imageUrls)';
 }
