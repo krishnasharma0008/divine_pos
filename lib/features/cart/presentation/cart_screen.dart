@@ -12,11 +12,30 @@ import 'cart_item_card.dart';
 import '../../auth/data/auth_notifier.dart';
 import '../data/customer_detail_model.dart';
 
-class CartScreen extends ConsumerWidget {
+class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends ConsumerState<CartScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      final auth = ref.read(authProvider);
+      final user = auth.user?.userName;
+      if (user != null && user.isNotEmpty) {
+        await ref.read(cartNotifierProvider.notifier).refresh(user);
+      } else {
+        ref.invalidate(cartNotifierProvider); // clear if no user
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final cartAsync = ref.watch(cartNotifierProvider);
     final auth = ref.read(authProvider);
     final currentUser = auth.user?.userName;
