@@ -33,7 +33,7 @@ class _SideDiamondSelectorState extends State<SideDiamondSelector> {
   Widget build(BuildContext context) {
     return Container(
       width: 239 * widget.r,
-      height: 100 * widget.r,
+      height: 120 * widget.r,
       decoration: ShapeDecoration(
         shape: RoundedRectangleBorder(
           side: BorderSide(width: 1 * widget.r, color: Color(0xFFBEE4DD)),

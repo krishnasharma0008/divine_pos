@@ -25,7 +25,7 @@ class User {
       designation: json['designation'] ?? '',
       token: json['token'] ?? '',
       pjcode: json['pjcode'] ?? '',
-      cartCount: json['cartcount'].toInt(), // ✅ FIX
+      cartCount: json['cartcount'] ?? 0, // ✅ FIX
     );
   }
 

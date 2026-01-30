@@ -332,83 +332,122 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                               (widget.metalPurity?.isNotEmpty ?? false))
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // 🔹 METAL LABEL (CENTERED ABOVE DROPDOWNS)
-                                Column(
-                                  children: [
-                                    Center(
-                                      child: Text(
-                                        'Metal',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14 * fem,
-                                          fontFamily: 'Rushter Glory',
-                                          fontWeight: FontWeight.w400,
-                                        ),
+                                // 🔹 METAL CARD
+                                // Expanded(
+                                //   flex: 2,
+                                //   child:
+                                Container(
+                                  width: 290 * fem,
+                                  decoration: ShapeDecoration(
+                                    shape: RoundedRectangleBorder(
+                                      side: BorderSide(
+                                        width: 1 * fem,
+                                        color: const Color(0xFFBEE4DD),
+                                      ),
+                                      borderRadius: BorderRadius.circular(
+                                        15 * fem,
                                       ),
                                     ),
-
-                                    const SizedBox(height: 6),
-
-                                    // 🔹 METAL DROPDOWNS
-                                    Row(
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.fromLTRB(
+                                      9 * fem,
+                                      16 * fem,
+                                      9 * fem,
+                                      10 * fem,
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        if (widget.metalColors?.isNotEmpty ??
-                                            false)
-                                          StyledDropdown(
-                                            label: '',
-                                            value: selectedMetalColor,
-                                            items: widget.metalColors!,
-                                            onChanged: (value) {
-                                              setState(
-                                                () =>
-                                                    selectedMetalColor = value,
-                                              );
-                                            },
-                                            width: 140,
+                                        Center(
+                                          child: Text(
+                                            'Metal',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14 * fem,
+                                              fontFamily: 'Rushter Glory',
+                                              fontWeight: FontWeight.w400,
+                                            ),
                                           ),
+                                        ),
+                                        SizedBox(height: 6 * fem),
 
-                                        const SizedBox(width: 10),
-
-                                        if (widget.metalPurity?.isNotEmpty ??
-                                            false)
-                                          StyledDropdown(
-                                            label: '',
-                                            value: selectedMetalPurity,
-                                            items: widget.metalPurity!,
-                                            onChanged: (value) {
-                                              setState(
-                                                () =>
-                                                    selectedMetalPurity = value,
-                                              );
-                                            },
-                                            width: 100,
-                                          ),
+                                        // 🔹 METAL DROPDOWNS
+                                        Row(
+                                          children: [
+                                            if (widget
+                                                    .metalColors
+                                                    ?.isNotEmpty ??
+                                                false)
+                                              Expanded(
+                                                child: StyledDropdown(
+                                                  label: '',
+                                                  value: selectedMetalColor,
+                                                  items: widget.metalColors!,
+                                                  onChanged: (value) {
+                                                    setState(
+                                                      () => selectedMetalColor =
+                                                          value,
+                                                    );
+                                                  },
+                                                  width:
+                                                      140 *
+                                                      fem, // ignore internal width
+                                                ),
+                                              ),
+                                            if (widget
+                                                    .metalPurity
+                                                    ?.isNotEmpty ??
+                                                false) ...[
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: StyledDropdown(
+                                                  label: '',
+                                                  value: selectedMetalPurity,
+                                                  items: widget.metalPurity!,
+                                                  onChanged: (value) {
+                                                    setState(
+                                                      () =>
+                                                          selectedMetalPurity =
+                                                              value,
+                                                    );
+                                                  },
+                                                  width: 140 * fem,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
                                       ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-
-                                const SizedBox(width: 16),
-
-                                // 🔹 SIDE DIAMOND SELECTOR (FIGMA CARD)
-                                SideDiamondSelector(
-                                  title:
-                                      'Side Diamond : ${widget.totalSidePcs} / ${widget.totalSideWeight.toStringAsFixed(3)} ct',
-                                  options: const ['IJ-SI', 'GH-VS', 'EF-VVS'],
-                                  selectedValue: selectedSideDiamondQuality,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      selectedSideDiamondQuality = value;
-                                    });
-                                  },
-                                  r: fem,
+                                //),
+                                SizedBox(width: 80 * fem),
+                                // 🔹 SIDE DIAMOND SELECTOR
+                                Expanded(
+                                  flex: 2,
+                                  child: SideDiamondSelector(
+                                    title:
+                                        'Side Diamond : ${widget.totalSidePcs} / ${widget.totalSideWeight.toStringAsFixed(3)} ct',
+                                    options: const ['IJ-SI', 'GH-VS', 'EF-VVS'],
+                                    selectedValue: selectedSideDiamondQuality,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        selectedSideDiamondQuality = value;
+                                      });
+                                    },
+                                    r: fem,
+                                  ),
                                 ),
                               ],
                             ),
 
                           SizedBox(height: 16 * fem),
 
+                          // size
                           if (ringSizes.isNotEmpty)
                             RingSizeSelector(
                               key: ValueKey(_selectedRingSize),
@@ -452,40 +491,44 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                       child: Row(
                         children: [
                           // 🔹 PRICE SUMMARY
-                          Row(
-                            children: [
-                              MyText(
-                                double.parse(
-                                  priceSteps[_priceStartIndex].replaceAll(
-                                    ',',
-                                    '',
+                          if (showPriceRange) ...[
+                            Row(
+                              children: [
+                                MyText(
+                                  double.parse(
+                                    priceSteps[_priceStartIndex].replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ).inRupeesFormat(),
+                                  style: TextStyle(
+                                    fontSize: 20 * fem,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                ).inRupeesFormat(),
-                                style: TextStyle(
-                                  fontSize: 20 * fem,
-                                  fontWeight: FontWeight.w500,
                                 ),
-                              ),
-                              SizedBox(width: 8 * fem),
-                              MyText('-', style: TextStyle(fontSize: 20 * fem)),
-                              SizedBox(width: 8 * fem),
-                              MyText(
-                                double.parse(
-                                  priceSteps[_priceEndIndex].replaceAll(
-                                    ',',
-                                    '',
+                                SizedBox(width: 8 * fem),
+                                MyText(
+                                  '-',
+                                  style: TextStyle(fontSize: 20 * fem),
+                                ),
+                                SizedBox(width: 8 * fem),
+                                MyText(
+                                  double.parse(
+                                    priceSteps[_priceEndIndex].replaceAll(
+                                      ',',
+                                      '',
+                                    ),
+                                  ).inRupeesFormat(),
+                                  style: TextStyle(
+                                    fontSize: 20 * fem,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                ).inRupeesFormat(),
-                                style: TextStyle(
-                                  fontSize: 20 * fem,
-                                  fontWeight: FontWeight.w500,
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
 
-                          const Spacer(),
-
+                            const Spacer(),
+                          ],
                           // 🔹 APPLY BUTTON
                           SizedBox(
                             height: 52 * fem,
