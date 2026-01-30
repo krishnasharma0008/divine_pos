@@ -3,16 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../auth/data/auth_notifier.dart';
-import '../../../shared/utils/scale_size.dart';
 import '../../../shared/app_bar.dart';
-import '../../../shared/utils/scale_size.dart';
 import '../../../shared/utils/enums.dart';
-import '../../../shared/routes/app_drawer.dart';
-import '../../../shared/widgets/carat_selector.dart';
-import '../../../shared/widgets/carat_range_slider.dart';
 import '../data/home_provider.dart';
 import '../../../shared/widgets/grade_selecter.dart';
-import '../../jewellery_customize/presentation/customize_solitaire.dart';
 
 class HomeScreen extends ConsumerWidget {
   HomeScreen({super.key});

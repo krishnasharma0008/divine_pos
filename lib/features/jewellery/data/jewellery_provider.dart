@@ -164,13 +164,9 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         // "price_to": filter.selectedPriceRange.end > 0
         //     ? filter.selectedPriceRange.end.toInt()
         //     : null,
-        "price_from": filter.selectedPriceRange != null
-            ? filter.selectedPriceRange!.start.toInt()
-            : null,
+        "price_from": filter.selectedPriceRange?.start.toInt(),
 
-        "price_to": filter.selectedPriceRange != null
-            ? filter.selectedPriceRange!.end.toInt()
-            : null,
+        "price_to": filter.selectedPriceRange?.end.toInt(),
         "order_for": null,
 
         // "cts_from": filter.caratStartLabel.isEmpty
@@ -199,7 +195,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       };
 
       // debugPrint("🔄 Fetching jewellery - Page: $_page");
-      debugPrint("📦 Post Data: ${jsonEncode(postData)}");
+      //debugPrint("📦 Post Data: ${jsonEncode(postData)}");
 
       // debugPrint(
       //   '🌐 URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_listing}',

@@ -20,5 +20,15 @@ class ApiEndPoint {
 
   static const get_price = "get-price";
 
+  static const cart_list = "cart/list";
+
   static const create_cart = "cart/";
+
+  static const delete_cart = "cart/";
+
+  static const update_cart = "cart/";
+
+  static const customerSearch =  "retail-customer/";
+
+  static const create_order = 'cart/toorder';
 }

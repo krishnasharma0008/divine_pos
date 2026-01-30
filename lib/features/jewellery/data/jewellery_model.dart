@@ -29,14 +29,14 @@ class Jewellery {
   });
 
   factory Jewellery.fromJson(Map<String, dynamic> json) {
-    double? _toDouble(dynamic v) {
+    double? toDouble(dynamic v) {
       if (v == null) return null;
       if (v is num) return v.toDouble();
       if (v is String && v.isNotEmpty) return double.tryParse(v);
       return null;
     }
 
-    String? _cleanUrl(dynamic v) {
+    String? cleanUrl(dynamic v) {
       if (v == null) return null;
       var s = v.toString().trim();
       if (s.startsWith('[') && s.contains('](')) {
@@ -58,7 +58,7 @@ class Jewellery {
       oldVariant: json['old_varient']?.toString(),
       productCategory: json['product_category']?.toString() ?? '',
       solitaireSlab: json['solitaire_slab']?.toString(),
-      weight: _toDouble(json['weight']),
+      weight: toDouble(json['weight']),
       isNew:
           json['isnew'] == true ||
           json['isnew'] == 1 ||
@@ -66,9 +66,9 @@ class Jewellery {
 
       classify: json['classify']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
-      price: _toDouble(json['price']),
+      price: toDouble(json['price']),
       layingWith: json['laying_with']?.toString() ?? '',
-      imageUrl: _cleanUrl(json['image_url']),
+      imageUrl: cleanUrl(json['image_url']),
     );
   }
 

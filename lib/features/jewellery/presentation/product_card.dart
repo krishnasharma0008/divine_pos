@@ -144,7 +144,7 @@ class _ProductCardState extends State<ProductCard> {
 
     return Stack(
       children: [
-        Container(
+        SizedBox(
           height: 287 * r,
           width: double.infinity,
           //color: Colors.amber,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/app_bar.dart';
-import '../../../shared/routes/app_drawer.dart';
 import '../../../shared/utils/enums.dart';
 import '../../../shared/themes.dart';
 import '../../../shared/widgets/text.dart';

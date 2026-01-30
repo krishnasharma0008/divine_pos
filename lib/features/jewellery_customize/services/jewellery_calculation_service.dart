@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import '../data/jewellery_detail_model.dart';
 import '../data/variant_model.dart';

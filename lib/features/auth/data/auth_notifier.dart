@@ -13,9 +13,6 @@ final authProvider = NotifierProvider<AuthNotifier, AuthState>(
 );
 
 class AuthNotifier extends Notifier<AuthState> {
-  // AuthNotifier() : super(AuthState(status: AuthStatus.loading)) {
-  //   loadToken();
-  // }
 
   @override
   AuthState build() {
@@ -54,6 +51,15 @@ class AuthNotifier extends Notifier<AuthState> {
     state = AuthState(status: AuthStatus.unauthenticated, user: null);
     _authChanges.add(null);
   }
+
+  void updateCartCount(int count) {
+  if (state.user == null) return;
+
+  state = state.copyWith(
+    user: state.user!.copyWith(cartCount: count),
+  );
+}
+
 }
 
 class AuthState {

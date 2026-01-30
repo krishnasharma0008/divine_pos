@@ -15,6 +15,7 @@ import '../../features/home/presentation/loading_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart'; // import your OTP screen
 import '../../features/jewellery/presentation/jewellery_listing_screen.dart';
 import '../../features/Order_feedback_form/presentation/order_feedback_form_screen.dart';
+import '../../features/cart/presentation/cart_screen.dart';
 import '../../shared/utils/enums.dart';
 
 //import '../../shared/shared_layout.dart';
@@ -136,6 +137,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RoutePages.feedbackform.routeName,
         //builder: (context, state) => const ProfileScreen(),
         builder: (context, state) => const DivineFeedbackScreen(),
+      ),
+       GoRoute(
+        path: RoutePages.cart.routePath,
+        name: RoutePages.cart.routeName,
+        builder: (context, state) => CartScreen(),
       ),
 
       // ⭐ MAIN APP LAYOUT (Bottom Navigation)

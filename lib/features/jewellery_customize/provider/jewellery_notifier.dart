@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/utils/http_client.dart';
 import '../../../shared/utils/api_endpointen.dart';
 import '../data/jewellery_detail_model.dart';
-import '../data/jewellery_price_model.dart';
 
 /// Provider
 final jewelleryDetailProvider =

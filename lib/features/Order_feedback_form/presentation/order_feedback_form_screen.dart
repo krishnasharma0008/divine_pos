@@ -8,7 +8,7 @@ import '../../../shared/utils/enums.dart';
 import '../../../shared/utils/scale_size.dart';
 
 class DivineFeedbackScreen extends StatefulWidget {
-  const DivineFeedbackScreen({Key? key}) : super(key: key);
+  const DivineFeedbackScreen({super.key});
 
   @override
   State<DivineFeedbackScreen> createState() => _DivineFeedbackScreenState();
@@ -627,7 +627,7 @@ Widget stepHeader(
   const inactiveCircle = Color(0xFFF5F5F5);
   const textColor = Color(0xFF222222);
 
-  Widget _step({required int step, required String label}) {
+  Widget step({required int step, required String label}) {
     final isActive = currentStep == step;
     return InkWell(
       onTap: () => onStepChanged(step),
@@ -691,11 +691,11 @@ Widget stepHeader(
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _step(step: 1, label: 'Customer'),
+        step(step: 1, label: 'Customer'),
         SizedBox(width: 24 * fem),
         Container(width: 60 * fem, height: 2 * fem, color: activeColor),
         SizedBox(width: 24 * fem),
-        _step(step: 2, label: 'Sales Executive'),
+        step(step: 2, label: 'Sales Executive'),
       ],
     ),
   );
@@ -709,12 +709,12 @@ class QuestionSection extends StatelessWidget {
   final Widget child;
 
   const QuestionSection({
-    Key? key,
+    super.key,
     required this.index,
     required this.fem,
     required this.title,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/text.dart';
-import '../../../../shared/utils/scale_size.dart';
 
 class FilterSection extends StatefulWidget {
   final String title;

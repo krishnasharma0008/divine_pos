@@ -238,7 +238,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                             // PRICE RangeSelector
                             RangeSelector(
                               key: ValueKey(
-                                'price_${_priceStartIndex}_${_priceEndIndex}',
+                                'price_${_priceStartIndex}_$_priceEndIndex',
                               ),
                               label: 'Price Range',
                               values: priceSteps,
@@ -259,7 +259,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                           // CARAT RangeSelector
                           RangeSelector(
                             key: ValueKey(
-                              'carat_${_caratStartIndex}_${_caratEndIndex}',
+                              'carat_${_caratStartIndex}_$_caratEndIndex',
                             ),
                             label: 'Carat',
                             values: caratSteps,
@@ -278,7 +278,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                           // COLOR RangeSelector
                           RangeSelector(
                             key: ValueKey(
-                              'color_${_colorStartIndex}_${_colorEndIndex}',
+                              'color_${_colorStartIndex}_$_colorEndIndex',
                             ),
                             label: 'Color',
                             values: colorSteps,
@@ -297,7 +297,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                           // CLARITY RangeSelector
                           RangeSelector(
                             key: ValueKey(
-                              'clarity_${_clarityStartIndex}_${_clarityEndIndex}',
+                              'clarity_${_clarityStartIndex}_$_clarityEndIndex',
                             ),
                             label: 'Clarity',
                             values: claritySteps,

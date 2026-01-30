@@ -6,7 +6,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../features/auth/data/auth_notifier.dart';
 import '../utils/scale_size.dart';
-import '../themes.dart';
 import '../widgets/text.dart';
 import 'drawer_provider.dart';
 import 'route_pages.dart';

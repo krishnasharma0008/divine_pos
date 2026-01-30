@@ -11,8 +11,10 @@ import '../../../shared/routes/app_drawer.dart';
 import '../../auth/data/auth_notifier.dart';
 import '../../../shared/utils/enums.dart';
 
+import '../../auth/data/auth_notifier.dart';
+
 class DashboardScreen extends ConsumerStatefulWidget {
-  DashboardScreen({super.key});
+  const DashboardScreen({super.key});
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
@@ -43,6 +45,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final width = MediaQuery.of(context).size.width;
     final fem = ScaleSize.aspectRatio;
 
+    // cart item count 
+    final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
+
+    debugPrint('cart count is : $cartCount');
+
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.white,
@@ -61,7 +68,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           AppBarActionConfig(
             type: AppBarAction.notification,
-            badgeCount: 0,
+            badgeCount: cartCount,
             onTap: () {
               context.push('/notifications');
             },

@@ -1,3 +1,4 @@
+import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import '../../../shared/utils/scale_size.dart';
@@ -211,11 +212,9 @@ class _JewelleryCustomiseScreenState
 
     // 4) METAL AMOUNT
     final activeMetalColor =
-        selectedMetalColor ?? detail.metalColor?.split(',').first.trim() ?? '';
+        selectedMetalColor ?? detail.metalColor.split(',').first.trim() ?? '';
     final activeMetalPurity =
-        selectedMetalPurity ??
-        detail.metalPurity?.split(',').first.trim() ??
-        '';
+        selectedMetalPurity ?? detail.metalPurity.split(',').first.trim() ?? '';
 
     final metal = await _calculateMetalAmountFromApi(
       detail: detail,
@@ -406,8 +405,8 @@ class _JewelleryCustomiseScreenState
 
         // ✅ IMAGE LOGIC BELONGS HERE
         final allImages = detail.images ?? [];
-        final defaultMetalColor = detail.metalColor?.split(',').first.trim();
-        final defaultMetalPurity = detail.metalPurity?.split(',').first.trim();
+        final defaultMetalColor = detail.metalColor.split(',').first.trim();
+        final defaultMetalPurity = detail.metalPurity.split(',').first.trim();
 
         final activeColor = selectedMetalColor ?? defaultMetalColor;
         final activePurity = selectedMetalPurity ?? defaultMetalPurity;
@@ -460,7 +459,10 @@ class _JewelleryCustomiseScreenState
               AppBarActionConfig(
                 type: AppBarAction.cart,
                 badgeCount: 0,
-                onTap: () => context.push('/cart'),
+                //onTap: () => context.push('/cart'),
+                onTap: () => GoRouter.of(
+                  context,
+                ).pushReplacement(RoutePages.cart.routePath),
               ),
             ],
           ),
@@ -555,10 +557,10 @@ class _JewelleryCustomiseScreenState
                                         // ✅ THIS IS THE onTap
                                         onTap: () async {
                                           final metalColors =
-                                              detail.metalColor?.split(',') ??
+                                              detail.metalColor.split(',') ??
                                               ['Yellow'];
                                           final metalPurities =
-                                              detail.metalPurity?.split(',') ??
+                                              detail.metalPurity.split(',') ??
                                               ['18K'];
 
                                           final result =
@@ -646,8 +648,9 @@ class _JewelleryCustomiseScreenState
                                                 ),
                                               );
 
-                                          if (!mounted || result == null)
+                                          if (!mounted || result == null) {
                                             return;
+                                          }
 
                                           setState(() {
                                             // PRICE

@@ -5,14 +5,16 @@ class User {
   final String designation;
   final String token;
   final String pjcode;
+  final int cartCount;
 
-  User({
+  const User({
     required this.userid,
     required this.userName,
     required this.displayName,
     required this.designation,
     required this.token,
     required this.pjcode,
+    required this.cartCount,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class User {
       designation: json['designation'] ?? '',
       token: json['token'] ?? '',
       pjcode: json['pjcode'] ?? '',
+      cartCount: json['cartcount'].toInt(), // ✅ FIX
     );
   }
 
@@ -34,6 +37,19 @@ class User {
       'designation': designation,
       'token': token,
       'pjcode': pjcode,
+      'cartcount': cartCount,
     };
+  }
+
+  User copyWith({int? cartCount}) {
+    return User(
+      userid: userid,
+      userName: userName,
+      displayName: displayName,
+      designation: designation,
+      token: token,
+      pjcode: pjcode,
+      cartCount: cartCount ?? this.cartCount,
+    );
   }
 }
