@@ -12,6 +12,7 @@ import '../../../shared/utils/ring_size_utils.dart';
 import '../data/jewellery_detail_model.dart';
 
 import 'widget/side_diamond_selector.dart';
+//import 'widget/metal_selector.dart';
 import '../../../shared/widgets/styled_dropdown.dart';
 
 class CustomizeSolitaire extends ConsumerStatefulWidget {
@@ -332,14 +333,14 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                               (widget.metalPurity?.isNotEmpty ?? false))
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment
+                                  .spaceBetween, // justify between
+
                               children: [
                                 // 🔹 METAL CARD
-                                // Expanded(
-                                //   flex: 2,
-                                //   child:
                                 Container(
-                                  width: 290 * fem,
+                                  width: 253 * fem,
+                                  height: 105 * fem,
                                   decoration: ShapeDecoration(
                                     shape: RoundedRectangleBorder(
                                       side: BorderSide(
@@ -352,70 +353,62 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                     ),
                                   ),
                                   child: Padding(
-                                    padding: EdgeInsets.fromLTRB(
-                                      9 * fem,
-                                      16 * fem,
-                                      9 * fem,
-                                      10 * fem,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10 * fem,
+                                      vertical: 8 * fem, // tighter vertically
                                     ),
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Center(
-                                          child: Text(
-                                            'Metal',
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 14 * fem,
-                                              fontFamily: 'Rushter Glory',
-                                              fontWeight: FontWeight.w400,
-                                            ),
+                                        Text(
+                                          'Metal',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 14 * fem,
+                                            fontFamily: 'Rushter Glory',
+                                            fontWeight: FontWeight.w400,
                                           ),
                                         ),
-                                        SizedBox(height: 6 * fem),
 
-                                        // 🔹 METAL DROPDOWNS
+                                        //SizedBox(height: 6 * fem),
                                         Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
                                             if (widget
                                                     .metalColors
                                                     ?.isNotEmpty ??
                                                 false)
-                                              Expanded(
-                                                child: StyledDropdown(
-                                                  label: '',
-                                                  value: selectedMetalColor,
-                                                  items: widget.metalColors!,
-                                                  onChanged: (value) {
-                                                    setState(
-                                                      () => selectedMetalColor =
-                                                          value,
-                                                    );
-                                                  },
-                                                  width:
-                                                      140 *
-                                                      fem, // ignore internal width
-                                                ),
+                                              StyledDropdown(
+                                                label: '',
+                                                value: selectedMetalColor,
+                                                items: widget.metalColors!,
+                                                onChanged: (value) {
+                                                  setState(
+                                                    () => selectedMetalColor =
+                                                        value,
+                                                  );
+                                                },
+                                                width: 140 * fem,
                                               ),
                                             if (widget
                                                     .metalPurity
                                                     ?.isNotEmpty ??
                                                 false) ...[
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: StyledDropdown(
-                                                  label: '',
-                                                  value: selectedMetalPurity,
-                                                  items: widget.metalPurity!,
-                                                  onChanged: (value) {
-                                                    setState(
-                                                      () =>
-                                                          selectedMetalPurity =
-                                                              value,
-                                                    );
-                                                  },
-                                                  width: 140 * fem,
-                                                ),
+                                              SizedBox(width: 10 * fem),
+                                              StyledDropdown(
+                                                label: '',
+                                                value: selectedMetalPurity,
+                                                items: widget.metalPurity!,
+                                                onChanged: (value) {
+                                                  setState(
+                                                    () => selectedMetalPurity =
+                                                        value,
+                                                  );
+                                                },
+                                                width: 140 * fem,
                                               ),
                                             ],
                                           ],
@@ -425,23 +418,27 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                   ),
                                 ),
                                 //),
-                                SizedBox(width: 80 * fem),
+
+                                // ❌ remove big fixed spacer, rely on Row + flex
+                                SizedBox(width: 12 * fem),
+
                                 // 🔹 SIDE DIAMOND SELECTOR
-                                Expanded(
-                                  flex: 2,
-                                  child: SideDiamondSelector(
-                                    title:
-                                        'Side Diamond : ${widget.totalSidePcs} / ${widget.totalSideWeight.toStringAsFixed(3)} ct',
-                                    options: const ['IJ-SI', 'GH-VS', 'EF-VVS'],
-                                    selectedValue: selectedSideDiamondQuality,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedSideDiamondQuality = value;
-                                      });
-                                    },
-                                    r: fem,
-                                  ),
+                                // Expanded(
+                                //   flex: 1,
+                                //child:
+                                SideDiamondSelector(
+                                  title:
+                                      'Side Diamond : ${widget.totalSidePcs} / ${widget.totalSideWeight.toStringAsFixed(3)} ct',
+                                  options: const ['IJ-SI', 'GH-VS', 'EF-VVS'],
+                                  selectedValue: selectedSideDiamondQuality,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      selectedSideDiamondQuality = value;
+                                    });
+                                  },
+                                  r: fem,
                                 ),
+                                //),
                               ],
                             ),
 

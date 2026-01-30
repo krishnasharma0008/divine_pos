@@ -32,8 +32,8 @@ class _SideDiamondSelectorState extends State<SideDiamondSelector> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 239 * widget.r,
-      height: 120 * widget.r,
+      width: 249 * widget.r,
+      height: 105 * widget.r,
       decoration: ShapeDecoration(
         shape: RoundedRectangleBorder(
           side: BorderSide(width: 1 * widget.r, color: Color(0xFFBEE4DD)),
@@ -77,7 +77,7 @@ class _SideDiamondSelectorState extends State<SideDiamondSelector> {
                       widget.onChanged(option); // ✅ SEND TO PARENT
                     },
                     child: Container(
-                      height: 26 * widget.r,
+                      height: 36 * widget.r,
                       padding: EdgeInsets.symmetric(horizontal: 10 * widget.r),
                       decoration: ShapeDecoration(
                         color: isSelected
@@ -98,7 +98,7 @@ class _SideDiamondSelectorState extends State<SideDiamondSelector> {
                           option,
                           style: TextStyle(
                             color: Colors.black,
-                            fontSize: 12 * widget.r,
+                            fontSize: 14 * widget.r,
                             fontFamily: 'Rushter Glory',
                             fontWeight: FontWeight.w400,
                           ),
