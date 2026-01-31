@@ -1,3 +1,4 @@
+import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,7 +46,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final width = MediaQuery.of(context).size.width;
     final fem = ScaleSize.aspectRatio;
 
-    // cart item count 
+    // cart item count
     final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
 
     debugPrint('cart count is : $cartCount');
@@ -70,20 +71,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             type: AppBarAction.notification,
             badgeCount: cartCount,
             onTap: () {
-              context.push('/notifications');
+              //context.push('/notifications');
             },
           ),
           AppBarActionConfig(
             type: AppBarAction.profile,
             onTap: () {
               context.push('/profile');
+              //context.pushNamed(RoutePages.profile.routeName);
             },
           ),
           AppBarActionConfig(
             type: AppBarAction.cart,
             badgeCount: 0,
             onTap: () {
-              context.push('/cart');
+              //context.push('/cart');
+              context.pushNamed(RoutePages.cart.routeName);
             },
           ),
         ],

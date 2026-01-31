@@ -326,7 +326,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                               height: 1.60,
                             ),
                           ),
-                          SizedBox(height: 20 * fem),
+                          SizedBox(height: 15 * fem),
 
                           //add dropdown for metal color  here
                           if ((widget.metalColors?.isNotEmpty ?? false) ||
@@ -339,8 +339,8 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                               children: [
                                 // 🔹 METAL CARD
                                 Container(
-                                  width: 253 * fem,
-                                  height: 105 * fem,
+                                  width: 300 * fem,
+                                  height: 110 * fem,
                                   decoration: ShapeDecoration(
                                     shape: RoundedRectangleBorder(
                                       side: BorderSide(
@@ -391,13 +391,13 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                                         value,
                                                   );
                                                 },
-                                                width: 140 * fem,
+                                                width: 155 * fem,
                                               ),
                                             if (widget
                                                     .metalPurity
                                                     ?.isNotEmpty ??
                                                 false) ...[
-                                              SizedBox(width: 10 * fem),
+                                              SizedBox(width: 20 * fem),
                                               StyledDropdown(
                                                 label: '',
                                                 value: selectedMetalPurity,
@@ -408,7 +408,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                                         value,
                                                   );
                                                 },
-                                                width: 140 * fem,
+                                                width: 100 * fem,
                                               ),
                                             ],
                                           ],
@@ -486,6 +486,8 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                         10 * fem,
                       ),
                       child: Row(
+                        //crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // 🔹 PRICE SUMMARY
                           if (showPriceRange) ...[

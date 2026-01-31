@@ -32,8 +32,8 @@ class _SideDiamondSelectorState extends State<SideDiamondSelector> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 249 * widget.r,
-      height: 105 * widget.r,
+      width: 270 * widget.r,
+      height: 110 * widget.r,
       decoration: ShapeDecoration(
         shape: RoundedRectangleBorder(
           side: BorderSide(width: 1 * widget.r, color: Color(0xFFBEE4DD)),
@@ -61,10 +61,11 @@ class _SideDiamondSelectorState extends State<SideDiamondSelector> {
               ),
             ),
 
-            SizedBox(height: 16 * widget.r),
+            SizedBox(height: 22 * widget.r),
 
             // 🔹 SELECTABLE CHIPS
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: widget.options.map((option) {
                 final isSelected = option == _selected;
 

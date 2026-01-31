@@ -16,10 +16,106 @@ class ContinueCartPopup extends ConsumerStatefulWidget {
 
 class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
   final _searchController = TextEditingController();
+  final _newNameController = TextEditingController();
+  final _newMobileController = TextEditingController();
+  final LayerLink _fieldLink = LayerLink();
+
+  OverlayEntry? _overlayEntry;
+  double _textFieldWidth = 0;
   Timer? _debounce;
   bool _loading = false;
-  bool _showSuggestions = false;
   List<CustomerDetail> _results = [];
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _overlayEntry?.remove();
+    _searchController.dispose();
+    _newNameController.dispose();
+    _newMobileController.dispose();
+    super.dispose();
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  OverlayEntry _buildOverlay() {
+    final r = ScaleSize.aspectRatio;
+    return OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _removeOverlay,
+              behavior: HitTestBehavior.translucent,
+            ),
+          ),
+          CompositedTransformFollower(
+            link: _fieldLink,
+            showWhenUnlinked: false,
+            offset: Offset(0, 54 * r),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: _textFieldWidth,
+                  constraints: BoxConstraints(maxHeight: 200 * r),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFFAEAEAE),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: _results.length,
+                    shrinkWrap: true,
+                    itemBuilder: (context, index) {
+                      final c = _results[index];
+                      return InkWell(
+                        onTap: () => _onCustomerTap(c),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12 * r,
+                            vertical: 10 * r,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: index < _results.length - 1
+                                  ? BorderSide(
+                                      color: const Color(0xFFE0E0E0),
+                                      width: 0.5,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                          ),
+                          child: Text(
+                            c.name,
+                            style: TextStyle(
+                              fontSize: 14 * r,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w400,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _onSearchChanged(String value) {
     _debounce?.cancel();
@@ -28,9 +124,9 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
       if (query.isEmpty) {
         setState(() {
           _results = [];
-          _showSuggestions = false;
           _loading = false;
         });
+        _removeOverlay();
         return;
       }
 
@@ -40,46 +136,82 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
         final list = await ref
             .read(cartNotifierProvider.notifier)
             .searchCustomer(query);
-        setState(() {
-          _results = list;
-          _showSuggestions = list.isNotEmpty;
-        });
-      } catch (_) {
-        setState(() {
-          _results = [];
-          _showSuggestions = false;
-        });
+        if (!mounted) return;
+
+        setState(() => _results = list);
+
+        if (list.isNotEmpty) {
+          if (_overlayEntry == null) {
+            _overlayEntry = _buildOverlay();
+            Overlay.of(context).insert(_overlayEntry!);
+          } else {
+            _overlayEntry!.markNeedsBuild();
+          }
+        } else {
+          _removeOverlay();
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _results = []);
+        _removeOverlay();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Search failed: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } finally {
-        setState(() => _loading = false);
+        if (mounted) setState(() => _loading = false);
       }
     });
   }
 
   void _onCustomerTap(CustomerDetail c) {
-    // Fill the field and close suggestions (you can also pop with selected)
     _searchController.text = c.name;
-    setState(() => _showSuggestions = false);
-    // Example: Navigator.of(context).pop(c); // if you want to return selected
+    _searchController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _searchController.text.length),
+    );
+    _removeOverlay();
+    FocusScope.of(context).unfocus();
   }
 
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _searchController.dispose();
-    super.dispose();
+  void _handleAddToCart() {
+    final selectedExisting = _searchController.text.trim();
+    final newName = _newNameController.text.trim();
+    final newMobile = _newMobileController.text.trim();
+
+    if (selectedExisting.isEmpty && newName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please search for a customer or enter new customer details',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop({
+      'existingCustomerName': selectedExisting.isNotEmpty
+          ? selectedExisting
+          : null,
+      'newCustomerName': newName.isNotEmpty ? newName : null,
+      'newCustomerMobile': newMobile.isNotEmpty ? newMobile : null,
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final r = ScaleSize.aspectRatio;
-    final results = _results;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Main card
           Container(
             width: 750 * r,
             padding: EdgeInsets.fromLTRB(56 * r, 61 * r, 56 * r, 61 * r),
@@ -92,7 +224,6 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// SEARCH EXISTING
                   MyText(
                     'Search existing customer',
                     style: TextStyle(
@@ -101,139 +232,102 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                     ),
                   ),
                   SizedBox(height: 8 * r),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      TextField(
-                        controller: _searchController,
-                        onChanged: _onSearchChanged,
-                        style: TextStyle(
-                          fontSize: 16 * r,
-                          fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.w400,
-                          color: Colors.black,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Search here for existing customer',
-                          hintStyle: TextStyle(
-                            color: const Color(0xFFB0B0B0),
-                            fontSize: 16 * r,
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w400,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            size: 18,
-                            color: Color(0xFFB0B0B0),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 10 * r,
-                            vertical: 14 * r,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFAEAEAE),
-                              width: 0.5,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10 * r),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFAEAEAE),
-                              width: 0.5,
-                            ),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10 * r),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFAEAEAE),
-                              width: 0.5,
-                            ),
-                          ),
-                          isDense: true,
-                        ),
-                      ),
-
-                      if (_loading)
-                        Positioned(
-                          right: 8 * r,
-                          top: 0,
-                          bottom: 0,
-                          child: SizedBox(
-                            width: 18 * r,
-                            height: 18 * r,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        ),
-
-                      if (_showSuggestions && _results.isNotEmpty)
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          top: 8 * r + 52 * r, // just below the TextField
-                          child: Material(
-                            elevation: 8,
-                            borderRadius: BorderRadius.circular(8 * r),
-                            child: Container(
-                              constraints: BoxConstraints(maxHeight: 160 * r),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8 * r),
+                  CompositedTransformTarget(
+                    link: _fieldLink,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (_textFieldWidth != constraints.maxWidth) {
+                            setState(
+                              () => _textFieldWidth = constraints.maxWidth,
+                            );
+                          }
+                        });
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            TextField(
+                              controller: _searchController,
+                              onChanged: _onSearchChanged,
+                              style: TextStyle(
+                                fontSize: 16 * r,
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w400,
+                                color: Colors.black,
                               ),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                padding: EdgeInsets.zero,
-                                itemCount: _results.length,
-                                itemBuilder: (context, index) {
-                                  final c = _results[index];
-                                  return InkWell(
-                                    onTap: () => _onCustomerTap(c),
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 12 * r,
-                                        vertical: 8 * r,
-                                      ),
-                                      child: Text(
-                                        c.name,
-                                        style: TextStyle(
-                                          fontSize: 14 * r,
-                                          fontFamily: 'Montserrat',
-                                        ),
-                                      ),
+                              decoration: InputDecoration(
+                                hintText: 'Search here for existing customer',
+                                hintStyle: TextStyle(
+                                  color: const Color(0xFFB0B0B0),
+                                  fontSize: 16 * r,
+                                  fontFamily: 'Montserrat',
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                prefixIcon: const Icon(
+                                  Icons.search,
+                                  size: 18,
+                                  color: Color(0xFFB0B0B0),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10 * r,
+                                  vertical: 14 * r,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFAEAEAE),
+                                    width: 0.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10 * r),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFAEAEAE),
+                                    width: 0.5,
+                                  ),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10 * r),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFAEAEAE),
+                                    width: 0.5,
+                                  ),
+                                ),
+                                isDense: true,
+                              ),
+                            ),
+                            if (_loading)
+                              Positioned(
+                                right: 8 * r,
+                                top: 0,
+                                bottom: 0,
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 18 * r,
+                                    height: 18 * r,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
                                     ),
-                                  );
-                                },
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
-                    ],
+                          ],
+                        );
+                      },
+                    ),
                   ),
-
                   SizedBox(height: 40 * r),
-                  // Separator line
                   Container(
-                    width: double
-                        .infinity, // or 703 * r if you want exact Figma width
-                    decoration: ShapeDecoration(
+                    width: double.infinity,
+                    decoration: const ShapeDecoration(
                       shape: RoundedRectangleBorder(
-                        side: const BorderSide(
-                          width: 1,
-                          color: Color(0xFFBEE4DD),
-                          // strokeAlign is optional; default is inside
-                          // strokeAlign: BorderSide.strokeAlignCenter,
-                        ),
+                        side: BorderSide(width: 1, color: Color(0xFFBEE4DD)),
                       ),
                     ),
                   ),
                   SizedBox(height: 30 * r),
-
-                  /// CREATE CART
                   MyText(
                     'Create new cart',
                     style: TextStyle(
@@ -244,13 +338,13 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                   SizedBox(height: 8 * r),
                   Row(
                     children: [
-                      // Name
                       Expanded(
                         child: TextField(
+                          controller: _newNameController,
                           decoration: InputDecoration(
                             hintText: 'Enter customer Name',
                             hintStyle: TextStyle(
-                              color: Color(0xFFB0B0B0),
+                              color: const Color(0xFFB0B0B0),
                               fontSize: 14 * r,
                               fontFamily: 'Montserrat',
                               fontWeight: FontWeight.w400,
@@ -280,15 +374,14 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                         ),
                       ),
                       SizedBox(width: 16 * r),
-
-                      // Mobile
                       Expanded(
                         child: TextField(
+                          controller: _newMobileController,
                           keyboardType: TextInputType.phone,
                           decoration: InputDecoration(
                             hintText: 'Enter Mobile Number',
                             hintStyle: TextStyle(
-                              color: Color(0xFFB0B0B0),
+                              color: const Color(0xFFB0B0B0),
                               fontSize: 14 * r,
                               fontFamily: 'Montserrat',
                               fontWeight: FontWeight.w400,
@@ -318,21 +411,23 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                         ),
                       ),
                       SizedBox(width: 16 * r),
-
-                      // + Create button
                       InkWell(
                         onTap: () {
-                          // handle create new cart
-                          print('Create new cart');
+                          if (_newNameController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter customer name'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                          }
                         },
                         borderRadius: BorderRadius.circular(10 * r),
                         child: Container(
-                          // remove hardcoded height, let padding define it
-                          // or set same 52 * r as an explicit height
-                          height: 52 * r, // ← matches TextField visual height
+                          height: 52 * r,
                           padding: EdgeInsets.symmetric(
                             horizontal: 16 * r,
-                            vertical: 14 * r, // ← same vertical as TextField
+                            vertical: 14 * r,
                           ),
                           decoration: ShapeDecoration(
                             color: const Color(0xFFF6F6F6),
@@ -359,19 +454,15 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                       ),
                     ],
                   ),
-
                   SizedBox(height: 60 * r),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       InkWell(
-                        onTap: () {
-                          // handle add to cart
-                        },
+                        onTap: _handleAddToCart,
                         borderRadius: BorderRadius.circular(20 * r),
                         child: Container(
-                          width: 384 * r, // Figma width
+                          width: 384 * r,
                           height: 52 * r,
                           padding: EdgeInsets.symmetric(
                             horizontal: 30 * r,
@@ -392,7 +483,7 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                             ),
                             shadows: [
                               BoxShadow(
-                                color: Color(0x7C000000),
+                                color: const Color(0x7C000000),
                                 blurRadius: 4 * r,
                                 offset: Offset(2 * r, 2 * r),
                               ),
@@ -417,8 +508,6 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
               ),
             ),
           ),
-
-          // Close button pinned to top‑right of the card
           Positioned(
             right: 20 * r,
             top: 20 * r,

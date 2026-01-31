@@ -34,8 +34,6 @@ class _JewelleryCustomiseScreenState
   String? priceStartValue;
   String? priceEndValue;
 
-  // double? caratStart;
-  // double? caratEnd;
   int? caratStartIndex;
   int? caratEndIndex;
 
@@ -82,6 +80,7 @@ class _JewelleryCustomiseScreenState
   double? approxPriceFrom;
   double? approxPriceTo;
   bool _priceCalculated = false;
+  bool _showMsg = false; // add this
 
   @override
   void initState() {
@@ -260,10 +259,10 @@ class _JewelleryCustomiseScreenState
         );
 
     // 6) SOLITAIRE SELECTION (FROM POPUP OR BASE)
-    final caratFromStr = caratStartValue ?? baseCarat ?? "0.30";
+    final caratFromStr = caratStartValue ?? baseCarat ?? "0.10";
     final caratToStr = caratEndValue ?? caratFromStr;
 
-    final double minCt = double.tryParse('0.18') ?? 0.30;
+    final double minCt = double.tryParse('0.18') ?? 0.10;
     final double maxCt = double.tryParse('0.22') ?? minCt;
 
     // JS uses color[1] for "from", color[0] for "to"
@@ -416,9 +415,13 @@ class _JewelleryCustomiseScreenState
           totalPcs: totalSolitairePcs ?? 0,
         );
 
-        if (msg.isNotEmpty) {
+        if (msg.isNotEmpty && !_showMsg) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
+
+            setState(() {
+              _showMsg = true;
+            });
 
             ScaffoldMessenger.of(context)
               ..clearSnackBars()
@@ -435,23 +438,10 @@ class _JewelleryCustomiseScreenState
             appBarLeading: AppBarLeading.back,
             showLogo: false,
             actions: [
-              //AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
-              //   AppBarActionConfig(
-              //     type: AppBarAction.notification,
-              //     badgeCount: 1,
-              //     onTap: () => context.push('/notifications'),
-              //   ),
-              //   AppBarActionConfig(
-              //     type: AppBarAction.profile,
-              //     onTap: () => context.push('/profile'),
-              //   ),
               AppBarActionConfig(
                 type: AppBarAction.cart,
                 badgeCount: 0,
-                //onTap: () => context.push('/cart'),
-                onTap: () => GoRouter.of(
-                  context,
-                ).pushReplacement(RoutePages.cart.routePath),
+                onTap: () => context.pushNamed(RoutePages.cart.routeName),
               ),
             ],
           ),
@@ -945,12 +935,31 @@ class _JewelleryCustomiseScreenState
 
                         /// CONTINUE BUTTON
                         InkWell(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              barrierDismissible: true,
-                              builder: (_) => const ContinueCartPopup(),
-                            );
+                          onTap: () async {
+                            final result =
+                                await showDialog<Map<String, dynamic>>(
+                                  context: context,
+                                  barrierDismissible: true,
+                                  builder: (_) => const ContinueCartPopup(),
+                                );
+
+                            if (result != null) {
+                              final existingName =
+                                  result['existingCustomerName'] as String?;
+                              final newName =
+                                  result['newCustomerName'] as String?;
+                              final newMobile =
+                                  result['newCustomerMobile'] as String?;
+
+                              if (existingName != null) {
+                                // add to cart for existing customer
+                                debugPrint('Searched Customer : $existingName');
+                              } else if (newName != null && newMobile != null) {
+                                // create new customer/cart with name + mobile
+                                debugPrint('New Customer : $newName');
+                                debugPrint('New Mobile No. : $newMobile');
+                              }
+                            }
                           },
 
                           borderRadius: BorderRadius.circular(20),

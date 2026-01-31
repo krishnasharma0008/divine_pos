@@ -153,7 +153,7 @@ class ProductGrid extends StatelessWidget {
       onAddToCart: () => debugPrint("Add → ${item.itemNumber}"),
       //onTryOn: () => debugPrint("Try → ${item.itemNumber}"),
       onTryOn: () {
-        debugPrint("Try → ${item.itemNumber}");
+        //debugPrint("Try → ${item.itemNumber}");
         // context.pushNamed(
         //   RoutePages.jewellerycustomize.routeName,
         //   queryParameters: {'code': item.itemNumber ?? ''},

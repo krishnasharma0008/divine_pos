@@ -1,3 +1,4 @@
+import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -128,12 +129,16 @@ class _JewelleryListingScreenState
           ),
           AppBarActionConfig(
             type: AppBarAction.profile,
-            onTap: () => context.push('/profile'),
+            onTap: () => context.pushNamed(
+              RoutePages.profile.routeName,
+            ), // context.push('/profile'),
           ),
           AppBarActionConfig(
             type: AppBarAction.cart,
             badgeCount: 0,
-            onTap: () => context.push('/cart'),
+            onTap: () => context.pushNamed(
+              RoutePages.cart.routeName,
+            ), //context.push('/cart'),
           ),
         ],
       ),
