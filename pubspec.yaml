@@ -100,6 +100,7 @@ flutter:
     - assets/jewellery/
     - assets/jewellery_pdp/
     - assets/feedback_form/
+    - assets/cart/
     # - assets/config/
     # - .env
 

@@ -154,7 +154,6 @@ class _JewelleryListingScreenState
                   onBranchSelected: (store) {
                     ref.read(storeProvider.notifier).selectStore(store);
                     filterNotifier.setProductsAtOtherBranch(store.code);
-                    //jewelleryNotifier.resetAndFetch();
                   },
                   onSortSelected: (sort) {
                     filterNotifier.setSort(sort);

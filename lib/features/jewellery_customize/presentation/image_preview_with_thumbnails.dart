@@ -224,14 +224,13 @@ class _ImagePreviewWithThumbnailsState
 
                     SizedBox(height: 6 * r),
 
-                    MyText(
-                      '${widget.productCode ?? ''} | UID: ${widget.uid ?? ''}',
-                      style: TextStyle(
-                        fontSize: 11 * r,
-                        fontFamily: 'Rushter Glory',
-                      ),
-                    ),
-
+                    // MyText(
+                    //   '${widget.productCode ?? ''} | UID: ${widget.uid ?? ''}',
+                    //   style: TextStyle(
+                    //     fontSize: 11 * r,
+                    //     fontFamily: 'Rushter Glory',
+                    //   ),
+                    // ),
                     SizedBox(height: 26 * r),
                   ],
                 );

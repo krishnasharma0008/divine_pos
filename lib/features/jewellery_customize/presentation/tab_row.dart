@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
+import 'package:divine_pos/shared/utils/currency_formatter.dart';
 
 /// ================= MAIN SCREEN =================
 
@@ -17,6 +18,7 @@ class DetailsScreen extends StatefulWidget {
   final int totalSidePcs;
   final double totalSideWeight;
   final String? sideDiamondQuality;
+  final String? shape;
 
   // all amount presen
   final double? metalAmount;
@@ -40,6 +42,7 @@ class DetailsScreen extends StatefulWidget {
     required this.totalSidePcs,
     required this.totalSideWeight,
     required this.sideDiamondQuality,
+    this.shape,
     //
     required this.metalAmount,
     required this.sideDiamondAmount,
@@ -89,6 +92,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
               ? ProductDetailsTab(
                   r: r,
                   //priceRange: widget.priceRange,
+                  Shape: widget.shape,
                   caratRange: widget.caratRange,
                   colorRange: widget.colorRange,
                   clarityRange: widget.clarityRange,
@@ -244,6 +248,7 @@ Widget legendCard({
 
 class ProductDetailsTab extends StatelessWidget {
   final double r;
+  final String? Shape;
   final String? priceRange;
   final String? caratRange;
   final String? colorRange;
@@ -259,6 +264,7 @@ class ProductDetailsTab extends StatelessWidget {
   const ProductDetailsTab({
     super.key,
     required this.r,
+    this.Shape,
     this.priceRange,
     this.caratRange,
     this.colorRange,
@@ -287,11 +293,12 @@ class ProductDetailsTab extends StatelessWidget {
           SizedBox(height: 16 * r),
           _row(r, 'Metal Type', '$metalPurity $metalColors Gold'),
           _row(r, 'Net Weight', '${totalMetalWeight.toStringAsFixed(2)} Gms'),
-          _row(
-            r,
-            'Side Diamond',
-            'Qty  $totalSidePcs / $totalSideWeight ct $sideDiamondQuality',
-          ),
+          if (totalSidePcs > 0)
+            _row(
+              r,
+              'Side Diamond',
+              'Qty  $totalSidePcs / ${totalSideWeight.toStringAsFixed(2)} ct ${sideDiamondQuality ?? 'IJ - SI'}',
+            ),
           if (ringSize != null && ringSize != "")
             _row(r, 'Ring Size', ringSize ?? ''),
         ],
@@ -300,13 +307,13 @@ class ProductDetailsTab extends StatelessWidget {
   }
 
   String _buildSolitaireLine() {
-    final price = '₹${caratRange ?? '57,900'}';
+    //final price = '₹${caratRange ?? '57,900'}';
     final carat = caratRange ?? '0.15–0.18 ct';
     final color = colorRange ?? 'F-G';
     final clarity = clarityRange ?? 'VVS1-VS1';
-    final ringsize = 'Size 12';
+    //final ringsize = 'Size 12';
 
-    return 'Round $carat $color $clarity (2 Pcs)';
+    return '$Shape $carat $color $clarity '; //(2 Pcs)';
   }
 }
 
@@ -335,8 +342,8 @@ class PriceBreakupTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grandFrom = (approxPriceFrom ?? 0).toStringAsFixed(0);
-    final grandTo = (approxPriceTo ?? 0).toStringAsFixed(0);
+    final grandFrom = (approxPriceFrom ?? 0);
+    final grandTo = (approxPriceTo ?? 0);
 
     return legendCard(
       r: r,
@@ -347,18 +354,26 @@ class PriceBreakupTab extends StatelessWidget {
           _priceRow(
             r,
             'Solitaire Value',
-            '$solitaireAmountFrom  - $solitaireAmountTo',
+            '${solitaireAmountFrom!.inRupeesFormat()}  - ${solitaireAmountTo!.inRupeesFormat()}',
           ),
           SizedBox(height: 16 * r),
           _sectionHeader(r, 'Divine Mount'),
           SizedBox(height: 16 * r),
           _priceRow(
             r,
-            'Metal + Side Diamonds',
-            '$metalAmount - $sideDiamondAmount',
+            (sideDiamondAmount ?? 0) > 0 ? 'Metal + Side Diamonds' : 'Metal',
+            //'${metalAmount!.inRupeesFormat()} - ${sideDiamondAmount!.inRupeesFormat()}',
+            (sideDiamondAmount ?? 0) > 0
+                ? '${metalAmount!.inRupeesFormat()} - ${sideDiamondAmount!.inRupeesFormat()}'
+                : metalAmount!.inRupeesFormat(),
           ),
           Divider(height: 32 * r),
-          _priceRow(r, 'Grand Total', '₹$grandFrom - ₹$grandTo', bold: true),
+          _priceRow(
+            r,
+            'Grand Total',
+            '${grandFrom.inRupeesFormat()} - ${grandTo.inRupeesFormat()}',
+            bold: true,
+          ),
         ],
       ),
     );

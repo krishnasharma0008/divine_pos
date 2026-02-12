@@ -1,3 +1,4 @@
+//import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/jewellery_detail_model.dart';
 

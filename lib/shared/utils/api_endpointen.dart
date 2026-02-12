@@ -28,7 +28,11 @@ class ApiEndPoint {
 
   static const update_cart = "cart/";
 
-  static const customerSearch =  "retail-customer/";
+  static const customerSearch = "retail-customer/";
+
+  //  static const customerSearch = "erp/findcust/";
+
+  static const create_customer = "retail-customer/";
 
   static const create_order = 'cart/toorder';
 }

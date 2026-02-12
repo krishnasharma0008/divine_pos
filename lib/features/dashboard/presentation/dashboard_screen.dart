@@ -12,8 +12,6 @@ import '../../../shared/routes/app_drawer.dart';
 import '../../auth/data/auth_notifier.dart';
 import '../../../shared/utils/enums.dart';
 
-import '../../auth/data/auth_notifier.dart';
-
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -43,7 +41,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
+    //final width = MediaQuery.of(context).size.width;
     final fem = ScaleSize.aspectRatio;
 
     // cart item count
@@ -64,7 +62,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           AppBarActionConfig(
             type: AppBarAction.search,
             onTap: () {
-              print('Search tapped');
+              debugPrint('Search tapped');
             },
           ),
           AppBarActionConfig(

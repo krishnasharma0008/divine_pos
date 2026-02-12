@@ -149,11 +149,7 @@ class _StoreCard extends StatelessWidget {
             fem: fem,
           ),
           SizedBox(height: 12 * fem),
-          _InfoField(
-            label: 'Name',
-            value: store.salesPerson ?? 'N/A',
-            fem: fem,
-          ),
+          _InfoField(label: 'Name', value: store.salesPerson, fem: fem),
           SizedBox(height: 8 * fem),
           _InfoField(label: 'Mobile', value: 'N/A', fem: fem),
           SizedBox(height: 24 * fem),
@@ -169,8 +165,8 @@ class _StoreCard extends StatelessWidget {
             Column(
               children: subBranches.map((branch) {
                 return BranchTile(
-                  title: branch.nickName ?? branch.name,
-                  address: branch.address ?? 'Address not available',
+                  title: branch.nickName,
+                  address: branch.address,
                   fem: fem,
                 );
               }).toList(),
@@ -209,7 +205,7 @@ class _StoreHeader extends StatelessWidget {
         ),
         SizedBox(height: 4 * fem),
         MyText(
-          store.locationType ?? '',
+          store.locationType,
           style: TextStyle(
             fontFamily: MyThemes.labelFontFamily,
             fontSize: 13 * fem,
@@ -286,7 +282,10 @@ class _SectionDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(color: MyThemes.Light_Mint.withOpacity(0.5), thickness: 1);
+    return Divider(
+      color: MyThemes.Light_Mint.withValues(alpha: 0.5),
+      thickness: 1,
+    );
   }
 }
 

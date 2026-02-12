@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/utils/http_client.dart';
@@ -28,6 +30,12 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
     state = await AsyncValue.guard(() async {
       final dio = ref.read(httpClientProvider);
 
+      //debugPrint('Product : $productCode');
+
+      // debugPrint(
+      //   '🌐 URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_Prodct}',
+      // );
+
       final response = await dio
           .post(
             ApiEndPoint.get_jewellery_Prodct,
@@ -39,6 +47,8 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
                 throw TimeoutException('Request timed out after 15s'),
           );
 
+      //debugPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
+
       if (response.statusCode != HttpStatus.ok) {
         throw HttpException(
           'HTTP ${response.statusCode}: ${response.statusMessage}',
@@ -46,6 +56,7 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
       }
 
       final body = response.data;
+      //debugPrint('Data : $body');
 
       if (body == null || body['success'] != true) {
         throw Exception('Invalid response from server');

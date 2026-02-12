@@ -25,6 +25,7 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
   Timer? _debounce;
   bool _loading = false;
   List<CustomerDetail> _results = [];
+  CustomerDetail? _selectedCustomer;
 
   @override
   void dispose() {
@@ -96,7 +97,7 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                             ),
                           ),
                           child: Text(
-                            c.name,
+                            c.name ?? '',
                             style: TextStyle(
                               fontSize: 14 * r,
                               fontFamily: 'Montserrat',
@@ -169,7 +170,8 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
   }
 
   void _onCustomerTap(CustomerDetail c) {
-    _searchController.text = c.name;
+    _selectedCustomer = c;
+    _searchController.text = c.name ?? '';
     _searchController.selection = TextSelection.fromPosition(
       TextPosition(offset: _searchController.text.length),
     );
@@ -178,29 +180,17 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
   }
 
   void _handleAddToCart() {
-    final selectedExisting = _searchController.text.trim();
-    final newName = _newNameController.text.trim();
-    final newMobile = _newMobileController.text.trim();
-
-    if (selectedExisting.isEmpty && newName.isEmpty) {
+    if (_selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Please search for a customer or enter new customer details',
-          ),
+          content: Text('Please select an existing customer.'),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
-
-    Navigator.of(context).pop({
-      'existingCustomerName': selectedExisting.isNotEmpty
-          ? selectedExisting
-          : null,
-      'newCustomerName': newName.isNotEmpty ? newName : null,
-      'newCustomerMobile': newMobile.isNotEmpty ? newMobile : null,
-    });
+    // Return the selected existing customer
+    Navigator.of(context).pop<CustomerDetail>(_selectedCustomer);
   }
 
   @override
@@ -412,16 +402,65 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                       ),
                       SizedBox(width: 16 * r),
                       InkWell(
-                        onTap: () {
-                          if (_newNameController.text.trim().isEmpty) {
+                        onTap: () async {
+                          final name = _newNameController.text.trim();
+                          final mobile = _newMobileController.text.trim();
+
+                          if (name.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Please enter customer name'),
                                 backgroundColor: Colors.orange,
                               ),
                             );
+                            return;
+                          }
+                          if (mobile.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter mobile number'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                            return;
+                          }
+
+                          try {
+                            setState(() => _loading = true);
+
+                            final CustomerDetail newCustomer = await ref
+                                .read(cartNotifierProvider.notifier)
+                                .createCustomer(name: name, mobile: mobile);
+
+                            if (!mounted) return;
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Customer created successfully'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+
+                            // Close dialog and return the new customer to parent
+                            // Navigator.of(
+                            //   context,
+                            // ).pop<CustomerDetail>(newCustomer);
+
+                            // mark this new customer as selected
+                            _selectedCustomer = newCustomer;
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to create customer: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          } finally {
+                            if (mounted) setState(() => _loading = false);
                           }
                         },
+
                         borderRadius: BorderRadius.circular(10 * r),
                         child: Container(
                           height: 52 * r,

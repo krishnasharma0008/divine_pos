@@ -1,3 +1,5 @@
+import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
+import 'package:divine_pos/features/cart/providers/cart_providers.dart';
 import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
@@ -10,9 +12,10 @@ import 'image_preview_with_thumbnails.dart'; //gallery
 import 'tab_row.dart'; //tab panel
 import 'customize_solitaire.dart';
 import '../presentation/widget/continue_cart_popup.dart';
-import '../data/jewellery_detail_model.dart';
 import '../provider/jewellery_detail_provider.dart';
-import '../services/jewellery_calculation_service.dart'; // for calculation
+import '../provider/jewellery_calc_provider.dart';
+import '../services/jewellery_calculation_service.dart'; // for message
+import 'package:divine_pos/shared/utils/currency_formatter.dart';
 
 class JewelleryCustomiseScreen extends ConsumerStatefulWidget {
   final String productCode;
@@ -31,341 +34,64 @@ class _JewelleryCustomiseScreenState
   int? priceStartIndex;
   int? priceEndIndex;
 
-  String? priceStartValue;
-  String? priceEndValue;
-
   int? caratStartIndex;
   int? caratEndIndex;
 
-  String? caratStartValue;
-  String? caratEndValue;
-
   int? colorStartIndex;
   int? colorEndIndex;
-  String? colorStart;
-  String? colorEnd;
 
   int? clarityStartIndex;
   int? clarityEndIndex;
-  String? clarityStart;
-  String? clarityEnd;
 
-  String? ringSize;
-  String? selectedMetalColor;
-  String? selectedMetalPurity;
-  String? selectedSideDiamondQuality;
-
-  // Display strings
-  String? priceRange;
-  String? caratRange;
-  String? colorRange;
-  String? clarityRange;
-
-  //for calculation
-  int selectedQty = 1;
-  // double? baseSize;
-  // String? baseCarat;
-  double? netMetalWeight;
-  int? totalSidePcs;
-  double? totalSideWeight;
-
-  int? totalSolitairePcs;
-  double? baseSize;
-  String? baseCarat;
-  double? metalAmount;
-  double? metalPrice;
-  double? sideDiamondAmount;
-  double? solitaireAmountFrom;
-  double? solitaireAmountTo;
-  double? approxPriceFrom;
-  double? approxPriceTo;
-  bool _priceCalculated = false;
-  bool _showMsg = false; // add this
+  bool _showMsg = false;
 
   @override
   void initState() {
     super.initState();
+    // load detail + initial calc
     Future.microtask(() {
-      ref
-          .read(jewelleryDetailProvider.notifier)
-          .fetchJewelleryDetail(widget.productCode);
+      ref.read(jewelleryCalcProvider.notifier).loadDetail(widget.productCode);
     });
   }
 
-  Future<double> _calculateMetalAmountFromApi({
-    required JewelleryDetail detail,
-    required String metalColor,
-    required String metalPurity,
-    required double goldWeight,
-    required double platinumWeight,
-    required int qty,
+  void _onAddToCart(
+    BuildContext context,
+    WidgetRef ref, {
+    required CustomerDetail customer,
   }) async {
-    final notifier = ref.read(jewelleryDetailProvider.notifier);
+    try {
+      final notifier = ref.read(jewelleryCalcProvider.notifier);
 
-    if (metalColor.isEmpty || metalPurity.isEmpty) {
-      return 0.0;
+      final cartItem = await notifier.buildCartPayload(customer: customer);
+
+      if (cartItem == null) return;
+
+      await ref.read(cartNotifierProvider.notifier).createCart(cartItem);
+
+      if (context.mounted) {
+        context.pushNamed(RoutePages.cart.routeName);
+      }
+    } catch (e) {
+      final message = e is Exception
+          ? e.toString().replaceFirst('Exception: ', '')
+          : 'Something went wrong';
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
-
-    final goldColor = metalColor.contains('+')
-        ? JewelleryCalculationService.getMetalColor('GOLD', metalColor)
-        : metalColor;
-
-    final selectedQty = qty > 0 ? qty : 1;
-
-    double goldPrice = 0;
-    double platinumPrice = 0;
-
-    // GOLD pricing
-    if (goldWeight > 1) {
-      goldPrice = await notifier.fetchPrice(
-        itemGroup: 'GOLD',
-        slab: '',
-        shape: '',
-        color: goldColor,
-        quality: JewelleryCalculationService.getValidPurity(
-          'gold',
-          metalPurity,
-        ),
-      );
-    } else if (goldWeight > 0 && goldWeight <= 1) {
-      goldPrice = (detail.metalPriceLessOneGms ?? 0).toDouble();
-    }
-
-    // PLATINUM pricing
-    if (platinumWeight > 0) {
-      final platinumColor = JewelleryCalculationService.getMetalColor(
-        'PLATINUM',
-        metalColor,
-      );
-
-      platinumPrice = await notifier.fetchPrice(
-        itemGroup: 'PLATINUM',
-        slab: '',
-        shape: '',
-        color: platinumColor,
-        quality: metalPurity,
-      );
-    }
-
-    double goldAmount = goldWeight > 0
-        ? goldWeight * goldPrice * selectedQty
-        : 0;
-    final platinumAmount = platinumWeight > 0
-        ? platinumWeight * platinumPrice * selectedQty
-        : 0;
-
-    // <= 1 gm rule
-    if (goldWeight > 0 && goldWeight <= 1) {
-      goldAmount = (detail.metalPriceLessOneGms ?? 0).toDouble();
-    }
-
-    final totalMetalAmount = goldAmount + platinumAmount;
-
-    return totalMetalAmount;
-  }
-
-  Future<void> _recalculatePrice(JewelleryDetail detail) async {
-    if (_priceCalculated) return;
-    _priceCalculated = true;
-
-    final notifier = ref.read(jewelleryDetailProvider.notifier);
-
-    // 1) BASE SIZE & CARAT
-    final base = JewelleryCalculationService.getBaseSizeCarat(detail);
-    baseSize ??= base.baseSize;
-    baseCarat ??= base.baseCarat;
-    ringSize ??= baseSize?.toStringAsFixed(0);
-
-    // 2) DEFAULT SOLITAIRE SHAPE
-    final shapeCode = JewelleryCalculationService.getDefaultSolitaireShapeCode(
-      variants: detail.variants,
-      bom: detail.bom,
-    );
-
-    // 3) METAL WEIGHTS
-    /// gold weight
-    final goldWeight = JewelleryCalculationService.getWeight(
-      detail.variants,
-      detail.bom,
-      'GOLD',
-      'METAL',
-    );
-    // paltinum weight
-    final platinumWeight = JewelleryCalculationService.getWeight(
-      detail.variants,
-      detail.bom,
-      'PLATINUM',
-      'METAL',
-    );
-
-    // 4) METAL AMOUNT
-    final activeMetalColor =
-        selectedMetalColor ?? detail.metalColor.split(',').first.trim() ?? '';
-    final activeMetalPurity =
-        selectedMetalPurity ?? detail.metalPurity.split(',').first.trim() ?? '';
-
-    final metal = await _calculateMetalAmountFromApi(
-      detail: detail,
-      metalColor: activeMetalColor,
-      metalPurity: activeMetalPurity,
-      goldWeight: goldWeight,
-      platinumWeight: platinumWeight,
-      qty: selectedQty,
-    );
-
-    netMetalWeight = JewelleryCalculationService.getNetMetalWeight(
-      detail.variants,
-      detail.bom,
-    );
-
-    final perGram = (netMetalWeight ?? 0) > 0
-        ? metal / (netMetalWeight ?? 1)
-        : 0.0;
-
-    // 5) SIDE DIAMOND
-    /// TOTAL SIDE PCS
-    totalSidePcs = JewelleryCalculationService.getPcs(
-      detail.variants,
-      detail.bom,
-      'DIAMOND',
-      'STONE',
-    );
-
-    /// TOTAL SIDE WEIGHT
-    totalSideWeight = JewelleryCalculationService.getWeight(
-      detail.variants,
-      detail.bom,
-      'DIAMOND',
-      'STONE',
-    );
-
-    // color-quality
-    final parts = (selectedSideDiamondQuality ?? 'IJ-SI').split("-");
-
-    // price per ct FROM
-    final double sideprice = await notifier.fetchPrice(
-      itemGroup: 'DIAMOND',
-      slab: '',
-      shape: '',
-      color: parts.isNotEmpty ? parts[0] : null,
-      quality: parts.length > 1 ? parts[1] : null,
-    );
-
-    final sideDiamond =
-        await JewelleryCalculationService.calculateSideDiamondPrice(
-          price: sideprice ?? 0,
-          totalSideCts: (totalSideWeight?.toDouble() ?? 0.0),
-          qty: selectedQty ?? 0,
-        );
-
-    // 6) SOLITAIRE SELECTION (FROM POPUP OR BASE)
-    final caratFromStr = caratStartValue ?? baseCarat ?? "0.10";
-    final caratToStr = caratEndValue ?? caratFromStr;
-
-    final double minCt = double.tryParse('0.18') ?? 0.10;
-    final double maxCt = double.tryParse('0.22') ?? minCt;
-
-    // JS uses color[1] for "from", color[0] for "to"
-    final selectedColorFrom = colorEnd ?? colorStart ?? "G";
-    final selectedColorTo = colorStart ?? selectedColorFrom;
-
-    final selectedClarityFrom = clarityEnd ?? clarityStart ?? "VS";
-    final selectedClarityTo = clarityStart ?? selectedClarityFrom;
-
-    // 7) TOTAL SOLITAIRE PCS
-    totalSolitairePcs = JewelleryCalculationService.getPcs(
-      detail.variants ?? [],
-      detail.bom ?? [],
-      "SOLITAIRE",
-      "STONE",
-    );
-
-    // 8) BASIC SOLITAIRE RATE (WITHOUT PREMIUM YET)
-    final double rateFromPerCtRaw = await notifier.fetchPrice(
-      itemGroup: "SOLITAIRE",
-      slab: minCt.toStringAsFixed(2),
-      shape: shapeCode,
-      color: selectedColorFrom,
-      quality: selectedClarityFrom,
-    );
-
-    final double rateToPerCtRaw = await notifier.fetchPrice(
-      itemGroup: "SOLITAIRE",
-      slab: maxCt.toStringAsFixed(2),
-      shape: shapeCode,
-      color: selectedColorTo,
-      quality: selectedClarityTo,
-    );
-
-    // 9) PREMIUM
-    final double premiumPct = 0.0; // premiumPercentage?.toDouble() ?? 0.0;
-    final double rateFromWithPremium =
-        rateFromPerCtRaw + rateFromPerCtRaw * (premiumPct / 100);
-    final double rateToWithPremium =
-        rateToPerCtRaw + rateToPerCtRaw * (premiumPct / 100);
-
-    // 10) MULTI‑SIZE OR SINGLE‑SIZE SOLITAIRE
-    final int rowCount = JewelleryCalculationService.getSolitaireRowCount(
-      detail.variants ?? [],
-      detail.bom ?? [],
-    );
-
-    double solFrom = 0;
-    double solTo = 0;
-
-    if (rowCount > 1) {
-      // MULTI‑SIZE: mirror the JS BOM loop
-      final result =
-          JewelleryCalculationService.calculateSolitaireAmountRangeLocal(
-            detail: detail,
-            //selectedCaratRangeFrom: caratFromStr,
-            //selectedCaratRangeTo: caratToStr,
-            qty: selectedQty,
-            rateFromPerCt: rateFromWithPremium,
-            rateToPerCt: rateToWithPremium,
-          );
-      solFrom = result.solFrom;
-      solTo = result.solTo;
-    } else {
-      // SINGLE‑SIZE (but can be multi‑solitaire i.e. Pcs > 1)
-      final pcs = (totalSolitairePcs ?? 0);
-      final minAmountPerCt = rateFromWithPremium;
-      final maxAmountPerCt = rateToWithPremium;
-
-      solFrom = minAmountPerCt * minCt * pcs * selectedQty;
-      solTo = maxAmountPerCt * maxCt * pcs * selectedQty;
-    }
-
-    // 11) DIVINE MOUNT ADJUSTMENT
-    if (detail.productSizeFrom != "-" && baseSize != null) {
-      final currentSize = double.tryParse(ringSize ?? "") ?? baseSize!;
-      final factor = JewelleryCalculationService.calculateDivineMountAdjustment(
-        carat: caratFromStr.trim(),
-        size: currentSize,
-        baseRingSize: baseSize!,
-        qty: selectedQty,
-      );
-      solFrom *= factor;
-      solTo *= factor;
-    }
-
-    // 12) SET STATE
-    setState(() {
-      metalAmount = metal;
-      metalPrice = double.parse(perGram.toStringAsFixed(2));
-      sideDiamondAmount = sideDiamond;
-      solitaireAmountFrom = solFrom;
-      solitaireAmountTo = solTo;
-      approxPriceFrom = metal + sideDiamond + solFrom;
-      approxPriceTo = metal + sideDiamond + solTo;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    //    debugPrint('SCREEN productCode: "${widget.productCode}"');
     final r = ScaleSize.aspectRatio;
+
+    // detail async (for images, meta)
     final detailAsync = ref.watch(jewelleryDetailProvider);
+    // calc async (for all pricing + selection state)
+    final calcAsync = ref.watch(jewelleryCalcProvider);
+    final calc = calcAsync.value;
+
     return detailAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
@@ -378,47 +104,46 @@ class _JewelleryCustomiseScreenState
         ),
       ),
       data: (detail) {
-        if (detail == null) {
+        if (detail == null || calc == null) {
           return const Scaffold(
-            body: Center(child: Center(child: CircularProgressIndicator())),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        // ✅ AUTO CALCULATE ON PAGE LOAD
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!_priceCalculated) {
-            _recalculatePrice(detail);
-          }
-        });
-
-        // ✅ IMAGE LOGIC BELONGS HERE
+        // IMAGE LOGIC
         final allImages = detail.images ?? [];
         final defaultMetalColor = detail.metalColor.split(',').first.trim();
         final defaultMetalPurity = detail.metalPurity.split(',').first.trim();
 
-        final activeColor = selectedMetalColor ?? defaultMetalColor;
-        final activePurity = selectedMetalPurity ?? defaultMetalPurity;
+        //productPrice = detail.productPrice!;
 
-        final displayedImages = activeColor == null
-            ? allImages
-            : allImages
-                  .where(
-                    (img) =>
-                        (img.color ?? '').toLowerCase() ==
-                        activeColor.toLowerCase(),
-                  )
-                  .toList();
-
-        final msg = JewelleryCalculationService.getMultiSolitaireMessage(
-          variants: detail.variants,
-          bom: detail.bom,
-          totalPcs: totalSolitairePcs ?? 0,
+        debugPrint(
+          'Default metal color: $defaultMetalColor, purity: $defaultMetalPurity',
         );
+
+        final activeColor = calc.selectedMetalColor ?? defaultMetalColor;
+        final activePurity = calc.selectedMetalPurity ?? defaultMetalPurity;
+
+        final displayedImages = allImages
+            .where(
+              (img) =>
+                  (img.color ?? '').toLowerCase() == activeColor.toLowerCase(),
+            )
+            .toList();
+
+        // MULTI‑SOLITAIRE MESSAGE
+
+        final msg =
+            calc.solitaireMessage ??
+            JewelleryCalculationService.getMultiSolitaireMessage(
+              variants: detail.variants,
+              bom: detail.bom,
+              totalPcs: calc.totalSolitairePcs ?? 0,
+            );
 
         if (msg.isNotEmpty && !_showMsg) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-
             setState(() {
               _showMsg = true;
             });
@@ -429,10 +154,7 @@ class _JewelleryCustomiseScreenState
           });
         }
 
-        //debugPrint('Displayed Images Count: ${displayedImages}');
-
         return Scaffold(
-          //extendBody: true,
           backgroundColor: Colors.white,
           appBar: MyAppBar(
             appBarLeading: AppBarLeading.back,
@@ -445,12 +167,11 @@ class _JewelleryCustomiseScreenState
               ),
             ],
           ),
-          //drawer: const SideDrawer(),
           body: SafeArea(
             bottom: false,
             child: Container(
               width: double.infinity,
-              decoration: BoxDecoration(color: Colors.white),
+              decoration: const BoxDecoration(color: Colors.white),
               child: Column(
                 children: [
                   /// SCROLLABLE MIDDLE
@@ -496,32 +217,32 @@ class _JewelleryCustomiseScreenState
                                   SizedBox(height: 18 * r),
                                   DeliveryBadge(r: r),
                                   SizedBox(height: 23 * r),
+
+                                  /// DETAILS (READ FROM calc)
                                   DetailsScreen(
                                     r: r,
-                                    priceRange: priceRange,
-                                    caratRange: caratRange,
-                                    colorRange: colorRange,
-                                    clarityRange: clarityRange,
-                                    ringSize: ringSize,
-                                    totalMetalWeight: netMetalWeight ?? 0.0,
-                                    metalColors:
-                                        selectedMetalColor ??
-                                        defaultMetalColor!,
-                                    metalPurity:
-                                        selectedMetalPurity ??
-                                        defaultMetalPurity!,
-                                    totalSidePcs: totalSidePcs?.toInt() ?? 0,
-                                    totalSideWeight: totalSideWeight ?? 0.0,
+                                    shape: calc.solitaireShape,
+                                    priceRange: calc.priceRange,
+                                    caratRange: calc.caratRange,
+                                    colorRange: calc.colorRange,
+                                    clarityRange: calc.clarityRange,
+                                    ringSize: calc.ringSize,
+                                    totalMetalWeight:
+                                        calc.netMetalWeight ?? 0.0,
+                                    metalColors: activeColor,
+                                    metalPurity: activePurity,
+                                    totalSidePcs: calc.totalSidePcs ?? 0,
+                                    totalSideWeight:
+                                        calc.totalSideWeight ?? 0.0,
                                     sideDiamondQuality:
-                                        selectedSideDiamondQuality,
-
-                                    // all amount
-                                    metalAmount: metalAmount,
-                                    sideDiamondAmount: sideDiamondAmount,
-                                    solitaireAmountFrom: solitaireAmountFrom,
-                                    solitaireAmountTo: solitaireAmountTo,
-                                    approxPriceFrom: approxPriceFrom,
-                                    approxPriceTo: approxPriceTo,
+                                        calc.selectedSideDiamondQuality,
+                                    metalAmount: calc.metalAmount,
+                                    sideDiamondAmount: calc.sideDiamondAmount,
+                                    solitaireAmountFrom:
+                                        calc.solitaireAmountFrom,
+                                    solitaireAmountTo: calc.solitaireAmountTo,
+                                    approxPriceFrom: calc.approxPriceFrom,
+                                    approxPriceTo: calc.approxPriceTo,
                                   ),
 
                                   Padding(
@@ -535,196 +256,117 @@ class _JewelleryCustomiseScreenState
                                           borderRadius: BorderRadius.circular(
                                             20 * r,
                                           ),
-
-                                          // ✅ THIS IS THE onTap
                                           onTap: () async {
-                                            final metalColors =
-                                                detail.metalColor.split(',') ??
-                                                ['Yellow'];
-                                            final metalPurities =
-                                                detail.metalPurity.split(',') ??
-                                                ['18K'];
+                                            final metalColors = detail
+                                                .metalColor
+                                                .split(
+                                                  ',',
+                                                ); // split हमेशा List देगा
+                                            final metalPurities = detail
+                                                .metalPurity
+                                                .split(',');
 
-                                            final result =
-                                                await showDialog<
-                                                  Map<String, dynamic>
-                                                >(
-                                                  context: context,
-                                                  barrierDismissible: true,
-                                                  builder: (_) => CustomizeSolitaire(
-                                                    metalColors:
-                                                        metalColors, // metal dropdown options
-                                                    metalPurity: metalPurities,
-                                                    detail: detail,
+                                            final result = await showCustomizeDrawer(
+                                              context: context,
+                                              detail: detail,
+                                              totalSidePcs:
+                                                  calc.totalSidePcs ?? 0,
+                                              totalSideWeight:
+                                                  calc.totalSideWeight ?? 0.0,
 
-                                                    totalSidePcs:
-                                                        totalSidePcs?.toInt() ??
-                                                        0,
-                                                    totalSideWeight:
-                                                        totalSideWeight ?? 0.0,
+                                              // 🔹 JS की तरह: collection + multi-size flag
+                                              collection: detail
+                                                  .collection, // e.g. 'SOLITAIRE' / 'SOLUS'
+                                              isMultiSize:
+                                                  _showMsg, // bool field तुम model में रख रहे हो
+                                              //shape: calc.solitaireShape, // e.g. 'Round'
+                                              initialValues: {
+                                                if (priceStartIndex != null &&
+                                                    priceEndIndex != null)
+                                                  'price': {
+                                                    'startIndex':
+                                                        priceStartIndex,
+                                                    'endIndex': priceEndIndex,
+                                                  },
+                                                if (caratStartIndex != null &&
+                                                    caratEndIndex != null)
+                                                  'carat': {
+                                                    'startIndex':
+                                                        caratStartIndex,
+                                                    'endIndex': caratEndIndex,
+                                                  },
+                                                if (colorStartIndex != null &&
+                                                    colorEndIndex != null)
+                                                  'color': {
+                                                    'startIndex':
+                                                        colorStartIndex,
+                                                    'endIndex': colorEndIndex,
+                                                  },
+                                                if (clarityStartIndex != null &&
+                                                    clarityEndIndex != null)
+                                                  'clarity': {
+                                                    'startIndex':
+                                                        clarityStartIndex,
+                                                    'endIndex': clarityEndIndex,
+                                                  },
 
-                                                    initialValues: {
-                                                      if (priceStartIndex !=
-                                                              null &&
-                                                          priceEndIndex != null)
-                                                        'price': {
-                                                          'startIndex':
-                                                              priceStartIndex,
-                                                          'endIndex':
-                                                              priceEndIndex,
-                                                        },
+                                                // 🔹 extra: shape + ringSize + metal selections
+                                                'shape': calc
+                                                    .solitaireShape, // e.g. 'Round'
+                                                'ringSizeFrom':
+                                                    detail.productSizeFrom,
+                                                'ringSizeTo':
+                                                    detail.productSizeTo,
+                                                if (calc.ringSize != null)
+                                                  'ringSize': calc.ringSize,
+                                                'metalColor':
+                                                    calc.selectedMetalColor ??
+                                                    metalColors.first.trim(),
+                                                'metalPurity':
+                                                    calc.selectedMetalPurity ??
+                                                    metalPurities.first.trim(),
+                                                'sideDiamondQuality': calc
+                                                    .selectedSideDiamondQuality,
+                                              },
+                                              metalColors: metalColors
+                                                  .map((e) => e.trim())
+                                                  .toList(),
+                                              metalPurity: metalPurities
+                                                  .map((e) => e.trim())
+                                                  .toList(),
+                                            );
 
-                                                      // CARAT
-                                                      if (caratStartIndex !=
-                                                              null &&
-                                                          caratEndIndex != null)
-                                                        'carat': {
-                                                          'startIndex':
-                                                              caratStartIndex,
-                                                          'endIndex':
-                                                              caratEndIndex,
-                                                        },
-
-                                                      // ✅ pass indices for color
-                                                      if (colorStartIndex !=
-                                                              null &&
-                                                          colorEndIndex != null)
-                                                        'color': {
-                                                          'startIndex':
-                                                              colorStartIndex,
-                                                          'endIndex':
-                                                              colorEndIndex,
-                                                        },
-
-                                                      // ✅ pass indices for clarity
-                                                      if (clarityStartIndex !=
-                                                              null &&
-                                                          clarityEndIndex !=
-                                                              null)
-                                                        'clarity': {
-                                                          'startIndex':
-                                                              clarityStartIndex,
-                                                          'endIndex':
-                                                              clarityEndIndex,
-                                                        },
-
-                                                      // RING SIZE
-                                                      'ringSizeFrom': detail
-                                                          .productSizeFrom,
-                                                      'ringSizeTo':
-                                                          detail.productSizeTo,
-                                                      if (ringSize != null)
-                                                        'ringSize': ringSize,
-
-                                                      'availableColors': detail
-                                                          .images
-                                                          .map((e) => e.color)
-                                                          .toList(),
-                                                      'metalColor':
-                                                          selectedMetalColor,
-                                                      'metalPurity':
-                                                          selectedMetalPurity,
-
-                                                      'sideDiamondQuality':
-                                                          selectedSideDiamondQuality,
-                                                    },
-                                                  ),
-                                                );
-
-                                            if (!mounted || result == null) {
+                                            if (!mounted || result == null)
                                               return;
-                                            }
 
+                                            // indices local state में रखो
                                             setState(() {
-                                              // PRICE
                                               priceStartIndex =
-                                                  result['price']?['startIndex'];
+                                                  result.price?.startIndex;
                                               priceEndIndex =
-                                                  result['price']?['endIndex'];
-
-                                              priceStartValue =
-                                                  result['price']?['startValue'];
-                                              priceEndValue =
-                                                  result['price']?['endValue'];
-
-                                              priceRange =
-                                                  (priceStartValue != null &&
-                                                      priceEndValue != null)
-                                                  ? '₹$priceStartValue - ₹$priceEndValue'
-                                                  : null;
-
-                                              // CARAT
+                                                  result.price?.endIndex;
                                               caratStartIndex =
-                                                  result['carat']?['startIndex'];
+                                                  result.carat?.startIndex;
                                               caratEndIndex =
-                                                  result['carat']?['endIndex'];
-
-                                              caratStartValue =
-                                                  result['carat']?['startValue'];
-                                              caratEndValue =
-                                                  result['carat']?['endValue'];
-
-                                              caratRange =
-                                                  (caratStartValue != null &&
-                                                      caratEndValue != null)
-                                                  ? '$caratStartValue - $caratEndValue ct'
-                                                  : null;
-
-                                              // COLOR
+                                                  result.carat?.endIndex;
                                               colorStartIndex =
-                                                  result['color']?['startIndex'];
+                                                  result.color?.startIndex;
                                               colorEndIndex =
-                                                  result['color']?['endIndex'];
-
-                                              colorStart =
-                                                  result['color']?['start']; // ✅ FIX
-                                              colorEnd =
-                                                  result['color']?['end']; // ✅ FIX
-
-                                              colorRange =
-                                                  colorStart != null &&
-                                                      colorEnd != null
-                                                  ? '$colorStart - $colorEnd'
-                                                  : null;
-
-                                              // CLARITY
+                                                  result.color?.endIndex;
                                               clarityStartIndex =
-                                                  result['clarity']?['startIndex'];
+                                                  result.clarity?.startIndex;
                                               clarityEndIndex =
-                                                  result['clarity']?['endIndex'];
-
-                                              clarityStart =
-                                                  result['clarity']?['start']; // ✅ FIX
-                                              clarityEnd =
-                                                  result['clarity']?['end']; // ✅ FIX
-
-                                              clarityRange =
-                                                  clarityStart != null &&
-                                                      clarityEnd != null
-                                                  ? '$clarityStart - $clarityEnd'
-                                                  : null;
-
-                                              ringSize = result['ringSize'];
-
-                                              // metal color
-                                              selectedMetalColor =
-                                                  result['metalColor'];
-
-                                              // metal purity
-                                              selectedMetalPurity =
-                                                  result['metalPurity'];
-
-                                              // Filter images by selected color
-                                              final allImages =
-                                                  detail.images ?? [];
-                                              final selectedColor =
-                                                  result['color']?['start'];
-
-                                              _priceCalculated = false;
+                                                  result.clarity?.endIndex;
                                             });
-                                            await _recalculatePrice(
-                                              detail,
-                                            ); //recalculate price
+
+                                            // provider को filter दो (ये पहले से है)
+                                            ref
+                                                .read(
+                                                  jewelleryCalcProvider
+                                                      .notifier,
+                                                )
+                                                .applyFilter(result);
+
                                             ScaffoldMessenger.of(
                                               context,
                                             ).showSnackBar(
@@ -740,91 +382,98 @@ class _JewelleryCustomiseScreenState
                                               ),
                                             );
                                           },
-
-                                          //child: const Text('Customize Solitaire'),
-                                          child: Stack(
-                                            children: [
-                                              /// Outer border
-                                              Positioned.fill(
-                                                child: Container(
-                                                  decoration: ShapeDecoration(
-                                                    shape: RoundedRectangleBorder(
-                                                      side: const BorderSide(
-                                                        width: 1,
-                                                        color: Color(
-                                                          0xFF6C5022,
+                                          child:
+                                              detail.productPrice == null ||
+                                                  detail.productPrice == 0
+                                              ? Stack(
+                                                  children: [
+                                                    /// Outer border
+                                                    Positioned.fill(
+                                                      child: Container(
+                                                        decoration: ShapeDecoration(
+                                                          shape: RoundedRectangleBorder(
+                                                            side:
+                                                                const BorderSide(
+                                                                  width: 1,
+                                                                  color: Color(
+                                                                    0xFF6C5022,
+                                                                  ),
+                                                                ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  20,
+                                                                ),
+                                                          ),
                                                         ),
                                                       ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            20,
-                                                          ),
                                                     ),
-                                                  ),
-                                                ),
-                                              ),
 
-                                              /// Main button
-                                              Positioned(
-                                                left: 4 * r,
-                                                top: 4 * r,
-                                                bottom: 4 * r,
-                                                right: 84 * r,
-                                                child: Container(
-                                                  alignment: Alignment.center,
-                                                  decoration: ShapeDecoration(
-                                                    color: const Color(
-                                                      0xFFCBC4AE,
-                                                    ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            15 * r,
+                                                    /// Main button
+                                                    Positioned(
+                                                      left: 4 * r,
+                                                      top: 4 * r,
+                                                      bottom: 4 * r,
+                                                      right: 84 * r,
+                                                      child: Container(
+                                                        alignment:
+                                                            Alignment.center,
+                                                        decoration: ShapeDecoration(
+                                                          color: const Color(
+                                                            0xFFCBC4AE,
                                                           ),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  15 * r,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        child: MyText(
+                                                          'Start customizing',
+                                                          style: TextStyle(
+                                                            color: const Color(
+                                                              0xFF6C5022,
+                                                            ),
+                                                            fontSize: 14 * r,
+                                                            fontFamily:
+                                                                'Montserrat',
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  child: MyText(
-                                                    'Start customizing',
-                                                    style: TextStyle(
-                                                      color: Color(0xFF6C5022),
-                                                      fontSize: 14 * r,
-                                                      fontFamily: 'Montserrat',
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
 
-                                              /// Arrow image button
-                                              Positioned(
-                                                top: 4 * r,
-                                                bottom: 4 * r,
-                                                right: 4 * r,
-                                                width: 72 * r,
-                                                child: Container(
-                                                  alignment: Alignment.center,
-                                                  decoration: ShapeDecoration(
-                                                    color: const Color(
-                                                      0xFF6C5022,
-                                                    ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            15 * r,
+                                                    /// Arrow image button
+                                                    Positioned(
+                                                      top: 4 * r,
+                                                      bottom: 4 * r,
+                                                      right: 4 * r,
+                                                      width: 72 * r,
+                                                      child: Container(
+                                                        alignment:
+                                                            Alignment.center,
+                                                        decoration: ShapeDecoration(
+                                                          color: const Color(
+                                                            0xFF6C5022,
                                                           ),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  15 * r,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        child: Image.asset(
+                                                          'assets/jewellery_pdp/cus-ticon.png',
+                                                          width: 18 * r,
+                                                          height: 18 * r,
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  child: Image.asset(
-                                                    'assets/jewellery_pdp/cus-ticon.png',
-                                                    width: 18 * r,
-                                                    height: 18 * r,
-                                                  ),
-                                                ),
-                                              ),
-                                              //),
-                                            ],
-                                          ),
+                                                  ],
+                                                )
+                                              : SizedBox.shrink(),
                                         ),
                                       ),
                                     ),
@@ -858,7 +507,7 @@ class _JewelleryCustomiseScreenState
                     padding: EdgeInsets.symmetric(horizontal: 40 * r),
                     decoration: BoxDecoration(
                       color: const Color(0xFFBEE4DD),
-                      border: Border(
+                      border: const Border(
                         top: BorderSide(color: Color(0xFF90DCD0), width: 1),
                       ),
                     ),
@@ -871,7 +520,6 @@ class _JewelleryCustomiseScreenState
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            //const Spacer(),
                             MyText(
                               'Approx.',
                               textAlign: TextAlign.center,
@@ -887,9 +535,13 @@ class _JewelleryCustomiseScreenState
                             Row(
                               children: [
                                 MyText(
-                                  approxPriceFrom != null
-                                      ? '₹${approxPriceFrom!.toStringAsFixed(0)}'
-                                      : '--',
+                                  detail.productPrice == null ||
+                                          detail.productPrice == 0
+                                      ? calc.approxPriceFrom != null
+                                            ? calc.approxPriceFrom!
+                                                  .inRupeesFormat()
+                                            : '--'
+                                      : detail.productPrice!.inRupeesFormat(),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.black,
@@ -915,9 +567,13 @@ class _JewelleryCustomiseScreenState
                                 ),
                                 SizedBox(width: 6),
                                 Text(
-                                  approxPriceTo != null
-                                      ? '₹${approxPriceTo!.toStringAsFixed(0)}'
-                                      : '--',
+                                  detail.productPrice == null ||
+                                          detail.productPrice == 0
+                                      ? calc.approxPriceTo != null
+                                            ? calc.approxPriceTo!
+                                                  .inRupeesFormat()
+                                            : '--'
+                                      : detail.productPrice!.inRupeesFormat(),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.black,
@@ -936,32 +592,23 @@ class _JewelleryCustomiseScreenState
                         /// CONTINUE BUTTON
                         InkWell(
                           onTap: () async {
-                            final result =
-                                await showDialog<Map<String, dynamic>>(
-                                  context: context,
-                                  barrierDismissible: true,
-                                  builder: (_) => const ContinueCartPopup(),
-                                );
+                            final customer = await showDialog<CustomerDetail>(
+                              context: context,
+                              barrierDismissible: true,
+                              builder: (_) => const ContinueCartPopup(),
+                            );
 
-                            if (result != null) {
-                              final existingName =
-                                  result['existingCustomerName'] as String?;
-                              final newName =
-                                  result['newCustomerName'] as String?;
-                              final newMobile =
-                                  result['newCustomerMobile'] as String?;
+                            if (customer == null) return;
 
-                              if (existingName != null) {
-                                // add to cart for existing customer
-                                debugPrint('Searched Customer : $existingName');
-                              } else if (newName != null && newMobile != null) {
-                                // create new customer/cart with name + mobile
-                                debugPrint('New Customer : $newName');
-                                debugPrint('New Mobile No. : $newMobile');
-                              }
-                            }
+                            _onAddToCart(context, ref, customer: customer);
+
+                            //call here cart create and set data
+                            //final customerId = customer.id;
+
+                            // debugPrint(
+                            //   'Selected customer: ${customer.name} (${customer.id})',
+                            // );
                           },
-
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
                             width: 258 * r,
@@ -981,7 +628,9 @@ class _JewelleryCustomiseScreenState
                                   width: 1,
                                   color: Color(0xFFACA584),
                                 ),
-                                borderRadius: BorderRadius.circular(20 * r),
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(20),
+                                ),
                               ),
                               shadows: const [
                                 BoxShadow(
@@ -994,7 +643,7 @@ class _JewelleryCustomiseScreenState
                             ),
                             child: Center(
                               child: MyText(
-                                'Continue ',
+                                'Continue',
                                 style: TextStyle(
                                   color: const Color(0xFF6C5022),
                                   fontSize: 20 * r,
@@ -1005,17 +654,17 @@ class _JewelleryCustomiseScreenState
                             ),
                           ),
                         ),
-
-                        /// ✅ WHITE GAP (8px) BELOW BOTTOM BAR
-                        //Container(height: 8, width: double.infinity, color: Colors.white),
                       ],
                     ),
                   ),
-
-                  //white  backgroundColor: Colors.white
                 ),
 
-                // 8 px white gap below bottom bar
+                /// WHITE GAP BELOW BOTTOM BAR
+                Container(
+                  height: 4,
+                  width: double.infinity,
+                  color: Colors.white,
+                ),
                 const SizedBox(
                   height: 4,
                   child: ColoredBox(color: Colors.white),
@@ -1061,14 +710,12 @@ class DeliveryBadge extends StatelessWidget {
               ),
             ),
           ),
-
           // White separator
           Container(
             width: 1,
             margin: EdgeInsets.symmetric(vertical: 6 * r),
             color: Colors.white,
           ),
-
           // Right text
           Expanded(
             child: Center(

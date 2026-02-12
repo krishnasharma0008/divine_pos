@@ -1,4 +1,4 @@
-import 'dart:async'; // for Timer
+import 'dart:async';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +11,8 @@ import '../providers/cart_providers.dart';
 import 'cart_item_card.dart';
 import '../../auth/data/auth_notifier.dart';
 import '../data/customer_detail_model.dart';
+import '../presentation/cart_summary.dart';
+import '../presentation/mobile_number_dialog.dart';
 
 class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
@@ -23,45 +25,79 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
-      final auth = ref.read(authProvider);
-      final user = auth.user?.userName;
-      if (user != null && user.isNotEmpty) {
-        await ref.read(cartNotifierProvider.notifier).refresh(user);
+    _initializeCart();
+  }
+
+  Future<void> _initializeCart() async {
+    await Future.microtask(() async {
+      final user = ref.read(authProvider).user?.userName;
+
+      if (user?.isNotEmpty ?? false) {
+        await ref.read(cartNotifierProvider.notifier).refresh(user!);
+
+        final lastCustomer = ref.read(lastCustomerProvider);
+        if (lastCustomer != null) {
+          ref.read(selectedCustomerProvider.notifier).setCustomer(lastCustomer);
+        }
       } else {
-        ref.invalidate(cartNotifierProvider); // clear if no user
+        ref.invalidate(cartNotifierProvider);
       }
+    });
+  }
+
+  double _calculateSubtotal(List<CartDetail> items) {
+    return items.fold(0.0, (total, item) {
+      final amount = item.productAmtMax ?? item.productAmtMin ?? 0;
+      final quantity = item.productQty ?? 1;
+      double lineTotal = amount * quantity;
+
+      if (item.cartRemarks?.trim().isNotEmpty ?? false) {
+        lineTotal += 1000;
+      }
+
+      return total + lineTotal;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final cartAsync = ref.watch(cartNotifierProvider);
-    final auth = ref.read(authProvider);
-    final currentUser = auth.user?.userName;
-
     final fem = ScaleSize.aspectRatio;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFE7F7F4),
-      appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
-      body: cartAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
-        data: (items) {
-          final orderProducts = items
-              .where((e) => e.orderType != 'READY')
-              .toList();
-          final readyProducts = items
-              .where((e) => e.orderType == 'READY')
-              .toList();
+    return cartAsync.when(
+      loading: () => const Scaffold(
+        backgroundColor: Color(0xFFE7F7F4),
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Scaffold(
+        backgroundColor: const Color(0xFFE7F7F4),
+        body: Center(child: Text('Error loading cart')),
+      ),
+      data: (cart) {
+        if (cart.isEmpty) {
+          return const _EmptyCartView();
+        }
 
-          return ListView(
-            padding: EdgeInsets.only(bottom: 120 * fem),
+        final items = ref.watch(filteredCartProvider);
+        final activeCustomer =
+            ref.watch(selectedCustomerProvider) ??
+            ref.watch(lastCustomerProvider);
+
+        final orderProducts = items
+            .where((e) => e.orderType != 'READY')
+            .toList();
+        final readyProducts = items
+            .where((e) => e.orderType == 'READY')
+            .toList();
+        final subtotal = _calculateSubtotal(items);
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFE7F7F4),
+          appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
+          body: ListView(
+            padding: EdgeInsets.only(bottom: 24 * fem),
             children: [
-              CartHeader(User: currentUser ?? ''),
-
-              // Shopping Cart title
+              CartHeader(customerName: activeCustomer?.name ?? ''),
               Padding(
                 padding: EdgeInsets.fromLTRB(72 * fem, 8 * fem, 24 * fem, 0),
                 child: MyText(
@@ -72,8 +108,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   ),
                 ),
               ),
-
-              // Sections
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 52 * fem),
                 child: Center(
@@ -98,17 +132,22 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 ),
               ),
             ],
-          );
-        },
-      ),
-      bottomNavigationBar: const _BottomProceedBar(),
+          ),
+          bottomNavigationBar: _BottomProceedBar(
+            orderProducts: orderProducts,
+            readyProducts: readyProducts,
+            subtotal: subtotal,
+          ),
+        );
+      },
     );
   }
 }
 
 class CartHeader extends StatelessWidget {
-  final String User;
-  const CartHeader({super.key, required this.User});
+  final String customerName;
+
+  const CartHeader({super.key, required this.customerName});
 
   @override
   Widget build(BuildContext context) {
@@ -117,60 +156,50 @@ class CartHeader extends StatelessWidget {
     return Column(
       children: [
         SizedBox(height: 24 * fem),
-
-        // Stepper
-        Center(
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 32 * fem,
-              vertical: 12 * fem,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30 * fem),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x14000000),
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _StepPill(
-                  label: 'Shopping Cart',
-                  index: 1,
-                  active: true,
-                  fem: fem,
-                ),
-                _StepDivider(fem: fem),
-                _StepPill(
-                  label: 'Customer Feedback',
-                  index: 2,
-                  active: false,
-                  fem: fem,
-                ),
-                _StepDivider(fem: fem),
-                _StepPill(
-                  label: 'Sales Executive Form',
-                  index: 3,
-                  active: false,
-                  fem: fem,
-                ),
-              ],
-            ),
-          ),
-        ),
-
+        _buildStepper(fem),
         SizedBox(height: 24 * fem),
-
-        // Search + current cart
-        SearchCurrentCartRow(fem: fem, user: User),
-
+        SearchCurrentCartRow(fem: fem, cartCustomer: customerName),
         SizedBox(height: 24 * fem),
       ],
+    );
+  }
+
+  Widget _buildStepper(double fem) {
+    return Center(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 32 * fem, vertical: 12 * fem),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30 * fem),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x14000000),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _StepPill(label: 'Shopping Cart', index: 1, active: true, fem: fem),
+            _StepDivider(fem: fem),
+            _StepPill(
+              label: 'Customer Feedback',
+              index: 2,
+              active: false,
+              fem: fem,
+            ),
+            _StepDivider(fem: fem),
+            _StepPill(
+              label: 'Sales Executive Form',
+              index: 3,
+              active: false,
+              fem: fem,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -213,7 +242,7 @@ class _StepPill extends StatelessWidget {
             fontSize: 13 * fem,
             fontFamily: 'Montserrat',
             fontWeight: FontWeight.w500,
-            color: Color(0xFF111827),
+            color: const Color(0xFF111827),
           ),
         ),
       ],
@@ -237,15 +266,14 @@ class _StepDivider extends StatelessWidget {
   }
 }
 
-// search and current user
 class SearchCurrentCartRow extends ConsumerStatefulWidget {
   final double fem;
-  final String user;
+  final String cartCustomer;
 
   const SearchCurrentCartRow({
     super.key,
     required this.fem,
-    required this.user,
+    required this.cartCustomer,
   });
 
   @override
@@ -258,240 +286,250 @@ class _SearchCurrentCartRowState extends ConsumerState<SearchCurrentCartRow> {
   Timer? _debounce;
   bool _showSuggestions = false;
   bool _loading = false;
-
   List<CustomerDetail> _results = [];
 
-  void _onChanged(String value) {
+  static const _searchDebounceMs = 350;
+  static const _maxSuggestionsHeight = 160.0;
+
+  @override
+  void dispose() {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 350), () async {
-      final query = value.trim();
-      if (query.isEmpty) {
-        setState(() {
-          _results = [];
-          _showSuggestions = false;
-          _loading = false;
-        });
-        return;
-      }
-
-      setState(() => _loading = true);
-
-      try {
-        final results = await ref
-            .read(cartNotifierProvider.notifier)
-            .searchCustomer(query);
-        setState(() {
-          _results = results;
-          _showSuggestions = results.isNotEmpty;
-        });
-      } catch (_) {
-        setState(() {
-          _results = [];
-          _showSuggestions = false;
-        });
-      } finally {
-        setState(() => _loading = false);
-      }
-    });
+    _controller.dispose();
+    super.dispose();
   }
 
-  void _onCustomerTap(CustomerDetail c) {
-    // you can set current user / customer here if needed
-    _controller.text = c.name;
-    setState(() => _showSuggestions = false);
-    debugPrint("Suggestation Clicked");
-    // TODO: hook this to your cart refresh / context if required
+  Future<void> _onChanged(String value) async {
+    _debounce?.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: _searchDebounceMs),
+      () async {
+        final query = value.trim();
+
+        if (query.isEmpty) {
+          setState(() {
+            _results = [];
+            _showSuggestions = false;
+            _loading = false;
+          });
+          return;
+        }
+
+        setState(() => _loading = true);
+
+        try {
+          final results = await ref
+              .read(cartNotifierProvider.notifier)
+              .searchCustomer(query);
+
+          if (mounted) {
+            setState(() {
+              _results = results;
+              _showSuggestions = results.isNotEmpty;
+            });
+          }
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _results = [];
+              _showSuggestions = false;
+            });
+          }
+        } finally {
+          if (mounted) {
+            setState(() => _loading = false);
+          }
+        }
+      },
+    );
+  }
+
+  void _onCustomerTap(CustomerDetail customer) {
+    ref.read(selectedCustomerProvider.notifier).setCustomer(customer);
+
+    _controller.clear();
+    setState(() {
+      _results = [];
+      _showSuggestions = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final fem = widget.fem;
-    final results = _results;
+    final suggestionsHeight = _showSuggestions && _results.isNotEmpty
+        ? _maxSuggestionsHeight
+        : 0.0;
 
     return Center(
       child: SizedBox(
         width: 560 * fem,
-        height: 70 * fem + (results.isNotEmpty && _showSuggestions ? 160 : 0),
+        height: 70 * fem + suggestionsHeight,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // SEARCH pill with TextField
-            // SEARCH pill with TextField (FIXED)
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Container(
-                  width: 560 * fem,
-                  height: 54 * fem, // 🔥 FIXED HEIGHT
-                  padding: EdgeInsets.symmetric(horizontal: 16 * fem),
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      side: const BorderSide(
-                        width: 1,
-                        color: Color(0xFFBEE4DD),
-                      ),
-                      borderRadius: BorderRadius.circular(15 * fem),
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.search,
-                                size: 18 * fem,
-                                color: const Color(0xFF6C6C6C),
-                              ),
-                              SizedBox(width: 8 * fem),
-                              Expanded(
-                                child: TextField(
-                                  controller: _controller,
-                                  onChanged: _onChanged,
-                                  decoration: const InputDecoration(
-                                    isCollapsed: true,
-                                    border: InputBorder.none,
-                                    hintText: 'Search customer here...',
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 16 * fem,
-                                    fontFamily: 'Rushter Glory',
-                                    color: const Color(0xFF6C6C6C),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      if (_loading)
-                        Positioned(
-                          right: 4 * fem,
-                          top: 0,
-                          bottom: 0,
-                          child: SizedBox(
-                            width: 18 * fem,
-                            height: 18 * fem,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // CURRENT CART pill (unchanged)
-            Positioned(
-              right: 0,
-              top: -2 * fem,
-              child: Container(
-                width: 222 * fem,
-                height: 58 * fem,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 23 * fem,
-                  vertical: 8 * fem,
-                ),
-                decoration: ShapeDecoration(
-                  color: const Color(0xFFBEE4DD),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18 * fem),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.person,
-                            size: 20 * fem,
-                            color: const Color(0xFF5E5E5E),
-                          ),
-                          SizedBox(width: 10 * fem),
-                          MyText(
-                            widget.user,
-                            style: TextStyle(
-                              color: const Color(0xFF5E5E5E),
-                              fontSize: 13 * fem,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w600,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 2 * fem),
-                    SizedBox(
-                      width: double.infinity,
-                      child: MyText(
-                        '(Current cart)',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: const Color(0xFF5E5E5E),
-                          fontSize: 10 * fem,
-                          fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.w400,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Suggestions dropdown
-            if (_showSuggestions && results.isNotEmpty)
-              Positioned(
-                left: 0,
-                top: 54 * fem + 4,
-                child: Container(
-                  width: 560 * fem,
-                  constraints: BoxConstraints(maxHeight: 160 * fem),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8 * fem),
-                    border: Border.all(color: const Color(0xFFDDDDDD)),
-                  ),
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    itemCount: results.length,
-                    itemBuilder: (context, index) {
-                      final c = results[index];
-                      return InkWell(
-                        onTap: () => _onCustomerTap(c),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12 * fem,
-                            vertical: 8 * fem,
-                          ),
-                          child: Text(
-                            c.name,
-                            style: TextStyle(
-                              fontSize: 14 * fem,
-                              fontFamily: 'Montserrat',
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
+            _buildSearchField(fem),
+            _buildCurrentCartBadge(fem),
+            if (_showSuggestions && _results.isNotEmpty) _buildSuggestions(fem),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchField(double fem) {
+    return Positioned.fill(
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: Container(
+          width: 560 * fem,
+          height: 54 * fem,
+          padding: EdgeInsets.symmetric(horizontal: 16 * fem),
+          decoration: ShapeDecoration(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(width: 1, color: Color(0xFFBEE4DD)),
+              borderRadius: BorderRadius.circular(15 * fem),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.search,
+                size: 18 * fem,
+                color: const Color(0xFF6C6C6C),
+              ),
+              SizedBox(width: 8 * fem),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  onChanged: _onChanged,
+                  decoration: const InputDecoration(
+                    isCollapsed: true,
+                    border: InputBorder.none,
+                    hintText: 'Search customer here...',
+                  ),
+                  style: TextStyle(
+                    fontSize: 16 * fem,
+                    fontFamily: 'Rushter Glory',
+                    color: const Color(0xFF6C6C6C),
+                  ),
+                ),
+              ),
+              if (_loading)
+                SizedBox(
+                  width: 18 * fem,
+                  height: 18 * fem,
+                  child: const CircularProgressIndicator(strokeWidth: 2),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentCartBadge(double fem) {
+    return Positioned(
+      right: 0,
+      top: -2 * fem,
+      child: Container(
+        width: 222 * fem,
+        height: 58 * fem,
+        padding: EdgeInsets.symmetric(horizontal: 23 * fem, vertical: 8 * fem),
+        decoration: ShapeDecoration(
+          color: const Color(0xFFBEE4DD),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18 * fem),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.person,
+                  size: 20 * fem,
+                  color: const Color(0xFF5E5E5E),
+                ),
+                SizedBox(width: 10 * fem),
+                Flexible(
+                  child: MyText(
+                    widget.cartCustomer,
+                    style: TextStyle(
+                      color: const Color(0xFF5E5E5E),
+                      fontSize: 13 * fem,
+                      fontFamily: 'Montserrat',
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 2 * fem),
+            MyText(
+              '(Current cart)',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: const Color(0xFF5E5E5E),
+                fontSize: 10 * fem,
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w400,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestions(double fem) {
+    return Positioned(
+      left: 0,
+      top: 54 * fem + 4,
+      child: Container(
+        width: 560 * fem,
+        constraints: BoxConstraints(maxHeight: _maxSuggestionsHeight * fem),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8 * fem),
+          border: Border.all(color: const Color(0xFFDDDDDD)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1A000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ListView.separated(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          itemCount: _results.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final customer = _results[index];
+            return InkWell(
+              onTap: () => _onCustomerTap(customer),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12 * fem,
+                  vertical: 10 * fem,
+                ),
+                child: Text(
+                  customer.name ?? 'Unknown',
+                  style: TextStyle(
+                    fontSize: 14 * fem,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -507,7 +545,7 @@ class _Section extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (items.isEmpty) return const SizedBox();
+    if (items.isEmpty) return const SizedBox.shrink();
 
     final notifier = ref.read(cartNotifierProvider.notifier);
 
@@ -527,18 +565,34 @@ class _Section extends ConsumerWidget {
                 fontWeight: FontWeight.w400,
                 height: 2.25,
               ),
-              // style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              //       fontWeight: FontWeight.w600,
-              //       fontFamily: 'Montserrat',
-              //     ),
             ),
           ),
           SizedBox(height: 8 * fem),
-          ...items.map(
-            (item) => CartItemCard(
-              item: item,
-              onDelete: () {
-                notifier.deleteItem(item.id ?? 0);
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: ListView.separated(
+              itemCount: items.length,
+              separatorBuilder: (_, __) => Container(
+                width: 1049 * fem,
+                height: 1 * fem,
+                margin: EdgeInsets.symmetric(horizontal: 24 * fem),
+                decoration: ShapeDecoration(
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                      width: 0.50 * fem,
+                      color: const Color(0xFFDADADC),
+                    ),
+                  ),
+                ),
+              ),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return CartItemCard(
+                  item: item,
+                  onDelete: () => notifier.deleteItem(item.id ?? 0),
+                  isTopRounded: index == 0,
+                  isBottomRounded: index == items.length - 1,
+                );
               },
             ),
           ),
@@ -548,18 +602,42 @@ class _Section extends ConsumerWidget {
   }
 }
 
-// Bottom bar styled like Figma
 class _BottomProceedBar extends ConsumerWidget {
-  const _BottomProceedBar();
+  final List<CartDetail> orderProducts;
+  final List<CartDetail> readyProducts;
+  final double subtotal;
+
+  const _BottomProceedBar({
+    required this.orderProducts,
+    required this.readyProducts,
+    required this.subtotal,
+  });
+
+  Future<void> _handleProceed(BuildContext context, WidgetRef ref) async {
+    final phone = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) =>
+          MobileNumberDialog(onSubmit: (value) => Navigator.of(ctx).pop(value)),
+    );
+
+    if (phone == null || phone.isEmpty) return;
+
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
+
+    debugPrint('Customer Number: $phone');
+
+    await ref.read(cartNotifierProvider.notifier).proceedToCheckout();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(cartNotifierProvider.notifier);
     final fem = ScaleSize.aspectRatio;
 
     return Container(
       height: 82 * fem,
-      width: double.infinity,
       decoration: ShapeDecoration(
         color: const Color(0xFFBEE4DD),
         shape: RoundedRectangleBorder(
@@ -580,7 +658,16 @@ class _BottomProceedBar extends ConsumerWidget {
               height: 52 * fem,
               child: InkWell(
                 borderRadius: BorderRadius.circular(20 * fem),
-                onTap: () => notifier.proceedToCheckout(),
+                onTap: () => showDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (_) => CartSummaryPanel(
+                    orderProducts: orderProducts,
+                    readyProducts: readyProducts,
+                    subtotal: subtotal,
+                    onConfirm: () => _handleProceed(context, ref),
+                  ),
+                ),
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 30 * fem,
@@ -604,7 +691,6 @@ class _BottomProceedBar extends ConsumerWidget {
                         color: const Color(0x7C000000),
                         blurRadius: 4 * fem,
                         offset: Offset(2 * fem, 2 * fem),
-                        spreadRadius: 0,
                       ),
                     ],
                   ),
@@ -623,6 +709,40 @@ class _BottomProceedBar extends ConsumerWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyCartView extends StatelessWidget {
+  const _EmptyCartView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFE7F7F4),
+      appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.shopping_cart_outlined,
+              size: 90,
+              color: Color(0xFF90DCD0),
+            ),
+            SizedBox(height: 20),
+            Text(
+              "Your cart is empty",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 6),
+            Text(
+              "Start adding items to see them here!",
+              style: TextStyle(color: Colors.black54),
+            ),
+          ],
         ),
       ),
     );

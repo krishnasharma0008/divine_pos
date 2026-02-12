@@ -1,10 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math' as math;
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:dio/dio.dart';
 
 import '../../../shared/utils/http_client.dart';
@@ -16,6 +12,48 @@ import '../../auth/data/auth_notifier.dart';
 final cartNotifierProvider =
     AsyncNotifierProvider<CartNotifier, List<CartDetail>>(CartNotifier.new);
 
+final selectedCustomerProvider =
+    NotifierProvider<SelectedCustomerNotifier, CustomerDetail?>(
+      SelectedCustomerNotifier.new,
+    );
+
+class SelectedCustomerNotifier extends Notifier<CustomerDetail?> {
+  @override
+  CustomerDetail? build() => null;
+
+  void setCustomer(CustomerDetail? customer) => state = customer;
+
+  void clear() => state = null;
+}
+
+final lastCustomerProvider = Provider<CustomerDetail?>((ref) {
+  final cartAsync = ref.watch(cartNotifierProvider);
+
+  return cartAsync.maybeWhen(
+    data: (cart) {
+      if (cart.isEmpty) return null;
+      final last = cart.last;
+      return CustomerDetail(id: last.customerId, name: last.customerName);
+    },
+    orElse: () => null,
+  );
+});
+
+final filteredCartProvider = Provider<List<CartDetail>>((ref) {
+  final cartAsync = ref.watch(cartNotifierProvider);
+  final selected = ref.watch(selectedCustomerProvider);
+  final last = ref.watch(lastCustomerProvider);
+
+  return cartAsync.maybeWhen(
+    data: (cart) {
+      final customerId = selected?.id ?? last?.id;
+      if (customerId == null) return [];
+      return cart.where((e) => e.customerId == customerId).toList();
+    },
+    orElse: () => [],
+  );
+});
+
 class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   List<CartDetail> _cartData = [];
   List<int> _selectedItems = [];
@@ -23,15 +61,16 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   String _errorMsg = '';
   String? _currentUser;
 
+  static const int maxEngravingWords = 10;
+
   Dio get dio => ref.read(httpClientProvider);
 
   @override
   Future<List<CartDetail>> build() async {
     final auth = ref.read(authProvider);
     _currentUser = auth.user?.userName;
-    debugPrint('current user $_currentUser');
 
-    if (_currentUser == null || _currentUser!.isEmpty) {
+    if (_currentUser?.isEmpty ?? true) {
       _cartData = [];
       _orderSummaryRemark = '';
       return _cartData;
@@ -40,22 +79,23 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     return _fetchCart(_currentUser!);
   }
 
+  // ==================== API CALLS ====================
+
   Future<List<CartDetail>> _fetchCart(String user) async {
     try {
-      debugPrint('🌐 URL => ${dio.options.baseUrl}${ApiEndPoint.cart_list}');
-
       final response = await dio.post(
         ApiEndPoint.cart_list,
         data: {'username': user},
       );
 
-      debugPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
-
       if (response.statusCode == 200) {
         final res = response.data;
-        _cartData = (res['data'] as List)
-            .map((e) => CartDetail.fromJson(e))
+        final rawList = res['data'] as List<dynamic>? ?? [];
+
+        _cartData = rawList
+            .map((e) => CartDetail.fromJson(e as Map<String, dynamic>))
             .toList();
+
         _orderSummaryRemark = res['order_remarks'] ?? '';
         state = AsyncData(_cartData);
         return _cartData;
@@ -72,20 +112,10 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     await dio.delete('${ApiEndPoint.delete_cart}$id');
   }
 
-  /// EDIT CART (used for qty + engraving)
   Future<void> _editCart(CartDetail item) async {
-    //final url = '${ApiEndPoint.update_cart}';
-    final body = item.toJson();
-
-    // debugPrint('EditCart URL  => ${dio.options.baseUrl}$url');
-    // debugPrint('EditCart body => $body');
-
     try {
-      final res = await dio.put(ApiEndPoint.update_cart, data: body);
-      debugPrint('EditCart OK   => ${res.statusCode}, ${res.data}');
-    } on DioException catch (e) {
-      debugPrint('EditCart ERROR => ${e.response?.statusCode}');
-      debugPrint('EditCart RESP  => ${e.response?.data}');
+      await dio.put(ApiEndPoint.update_cart, data: item.toJson());
+    } on DioException {
       rethrow;
     }
   }
@@ -98,17 +128,87 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     return response.data as Map<String, dynamic>;
   }
 
-  // PUBLIC GETTERS
+  // ==================== PUBLIC GETTERS ====================
 
   List<int> get selectedItems => _selectedItems;
   String get orderSummaryRemark => _orderSummaryRemark;
   String get errorMsg => _errorMsg;
   Map<String, dynamic> get totals => _calculateTotals();
 
-  // SELECTION
+  List<CustomerDetail> get cartCustomers {
+    final map = <int, CustomerDetail>{};
+
+    for (final item in _cartData) {
+      final id = item.customerId;
+      final name = item.customerName;
+
+      if (id != null && name?.isNotEmpty == true) {
+        map[id] = CustomerDetail(
+          id: id,
+          name: name!,
+          address: '',
+          contactNo: '',
+          pan: '',
+          gender: '',
+          dob: '',
+          pincode: '',
+          email: '',
+        );
+      }
+    }
+    return map.values.toList();
+  }
+
+  // ==================== CART OPERATIONS ====================
+
+  Future<void> createCart(CartDetail item) async {
+    final current = state.value ?? _cartData;
+
+    // Optimistic update
+    final tempList = [...current, item];
+    _cartData = tempList;
+    state = AsyncData(tempList);
+
+    try {
+      final res = await dio.post(ApiEndPoint.create_cart, data: item.toJson());
+      final data = res.data['data'] as Map<String, dynamic>;
+      final created = CartDetail.fromJson(data);
+
+      // Replace with server version
+      final updated = [...current, created];
+      _cartData = updated;
+      state = AsyncData(updated);
+    } catch (e, st) {
+      // Rollback on failure
+      _cartData = current;
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteItem(int id) async {
+    state = const AsyncLoading();
+    try {
+      await _deleteCart(id);
+      _cartData.removeWhere((item) => item.id == id);
+      _selectedItems.remove(id);
+      state = AsyncData(_cartData);
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+    }
+  }
+
+  Future<void> refresh(String user) async {
+    _currentUser = user;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _fetchCart(user));
+  }
+
+  // ==================== SELECTION ====================
 
   void toggleSelectAll() {
-    _selectedItems = _selectedItems.length == _cartData.length
+    final allSelected = _selectedItems.length == _cartData.length;
+    _selectedItems = allSelected
         ? []
         : _cartData.map((e) => e.id ?? 0).where((id) => id > 0).toList();
     state = AsyncData(_cartData);
@@ -123,21 +223,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     state = AsyncData(_cartData);
   }
 
-  // DELETE
-
-  Future<void> deleteItem(int id) async {
-    state = const AsyncLoading();
-    try {
-      await _deleteCart(id);
-      _cartData.removeWhere((item) => item.id == id);
-      _selectedItems.remove(id);
-      state = AsyncData(_cartData);
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
-    }
-  }
-
-  // QTY UPDATE
+  // ==================== QUANTITY UPDATE ====================
 
   Future<void> updateQuantity(int id, bool increase) async {
     final list = state.value ?? const <CartDetail>[];
@@ -148,86 +234,35 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     final oldQty = item.productQty ?? 1;
     final newQty = increase ? oldQty + 1 : (oldQty > 1 ? oldQty - 1 : 1);
 
-    final updated = item.copyWith(productQty: newQty);
+    final unitMin = (item.productAmtMin ?? 0) / (oldQty == 0 ? 1 : oldQty);
+    final unitMax = (item.productAmtMax ?? 0) / (oldQty == 0 ? 1 : oldQty);
 
-    // optimistic local update so UI changes instantly
+    final updated = item.copyWith(
+      productQty: newQty,
+      productAmtMin: unitMin * newQty,
+      productAmtMax: unitMax * newQty,
+    );
+
+    // Optimistic update
     final updatedList = [...list];
     updatedList[index] = updated;
     state = AsyncData(updatedList);
 
     try {
-      // call your existing edit-cart API here
-      await _editCart(updated); // ensure this sends productQty to backend
+      await _editCart(updated);
     } catch (e, st) {
-      // optionally revert UI or show error
       state = AsyncError(e, st);
     }
   }
 
-  // PROCEED TO CHECKOUT
+  // ==================== ENGRAVING ====================
 
-  Future<Map<String, dynamic>> proceedToCheckout() async {
-    if (_selectedItems.isEmpty) {
-      _errorMsg = 'Please select at least one item';
-      return {'success': false, 'msg': _errorMsg};
-    }
-
-    final selected = _cartData
-        .where((i) => _selectedItems.contains(i.id))
-        .toList();
-    if (selected.map((e) => e.customerName).toSet().length != 1) {
-      _errorMsg = 'Only one partner jeweller allowed';
-      return {'success': false, 'msg': _errorMsg};
-    }
-
-    state = const AsyncLoading();
-    try {
-      final response = await _createOrder(_selectedItems);
-      if ((response['msg'] ?? '').toLowerCase() == 'sucess') {
-        _cartData.removeWhere((item) => _selectedItems.contains(item.id));
-        _selectedItems.clear();
-        state = AsyncData(_cartData);
-        return {'success': true, 'data': response};
-      }
-      return {'success': false, 'msg': response['msg'] ?? 'Failed'};
-    } catch (e) {
-      _errorMsg = e.toString();
-      state = AsyncError(e, StackTrace.current);
-      return {'success': false, 'msg': _errorMsg};
-    }
-  }
-
-  // REFRESH
-
-  Future<void> refresh(String user) async {
-    _currentUser = user;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchCart(user));
-  }
-
-  // TOTALS
-
-  Map<String, dynamic> _calculateTotals() {
-    final selected = _cartData
-        .where((item) => _selectedItems.contains(item.id))
-        .toList();
-    return {
-      'totalQty': selected.fold<int>(0, (s, i) => s + (i.productQty ?? 0)),
-      'totalAmtMin': selected.fold<double>(
-        0,
-        (s, i) => s + (i.productAmtMin ?? 0),
-      ),
-      'totalAmtMax': selected.fold<double>(
-        0,
-        (s, i) => s + (i.productAmtMax ?? 0),
-      ),
-    };
-  }
-
-  // ENGRAVING STATE HELPERS
   bool isEngravingEnabled(int id) {
-    final item = _cartData.firstWhere((e) => e.id == id);
-    return (item.cartRemarks ?? '').trim().isNotEmpty;
+    final item = _cartData.firstWhere(
+      (e) => e.id == id,
+      orElse: () => throw Exception('Item not found'),
+    );
+    return (item.cartRemarks?.trim().isNotEmpty ?? false);
   }
 
   String getEngravingText(int id) {
@@ -244,63 +279,13 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     if (index == -1) return;
 
     final item = list[index];
-
     final newRemarks = enabled
-        ? ((item.cartRemarks ?? '').trim().isNotEmpty
+        ? ((item.cartRemarks?.trim().isNotEmpty ?? false)
               ? item.cartRemarks!
               : 'Engraving')
         : '';
 
-    final updated = CartDetail(
-      id: item.id,
-      cartRemarks: newRemarks,
-      productQty: item.productQty,
-      productAmtMin: item.productAmtMin,
-      productAmtMax: item.productAmtMax,
-      orderFor: item.orderFor,
-      customerId: item.customerId,
-      customerCode: item.customerCode,
-      customerBranch: item.customerBranch,
-      orderType: item.orderType,
-      productType: item.productType,
-      productCategory: item.productCategory,
-      productSubCategory: item.productSubCategory,
-      collection: item.collection,
-      expDlvDate: item.expDlvDate,
-      oldVarient: item.oldVarient,
-      solitairePcs: item.solitairePcs,
-      solitaireShape: item.solitaireShape,
-      solitaireSlab: item.solitaireSlab,
-      solitaireColor: item.solitaireColor,
-      solitaireQuality: item.solitaireQuality,
-      solitairePremSize: item.solitairePremSize,
-      solitairePremPct: item.solitairePremPct,
-      solitaireAmtMin: item.solitaireAmtMin,
-      solitaireAmtMax: item.solitaireAmtMax,
-      metalType: item.metalType,
-      metalPurity: item.metalPurity,
-      metalColor: item.metalColor,
-      metalWeight: item.metalWeight,
-      metalPrice: item.metalPrice,
-      mountAmtMin: item.mountAmtMin,
-      mountAmtMax: item.mountAmtMax,
-      sizeFrom: item.sizeFrom,
-      sizeTo: item.sizeTo,
-      sideStonePcs: item.sideStonePcs,
-      sideStoneCts: item.sideStoneCts,
-      sideStoneColor: item.sideStoneColor,
-      sideStoneQuality: item.sideStoneQuality,
-      orderRemarks: item.orderRemarks,
-      style: item.style,
-      wearStyle: item.wearStyle,
-      look: item.look,
-      portfolioType: item.portfolioType,
-      gender: item.gender,
-      customerName: item.customerName,
-      productCode: item.productCode,
-      imageUrl: item.imageUrl,
-    );
-
+    final updated = item.copyWith(cartRemarks: newRemarks);
     final updatedList = [...list];
     updatedList[index] = updated;
 
@@ -313,68 +298,17 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     }
   }
 
-  // UPDATE ENGRAVING TEXT
-
   Future<void> updateEngravingText(int id, String text) async {
     final index = _cartData.indexWhere((e) => e.id == id);
     if (index == -1) return;
 
     final words = text.trim().split(RegExp(r'\s+'));
-    if (words.length > 10) return;
+    if (words.length > maxEngravingWords) return;
 
     final item = _cartData[index];
+    final updated = item.copyWith(cartRemarks: text);
 
-    final updated = CartDetail(
-      id: item.id,
-      cartRemarks: text,
-      productQty: item.productQty,
-      productAmtMin: item.productAmtMin,
-      productAmtMax: item.productAmtMax,
-      orderFor: item.orderFor,
-      customerId: item.customerId,
-      customerCode: item.customerCode,
-      customerBranch: item.customerBranch,
-      orderType: item.orderType,
-      productType: item.productType,
-      productCategory: item.productCategory,
-      productSubCategory: item.productSubCategory,
-      collection: item.collection,
-      expDlvDate: item.expDlvDate,
-      oldVarient: item.oldVarient,
-      solitairePcs: item.solitairePcs,
-      solitaireShape: item.solitaireShape,
-      solitaireSlab: item.solitaireSlab,
-      solitaireColor: item.solitaireColor,
-      solitaireQuality: item.solitaireQuality,
-      solitairePremSize: item.solitairePremSize,
-      solitairePremPct: item.solitairePremPct,
-      solitaireAmtMin: item.solitaireAmtMin,
-      solitaireAmtMax: item.solitaireAmtMax,
-      metalType: item.metalType,
-      metalPurity: item.metalPurity,
-      metalColor: item.metalColor,
-      metalWeight: item.metalWeight,
-      metalPrice: item.metalPrice,
-      mountAmtMin: item.mountAmtMin,
-      mountAmtMax: item.mountAmtMax,
-      sizeFrom: item.sizeFrom,
-      sizeTo: item.sizeTo,
-      sideStonePcs: item.sideStonePcs,
-      sideStoneCts: item.sideStoneCts,
-      sideStoneColor: item.sideStoneColor,
-      sideStoneQuality: item.sideStoneQuality,
-      orderRemarks: item.orderRemarks,
-      style: item.style,
-      wearStyle: item.wearStyle,
-      look: item.look,
-      portfolioType: item.portfolioType,
-      gender: item.gender,
-      customerName: item.customerName,
-      productCode: item.productCode,
-      imageUrl: item.imageUrl,
-    );
-
-    // local update
+    // Local update
     _cartData[index] = updated;
     state = AsyncData(_cartData);
 
@@ -385,25 +319,121 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     }
   }
 
-  // CUSTOMER SEARCH
+  // ==================== CHECKOUT ====================
+
+  Future<Map<String, dynamic>> proceedToCheckout() async {
+    if (_selectedItems.isEmpty) {
+      _errorMsg = 'Please select at least one item';
+      return {'success': false, 'msg': _errorMsg};
+    }
+
+    final selected = _cartData
+        .where((i) => _selectedItems.contains(i.id))
+        .toList();
+
+    if (selected.map((e) => e.customerName).toSet().length != 1) {
+      _errorMsg = 'Only one partner jeweller allowed';
+      return {'success': false, 'msg': _errorMsg};
+    }
+
+    state = const AsyncLoading();
+    try {
+      final response = await _createOrder(_selectedItems);
+
+      if ((response['msg'] ?? '').toLowerCase() == 'sucess') {
+        _cartData.removeWhere((item) => _selectedItems.contains(item.id));
+        _selectedItems.clear();
+        state = AsyncData(_cartData);
+        return {'success': true, 'data': response};
+      }
+
+      return {'success': false, 'msg': response['msg'] ?? 'Failed'};
+    } catch (e) {
+      _errorMsg = e.toString();
+      state = AsyncError(e, StackTrace.current);
+      return {'success': false, 'msg': _errorMsg};
+    }
+  }
+
+  // ==================== CUSTOMER OPERATIONS ====================
 
   Future<List<CustomerDetail>> searchCustomer(String value) async {
     final query = value.trim();
     if (query.isEmpty) return [];
 
-    final res = await dio.get(
-      '${ApiEndPoint.customerSearch}find', // base path + "find"
-      queryParameters: {
-        'value': query, // => ?value=<query>
-      },
+    try {
+      final res = await dio.get(
+        '${ApiEndPoint.customerSearch}find',
+        queryParameters: {'value': query, 'useronly': 1},
+      );
+
+      final data = res.data['data'] as List<dynamic>? ?? [];
+      return data
+          .map((e) => CustomerDetail.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Customer search error: $e');
+      return [];
+    }
+  }
+
+  Future<CustomerDetail> createCustomer({
+    required String name,
+    required String mobile,
+  }) async {
+    final res = await dio.post(
+      ApiEndPoint.create_customer,
+      data: {'name': name, 'mobile': mobile},
     );
 
-    final data = res.data['data'] as List<dynamic>? ?? [];
+    final body = res.data as Map<String, dynamic>;
 
-    final list = data
-        .map((e) => CustomerDetail.fromJson(e as Map<String, dynamic>))
+    if (body['success'] != true) {
+      throw Exception(body['msg'] ?? 'Customer create failed');
+    }
+
+    final id = body['id'] as int?;
+    if (id == null) {
+      throw Exception('No id returned from API');
+    }
+
+    return CustomerDetail(
+      id: id,
+      name: name,
+      address: '',
+      contactNo: mobile,
+      pan: '',
+      gender: '',
+      dob: '',
+      pincode: '',
+      email: '',
+    );
+  }
+
+  List<CartDetail> getItemsForCustomer(int customerId) {
+    return _cartData.where((e) => e.customerId == customerId).toList();
+  }
+
+  // ==================== CALCULATIONS ====================
+
+  Map<String, dynamic> _calculateTotals() {
+    final selected = _cartData
+        .where((item) => _selectedItems.contains(item.id))
         .toList();
 
-    return list;
+    return {
+      'totalQty': selected.fold<int>(
+        0,
+        (sum, item) => sum + (item.productQty ?? 0),
+      ),
+      'totalAmtMin': selected.fold<double>(
+        0,
+        (sum, item) => sum + (item.productAmtMin ?? 0),
+      ),
+      'totalAmtMax': selected.fold<double>(
+        0,
+        (sum, item) => sum + (item.productAmtMax ?? 0),
+      ),
+    };
   }
 }
