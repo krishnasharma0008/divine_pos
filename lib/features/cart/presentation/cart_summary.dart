@@ -51,6 +51,9 @@ class CartSummaryPanel extends StatelessWidget {
       }
     }
 
+    //debugPrint("Base Subtotal: $baseSubtotal");
+    debugPrint("Engraving Total: $engravingTotal");
+
     // 3) Compute taxes
     // final engravingGst = engravingTotal * (engravingGstPercent / 100);
     // final gst = baseSubtotal * (gstPercent / 100);
@@ -397,7 +400,8 @@ class CartSummaryPanel extends StatelessWidget {
           SizedBox(height: 16 * fem),
           _buildPriceRow(
             'Engraving Cost',
-            fmt(TaxConstants.engravingCostPerItem),
+            //fmt(TaxConstants.engravingCostPerItem),
+            fmt(engravingCost),
           ),
           SizedBox(height: 16),
           _buildPriceRowWithBadge(
