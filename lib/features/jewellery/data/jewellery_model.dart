@@ -1,6 +1,7 @@
 class Jewellery {
   final int itemId;
   final String itemNumber;
+  final String? designno;
   final String? oldVariant;
   final String productCategory;
   final String? solitaireSlab;
@@ -16,6 +17,7 @@ class Jewellery {
   Jewellery({
     required this.itemId,
     required this.itemNumber,
+    this.designno,
     this.oldVariant,
     required this.productCategory,
     this.solitaireSlab,
@@ -55,6 +57,7 @@ class Jewellery {
           : int.tryParse(json['Item_id']?.toString() ?? '') ?? 0,
 
       itemNumber: json['item_number']?.toString() ?? '',
+      designno: json['designno']?.toString() ?? '',
       oldVariant: json['old_varient']?.toString(),
       productCategory: json['product_category']?.toString() ?? '',
       solitaireSlab: json['solitaire_slab']?.toString(),
@@ -75,6 +78,7 @@ class Jewellery {
   Map<String, dynamic> toJson() => {
     'Item_id': itemId,
     'item_number': itemNumber,
+    'designno': designno,
     'old_varient': oldVariant,
     'product_category': productCategory,
     'solitaire_slab': solitaireSlab,

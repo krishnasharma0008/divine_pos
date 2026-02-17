@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
@@ -164,22 +165,27 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   Future<void> createCart(CartDetail item) async {
     final current = state.value ?? _cartData;
 
-    // Optimistic update
-    final tempList = [...current, item];
-    _cartData = tempList;
-    state = AsyncData(tempList);
+    // ✅ optimistic update
+    final updated = [...current, item];
+    _cartData = updated;
+    state = AsyncData(updated);
+
+    debugPrint('Creating cart item: ${item.toJson()}');
 
     try {
-      final res = await dio.post(ApiEndPoint.create_cart, data: item.toJson());
-      final data = res.data['data'] as Map<String, dynamic>;
-      final created = CartDetail.fromJson(data);
+      final res = await dio.post(
+        ApiEndPoint.create_cart,
+        data: [item.toJson()],
+      );
 
-      // Replace with server version
-      final updated = [...current, created];
-      _cartData = updated;
-      state = AsyncData(updated);
+      if (res.data['success'] != true) {
+        throw Exception(res.data['msg']);
+      }
+
+      // ✅ DONE
+      // don't modify state again
     } catch (e, st) {
-      // Rollback on failure
+      // rollback only if API fails
       _cartData = current;
       state = AsyncError(e, st);
       rethrow;

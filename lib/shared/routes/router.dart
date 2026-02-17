@@ -32,6 +32,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ),
 
     redirect: (context, state) {
+      print('REDIRECT FIRED: ${state.uri} | authStatus: ${authState.status}');
       if (authState.status == AuthStatus.loading) {
         return '/loading';
       }
@@ -138,7 +139,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         //builder: (context, state) => const ProfileScreen(),
         builder: (context, state) => const DivineFeedbackScreen(),
       ),
-       GoRoute(
+      GoRoute(
         path: RoutePages.cart.routePath,
         name: RoutePages.cart.routeName,
         builder: (context, state) => CartScreen(),

@@ -10,6 +10,7 @@ class DetailsScreen extends StatefulWidget {
   final String? caratRange;
   final String? colorRange;
   final String? clarityRange;
+  final int? soltpcs;
   final String? ringSize;
   //const DetailsScreen({super.key, required this.r});
   final String metalColors; // ✅ from database
@@ -35,6 +36,7 @@ class DetailsScreen extends StatefulWidget {
     this.caratRange,
     this.colorRange,
     this.clarityRange,
+    this.soltpcs,
     this.ringSize,
     required this.metalColors,
     required this.metalPurity,
@@ -96,6 +98,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   caratRange: widget.caratRange,
                   colorRange: widget.colorRange,
                   clarityRange: widget.clarityRange,
+                  soltpcs: widget.soltpcs,
                   ringSize: widget.ringSize,
                   metalColors: widget.metalColors,
                   metalPurity: widget.metalPurity,
@@ -253,6 +256,7 @@ class ProductDetailsTab extends StatelessWidget {
   final String? caratRange;
   final String? colorRange;
   final String? clarityRange;
+  final int? soltpcs;
   final String? ringSize;
   final String metalColors; // ✅ from database
   final String metalPurity;
@@ -269,6 +273,7 @@ class ProductDetailsTab extends StatelessWidget {
     this.caratRange,
     this.colorRange,
     this.clarityRange,
+    this.soltpcs,
     this.ringSize,
     required this.metalColors,
     required this.metalPurity,
@@ -309,11 +314,31 @@ class ProductDetailsTab extends StatelessWidget {
   String _buildSolitaireLine() {
     //final price = '₹${caratRange ?? '57,900'}';
     final carat = caratRange ?? '0.15–0.18 ct';
-    final color = colorRange ?? 'F-G';
-    final clarity = clarityRange ?? 'VVS1-VS1';
+    final color =
+        () {
+          final parts = (colorRange ?? '')
+              .split('-')
+              .map((e) => e.trim())
+              .toList();
+          if (parts.length < 2) return colorRange;
+          return '${parts.last}-${parts.first}';
+        }() ??
+        'F-G';
+    final clarity =
+        () {
+          final parts = (clarityRange ?? '')
+              .split('-')
+              .map((e) => e.trim())
+              .toList();
+          if (parts.length < 2) return clarityRange;
+          return '${parts.last}-${parts.first}';
+        }() ??
+        'VVS1-VS1';
+    final solpcs = soltpcs ?? 1;
+    ;
     //final ringsize = 'Size 12';
 
-    return '$Shape $carat $color $clarity '; //(2 Pcs)';
+    return '$Shape $carat $color $clarity  ( $solpcs Pcs )';
   }
 }
 

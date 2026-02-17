@@ -286,6 +286,26 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
 }
 
 /// IMAGE
+// class _Image extends StatelessWidget {
+//   final String? url;
+
+//   const _Image(this.url);
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return ClipRRect(
+//       borderRadius: BorderRadius.circular(16),
+//       child: SizedBox(
+//         width: 180,
+//         height: 180,
+//         child: url != null && url!.isNotEmpty
+//             ? Image.network(url!, fit: BoxFit.cover)
+//             : Image.asset('assets/no_image.jpg'),
+//       ),
+//     );
+//   }
+// }
+
 class _Image extends StatelessWidget {
   final String? url;
 
@@ -293,14 +313,40 @@ class _Image extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //debugPrint('Cart image URL: "$url"');
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: SizedBox(
         width: 180,
         height: 180,
         child: url != null && url!.isNotEmpty
-            ? Image.network(url!, fit: BoxFit.cover)
-            : Image.asset('assets/no_image.jpg'),
+            ? Image.network(
+                url!,
+                fit: BoxFit.cover,
+                // ✅ Show fallback while loading
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: const Color(0xFFF5F5F5),
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                },
+                // ✅ Show fallback on any error (404, malformed URL, network fail)
+                errorBuilder: (context, error, stackTrace) {
+                  //debugPrint('Image load error: $error');
+                  return Image.asset(
+                    'assets/jewellery/No_Image_Available.jpg',
+                    fit: BoxFit.cover,
+                  );
+                },
+              )
+            : Image.asset(
+                'assets/jewellery/No_Image_Available.jpg',
+                fit: BoxFit.cover,
+              ),
       ),
     );
   }

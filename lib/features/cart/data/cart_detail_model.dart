@@ -1,5 +1,23 @@
+int _i(dynamic v) {
+  if (v == null) return 0;
+  if (v is int) return v;
+  if (v is double) return v.toInt();
+  return int.tryParse(v.toString()) ?? 0;
+}
+
+double _d(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is double) return v;
+  if (v is int) return v.toDouble();
+  return double.tryParse(v.toString()) ?? 0.0;
+}
+
+String? _s(dynamic v) => v?.toString();
+
 class CartDetail {
   final int? id;
+  // final String? username; // 🔥 NEW (UI ONLY
+  // final String? orderFrom; // 🔥 NEW (UI ONLY)
   final String? orderFor;
   final int? customerId;
   final String? customerCode;
@@ -13,6 +31,7 @@ class CartDetail {
   final String? expDlvDate;
   final String? oldVarient;
   final String? productCode;
+  final String? designno;
   final int? solitairePcs;
   final int? productQty;
   final double? productAmtMin;
@@ -52,6 +71,8 @@ class CartDetail {
 
   const CartDetail({
     this.id,
+    // this.username, // 🔥 NEW (UI ONLY)
+    // this.orderFrom, // 🔥 NEW (UI ONLY)
     this.orderFor,
     this.customerId,
     this.customerCode,
@@ -65,6 +86,7 @@ class CartDetail {
     this.expDlvDate,
     this.oldVarient,
     this.productCode,
+    this.designno,
     this.solitairePcs,
     this.productQty,
     this.productAmtMin,
@@ -103,59 +125,63 @@ class CartDetail {
 
   factory CartDetail.fromJson(Map<String, dynamic> json) {
     return CartDetail(
-      id: json['id'] as int?,
-      orderFor: json['order_for'] as String?,
-      customerId: json['customer_id'] as int?,
-      customerCode: json['customer_code'] as String?,
-      customerName: json['customer_name'] as String?,
-      customerBranch: json['customer_branch'] as String?,
-      orderType: json['order_type'] as String?,
-      productType: json['product_type'] as String?,
-      productCategory: json['product_category'] as String?,
-      productSubCategory: json['product_sub_category'] as String?,
-      collection: json['collection'] as String?,
-      expDlvDate: json['exp_dlv_date'] as String?,
-      oldVarient: json['old_varient'] as String?,
-      productCode: json['product_code'] as String?,
-      solitairePcs: json['solitaire_pcs'] as int?,
-      productQty: json['product_qty'] as int?,
-      productAmtMin: (json['product_amt_min'] as num?)?.toDouble(),
-      productAmtMax: (json['product_amt_max'] as num?)?.toDouble(),
-      solitaireShape: json['solitaire_shape'] as String?,
-      solitaireSlab: json['solitaire_slab'] as String?,
-      solitaireColor: json['solitaire_color'] as String?,
-      solitaireQuality: json['solitaire_quality'] as String?,
-      solitairePremSize: json['solitaire_prem_size'] as String?,
-      solitairePremPct: (json['solitaire_prem_pct'] as num?)?.toDouble(),
-      solitaireAmtMin: (json['solitaire_amt_min'] as num?)?.toDouble(),
-      solitaireAmtMax: (json['solitaire_amt_max'] as num?)?.toDouble(),
-      metalType: json['metal_type'] as String?,
-      metalPurity: json['metal_purity'] as String?,
-      metalColor: json['metal_color'] as String?,
-      metalWeight: (json['metal_weight'] as num?)?.toDouble(),
-      metalPrice: (json['metal_price'] as num?)?.toDouble(),
-      mountAmtMin: (json['mount_amt_min'] as num?)?.toDouble(),
-      mountAmtMax: (json['mount_amt_max'] as num?)?.toDouble(),
-      sizeFrom: json['size_from'] as String?,
-      sizeTo: json['size_to'] as String?,
-      sideStonePcs: json['side_stone_pcs'] as int?,
-      sideStoneCts: (json['side_stone_cts'] as num?)?.toDouble(),
-      sideStoneColor: json['side_stone_color'] as String?,
-      sideStoneQuality: json['side_stone_quality'] as String?,
-      cartRemarks: json['cart_remarks'] as String?, //remarks,
-      orderRemarks: json['order_remarks'] as String?,
-      imageUrl: json['image_url'] as String?,
-      style: json['style'] as String?,
-      wearStyle: json['wear_style'] as String?,
-      look: json['look'] as String?,
-      portfolioType: json['portfolio_type'] as String?,
-      gender: json['gender'] as String?,
-      //engravingEnabled: remarks != null, // ✅ KEY FIX
+      id: _i(json['id']),
+      // username: _s(json['username']),
+      // orderFrom: _s(json['order_from']),
+      orderFor: _s(json['order_for']),
+      customerId: _i(json['customer_id']),
+      customerCode: _s(json['customer_code']),
+      customerName: _s(json['customer_name']),
+      customerBranch: _s(json['customer_branch']),
+      orderType: _s(json['order_type']),
+      productType: _s(json['product_type']),
+      productCategory: _s(json['product_category']),
+      productSubCategory: _s(json['product_sub_category']),
+      collection: _s(json['collection']),
+      expDlvDate: _s(json['exp_dlv_date']),
+      oldVarient: _s(json['old_varient']),
+      productCode: _s(json['product_code']),
+      designno: _s(json['designno']),
+      solitairePcs: _i(json['solitaire_pcs']),
+      productQty: _i(json['product_qty']),
+      productAmtMin: _d(json['product_amt_min']),
+      productAmtMax: _d(json['product_amt_max']),
+      solitaireShape: _s(json['solitaire_shape']),
+      solitaireSlab: _s(json['solitaire_slab']),
+      solitaireColor: _s(json['solitaire_color']),
+      solitaireQuality: _s(json['solitaire_quality']),
+      solitairePremSize: _s(json['solitaire_prem_size']),
+      solitairePremPct: _d(json['solitaire_prem_pct']),
+      solitaireAmtMin: _d(json['solitaire_amt_min']),
+      solitaireAmtMax: _d(json['solitaire_amt_max']),
+      metalType: _s(json['metal_type']),
+      metalPurity: _s(json['metal_purity']),
+      metalColor: _s(json['metal_color']),
+      metalWeight: _d(json['metal_weight']),
+      metalPrice: _d(json['metal_price']),
+      mountAmtMin: _d(json['mount_amt_min']),
+      mountAmtMax: _d(json['mount_amt_max']),
+      sizeFrom: _s(json['size_from']),
+      sizeTo: _s(json['size_to']),
+      sideStonePcs: _i(json['side_stone_pcs']),
+      sideStoneCts: _d(json['side_stone_cts']),
+      sideStoneColor: _s(json['side_stone_color']),
+      sideStoneQuality: _s(json['side_stone_quality']),
+      cartRemarks: _s(json['cart_remarks']),
+      orderRemarks: _s(json['order_remarks']),
+      imageUrl: _s(json['image_url']),
+      style: _s(json['style']),
+      wearStyle: _s(json['wear_style']),
+      look: _s(json['look']),
+      portfolioType: _s(json['portfolio_type']),
+      gender: _s(json['gender']),
     );
   }
 
   CartDetail copyWith({
     int? id,
+    // String? username, // 🔥 NEW (UI ONLY
+    // String? orderFrom, // 🔥 NEW (UI ONLY)
     String? orderFor,
     int? customerId,
     String? customerCode,
@@ -169,6 +195,7 @@ class CartDetail {
     String? expDlvDate,
     String? oldVarient,
     String? productCode,
+    String? designno,
     int? solitairePcs,
     int? productQty,
     double? productAmtMin,
@@ -205,6 +232,8 @@ class CartDetail {
   }) {
     return CartDetail(
       id: id ?? this.id,
+      // username: username ?? this.username, // 🔥 NEW (UI ONLY
+      // orderFrom: orderFrom ?? this.orderFrom, // 🔥 NEW (UI ONLY)
       orderFor: orderFor ?? this.orderFor,
       customerId: customerId ?? this.customerId,
       customerCode: customerCode ?? this.customerCode,
@@ -218,6 +247,7 @@ class CartDetail {
       expDlvDate: expDlvDate ?? this.expDlvDate,
       oldVarient: oldVarient ?? this.oldVarient,
       productCode: productCode ?? this.productCode,
+      designno: designno ?? this.designno,
       solitairePcs: solitairePcs ?? this.solitairePcs,
       productQty: productQty ?? this.productQty,
       productAmtMin: productAmtMin ?? this.productAmtMin,
@@ -255,8 +285,10 @@ class CartDetail {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final map = <String, dynamic>{
       'id': id,
+      // 'username': username, // 🔥 NEW (UI ONLY
+      // 'order_from': orderFrom, // 🔥 NEW (UI ONLY
       'order_for': orderFor,
       'customer_id': customerId,
       'customer_code': customerCode,
@@ -270,6 +302,7 @@ class CartDetail {
       'exp_dlv_date': expDlvDate,
       'old_varient': oldVarient,
       'product_code': productCode,
+      'designno': designno,
       'solitaire_pcs': solitairePcs,
       'product_qty': productQty,
       'product_amt_min': productAmtMin,
@@ -304,5 +337,8 @@ class CartDetail {
       'portfolio_type': portfolioType,
       'gender': gender,
     };
+
+    map.removeWhere((_, v) => v == null || (v is String && v.isEmpty));
+    return map;
   }
 }

@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 import '../data/jewellery_detail_model.dart';
 import '../data/variant_model.dart';
 import '../data/bom_model.dart';
@@ -238,7 +240,7 @@ class JewelleryCalculationService {
   calculateSolitaireAmountRangeLocal({
     required JewelleryDetail detail,
     required int qty,
-    required double premiumPct,
+    //required double premiumPct,
     required Future<double> Function({
       required String itemGroup,
       String? slab,
@@ -329,21 +331,21 @@ class JewelleryCalculationService {
           userMinCt != null && (userMinCt - bomCaratFrom).abs() < 0.0001;
 
       final fromColor =
-          isUserSlab && userColorTo != null && userColorTo.isNotEmpty
-          ? userColorTo
-          : bomColorMin;
-      final toColor =
           isUserSlab && userColorFrom != null && userColorFrom.isNotEmpty
           ? userColorFrom
+          : bomColorMin;
+      final toColor =
+          isUserSlab && userColorTo != null && userColorTo.isNotEmpty
+          ? userColorTo
           : bomColorMax;
 
       final fromClarity =
-          isUserSlab && userClarityTo != null && userClarityTo.isNotEmpty
-          ? userClarityTo
-          : bomClarityMin;
-      final toClarity =
           isUserSlab && userClarityFrom != null && userClarityFrom.isNotEmpty
           ? userClarityFrom
+          : bomClarityMin;
+      final toClarity =
+          isUserSlab && userClarityTo != null && userClarityTo.isNotEmpty
+          ? userClarityTo
           : bomClarityMax;
 
       if (fromColor.isEmpty ||
@@ -362,6 +364,9 @@ class JewelleryCalculationService {
         color: JewelleryCalculationService.getSolitaireColor(fromColor),
         quality: fromClarity,
       );
+      // debugPrint(
+      //   'Fetched priceFrom for shape=$shape, carat=$bomCaratFrom, color=$fromColor, clarity=$fromClarity: $priceFrom',
+      // );
 
       final priceTo = await fetchPrice(
         itemGroup: 'SOLITAIRE',
@@ -370,12 +375,21 @@ class JewelleryCalculationService {
         color: JewelleryCalculationService.getSolitaireColor(toColor),
         quality: toClarity,
       );
+      // debugPrint(
+      //   'Fetched priceTo for shape=$shape, carat=$bomCaratTo, color=$toColor, clarity=$toClarity: $priceTo',
+      // );
 
-      final premiumMinPrice = priceFrom + priceFrom * (premiumPct / 100);
-      final premiumMaxPrice = priceTo + priceTo * (premiumPct / 100);
+      // final premiumMinPrice = priceFrom; // + priceFrom * (premiumPct / 100);
+      // final premiumMaxPrice = priceTo; // + priceTo * (premiumPct / 100);
 
-      amountFrom += premiumMinPrice * bomCaratFrom * qty * pcs;
-      amountTo += premiumMaxPrice * bomCaratTo * qty * pcs;
+      amountFrom += priceFrom * bomCaratFrom * qty * pcs;
+      debugPrint(
+        'BOM Row: shape=$shape, caratFrom=$bomCaratFrom, pcs=$pcs, priceFrom=$priceFrom, amountFrom=${priceFrom * bomCaratFrom * qty * pcs}',
+      );
+      amountTo += priceTo * bomCaratTo * qty * pcs;
+      debugPrint(
+        'BOM Row: shape=$shape, caratTo=$bomCaratTo, pcs=$pcs, priceTo=$priceTo,  amountTo=${priceTo * bomCaratTo * qty * pcs}',
+      );
     }
 
     return (solFrom: amountFrom, solTo: amountTo);

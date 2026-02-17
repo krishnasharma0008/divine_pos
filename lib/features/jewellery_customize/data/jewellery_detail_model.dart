@@ -5,6 +5,7 @@ import 'bom_model.dart';
 class JewelleryDetail {
   final int itemId;
   final String itemNumber;
+  final String? designno;
   final String productName;
 
   final String productCategory;
@@ -52,6 +53,7 @@ class JewelleryDetail {
   JewelleryDetail({
     required this.itemId,
     required this.itemNumber,
+    required this.designno,
     required this.productName,
     required this.productCategory,
     required this.productSubCategory,
@@ -90,6 +92,7 @@ class JewelleryDetail {
     return JewelleryDetail(
       itemId: json['Item_id'] ?? 0,
       itemNumber: json['Item_number'] ?? '',
+      designno: json['designno'] ?? '',
       productName: json['Product_name'] ?? '',
 
       productCategory: json['Product_category'] ?? '',

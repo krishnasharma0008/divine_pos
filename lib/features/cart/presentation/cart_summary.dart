@@ -73,7 +73,7 @@ class CartSummaryPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              _buildHeader(fem),
+              _buildHeader(fem, context),
 
               // Scrollable products (Flexible instead of Expanded)
               SizedBox(
@@ -175,39 +175,44 @@ class CartSummaryPanel extends StatelessWidget {
     return 'From ₹${min!.toStringAsFixed(0)}';
   }
 
-  Widget _buildHeader(double fem) {
+  Widget _buildHeader(double fem, BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Row(
         children: [
+          // Icon container
           Container(
-            width: 40 * fem,
-            height: 40 * fem,
+            width: 39.99,
+            height: 39.99,
+            padding: const EdgeInsets.only(right: 0.01),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
+                begin: Alignment(0.0, 0.0),
+                end: Alignment(1.0, 1.0),
                 colors: [Color(0xFF90DCD0), Color(0xFFBEE4DD)],
               ),
-              borderRadius: BorderRadius.circular(14 * fem),
-              boxShadow: [
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: const [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10 * fem,
-                  offset: const Offset(0, 6),
+                  color: Color(0x19000000),
+                  blurRadius: 6,
+                  offset: Offset(0, 4),
+                  spreadRadius: -4,
+                ),
+                BoxShadow(
+                  color: Color(0x19000000),
+                  blurRadius: 15,
+                  offset: Offset(0, 10),
+                  spreadRadius: -3,
                 ),
               ],
             ),
-            //child: const Icon(Icons.all_inbox, color: Colors.white, size: 20),
-            child: Container(
-              width: 40 * fem,
-              height: 40 * fem,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFD2D2D2)),
-              ),
-              child: Center(
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
                 child: Image.asset(
-                  "assets/cart/cart_summary2x.png",
+                  'assets/cart/cart_summary.png',
                   fit: BoxFit.contain,
                 ),
               ),
@@ -237,13 +242,28 @@ class CartSummaryPanel extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            width: 32 * fem,
-            height: 32 * fem,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16 * fem),
+          // Container(
+          //   width: 32 * fem,
+          //   height: 32 * fem,
+          //   decoration: BoxDecoration(
+          //     borderRadius: BorderRadius.circular(16 * fem),
+          //   ),
+          //   child: Icon(Icons.close, size: 20 * fem, color: Color(0xFF61738D)),
+          // ),
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(), // dialog close
+            child: Container(
+              width: 32 * fem,
+              height: 32 * fem,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16 * fem),
+              ),
+              child: Icon(
+                Icons.close,
+                size: 20 * fem,
+                color: const Color(0xFF61738D),
+              ),
             ),
-            child: Icon(Icons.close, size: 20 * fem, color: Color(0xFF61738D)),
           ),
         ],
       ),

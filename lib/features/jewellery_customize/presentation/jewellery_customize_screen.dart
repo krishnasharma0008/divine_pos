@@ -54,6 +54,35 @@ class _JewelleryCustomiseScreenState
     });
   }
 
+  // void _onAddToCart(
+  //   BuildContext context,
+  //   WidgetRef ref, {
+  //   required CustomerDetail customer,
+  // }) async {
+  //   try {
+  //     final notifier = ref.read(jewelleryCalcProvider.notifier);
+
+  //     final cartItem = await notifier.buildCartPayload(customer: customer);
+
+  //     if (cartItem == null) return;
+
+  //     await ref.read(cartNotifierProvider.notifier).createCart(cartItem);
+  //     print('context.mounted: ${context.mounted}');
+  //     if (context.mounted) {
+  //       print('navigating to cart');
+  //       context.pushNamed(RoutePages.cart.routeName);
+  //     }
+  //   } catch (e) {
+  //     final message = e is Exception
+  //         ? e.toString().replaceFirst('Exception: ', '')
+  //         : 'Something went wrong';
+
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(SnackBar(content: Text(message)));
+  //   }
+  // }
+
   void _onAddToCart(
     BuildContext context,
     WidgetRef ref, {
@@ -62,23 +91,34 @@ class _JewelleryCustomiseScreenState
     try {
       final notifier = ref.read(jewelleryCalcProvider.notifier);
 
+      print('Step 1: building cart payload');
       final cartItem = await notifier.buildCartPayload(customer: customer);
+      print('Step 2: cartItem = ${cartItem?.toJson()}');
 
-      if (cartItem == null) return;
-
-      await ref.read(cartNotifierProvider.notifier).createCart(cartItem);
-
-      if (context.mounted) {
-        context.pushNamed(RoutePages.cart.routeName);
+      if (cartItem == null) {
+        print('Step 3: cartItem is NULL — returning early');
+        return;
       }
-    } catch (e) {
-      final message = e is Exception
-          ? e.toString().replaceFirst('Exception: ', '')
-          : 'Something went wrong';
 
+      print('Step 4: calling createCart');
+      await ref.read(cartNotifierProvider.notifier).createCart(cartItem);
+      print('Step 5: createCart done, mounted = ${context.mounted}');
+
+      if (!context.mounted) {
+        print('Step 6: context NOT mounted — cannot navigate');
+        return;
+      }
+
+      print('Step 7: attempting navigation');
+      context.pushNamed(RoutePages.cart.routeName);
+      print('Step 8: pushNamed called successfully');
+    } catch (e, st) {
+      print('ERROR: $e');
+      print('STACKTRACE: $st');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -226,6 +266,7 @@ class _JewelleryCustomiseScreenState
                                     caratRange: calc.caratRange,
                                     colorRange: calc.colorRange,
                                     clarityRange: calc.clarityRange,
+                                    soltpcs: calc.totalSolitairePcs ?? 0,
                                     ringSize: calc.ringSize,
                                     totalMetalWeight:
                                         calc.netMetalWeight ?? 0.0,

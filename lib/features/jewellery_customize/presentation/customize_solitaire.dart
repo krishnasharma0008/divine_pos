@@ -342,7 +342,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
             ),
           ),
 
-          // Body + bottom
+          // Body
           Expanded(
             child: Column(
               children: [
@@ -600,7 +600,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                width: 300 * fem,
+                                //width: 300 * fem,
                                 height: 110 * fem,
                                 decoration: ShapeDecoration(
                                   shape: RoundedRectangleBorder(
@@ -707,156 +707,149 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                     ),
                   ),
                 ),
-
-                // bottom bar
-                Container(
-                  height: 82 * fem,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFFBEE4DD),
-                    shape: RoundedRectangleBorder(
-                      side: const BorderSide(color: Color(0xFF90DCD0)),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(25 * fem),
-                        topRight: Radius.circular(25 * fem),
-                      ),
-                    ),
+              ],
+            ),
+          ),
+          // bottom bar with Apply button
+          // हमेशा visible bottom bar
+          SafeArea(
+            // important
+            top: false,
+            child: Container(
+              height: 82 * fem,
+              decoration: ShapeDecoration(
+                color: const Color(0xFFBEE4DD),
+                shape: RoundedRectangleBorder(
+                  side: const BorderSide(color: Color(0xFF90DCD0)),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25 * fem),
+                    topRight: Radius.circular(25 * fem),
                   ),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      43 * fem,
-                      20 * fem,
-                      37 * fem,
-                      10 * fem,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (showPriceRange) ...[
-                          Row(
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  43 * fem,
+                  20 * fem,
+                  37 * fem,
+                  10 * fem,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (showPriceRange) ...[
+                      Row(
+                        children: [
+                          MyText(
+                            double.parse(
+                              priceSteps[_priceStartIndex].replaceAll(',', ''),
+                            ).inRupeesFormat(),
+                            style: TextStyle(
+                              fontSize: 20 * fem,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: 8 * fem),
+                          MyText('-', style: TextStyle(fontSize: 20 * fem)),
+                          SizedBox(width: 8 * fem),
+                          MyText(
+                            double.parse(
+                              priceSteps[_priceEndIndex].replaceAll(',', ''),
+                            ).inRupeesFormat(),
+                            style: TextStyle(
+                              fontSize: 20 * fem,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                    ],
+                    SizedBox(
+                      height: 52 * fem,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20 * fem),
+                        onTap: () {
+                          Navigator.of(context).pop(
+                            JewelleryFilter(
+                              price: PriceRangeFilter(
+                                startValue: priceSteps[_priceStartIndex],
+                                endValue: priceSteps[_priceEndIndex],
+                                startIndex: _priceStartIndex,
+                                endIndex: _priceEndIndex,
+                              ),
+                              carat: CaratRangeFilter(
+                                startValue: caratSteps[_caratStartIndex],
+                                endValue: caratSteps[_caratEndIndex],
+                                startIndex: _caratStartIndex,
+                                endIndex: _caratEndIndex,
+                              ),
+                              color: ColorRangeFilter(
+                                start:
+                                    colorOptions[_colorStartIndex.clamp(
+                                      0,
+                                      colorOptions.length - 1,
+                                    )],
+                                end:
+                                    colorOptions[_colorEndIndex.clamp(
+                                      0,
+                                      colorOptions.length - 1,
+                                    )],
+                                startIndex: _colorStartIndex,
+                                endIndex: _colorEndIndex,
+                              ),
+                              clarity: ClarityRangeFilter(
+                                start:
+                                    clarityOptions[_clarityStartIndex.clamp(
+                                      0,
+                                      clarityOptions.length - 1,
+                                    )],
+                                end:
+                                    clarityOptions[_clarityEndIndex.clamp(
+                                      0,
+                                      clarityOptions.length - 1,
+                                    )],
+                                startIndex: _clarityStartIndex,
+                                endIndex: _clarityEndIndex,
+                              ),
+                              ringSize: _selectedRingSize,
+                              metalColor: selectedMetalColor,
+                              metalPurity: selectedMetalPurity,
+                              sideDiamondQuality: selectedSideDiamondQuality,
+                              // चाहो तो multiVariantId भी filter में जोड़ो
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 30 * fem),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFFACA584)),
+                            borderRadius: BorderRadius.circular(20 * fem),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              MyText(
-                                double.parse(
-                                  priceSteps[_priceStartIndex].replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ).inRupeesFormat(),
-                                style: TextStyle(
-                                  fontSize: 20 * fem,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              SvgPicture.asset(
+                                'assets/icons/apply_customise.svg',
+                                width: 20 * fem,
                               ),
                               SizedBox(width: 8 * fem),
-                              MyText('-', style: TextStyle(fontSize: 20 * fem)),
-                              SizedBox(width: 8 * fem),
                               MyText(
-                                double.parse(
-                                  priceSteps[_priceEndIndex].replaceAll(
-                                    ',',
-                                    '',
-                                  ),
-                                ).inRupeesFormat(),
+                                'Apply Customization',
                                 style: TextStyle(
-                                  fontSize: 20 * fem,
+                                  fontSize: 16 * fem,
                                   fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF6C5022),
                                 ),
                               ),
                             ],
                           ),
-                          const Spacer(),
-                        ],
-                        SizedBox(
-                          height: 52 * fem,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20 * fem),
-                            onTap: () {
-                              Navigator.of(context).pop(
-                                JewelleryFilter(
-                                  price: PriceRangeFilter(
-                                    startValue: priceSteps[_priceStartIndex],
-                                    endValue: priceSteps[_priceEndIndex],
-                                    startIndex: _priceStartIndex,
-                                    endIndex: _priceEndIndex,
-                                  ),
-                                  carat: CaratRangeFilter(
-                                    startValue: caratSteps[_caratStartIndex],
-                                    endValue: caratSteps[_caratEndIndex],
-                                    startIndex: _caratStartIndex,
-                                    endIndex: _caratEndIndex,
-                                  ),
-                                  color: ColorRangeFilter(
-                                    start:
-                                        colorOptions[_colorStartIndex.clamp(
-                                          0,
-                                          colorOptions.length - 1,
-                                        )],
-                                    end:
-                                        colorOptions[_colorEndIndex.clamp(
-                                          0,
-                                          colorOptions.length - 1,
-                                        )],
-                                    startIndex: _colorStartIndex,
-                                    endIndex: _colorEndIndex,
-                                  ),
-                                  clarity: ClarityRangeFilter(
-                                    start:
-                                        clarityOptions[_clarityStartIndex.clamp(
-                                          0,
-                                          clarityOptions.length - 1,
-                                        )],
-                                    end:
-                                        clarityOptions[_clarityEndIndex.clamp(
-                                          0,
-                                          clarityOptions.length - 1,
-                                        )],
-                                    startIndex: _clarityStartIndex,
-                                    endIndex: _clarityEndIndex,
-                                  ),
-                                  ringSize: _selectedRingSize,
-                                  metalColor: selectedMetalColor,
-                                  metalPurity: selectedMetalPurity,
-                                  sideDiamondQuality:
-                                      selectedSideDiamondQuality,
-                                  // चाहो तो multiVariantId भी filter में जोड़ो
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 30 * fem,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: const Color(0xFFACA584),
-                                ),
-                                borderRadius: BorderRadius.circular(20 * fem),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SvgPicture.asset(
-                                    'assets/icons/apply_customise.svg',
-                                    width: 20 * fem,
-                                  ),
-                                  SizedBox(width: 8 * fem),
-                                  MyText(
-                                    'Apply Customization',
-                                    style: TextStyle(
-                                      fontSize: 16 * fem,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF6C5022),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ],

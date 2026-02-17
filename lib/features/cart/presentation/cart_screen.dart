@@ -84,10 +84,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             ref.watch(lastCustomerProvider);
 
         final orderProducts = items
-            .where((e) => e.orderType != 'READY')
+            .where((e) => e.productCode == e.designno)
             .toList();
         final readyProducts = items
-            .where((e) => e.orderType == 'READY')
+            //.where((e) => e.orderType == 'READY')
+            .where((e) => e.productCode != e.designno)
             .toList();
         final subtotal = _calculateSubtotal(items);
 

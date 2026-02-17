@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/utils/http_client.dart';
@@ -11,10 +12,9 @@ import '../data/jewellery_detail_model.dart';
 
 /// Provider
 final jewelleryDetailProvider =
-    AsyncNotifierProvider.autoDispose<
-      JewelleryDetailNotifier,
-      JewelleryDetail?
-    >(JewelleryDetailNotifier.new);
+    AsyncNotifierProvider<JewelleryDetailNotifier, JewelleryDetail?>(
+      JewelleryDetailNotifier.new,
+    );
 
 class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
   @override
@@ -47,7 +47,7 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
                 throw TimeoutException('Request timed out after 15s'),
           );
 
-      //debugPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
+      debugPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
 
       if (response.statusCode != HttpStatus.ok) {
         throw HttpException(
@@ -70,6 +70,47 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
 
       return JewelleryDetail.fromJson(data);
     });
+  }
+
+  Future<JewelleryDetail?> fetchDetail(
+    String productCode,
+    String lyingwith,
+  ) async {
+    state = const AsyncLoading();
+
+    final dio = ref.read(httpClientProvider);
+
+    final response = await dio
+        .post(
+          ApiEndPoint.get_jewellery_Prodct,
+          data: {'product_code': productCode, 'laying_with': lyingwith},
+        )
+        .timeout(
+          const Duration(seconds: 15),
+          onTimeout: () =>
+              throw TimeoutException('Request timed out after 15s'),
+        );
+
+    if (response.statusCode != HttpStatus.ok) {
+      throw HttpException(
+        'HTTP ${response.statusCode}: ${response.statusMessage}',
+      );
+    }
+
+    final body = response.data;
+    //debugPrint('Data : $body');
+
+    if (body == null || body['success'] != true) {
+      throw Exception('Invalid response from server');
+    }
+
+    final data = body['data'];
+
+    if (data == null) {
+      throw Exception('Jewellery detail not found');
+    }
+
+    return JewelleryDetail.fromJson(data);
   }
 
   /// Fetch solitaire price (single API call)
@@ -108,6 +149,39 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
       return price.toDouble();
     }
 
+    throw Exception('Invalid price response: $body');
+  }
+
+  // ✅ Static — safe to call from anywhere, no ref dependency
+  static Future<double> fetchPriceStatic({
+    required Dio dio,
+    required String itemGroup,
+    String? slab,
+    String? shape,
+    String? color,
+    String? quality,
+  }) async {
+    final response = await dio.post(
+      ApiEndPoint.get_price,
+      data: {
+        'itemgroup': itemGroup,
+        'weight': (slab != null && slab.isNotEmpty)
+            ? double.tryParse(slab)
+            : null,
+        'shape': (shape == null || shape.isEmpty) ? null : shape,
+        'color': color,
+        'quality': quality,
+      },
+    );
+    if (response.statusCode != HttpStatus.ok) {
+      throw HttpException('Failed to fetch price');
+    }
+    final body = response.data;
+    if (body == null || body['success'] != true) {
+      throw Exception('Invalid price response');
+    }
+    final price = body['price'];
+    if (price is num) return price.toDouble();
     throw Exception('Invalid price response: $body');
   }
 }

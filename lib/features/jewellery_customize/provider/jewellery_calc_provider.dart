@@ -75,10 +75,6 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     String? color,
     String? quality,
   }) {
-    debugPrint(
-      'Fetching price for $itemGroup with slab: $slab, shape: $shape, color: $color, quality: $quality',
-    );
-
     return ref
         .read(jewelleryDetailProvider.notifier)
         .fetchPrice(
@@ -297,25 +293,32 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       itemGroup: 'SOLITAIRE',
       slab: minCt.toStringAsFixed(2),
       shape: shapeCode,
-      color: selectedColorFrom,
+      color: JewelleryCalculationService.getSolitaireColor(selectedColorFrom),
       quality: selectedClarityFrom,
     );
 
+    debugPrint(
+      'Fetching price for SOLITAIRE with slab: $minCt, shape: $shapeCode, color: $selectedColorFrom, quality: $selectedClarityFrom => $rateFromPerCtRaw',
+    );
     final double rateToPerCtRaw = await _fetchPrice(
       itemGroup: 'SOLITAIRE',
       slab: maxCt.toStringAsFixed(2),
       shape: shapeCode,
-      color: selectedColorTo,
+      color: JewelleryCalculationService.getSolitaireColor(selectedColorTo),
       quality: selectedClarityTo,
     );
 
+    debugPrint(
+      'Fetching price for SOLITAIRE with slab: $maxCt, shape: $shapeCode, color: $selectedColorTo, quality: $selectedClarityTo => $rateToPerCtRaw',
+    );
+
     // 9) PREMIUM
-    final double premiumPct = 0.00; // currently 0, can be made dynamic later
+    //final double premiumPct = 0.00; // currently 0, can be made dynamic later
 
     final double rateFromWithPremium =
-        rateFromPerCtRaw + rateFromPerCtRaw * (premiumPct / 100);
+        rateFromPerCtRaw; // + rateFromPerCtRaw * (premiumPct / 100);
     final double rateToWithPremium =
-        rateToPerCtRaw + rateToPerCtRaw * (premiumPct / 100);
+        rateToPerCtRaw; // + rateToPerCtRaw * (premiumPct / 100);
 
     // 10) MULTI‑SIZE OR SINGLE‑SIZE SOLITAIRE
     final int rowCount = JewelleryCalculationService.getSolitaireRowCount(
@@ -332,7 +335,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
           await JewelleryCalculationService.calculateSolitaireAmountRangeLocal(
             detail: detail,
             qty: current.selectedQty,
-            premiumPct: premiumPct,
+            //premiumPct: premiumPct,
             fetchPrice:
                 ({
                   required String itemGroup,
@@ -486,13 +489,6 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
 
   //customer branch
   Future<String> _resolveCustomerBranch() async {
-    final filterState = ref.read(filterProvider);
-
-    final selectedBranch = filterState.productBranch;
-    if (selectedBranch?.isNotEmpty == true) {
-      return selectedBranch!;
-    }
-
     final auth = ref.read(authProvider);
     final pjcode = auth.user?.pjcode ?? '';
     final storeState = ref.read(storeProvider);
@@ -543,55 +539,91 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       throw Exception('Customise solitaire to add in cart');
     }
 
+    debugPrint('Customer dETAILS: ${customer.name}, ${customer.id}');
+    final branch = await _resolveCustomerBranch();
+    //final dt = DateTime.now().add(const Duration(days: 15));
+    final dt = DateTime.now().add(const Duration(days: 15)).toUtc();
+    // final expDate =
+    //     '${dt.year.toString().padLeft(4, '0')}-'
+    //     '${dt.month.toString().padLeft(2, '0')}-'
+    //     '${dt.day.toString().padLeft(2, '0')}';
+
     /// ---------- BUILD PAYLOAD (mirror JS) ----------
     return CartDetail(
+      // username: customer.name, // or login user
+      // orderFrom: 'app',
       orderFor: 'Retail Customer',
       customerId: customer.id,
       customerCode: '',
       customerName: customer.name,
-      customerBranch: await _resolveCustomerBranch(),
+      customerBranch: branch.isEmpty ? 'Mumbai HO' : branch,
       productType: 'jewellery',
-      orderType: 'rco',
+      orderType: 'RCO',
 
       productCategory: d.productCategory,
       productSubCategory: d.productSubCategory,
       collection: d.collection,
-      expDlvDate: '',
+      expDlvDate: DateTime.now()
+          .add(const Duration(days: 15))
+          .toUtc()
+          .toIso8601String(),
+
       oldVarient: d.oldVariant,
 
       productCode: d.itemNumber,
-      solitairePcs: s.totalSolitairePcs, //
-      productQty: s.selectedQty,
+      designno: d.designno,
 
-      // productAmtMin: s.approxPriceFrom ?? 0, //product_amt_min
-      // productAmtMax: s.approxPriceTo ?? 0, //product_amt_max
-      productAmtMin: d.productPrice == null || d.productPrice == 0
-          ? s.approxPriceFrom ?? 0
-          : d.productPrice,
+      solitairePcs: s.totalSolitairePcs ?? 1, //
+      productQty: s.selectedQty ?? 1,
 
-      productAmtMax: d.productPrice == null || d.productPrice == 0
-          ? s.approxPriceTo ?? 0
-          : d.productPrice,
+      productAmtMin: (d.productPrice == null || d.productPrice == 0)
+          ? (s.approxPriceFrom ?? 0).roundToDouble()
+          : d.productPrice?.toDouble(),
+
+      productAmtMax: (d.productPrice == null || d.productPrice == 0)
+          ? (s.approxPriceTo ?? 0).roundToDouble()
+          : d.productPrice?.toDouble(),
 
       solitaireShape: s.solitaireShape ?? '',
-      solitaireSlab: s.caratRange, //
-      solitaireColor: s.colorRange,
-      solitaireQuality: s.clarityRange,
-      solitairePremSize: null, // not avaiable field in customise screen
+      solitaireSlab: s.caratRange?.replaceAll('ct', '').replaceAll(' ', ''), //
+
+      solitaireColor: () {
+        final parts = (s.colorRange ?? '')
+            .split('-')
+            .map((e) => e.trim())
+            .toList();
+        if (parts.length < 2) return s.colorRange;
+        return '${parts.last}-${parts.first}';
+      }(),
+
+      solitaireQuality: () {
+        final parts = (s.clarityRange ?? '')
+            .split('-')
+            .map((e) => e.trim())
+            .toList();
+        if (parts.length < 2) return s.clarityRange;
+        return '${parts.last}-${parts.first}';
+      }(),
+      solitairePremSize: '', // not avaiable field in customise screen
       solitairePremPct: 0, // not avaiable field in customise screen
-      solitaireAmtMin: s.solitaireAmountFrom ?? 0,
-      solitaireAmtMax: s.solitaireAmountTo ?? 0,
+
+      solitaireAmtMin: (s.solitaireAmountFrom ?? 0).roundToDouble(),
+      solitaireAmtMax: (s.solitaireAmountTo ?? 0).roundToDouble(),
 
       metalType: s.selectedMetalPurity == '950PT' ? 'PLATINUM' : 'GOLD',
       metalPurity: s.selectedMetalPurity ?? '',
       metalColor: s.selectedMetalColor ?? '',
       metalWeight: s.netMetalWeight ?? 0,
-      metalPrice: s.metalprice,
-      mountAmtMin: (s.metalAmount ?? 0) + (s.sideDiamondAmount ?? 0),
-      mountAmtMax: (s.metalAmount ?? 0) + (s.sideDiamondAmount ?? 0),
+
+      metalPrice: (s.metalprice ?? 0).roundToDouble(),
+
+      mountAmtMin: (((s.metalAmount ?? 0) + (s.sideDiamondAmount ?? 0)))
+          .roundToDouble(),
+      mountAmtMax: (((s.metalAmount ?? 0) + (s.sideDiamondAmount ?? 0)))
+          .roundToDouble(),
 
       sizeFrom: s.ringSize,
-      sizeTo: '-',
+      sizeTo: null,
 
       sideStonePcs: s.totalSidePcs ?? 0,
       sideStoneCts: s.totalSideWeight ?? 0,
@@ -599,6 +631,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       sideStoneQuality: (s.selectedSideDiamondQuality ?? '').split('-').last,
       cartRemarks: '',
       orderRemarks: '',
+      //imageUrl: '',
       style: d.style,
       wearStyle: d.wearStyle,
       look: d.look,
