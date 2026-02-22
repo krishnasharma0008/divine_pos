@@ -8,6 +8,7 @@ import '../presentation/widget/diamond_shape_grid.dart';
 import '../presentation/widget/discrete_range_filter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/filter_provider.dart';
+import '../data/jewellery_listing_constant.dart';
 
 class FilterSidebar extends ConsumerStatefulWidget {
   final List<String> categories;
@@ -31,28 +32,6 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
   // -----------------------------------------------------------
   RangeValues priceRange = const RangeValues(10000, 1000000);
   RangeValues caratRange = const RangeValues(0.10, 2.99);
-
-  // -----------------------------------------------------------
-  // COLOR OPTIONS
-  // -----------------------------------------------------------
-  // final _colorOptions = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
-  // String colorStartLabel = 'D';
-  // String colorEndLabel = 'J';
-
-  // -----------------------------------------------------------
-  // CLARITY OPTIONS
-  // -----------------------------------------------------------
-  // static const _clarityOptions = [
-  //   'IF',
-  //   'VVS1',
-  //   'VVS2',
-  //   'VS1',
-  //   'VS2',
-  //   'SI1',
-  //   'SI2',
-  // ];
-  // String clarityStartLabel = 'IF';
-  // String clarityEndLabel = 'SI2';
 
   // -----------------------------------------------------------
   // SELECTED SETS (MULTI SELECT)
@@ -79,74 +58,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
     //print("[$group] → $s");
   }
 
-  final _diamondItems = [
-    {
-      'code': 'RND',
-      'label': 'Round',
-      'asset': 'assets/jewellery/filters/round.png',
-    },
-    {
-      'code': 'PRN',
-      'label': 'Princess',
-      'asset': 'assets/jewellery/filters/princess.png',
-    },
-    {
-      'code': 'OVL',
-      'label': 'Oval',
-      'asset': 'assets/jewellery/filters/oval.png',
-    },
-    {
-      'code': 'PER',
-      'label': 'Pear',
-      'asset': 'assets/jewellery/filters/pear.png',
-    },
-    {
-      'code': 'RADQ',
-      'label': 'Radiant',
-      'asset': 'assets/jewellery/filters/radiant.png',
-    },
-    {
-      'code': 'CUSQ',
-      'label': 'Cushion',
-      'asset': 'assets/jewellery/filters/fancy_cushion.png',
-    },
-    {
-      'code': 'HRT',
-      'label': 'Heart',
-      'asset': 'assets/jewellery/filters/heart.png',
-    },
-  ];
-
-  //carat
-  final _caratOptions = [
-    '0.10',
-    '0.14',
-    '0.18',
-    '0.25',
-    '0.50',
-    '0.75',
-    '1.00',
-    '1.50',
-    '2.00',
-    '2.50',
-    '2.99',
-  ];
-  // -----------------------------------------------------------
-  // Metal
-  // -----------------------------------------------------------
-  final List<Map<String, String>> _metalPurity = [
-    {'label': '10KT'},
-    {'label': '14KT'},
-    {'label': '18KT'},
-    {'label': '22KT'},
-    {'label': '950PT'},
-  ];
-
-  final List<Map<String, String>> _metalColor = [
-    {'label': 'Yellow'},
-    {'label': 'White'},
-    {'label': 'Rose'},
-  ];
+  //final _diamondItems = [];
 
   String? selectedMetal;
 
@@ -196,19 +108,68 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
     final filter = ref.watch(filterProvider); // FilterState
     final notifier = ref.read(filterProvider.notifier); // FilterNotifier
 
+    final bool isSolitaire = filter.selectedCategory.any(
+      (c) => c.trim().toLowerCase() == 'solitaires',
+    );
+
+    // const String kDefaultCaratStart = '0.10';
+    // const String kDefaultCaratEnd = '2.99';
+
+    // final int defaultStartIndex = caratOptions.indexOf(kDefaultCaratStart);
+    // final int defaultEndIndex = caratOptions.indexOf(kDefaultCaratEnd);
+
+    // final int startIndex = filter.caratStartLabel != null
+    //     ? caratOptions.indexOf(filter.caratStartLabel!)
+    //     : defaultStartIndex;
+
+    // final int endIndex = filter.caratEndLabel != null
+    //     ? caratOptions.indexOf(filter.caratEndLabel!)
+    //     : defaultEndIndex;
+
+    // ───────── CARAT INDICES ─────────
     const String kDefaultCaratStart = '0.10';
     const String kDefaultCaratEnd = '2.99';
 
-    final int defaultStartIndex = _caratOptions.indexOf(kDefaultCaratStart);
-    final int defaultEndIndex = _caratOptions.indexOf(kDefaultCaratEnd);
+    final int caratDefaultStart = caratOptions.indexOf(kDefaultCaratStart);
+    final int caratDefaultEnd = caratOptions.indexOf(kDefaultCaratEnd);
 
-    final int startIndex = filter.caratStartLabel != null
-        ? _caratOptions.indexOf(filter.caratStartLabel!)
-        : defaultStartIndex;
+    final int caratStartIndex = filter.caratStartLabel != null
+        ? caratOptions.indexOf(filter.caratStartLabel!)
+        : caratDefaultStart;
 
-    final int endIndex = filter.caratEndLabel != null
-        ? _caratOptions.indexOf(filter.caratEndLabel!)
-        : defaultEndIndex;
+    final int caratEndIndex = filter.caratEndLabel != null
+        ? caratOptions.indexOf(filter.caratEndLabel!)
+        : caratDefaultEnd;
+
+    // ───────── COLOR INDICES ─────────
+    const String kDefaultColorStart = 'D';
+    const String kDefaultColorEnd = 'J';
+
+    final int colorDefaultStart = Coloroption.indexOf(kDefaultColorStart);
+    final int colorDefaultEnd = Coloroption.indexOf(kDefaultColorEnd);
+
+    final int colorStartIndex = filter.colorStartLabel != null
+        ? Coloroption.indexOf(filter.colorStartLabel!)
+        : colorDefaultStart;
+
+    final int colorEndIndex = filter.colorEndLabel != null
+        ? Coloroption.indexOf(filter.colorEndLabel!)
+        : colorDefaultEnd;
+
+    // ───────── CLARITY INDICES ───────
+    const String kDefaultClarityStart = 'IF';
+    const String kDefaultClarityEnd = 'SI2';
+
+    final int clarityDefaultStart = Clarityoption.indexOf(kDefaultClarityStart);
+    final int clarityDefaultEnd = Clarityoption.indexOf(kDefaultClarityEnd);
+
+    final int clarityStartIndex = filter.clarityStartLabel != null
+        ? Clarityoption.indexOf(filter.clarityStartLabel!)
+        : clarityDefaultStart;
+
+    final int clarityEndIndex = filter.clarityEndLabel != null
+        ? Clarityoption.indexOf(filter.clarityEndLabel!)
+        : clarityDefaultEnd;
 
     return Container(
       width: fem * 310,
@@ -251,25 +212,29 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //------------------------------------------------------
                   // PRICE RANGE
                   //------------------------------------------------------
-                  FilterSection(
-                    title: 'Price Range',
-                    fem: fem,
-                    initiallyExpanded: true,
-                    child: RangeSelector(
-                      min: 10000,
-                      max: 1000000,
-                      title: '',
-                      //values: filter.selectedPriceRange,
-                      values:
-                          filter.selectedPriceRange ??
-                          const RangeValues(10000, 1000000), // UI default ONLY
-                      onChanged: (v) {
-                        notifier.setPrice(v); // state set ONLY on interaction
-                      },
-                      //onChanged: notifier.setPrice,
+                  if (!isSolitaire) ...[
+                    FilterSection(
+                      title: 'Price Range',
+                      fem: fem,
+                      initiallyExpanded: true,
+                      child: RangeSelector(
+                        min: 10000,
+                        max: 1000000,
+                        title: '',
+                        //values: filter.selectedPriceRange,
+                        values:
+                            filter.selectedPriceRange ??
+                            const RangeValues(
+                              10000,
+                              1000000,
+                            ), // UI default ONLY
+                        onChanged: (v) {
+                          notifier.setPrice(v); // state set ONLY on interaction
+                        },
+                        //onChanged: notifier.setPrice,
+                      ),
                     ),
-                  ),
-
+                  ],
                   //------------------------------------------------------
                   // DIAMOND SHAPE
                   //------------------------------------------------------
@@ -280,7 +245,9 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                     initiallyExpanded: true,
                     child: DiamondShapeGrid(
                       fem: fem,
-                      items: _diamondItems,
+                      items: !isSolitaire
+                          ? jewellerydiamondShape
+                          : SolotaireShape,
                       selected: filter.selectedShape, // Set<String> of codes
                       onSelected: notifier.toggleShape, // now passes code
                     ),
@@ -296,19 +263,20 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                     fem: fem,
                     child: DiscreteRangeSlider(
                       title: '',
-                      options: _caratOptions,
-                      // initialStartIndex: _caratOptions.indexOf(
+                      options: caratOptions,
+                      // initialStartIndex: caratOptions.indexOf(
                       //   filter.caratStartLabel,
                       // ),
                       // initialEndIndex: _caratOptions.indexOf(
                       //   filter.caratEndLabel,
                       // ),
-                      initialStartIndex: startIndex,
-                      initialEndIndex: endIndex,
+                      initialStartIndex: caratStartIndex,
+                      initialEndIndex: caratEndIndex,
+                      showlabels: false,
                       onChanged: (range) {
                         notifier.setCaratRange(
-                          _caratOptions[range.start.toInt()],
-                          _caratOptions[range.end.toInt()],
+                          caratOptions[range.start.toInt()],
+                          caratOptions[range.end.toInt()],
                         );
                       },
                     ),
@@ -368,22 +336,23 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //     onTapItem: notifier.toggleCategory,
                   //   ),
                   // ),
-                  FilterSection(
-                    title: 'Category',
-                    fem: fem,
-                    child: twoColumnGrid(
-                      items: widget.categories,
-                      selectedSet: filter.selectedCategory,
+                  if (!isSolitaire) ...[
+                    FilterSection(
+                      title: 'Category',
                       fem: fem,
-                      groupName: "Category",
-                      onTapItem: notifier.toggleCategory,
+                      child: twoColumnGrid(
+                        items: widget.categories,
+                        selectedSet: filter.selectedCategory,
+                        fem: fem,
+                        groupName: "Category",
+                        onTapItem: notifier.toggleCategory,
+                      ),
                     ),
-                  ),
-
+                    divider(fem),
+                  ],
                   //------------------------------------------------------
                   // SUB CATEGORY
                   //------------------------------------------------------
-                  divider(fem),
 
                   // FilterSection(
                   //   title: 'Sub Category',
@@ -402,22 +371,24 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //     onTapItem: notifier.toggleSubCategory,
                   //   ),
                   // ),
-                  FilterSection(
-                    title: 'Sub Category',
-                    fem: fem,
-                    child: twoColumnGrid(
-                      items: widget.subCategories,
-                      selectedSet: filter.selectedSubCategory,
+                  if (!isSolitaire) ...[
+                    FilterSection(
+                      title: 'Sub Category',
                       fem: fem,
-                      groupName: "Sub Category",
-                      onTapItem: notifier.toggleSubCategory,
+                      child: twoColumnGrid(
+                        items: widget.subCategories,
+                        selectedSet: filter.selectedSubCategory,
+                        fem: fem,
+                        groupName: "Sub Category",
+                        onTapItem: notifier.toggleSubCategory,
+                      ),
                     ),
-                  ),
-
+                    divider(fem),
+                  ],
                   //------------------------------------------------------
                   // METAL Purity
                   //------------------------------------------------------
-                  divider(fem),
+
                   // FilterSection(
                   //   title: 'Metal Purity',
                   //   fem: fem,
@@ -428,24 +399,25 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //     onSelected: notifier.toggleMetalPurity,
                   //   ),
                   // ),
-                  FilterSection(
-                    title: 'Metal Purity',
-                    fem: fem,
-                    child: twoColumnGrid(
-                      items: _metalPurity.map((e) => e['label']!).toList(),
-                      isCorrectLabel: false,
-                      selectedSet: filter.selectedMetalPurity,
+                  if (!isSolitaire) ...[
+                    FilterSection(
+                      title: 'Metal Purity',
                       fem: fem,
-                      groupName: "Metal Purity",
-                      onTapItem: notifier.toggleMetalPurity,
+                      child: twoColumnGrid(
+                        items: metalPurity.map((e) => e['label']!).toList(),
+                        isCorrectLabel: false,
+                        selectedSet: filter.selectedMetalPurity,
+                        fem: fem,
+                        groupName: "Metal Purity",
+                        onTapItem: notifier.toggleMetalPurity,
+                      ),
                     ),
-                  ),
-
+                    divider(fem),
+                  ],
                   //------------------------------------------------------
                   // METAL
                   //------------------------------------------------------
                   //------------------------------------------------------
-                  divider(fem),
 
                   // FilterSection(
                   //   title: 'Metal Color',
@@ -457,55 +429,100 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                   //     onSelected: notifier.toggleMetalColor,
                   //   ),
                   // ),
-                  FilterSection(
-                    title: 'Metal Color',
-                    fem: fem,
-                    child: twoColumnGrid(
-                      items: _metalColor.map((e) => e['label']!).toList(),
-                      selectedSet: filter.selectedMetalColor,
+                  if (!isSolitaire) ...[
+                    FilterSection(
+                      title: 'Metal Color',
                       fem: fem,
-                      groupName: "Metal Color",
-                      onTapItem: notifier.toggleMetalColor,
+                      child: twoColumnGrid(
+                        items: metalColor.map((e) => e['label']!).toList(),
+                        selectedSet: filter.selectedMetalColor,
+                        fem: fem,
+                        groupName: "Metal Color",
+                        onTapItem: notifier.toggleMetalColor,
+                      ),
                     ),
-                  ),
-
+                  ],
                   //------------------------------------------------------
                   // GENDER
                   //------------------------------------------------------
-                  divider(fem),
-                  FilterSection(
-                    title: 'Gender',
-                    fem: fem,
-                    child: twoColumnGrid(
-                      items: ['Men', 'Women', 'Children'],
-                      selectedSet: filter.selectedGender,
+                  if (!isSolitaire) ...[
+                    divider(fem),
+                    FilterSection(
+                      title: 'Gender',
                       fem: fem,
-                      groupName: "Gender",
-                      onTapItem: notifier.toggleGender,
+                      child: twoColumnGrid(
+                        items: ['Men', 'Women', 'Children'],
+                        selectedSet: filter.selectedGender,
+                        fem: fem,
+                        groupName: "Gender",
+                        onTapItem: notifier.toggleGender,
+                      ),
                     ),
-                  ),
-
+                  ],
                   //------------------------------------------------------
                   // OCCASION
                   //------------------------------------------------------
-                  divider(fem),
-                  FilterSection(
-                    title: 'Occasion',
-                    fem: fem,
-                    child: twoColumnGrid(
-                      items: [
-                        'Engagement',
-                        'Wedding',
-                        'Anniversary',
-                        'Daily Wear',
-                        'Gifting',
-                      ],
-                      selectedSet: filter.selectedOccasions,
+                  if (!isSolitaire) ...[
+                    divider(fem),
+                    FilterSection(
+                      title: 'Occasion',
                       fem: fem,
-                      groupName: "Occasion",
-                      onTapItem: notifier.toggleOccasion,
+                      child: twoColumnGrid(
+                        items: [
+                          'Engagement',
+                          'Wedding',
+                          'Anniversary',
+                          'Daily Wear',
+                          'Gifting',
+                        ],
+                        selectedSet: filter.selectedOccasions,
+                        fem: fem,
+                        groupName: "Occasion",
+                        onTapItem: notifier.toggleOccasion,
+                      ),
                     ),
-                  ),
+                  ],
+
+                  if (isSolitaire) ...[
+                    divider(fem),
+
+                    FilterSection(
+                      title: 'Color',
+                      fem: fem,
+                      child: DiscreteRangeSlider(
+                        title: '',
+                        options: Coloroption,
+                        initialStartIndex: colorStartIndex,
+                        initialEndIndex: colorEndIndex,
+                        showlabels: true,
+                        onChanged: (range) {
+                          notifier.setColorRange(
+                            Coloroption[range.start.toInt()],
+                            Coloroption[range.end.toInt()],
+                          );
+                        },
+                      ),
+                    ),
+
+                    divider(fem),
+                    FilterSection(
+                      title: 'Clarity',
+                      fem: fem,
+                      child: DiscreteRangeSlider(
+                        title: '',
+                        options: Clarityoption,
+                        initialStartIndex: clarityStartIndex,
+                        initialEndIndex: clarityEndIndex,
+                        showlabels: true,
+                        onChanged: (range) {
+                          notifier.setClarityRange(
+                            Clarityoption[range.start.toInt()],
+                            Clarityoption[range.end.toInt()],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

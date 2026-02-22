@@ -20,6 +20,8 @@ class FilterNotifier extends Notifier<FilterState> {
       selectedMetalPurity: {'18KT'},
       selectedMetalColor: {}, // {'Yellow'},
       selectedOccasions: {},
+      // selectedColors: {},
+      // selectedClarities: {},
     );
   }
 
@@ -167,6 +169,8 @@ class FilterNotifier extends Notifier<FilterState> {
       selectedMetalPurity: {'18KT'},
       selectedMetalColor: {}, // {'Yellow'},
       selectedOccasions: {},
+      // selectedColors: {},
+      // selectedClarities: {},
       // Top buttons remain untouched
     );
   }

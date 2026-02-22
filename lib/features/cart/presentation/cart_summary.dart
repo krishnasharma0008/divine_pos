@@ -15,7 +15,7 @@ class CartSummaryPanel extends StatelessWidget {
   final VoidCallback? onConfirm;
 
   const CartSummaryPanel({
-    Key? key,
+    super.key,
     required this.orderProducts,
     required this.readyProducts,
     required this.subtotal,
@@ -23,7 +23,7 @@ class CartSummaryPanel extends StatelessWidget {
     //this.engravingGstPercent,// 18,
     //this.gstPercent,// = 3,
     this.onConfirm,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

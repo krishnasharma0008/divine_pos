@@ -104,7 +104,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       bom: detail.bom,
     );
 
-    final get_shape = JewelleryCalculationService.mapShapeCodeToName(shapeCode);
+    final getShape = JewelleryCalculationService.mapShapeCodeToName(shapeCode);
 
     // 3) METAL WEIGHTS
     final goldWeight = JewelleryCalculationService.getWeight(
@@ -179,7 +179,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     final sideDiamond =
         await JewelleryCalculationService.calculateSideDiamondPrice(
           price: sideprice,
-          totalSideCts: (totalSideWeight?.toDouble() ?? 0.0),
+          totalSideCts: (totalSideWeight.toDouble() ?? 0.0),
           qty: current.selectedQty,
         );
 
@@ -411,7 +411,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       totalSideWeight: totalSideWeight,
       totalSolitairePcs: totalSolitairePcs,
       solitaireMessage: msg.isEmpty ? null : msg,
-      solitaireShape: get_shape,
+      solitaireShape: getShape,
     );
 
     state = AsyncData(updated);
@@ -495,7 +495,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
 
     // reuse cached store if already fetched
     if (storeState.selectedStore?.nickName != null) {
-      return storeState.selectedStore!.nickName!;
+      return storeState.selectedStore!.nickName;
     }
 
     if (pjcode.isNotEmpty) {

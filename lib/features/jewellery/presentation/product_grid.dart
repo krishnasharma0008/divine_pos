@@ -43,7 +43,7 @@ class ProductGrid extends ConsumerWidget {
 
     String branch = '';
     if (storeState.selectedStore?.nickName != null) {
-      branch = storeState.selectedStore!.nickName!;
+      branch = storeState.selectedStore!.nickName;
     }
 
     if (branch.isEmpty) {

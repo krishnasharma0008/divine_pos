@@ -66,6 +66,14 @@ class CartDetail {
   final String? portfolioType;
   final String? gender;
 
+  final String? engraving; // new
+  final double? engraving_cost;
+  final double? engraving_taxper;
+  final double? engraving_taxamt;
+  final double? product_taxper;
+  final double? product_taxamt;
+  final double? product_netamt;
+
   /// 🔥 NEW (UI ONLY)
   //final bool engravingEnabled;
 
@@ -120,6 +128,15 @@ class CartDetail {
     this.look,
     this.portfolioType,
     this.gender,
+
+    this.engraving, // new
+    this.engraving_cost,
+    this.engraving_taxper,
+    this.engraving_taxamt,
+    this.product_taxper,
+    this.product_taxamt,
+    this.product_netamt,
+
     //this.engravingEnabled = false, // ✅ default
   });
 
@@ -175,6 +192,27 @@ class CartDetail {
       look: _s(json['look']),
       portfolioType: _s(json['portfolio_type']),
       gender: _s(json['gender']),
+      engraving: json.containsKey('engraving')
+          ? _s(json['engraving'])
+          : null, // new
+      engraving_cost: json.containsKey('engraving_cost')
+          ? _d(json['engraving_cost'])
+          : null,
+      engraving_taxper: json.containsKey('engraving_taxper')
+          ? _d(json['engraving_taxper'])
+          : null,
+      engraving_taxamt: json.containsKey('engraving_taxamt')
+          ? _d(json['engraving_taxamt'])
+          : null,
+      product_taxper: json.containsKey('product_taxper')
+          ? _d(json['product_taxper'])
+          : null,
+      product_taxamt: json.containsKey('product_taxamt')
+          ? _d(json['product_taxamt'])
+          : null,
+      product_netamt: json.containsKey('product_netamt')
+          ? _d(json['product_netamt'])
+          : null,
     );
   }
 
@@ -229,6 +267,13 @@ class CartDetail {
     String? look,
     String? portfolioType,
     String? gender,
+    String? engraving, // new
+    double? engraving_cost,
+    double? engraving_taxper,
+    double? engraving_taxamt,
+    double? product_taxper,
+    double? product_taxamt,
+    double? product_netamt,
   }) {
     return CartDetail(
       id: id ?? this.id,
@@ -281,6 +326,14 @@ class CartDetail {
       look: look ?? this.look,
       portfolioType: portfolioType ?? this.portfolioType,
       gender: gender ?? this.gender,
+
+      engraving: engraving ?? this.engraving, // new
+      engraving_cost: engraving_cost ?? this.engraving_cost,
+      engraving_taxper: engraving_taxper ?? this.engraving_taxper,
+      engraving_taxamt: engraving_taxamt ?? this.engraving_taxamt,
+      product_taxper: product_taxper ?? this.product_taxper,
+      product_taxamt: product_taxamt ?? this.product_taxamt,
+      product_netamt: product_netamt ?? this.product_netamt,
     );
   }
 
@@ -336,6 +389,14 @@ class CartDetail {
       'look': look,
       'portfolio_type': portfolioType,
       'gender': gender,
+
+      'engraving': engraving, // new
+      'engraving_cost': engraving_cost,
+      'engraving_taxper': engraving_taxper,
+      'engraving_taxamt': engraving_taxamt,
+      'product_taxper': product_taxper,
+      'product_taxamt': product_taxamt,
+      'product_netamt': product_netamt,
     };
 
     map.removeWhere((_, v) => v == null || (v is String && v.isEmpty));

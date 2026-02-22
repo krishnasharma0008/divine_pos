@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class MobileNumberDialog extends StatefulWidget {
   final Function(String)? onSubmit;
 
-  const MobileNumberDialog({Key? key, this.onSubmit}) : super(key: key);
+  const MobileNumberDialog({super.key, this.onSubmit});
 
   @override
   State<MobileNumberDialog> createState() => _MobileNumberDialogState();

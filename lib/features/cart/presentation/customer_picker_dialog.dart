@@ -137,7 +137,7 @@ Future<CustomerSelectionResult?> showCustomerPickerDialog(
                           ),
                         )
                         .toList(),
-                    value: selectedId,
+                    initialValue: selectedId,
                     onChanged: (val) {
                       setState(() {
                         selectedId = val;

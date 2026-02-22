@@ -335,7 +335,6 @@ class ProductDetailsTab extends StatelessWidget {
         }() ??
         'VVS1-VS1';
     final solpcs = soltpcs ?? 1;
-    ;
     //final ringsize = 'Size 12';
 
     return '$Shape $carat $color $clarity  ( $solpcs Pcs )';

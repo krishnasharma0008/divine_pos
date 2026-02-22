@@ -377,8 +377,9 @@ class _JewelleryCustomiseScreenState
                                                   .toList(),
                                             );
 
-                                            if (!mounted || result == null)
+                                            if (!mounted || result == null) {
                                               return;
+                                            }
 
                                             // indices local state में रखो
                                             setState(() {

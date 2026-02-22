@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:divine_pos/features/jewellery/data/jewellery_model.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -434,6 +435,131 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
     final body = response.data as Map<String, dynamic>?;
     if (body == null || body['success'] != true) {
       throw Exception(body?['msg'] ?? 'Failed to create cart');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // solitaire inser cart API (not implemented yet)
+  // ---------------------------------------------------------------------------
+
+  Future<void> createCartFromRows({
+    required List<Jewellery> rows,
+    required CustomerDetail? customerOrder,
+    required String branch,
+  }) async {
+    state = const AsyncData(AddToCartState(status: AddToCartStatus.loading));
+
+    try {
+      final validRows = rows.where(
+        (row) =>
+            row.shape != null &&
+            row.weight != null &&
+            row.color != null &&
+            row.clarity != null,
+      );
+
+      final List<CartDetail> payloads = validRows.map((row) {
+        final co = customerOrder;
+
+        return CartDetail(
+          orderFor: 'Retail Customer',
+          customerId: co?.id ?? 0,
+          customerCode: '',
+          customerName: co?.name ?? '',
+          customerBranch: branch,
+          productType: 'Solitaire',
+          orderType: 'RCO',
+          collection: '',
+          productCategory: '',
+          productSubCategory: '',
+          style: '',
+          wearStyle: '',
+          look: '',
+          portfolioType: '',
+          expDlvDate: DateTime.now()
+              .add(const Duration(days: 15))
+              .toUtc()
+              .toIso8601String(),
+          oldVarient: '',
+          productCode: row.itemNumber ?? '',
+          designno: row.designno ?? '',
+          solitairePcs: row.pcs,
+          productQty: row.pcs,
+          productAmtMin: (row.pcs ?? 0) * (row.price ?? 0) * row.weight!,
+          productAmtMax: (row.pcs ?? 0) * (row.price ?? 0) * row.weight!,
+          solitaireShape: row.shape ?? '',
+          solitaireSlab: row.weight.toString() ?? '',
+          solitaireColor: '${row.color ?? ''} - ${row.color ?? ''}',
+          solitaireQuality: '${row.clarity ?? ''} - ${row.clarity ?? ''}',
+          solitairePremSize: '',
+          solitairePremPct: 0,
+          solitaireAmtMin: (row.pcs ?? 0) * (row.price ?? 0) * row.weight!,
+          solitaireAmtMax: (row.pcs ?? 0) * (row.price ?? 0) * row.weight!,
+          metalType: '',
+          metalPurity: '',
+          metalColor: '',
+          metalWeight: 0,
+          metalPrice: 0,
+          mountAmtMin: 0,
+          mountAmtMax: 0,
+          sizeFrom: '-',
+          sizeTo: '-',
+          sideStonePcs: 0,
+          sideStoneCts: 0,
+          sideStoneColor: '',
+          sideStoneQuality: '',
+          cartRemarks: '',
+          orderRemarks: '',
+        );
+      }).toList();
+
+      if (payloads.isEmpty) {
+        throw Exception('No valid rows to create cart');
+      }
+
+      final response = await _dio
+          .post(
+            ApiEndPoint.create_cart,
+            data: payloads.map((p) => p.toJson()).toList(),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw TimeoutException('Create cart timed out'),
+          );
+
+      if (response.statusCode != HttpStatus.ok) {
+        throw HttpException('HTTP ${response.statusCode}');
+      }
+
+      final body = response.data as Map<String, dynamic>?;
+      if (body == null || body['success'] != true) {
+        throw Exception(body?['msg'] ?? 'Failed to create cart');
+      }
+
+      // ✅ This is what was missing
+      state = const AsyncData(AddToCartState(status: AddToCartStatus.success));
+    } on TimeoutException {
+      state = const AsyncData(
+        AddToCartState(
+          status: AddToCartStatus.error,
+          errorMessage: 'Request timed out. Please try again.',
+        ),
+      );
+    } on HttpException catch (e) {
+      state = AsyncData(
+        AddToCartState(
+          status: AddToCartStatus.error,
+          errorMessage: 'Network error: ${e.message}',
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('createCartFromRows error: $e\n$st');
+      state = AsyncData(
+        AddToCartState(
+          status: AddToCartStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 }

@@ -34,5 +34,7 @@ class ApiEndPoint {
 
   static const create_customer = "retail-customer/";
 
+  static const update_customer = "retail-customer/";
+
   static const create_order = 'cart/toorder';
 }

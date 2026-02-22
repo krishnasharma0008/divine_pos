@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
+import 'package:divine_pos/constants/tax_constants.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
@@ -268,7 +268,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
       (e) => e.id == id,
       orElse: () => throw Exception('Item not found'),
     );
-    return (item.cartRemarks?.trim().isNotEmpty ?? false);
+    return (item.engraving?.trim().isNotEmpty ?? false);
   }
 
   String getEngravingText(int id) {
@@ -276,7 +276,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
       (e) => e.id == id,
       orElse: () => throw Exception('Item not found'),
     );
-    return item.cartRemarks ?? '';
+    return item.engraving ?? '';
   }
 
   Future<void> toggleEngraving(int id, bool enabled) async {
@@ -285,13 +285,13 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     if (index == -1) return;
 
     final item = list[index];
-    final newRemarks = enabled
-        ? ((item.cartRemarks?.trim().isNotEmpty ?? false)
-              ? item.cartRemarks!
+    final newEngraving = enabled
+        ? ((item.engraving?.trim().isNotEmpty ?? false)
+              ? item.engraving!
               : 'Engraving')
         : '';
 
-    final updated = item.copyWith(cartRemarks: newRemarks);
+    final updated = item.copyWith(engraving: newEngraving);
     final updatedList = [...list];
     updatedList[index] = updated;
 
@@ -312,7 +312,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     if (words.length > maxEngravingWords) return;
 
     final item = _cartData[index];
-    final updated = item.copyWith(cartRemarks: text);
+    final updated = item.copyWith(engraving: text);
 
     // Local update
     _cartData[index] = updated;
@@ -342,6 +342,62 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
       return {'success': false, 'msg': _errorMsg};
     }
 
+    // 1) per-item tax calculation + local update + API update
+    for (var i = 0; i < selected.length; i++) {
+      final item = selected[i];
+
+      final baseAmt = (item.productAmtMax ?? item.productAmtMin ?? 0);
+      final qty = item.productQty ?? 1;
+      final lineBase = baseAmt * qty;
+
+      // engraving
+      final hasEngraving = item.cartRemarks != null;
+      final engravingCost = hasEngraving
+          ? TaxConstants.engravingCostPerItem
+          : 0.0; // 1000 per item fixed cost for engraving
+      final engravingTaxPer =
+          TaxConstants.engravingGstPercent; // 18% GST on engraving
+      final engravingTaxAmt = TaxConstants.calculateEngravingGst(
+        engravingCost,
+      ); // GST amount for engraving
+
+      // product tax
+      final productTaxPer = TaxConstants.gstPercent; // 3% GST on product
+      final productTaxAmt = TaxConstants.calculateGst(
+        lineBase,
+      ); // GST amount for product
+
+      // net amount = base + engraving + both taxes
+      final productNetAmt =
+          lineBase +
+          engravingCost +
+          engravingTaxAmt +
+          productTaxAmt; // final net amount for the line item
+
+      final updated = item.copyWith(
+        engraving_cost: engravingCost,
+        engraving_taxper: engravingTaxPer,
+        engraving_taxamt: engravingTaxAmt,
+        product_taxper: productTaxPer,
+        product_taxamt: productTaxAmt,
+        product_netamt: productNetAmt,
+      );
+
+      // local list में replace
+      final idx = _cartData.indexWhere((e) => e.id == item.id);
+      if (idx != -1) {
+        _cartData[idx] = updated;
+      }
+
+      // backend पर भी update
+      try {
+        await _editCart(updated);
+      } catch (e) {
+        debugPrint('Cart tax update error for item ${item.id}: $e');
+      }
+    }
+
+    // 2) अब order create करो
     state = const AsyncLoading();
     try {
       final response = await _createOrder(_selectedItems);
@@ -414,6 +470,21 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
       pincode: '',
       email: '',
     );
+  }
+
+  Future<void> updateCustomerMobile({
+    required int customerId,
+    required String mobile,
+  }) async {
+    try {
+      await dio.put(
+        ApiEndPoint.update_customer, // अपना endpoint
+        data: {'id': customerId, 'mobile': mobile},
+      );
+    } catch (e) {
+      debugPrint('Update customer error: $e');
+      rethrow;
+    }
   }
 
   List<CartDetail> getItemsForCustomer(int customerId) {

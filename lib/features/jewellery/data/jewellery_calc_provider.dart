@@ -290,7 +290,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
 
     // reuse cached store if already fetched
     if (storeState.selectedStore?.nickName != null) {
-      return storeState.selectedStore!.nickName!;
+      return storeState.selectedStore!.nickName;
     }
 
     if (pjcode.isNotEmpty) {

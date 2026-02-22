@@ -615,6 +615,7 @@ class _BottomProceedBar extends ConsumerWidget {
   });
 
   Future<void> _handleProceed(BuildContext context, WidgetRef ref) async {
+    // update existing customer mobile if changed or new mobile entered
     final phone = await showDialog<String>(
       context: context,
       barrierDismissible: false,
@@ -623,6 +624,17 @@ class _BottomProceedBar extends ConsumerWidget {
     );
 
     if (phone == null || phone.isEmpty) return;
+
+    // selected customer का mobile अपडेट
+    final selected = ref.read(selectedCustomerProvider);
+    if (selected != null && selected.id != null) {
+      await ref
+          .read(cartNotifierProvider.notifier)
+          .updateCustomerMobile(customerId: selected.id!, mobile: phone);
+    }
+
+    //end
+    //update cart
 
     if (context.mounted) {
       Navigator.of(context).pop();

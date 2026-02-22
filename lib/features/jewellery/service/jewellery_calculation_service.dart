@@ -43,7 +43,7 @@ class JewelleryCalculationService {
       if ((b.itemGroup ?? '').toUpperCase() == 'SOLITAIRE' &&
           (b.itemType ?? '').toUpperCase() == 'STONE') {
         final name = b.bomVariantName;
-        if (name == null || name.isEmpty) continue;
+        if (name.isEmpty) continue;
 
         final parts = name.split('-');
 

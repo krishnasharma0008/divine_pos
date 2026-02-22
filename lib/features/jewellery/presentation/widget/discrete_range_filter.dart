@@ -8,6 +8,7 @@ class DiscreteRangeSlider extends StatefulWidget {
   final int initialStartIndex;
   final int initialEndIndex;
   final ValueChanged<RangeValues>? onChanged;
+  final bool showlabels;
 
   const DiscreteRangeSlider({
     super.key,
@@ -16,6 +17,7 @@ class DiscreteRangeSlider extends StatefulWidget {
     this.initialStartIndex = 0,
     required this.initialEndIndex,
     this.onChanged,
+    this.showlabels = true,
   });
 
   @override
@@ -48,18 +50,6 @@ class _DiscreteRangeSliderState extends State<DiscreteRangeSlider> {
               style: TextStyle(fontSize: 16 * fem, fontWeight: FontWeight.w400),
             ),
           ),
-
-        // /// VALUE BOXES
-        // Padding(
-        //   padding: EdgeInsets.symmetric(horizontal: 5 * fem),
-        //   child: Row(
-        //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //     children: [
-        //       _valueBox(widget.options[startIndex.toInt()], fem),
-        //       _valueBox(widget.options[endIndex.toInt()], fem),
-        //     ],
-        //   ),
-        // ),
 
         /// SELECTED VALUES
         Padding(
@@ -122,7 +112,51 @@ class _DiscreteRangeSliderState extends State<DiscreteRangeSlider> {
             },
           ),
         ),
+        SizedBox(height: 4 * fem),
+
+        if (widget.showlabels) ...[
+          SizedBox(height: 4 * fem),
+          _buildTicksAndLabels(fem),
+        ],
       ],
+    );
+  }
+
+  Widget _buildTicksAndLabels(double fem) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 10 * fem),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(widget.options.length, (index) {
+          final isSelected =
+              index == startIndex.toInt() || index == endIndex.toInt();
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // छोटा tick
+              Container(
+                width: 2 * fem,
+                height: 8 * fem,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFA9E7DF),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 4 * fem),
+              // label (start/end bold)
+              Text(
+                widget.options[index],
+                style: TextStyle(
+                  fontSize: 10 * fem,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? Colors.black : const Color(0xFF4B4B4B),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
     );
   }
 

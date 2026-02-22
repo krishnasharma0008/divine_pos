@@ -15,6 +15,10 @@ class FilterState {
   final Set<String> selectedMetalPurity;
   final Set<String> selectedMetalColor;
   final Set<String> selectedOccasions;
+  // final Set<String> ColorStartLabel;
+  // final Set<String> ColorEndLabel;
+  // final Set<String> ClaritieStartLabel;
+  // final Set<String> ClaritieEndLabel;
 
   final bool isInStore;
   final String? productBranch;
@@ -36,6 +40,8 @@ class FilterState {
     required this.selectedMetalPurity,
     required this.selectedMetalColor,
     required this.selectedOccasions,
+    // required this.selectedColors,
+    // required this.selectedClarities,
 
     // top button filters
     this.isInStore = true, // ✅ default in-store
@@ -43,6 +49,8 @@ class FilterState {
     this.allDesigns = false,
     this.sortBy,
   });
+
+  get selectedClarity => null;
 
   FilterState copyWith({
     Set<String>? selectedGender,
@@ -60,6 +68,8 @@ class FilterState {
     Set<String>? selectedMetalPurity,
     Set<String>? selectedMetalColor,
     Set<String>? selectedOccasions,
+    Set<String>? selectedColors,
+    Set<String>? selectedClarities,
     //top button filters
     bool? isInStore,
     //String? productBranch,
@@ -92,6 +102,8 @@ class FilterState {
       selectedMetalPurity: selectedMetalPurity ?? this.selectedMetalPurity,
       selectedMetalColor: selectedMetalColor ?? this.selectedMetalColor,
       selectedOccasions: selectedOccasions ?? this.selectedOccasions,
+      // selectedColors: selectedColors ?? this.selectedColors,
+      // selectedClarities: selectedClarities ?? this.selectedClarities,
 
       //top button filters
       isInStore: isInStore ?? this.isInStore,

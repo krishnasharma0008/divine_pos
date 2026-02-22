@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 
+// ── Shared text style across row and header ──────────────────────────────────
+const _kCellStyle = TextStyle(
+  color: Color(0xFF888888),
+  fontSize: 16,
+  fontFamily: 'Arial',
+  fontWeight: FontWeight.w400,
+  height: 1.50,
+);
+
 class DiamondsRow extends StatelessWidget {
   final int srNo;
   final String shape;
   final String color;
   final String clarity;
-  final int amount;
+  final double carat;
+  final double price; // per stone
   final int qty;
   final VoidCallback onInc;
   final VoidCallback onDec;
@@ -16,49 +26,53 @@ class DiamondsRow extends StatelessWidget {
     required this.shape,
     required this.color,
     required this.clarity,
-    required this.amount,
+    required this.carat,
+    required this.price,
     required this.qty,
     required this.onInc,
     required this.onDec,
   });
 
+  String _formatAmount(int value) {
+    final s = value.toString();
+    if (s.length <= 3) return '₹$s';
+    final last3 = s.substring(s.length - 3);
+    final rest = s.substring(0, s.length - 3);
+    final buf = StringBuffer();
+    int count = 0;
+    for (int i = rest.length - 1; i >= 0; i--) {
+      buf.write(rest[i]);
+      count++;
+      if (count % 2 == 0 && i != 0) buf.write(',');
+    }
+    return '₹${buf.toString().split('').reversed.join()},$last3';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: const Color(0xFF888888),
-          fontSize: 16,
-          fontFamily: 'Arial',
-          height: 1.5,
-        );
-
     return Container(
       height: 61,
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: ShapeDecoration(
-        color: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+          side: const BorderSide(width: 1, color: Color(0xFFE5E5E5)),
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _Cell(text: '${srNo.toString().padLeft(2, '0')}.', style: textStyle),
-          _Cell(text: shape, style: textStyle),
-          _Cell(text: color, style: textStyle),
-          _Cell(text: clarity, style: textStyle),
-          _Cell(text: '₹$amount', style: textStyle),
+          _Cell(text: '${srNo.toString().padLeft(2, '0')}.'),
+          _Cell(text: shape),
+          _Cell(text: color),
+          _Cell(text: clarity),
+          _Cell(text: carat.toStringAsFixed(2)),
+          _Cell(text: _formatAmount(price.toInt())), // per stone price
           _QtyCell(qty: qty, onInc: onInc, onDec: onDec),
-          Expanded(
-            flex: 2,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                '₹${amount * qty}',
-                style: textStyle,
-              ),
-            ),
+          _Cell(
+            text: _formatAmount((carat * price * qty).toDouble().round()),
+            align: Alignment.centerRight,
           ),
         ],
       ),
@@ -68,16 +82,23 @@ class DiamondsRow extends StatelessWidget {
 
 class _Cell extends StatelessWidget {
   final String text;
-  final TextStyle? style;
+  final Alignment align;
 
-  const _Cell({required this.text, this.style});
+  const _Cell({required this.text, this.align = Alignment.centerLeft});
 
   @override
   Widget build(BuildContext context) {
+    // derive TextAlign from Alignment so text inside also aligns correctly
+    final textAlign = align == Alignment.centerRight
+        ? TextAlign.right
+        : align == Alignment.center
+        ? TextAlign.center
+        : TextAlign.left;
+
     return Expanded(
       child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(text, style: style),
+        alignment: align,
+        child: Text(text, style: _kCellStyle, textAlign: textAlign),
       ),
     );
   }
@@ -88,60 +109,125 @@ class _QtyCell extends StatelessWidget {
   final VoidCallback onInc;
   final VoidCallback onDec;
 
-  const _QtyCell({
-    required this.qty,
-    required this.onInc,
-    required this.onDec,
-  });
+  const _QtyCell({required this.qty, required this.onInc, required this.onDec});
 
   @override
   Widget build(BuildContext context) {
+    // ── Figma: white pill, mint square tap buttons, number centered ──────────
     return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFBEE4DD),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _StepButton(icon: Icons.remove, onTap: onDec),
-            SizedBox(
-              width: 32,
-              child: Center(
-                child: Text(
-                  '$qty',
-                  style: Theme.of(context).textTheme.bodyMedium,
+      child: Align(
+        alignment: Alignment.center, // center the stepper inside the cell
+        child: Container(
+          width: 94, // fixed Figma width
+          height: 31,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(29),
+          ),
+          child: Row(
+            mainAxisAlignment:
+                MainAxisAlignment.spaceBetween, // fills full width
+            children: [
+              // ── Minus button — disabled at 0 ─────────────────────────────
+              Material(
+                color: qty == 0
+                    ? const Color(0xFFBEE4DD).withValues(alpha: 0.4)
+                    : const Color(0xFFBEE4DD),
+                child: InkWell(
+                  onTap: qty == 0 ? null : onDec,
+                  child: const SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Icon(Icons.remove, size: 16, color: Colors.white),
+                  ),
                 ),
               ),
-            ),
-            _StepButton(icon: Icons.add, onTap: onInc),
-          ],
+              // ── Qty number — centered ─────────────────────────────────────
+              Text(
+                '$qty',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                  fontFamily: 'Arial',
+                  fontWeight: FontWeight.w400,
+                  height: 1.50,
+                ),
+              ),
+              // ── Plus button ───────────────────────────────────────────────
+              Material(
+                color: const Color(0xFFBEE4DD),
+                child: InkWell(
+                  onTap: onInc,
+                  child: const SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Icon(Icons.add, size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _StepButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
+// ─────────────────────────────────────────────────────────────────────────────
+// Header row — matches Figma design
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const _StepButton({required this.icon, required this.onTap});
+class SolitaireHeader extends StatelessWidget {
+  const SolitaireHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 26,
-        height: 26,
-        decoration: BoxDecoration(
-          color: const Color(0xFF7BD0BB),
-          borderRadius: BorderRadius.circular(13),
-        ),
-        child: Icon(icon, size: 16, color: Colors.white),
+    return Container(
+      height: 61,
+      margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: ShapeDecoration(
+        color: const Color(0xFFBEE4DD),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _HeaderCell(label: 'Sr No'),
+          _HeaderCell(label: 'Shape'),
+          _HeaderCell(label: 'Color'),
+          _HeaderCell(label: 'Clarity'),
+          _HeaderCell(label: 'Carat'),
+          _HeaderCell(label: 'Price'),
+          _HeaderCell(label: 'Qty', align: Alignment.center),
+          _HeaderCell(label: 'Amount', align: Alignment.centerRight),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  final String label;
+  //final int flex;
+  final Alignment align;
+
+  const _HeaderCell({required this.label, this.align = Alignment.centerLeft});
+
+  @override
+  Widget build(BuildContext context) {
+    final textAlign = align == Alignment.centerRight
+        ? TextAlign.right
+        : align == Alignment.center
+        ? TextAlign.center
+        : TextAlign.left;
+
+    return Expanded(
+      // flex: flex,
+      child: Align(
+        alignment: align,
+        child: Text(label, style: _kCellStyle, textAlign: textAlign),
       ),
     );
   }

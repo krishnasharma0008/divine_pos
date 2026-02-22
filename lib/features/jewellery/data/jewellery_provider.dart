@@ -152,29 +152,11 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         "pageno": effectivePage,
         "is_new_launch": false,
         "discarded": false,
-        // "gender": filter.selectedGender.isEmpty
-        //     ? null
-        //     : filter.selectedGender.join(","),
         "gender": gender,
-
-        // "price_from": filter.selectedPriceRange.start > 0
-        //     ? filter.selectedPriceRange.start.toInt()
-        //     : null,
-
-        // "price_to": filter.selectedPriceRange.end > 0
-        //     ? filter.selectedPriceRange.end.toInt()
-        //     : null,
         "price_from": filter.selectedPriceRange?.start.toInt(),
 
         "price_to": filter.selectedPriceRange?.end.toInt(),
         "order_for": null,
-
-        // "cts_from": filter.caratStartLabel.isEmpty
-        //     ? null
-        //     : double.tryParse(filter.caratStartLabel),
-        // "cts_to": filter.caratEndLabel.isEmpty
-        //     ? null
-        //     : double.tryParse(filter.caratEndLabel),
         "cts_from": filter.caratStartLabel != null
             ? double.tryParse(filter.caratStartLabel!)
             : null,
@@ -192,6 +174,11 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         "sort_by": filter.sortBy,
         if (layingWith != null)
           "laying_with": layingWith, //"laying_with": layingWith,
+
+        "color_from": filter.colorStartLabel,
+        "color_to": filter.colorEndLabel,
+        "clarity_from": filter.clarityStartLabel,
+        "clarity_to": filter.clarityEndLabel,
       };
 
       // debugPrint("🔄 Fetching jewellery - Page: $_page");
