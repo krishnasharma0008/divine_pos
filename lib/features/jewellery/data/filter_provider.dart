@@ -133,6 +133,16 @@ class FilterNotifier extends Notifier<FilterState> {
     caratEndLabel: const Nullable(null),
   );
 
+  void removeColor() => state = state.copyWith(
+    colorStartLabel: null,
+    colorEndLabel: null,
+  );
+
+  void removeClarity() => state = state.copyWith(
+    clarityStartLabel: null,
+    clarityEndLabel: null,
+  );
+
   void setColorRange(String s, String e) =>
       state = state.copyWith(colorStartLabel: s, colorEndLabel: e);
 

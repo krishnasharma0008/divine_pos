@@ -1,13 +1,10 @@
+import 'package:divine_pos/shared/utils/currency_formatter.dart';
+import 'package:divine_pos/shared/utils/scale_size.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 
 // ── Shared text style across row and header ──────────────────────────────────
-const _kCellStyle = TextStyle(
-  color: Color(0xFF888888),
-  fontSize: 16,
-  fontFamily: 'Arial',
-  fontWeight: FontWeight.w400,
-  height: 1.50,
-);
+//const _kCellStyle =
 
 class DiamondsRow extends StatelessWidget {
   final int srNo;
@@ -33,46 +30,34 @@ class DiamondsRow extends StatelessWidget {
     required this.onDec,
   });
 
-  String _formatAmount(int value) {
-    final s = value.toString();
-    if (s.length <= 3) return '₹$s';
-    final last3 = s.substring(s.length - 3);
-    final rest = s.substring(0, s.length - 3);
-    final buf = StringBuffer();
-    int count = 0;
-    for (int i = rest.length - 1; i >= 0; i--) {
-      buf.write(rest[i]);
-      count++;
-      if (count % 2 == 0 && i != 0) buf.write(',');
-    }
-    return '₹${buf.toString().split('').reversed.join()},$last3';
-  }
-
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
+
     return Container(
-      height: 61,
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 61 * fem,
+      margin: EdgeInsets.only(top: 8 * fem),
+      padding: EdgeInsets.symmetric(horizontal: 10 * fem),
       decoration: ShapeDecoration(
         shape: RoundedRectangleBorder(
           side: const BorderSide(width: 1, color: Color(0xFFE5E5E5)),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(10 * fem),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _Cell(text: '${srNo.toString().padLeft(2, '0')}.'),
-          _Cell(text: shape),
-          _Cell(text: color),
-          _Cell(text: clarity),
-          _Cell(text: carat.toStringAsFixed(2)),
-          _Cell(text: _formatAmount(price.toInt())), // per stone price
-          _QtyCell(qty: qty, onInc: onInc, onDec: onDec),
+          _Cell(text: '${srNo.toString().padLeft(2, '0')}.', fem: fem),
+          _Cell(text: shape, fem: fem),
+          _Cell(text: color, fem: fem),
+          _Cell(text: clarity, fem: fem),
+          _Cell(text: carat.toStringAsFixed(2), fem: fem),
+          _Cell(text: price!.inRupeesFormat(), fem: fem), // per stone price
+          _QtyCell(qty: qty, onInc: onInc, onDec: onDec, fem: fem),
           _Cell(
-            text: _formatAmount((carat * price * qty).toDouble().round()),
+            text: (carat * price * qty).toDouble().round().inRupeesFormat(),
             align: Alignment.centerRight,
+            fem: fem,
           ),
         ],
       ),
@@ -83,8 +68,13 @@ class DiamondsRow extends StatelessWidget {
 class _Cell extends StatelessWidget {
   final String text;
   final Alignment align;
+  final double fem;
 
-  const _Cell({required this.text, this.align = Alignment.centerLeft});
+  const _Cell({
+    required this.text,
+    this.align = Alignment.centerLeft,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +88,17 @@ class _Cell extends StatelessWidget {
     return Expanded(
       child: Align(
         alignment: align,
-        child: Text(text, style: _kCellStyle, textAlign: textAlign),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: Color(0xFF888888),
+            fontSize: 20 * fem,
+            fontFamily: 'Arial',
+            fontWeight: FontWeight.w400,
+            height: 1.50,
+          ),
+          textAlign: textAlign,
+        ),
       ),
     );
   }
@@ -108,8 +108,14 @@ class _QtyCell extends StatelessWidget {
   final int qty;
   final VoidCallback onInc;
   final VoidCallback onDec;
+  final double fem;
 
-  const _QtyCell({required this.qty, required this.onInc, required this.onDec});
+  const _QtyCell({
+    required this.qty,
+    required this.onInc,
+    required this.onDec,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -118,8 +124,8 @@ class _QtyCell extends StatelessWidget {
       child: Align(
         alignment: Alignment.center, // center the stepper inside the cell
         child: Container(
-          width: 94, // fixed Figma width
-          height: 31,
+          width: 94 * fem, // fixed Figma width
+          height: 31 * fem,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: Colors.white,
@@ -136,19 +142,23 @@ class _QtyCell extends StatelessWidget {
                     : const Color(0xFFBEE4DD),
                 child: InkWell(
                   onTap: qty == 0 ? null : onDec,
-                  child: const SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: Icon(Icons.remove, size: 16, color: Colors.white),
+                  child: SizedBox(
+                    width: 32 * fem,
+                    height: 32 * fem,
+                    child: Icon(
+                      Icons.remove,
+                      size: 16 * fem,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
               // ── Qty number — centered ─────────────────────────────────────
-              Text(
+              MyText(
                 '$qty',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.black,
-                  fontSize: 16,
+                  fontSize: 20 * fem,
                   fontFamily: 'Arial',
                   fontWeight: FontWeight.w400,
                   height: 1.50,
@@ -159,10 +169,10 @@ class _QtyCell extends StatelessWidget {
                 color: const Color(0xFFBEE4DD),
                 child: InkWell(
                   onTap: onInc,
-                  child: const SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: Icon(Icons.add, size: 16, color: Colors.white),
+                  child: SizedBox(
+                    width: 32 * fem,
+                    height: 32 * fem,
+                    child: Icon(Icons.add, size: 16 * fem, color: Colors.white),
                   ),
                 ),
               ),
@@ -184,8 +194,8 @@ class SolitaireHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 61,
-      margin: const EdgeInsets.only(bottom: 4),
+      //height: 61,
+      margin: const EdgeInsets.symmetric(vertical: 2),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: ShapeDecoration(
         color: const Color(0xFFBEE4DD),
@@ -227,7 +237,17 @@ class _HeaderCell extends StatelessWidget {
       // flex: flex,
       child: Align(
         alignment: align,
-        child: Text(label, style: _kCellStyle, textAlign: textAlign),
+        child: MyText(
+          label,
+          style: TextStyle(
+            color: Color(0xFF888888),
+            fontSize: 20 * ScaleSize.aspectRatio,
+            fontFamily: 'Arial',
+            fontWeight: FontWeight.w400,
+            height: 1.50,
+          ),
+          textAlign: textAlign,
+        ),
       ),
     );
   }

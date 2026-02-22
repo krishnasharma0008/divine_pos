@@ -77,6 +77,18 @@ class FilterTagsSection extends ConsumerWidget {
       tags.add('Carat: ${filter.caratStartLabel}-${filter.caratEndLabel}');
     }
 
+    if (filter.selectedCategory.any(
+      (c) => c.trim().toLowerCase() == 'solitaires',
+    )) {
+      if (filter.colorStartLabel != null && filter.colorEndLabel != null) {
+        tags.add('Color: ${filter.colorStartLabel}-${filter.colorEndLabel}');
+      }
+      if (filter.clarityStartLabel != null && filter.clarityEndLabel != null) {
+        tags.add(
+          'Clarity: ${filter.clarityStartLabel}-${filter.clarityEndLabel}',
+        );
+      }
+    }
     // // Carat range tag ONLY when changed from default
     // if (filter.caratStartLabel != kDefaultCaratStart ||
     //     filter.caratEndLabel != kDefaultCaratEnd) {
@@ -112,20 +124,23 @@ class FilterTagsSection extends ConsumerWidget {
             notifier.toggleGender(tag);
           } else if (filter.selectedMetalPurity.contains(tag)) {
             notifier.toggleMetalPurity(tag);
-          }else if (filter.selectedMetalColor.contains(tag)) {
+          } else if (filter.selectedMetalColor.contains(tag)) {
             notifier.toggleMetalColor(tag);
-          }  else if (shapeCode.isNotEmpty &&
+          } else if (shapeCode.isNotEmpty &&
               filter.selectedShape.contains(shapeCode)) {
             notifier.toggleShape(shapeCode);
           } else if (filter.selectedOccasions.contains(tag)) {
             notifier.toggleOccasion(tag);
 
             // Reset price only when the price tag is removed
-          }
-           else if (tag.startsWith('Price:')) {
+          } else if (tag.startsWith('Price:')) {
             notifier.removePrice(); // ✅ use the nullable remove function
           } else if (tag.startsWith('Carat:')) {
             notifier.removeCarat(); // ✅ use the nullable remove function
+          } else if (tag.startsWith('Color:')) {
+            notifier.removeColor(); // ✅ use the nullable remove function
+          } else if (tag.startsWith('Clarity:')) {
+            notifier.removeClarity(); // ✅ use the nullable remove function
           }
           //  else if (tag.startsWith('Price:')) {
           //   notifier.setPrice(kDefaultPriceRange);

@@ -373,7 +373,7 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
                 // ── Pinned header ──────────────────────────────────────────
                 SliverPersistentHeader(
                   pinned: true,
-                  delegate: _SolitaireHeaderDelegate(),
+                  delegate: _SolitaireHeaderDelegate(fem: widget.fem),
                 ),
                 // ── Rows ───────────────────────────────────────────────────
                 SliverPadding(
@@ -436,6 +436,16 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // const Text(
+                        //   'Total Amount',
+                        //   style: TextStyle(
+                        //     color: Color(0xFF888888),
+                        //     fontSize: 13,
+                        //     fontFamily: 'Arial',
+                        //     fontWeight: FontWeight.w400,
+                        //   ),
+                        // ),
+                        // const SizedBox(height: 2),
                         MyText(
                           grandTotal!.inRupeesFormat(),
                           style: TextStyle(
@@ -554,11 +564,15 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
 
 // ── Delegate that keeps SolitaireHeader pinned at the top ────────────────────
 class _SolitaireHeaderDelegate extends SliverPersistentHeaderDelegate {
-  @override
-  double get minExtent => 77; // 61 height + 8 top + 8 bottom padding
+  final double fem;
+
+  _SolitaireHeaderDelegate({required this.fem});
 
   @override
-  double get maxExtent => 77;
+  double get minExtent => 68 * fem; // 61 height + 8 top + 8 bottom padding
+
+  @override
+  double get maxExtent => 68 * fem;
 
   @override
   Widget build(
@@ -566,9 +580,10 @@ class _SolitaireHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
+    //final fem = ScaleSize.aspectRatio;
     return Container(
       color: Colors.white, // prevents content bleeding through when pinned
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 8 * fem, vertical: 0 * fem),
       child: const SolitaireHeader(),
     );
   }
