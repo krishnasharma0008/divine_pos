@@ -127,6 +127,10 @@ class _JewelleryListingScreenState
         storeState.isLoading ||
         (jewelleryAsync.isLoading && !jewelleryNotifier.isLoadingMore);
 
+    // isSolitaire = isSolitaire
+    //     ? filter.applySolitaireCategory
+    //     : filter.resetFilters();
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: MyAppBar(

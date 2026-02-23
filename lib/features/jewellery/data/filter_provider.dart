@@ -76,11 +76,43 @@ class FilterNotifier extends Notifier<FilterState> {
     (s) => state = state.copyWith(selectedGender: s),
   );
 
-  void toggleCategory(String v) => _toggleSet(
-    state.selectedCategory,
-    v,
-    (s) => state = state.copyWith(selectedCategory: s),
-  );
+  // void toggleCategory(String v) => _toggleSet(
+  //   state.selectedCategory,
+  //   v,
+  //   (s) => state = state.copyWith(selectedCategory: s),
+  // );
+
+  void toggleCategory(String v) {
+    final value = v.toLowerCase();
+
+    // 1) Handle Solitaire specially
+    if (value == 'solitaires') {
+      final alreadySelected = state.selectedCategory.contains(v);
+      if (alreadySelected) {
+        // Turn off solitaire
+        final next = {...state.selectedCategory}..remove(v);
+        state = state.copyWith(selectedCategory: next);
+      } else {
+        // Turn on solitaire as single category + clear other filters
+        state = state.copyWith(selectedCategory: {v});
+        applySolitaireCategory();
+      }
+      return;
+    }
+
+    // 2) For any non‑solitaire category, remove solitaire if present
+    var next = {...state.selectedCategory};
+    next.removeWhere((c) => c.toLowerCase() == 'solitaires');
+
+    // Then toggle the requested category
+    if (next.contains(v)) {
+      next.remove(v);
+    } else {
+      next.add(v);
+    }
+
+    state = state.copyWith(selectedCategory: next);
+  }
 
   void toggleSubCategory(String v) => _toggleSet(
     state.selectedSubCategory,
@@ -172,6 +204,12 @@ class FilterNotifier extends Notifier<FilterState> {
 
   void setCategory(String value) {
     state = state.copyWith(selectedCategory: {value});
+    //debugPrint('Selected Category : $value');
+    // if (value.toLowerCase() == 'solitaire') {
+    //   applySolitaireCategory();
+    // } else {
+    //   resetFilters();
+    // }
   }
 
   void setSubCategory(String value) {
@@ -192,12 +230,36 @@ class FilterNotifier extends Notifier<FilterState> {
       caratStartLabel: null, // '0.10',
       caratEndLabel: null, // '2.99',
       selectedShape: {},
-      selectedMetalPurity: {'18KT'},
+      selectedMetalPurity: {},
       selectedMetalColor: {}, // {'Yellow'},
       selectedOccasions: {},
       // selectedColors: {},
       // selectedClarities: {},
       // Top buttons remain untouched
+    );
+  }
+
+  // for solitaire
+  void applySolitaireCategory() {
+    state = state.copyWith(
+      selectedGender: {},
+      selectedPriceRange: null,
+      selectedSubCategory: {},
+      selectedShape: {},
+      selectedMetalPurity: {},
+      selectedMetalColor: {},
+      selectedOccasions: {},
+
+      // clear ranges
+      colorStartLabel: null,
+      colorEndLabel: null,
+      clarityStartLabel: null,
+      clarityEndLabel: null,
+      caratStartLabel: null,
+      caratEndLabel: null,
+      // optional: clear sort / top buttons if you want
+      sortBy: null,
+      // isInStore, productBranch, allDesigns can stay as-is or also reset
     );
   }
 }
