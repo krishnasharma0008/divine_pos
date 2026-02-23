@@ -1,3 +1,7 @@
+import 'package:divine_pos/shared/app_bar.dart';
+import 'package:divine_pos/shared/utils/enums.dart';
+import 'package:divine_pos/shared/utils/scale_size.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,6 +15,8 @@ const _textGrey = Color(0xFF9E9E9E);
 const _borderColor = Color(0xFFE0E0E0);
 const _cardBg = Colors.white;
 const _pageBg = Color(0xFFF0F7F6);
+
+final fem = ScaleSize.aspectRatio;
 
 // ─── Entry Point ────────────────────────────────────────────────────────────
 class FeedbackFormPage extends StatefulWidget {
@@ -30,40 +36,14 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _pageBg,
+      appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
       body: Column(
         children: [
-          _TopBar(onBack: _currentStep == 1 ? _goToStep1 : null),
           _StepIndicator(currentStep: _currentStep),
           Expanded(
             child: _currentStep == 0
                 ? _CustomerFeedbackForm(onNext: _goToStep2)
                 : _SalesExecutiveForm(onSubmit: () {}),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Top Bar ─────────────────────────────────────────────────────────────────
-class _TopBar extends StatelessWidget {
-  final VoidCallback? onBack;
-  const _TopBar({this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: _tealLight,
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        bottom: 12,
-        left: 8,
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left, color: _textDark, size: 28),
-            onPressed: onBack ?? () => Navigator.maybePop(context),
           ),
         ],
       ),
@@ -80,15 +60,18 @@ class _StepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: EdgeInsets.symmetric(vertical: 16 * fem),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16 * fem,
+              vertical: 8 * fem,
+            ),
             decoration: BoxDecoration(
               color: _pageBg,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(24 * fem),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -135,8 +118,8 @@ class _StepBubble extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 28,
-          height: 28,
+          width: 28 * fem,
+          height: 28 * fem,
           decoration: BoxDecoration(
             color: bg,
             shape: BoxShape.circle,
@@ -146,22 +129,22 @@ class _StepBubble extends StatelessWidget {
           ),
           child: Center(
             child: done
-                ? const Icon(Icons.check, color: Colors.white, size: 16)
-                : Text(
+                ? Icon(Icons.check, color: Colors.white, size: 16 * fem)
+                : MyText(
                     number,
                     style: TextStyle(
                       color: textColor,
-                      fontSize: 13,
+                      fontSize: 13 * fem,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
           ),
         ),
         const SizedBox(width: 8),
-        Text(
+        MyText(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 14 * fem,
             fontWeight: FontWeight.w500,
             color: (active || done) ? _textDark : _textGrey,
           ),
@@ -178,9 +161,9 @@ class _StepLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 40,
-      height: 2,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
+      width: 40 * fem,
+      height: 2 * fem,
+      margin: EdgeInsets.symmetric(horizontal: 10 * fem),
       color: done ? _teal : _borderColor,
     );
   }
@@ -245,7 +228,7 @@ class _CustomerFeedbackFormState extends State<_CustomerFeedbackForm> {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
+              blurRadius: 12 * fem,
               offset: const Offset(0, 2),
             ),
           ],
@@ -260,7 +243,7 @@ class _CustomerFeedbackFormState extends State<_CustomerFeedbackForm> {
               required: true,
               child: _Input(controller: _nameCtrl, hint: 'Sukanya Naiknaware'),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28 * fem),
             _FormField(
               number: 2,
               label: 'Mobile Number',
@@ -272,7 +255,7 @@ class _CustomerFeedbackFormState extends State<_CustomerFeedbackForm> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28 * fem),
             _FormField(
               number: 3,
               label: 'Email ID',
@@ -283,7 +266,7 @@ class _CustomerFeedbackFormState extends State<_CustomerFeedbackForm> {
                 keyboardType: TextInputType.emailAddress,
               ),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28 * fem),
             _FormField(
               number: 4,
               label: 'How Was Your Experience With Divine Solitaires?',
@@ -293,7 +276,7 @@ class _CustomerFeedbackFormState extends State<_CustomerFeedbackForm> {
                 onChanged: (v) => setState(() => _rating = v),
               ),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28 * fem),
             _FormField(
               number: 5,
               label: 'How did you know about Divine Solitaires?',
@@ -304,7 +287,7 @@ class _CustomerFeedbackFormState extends State<_CustomerFeedbackForm> {
                 onSelect: (v) => setState(() => _heardFrom = v),
               ),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28 * fem),
             _FormField(
               number: 6,
               label: 'Please select the option that best describes you',
@@ -314,7 +297,7 @@ class _CustomerFeedbackFormState extends State<_CustomerFeedbackForm> {
                 onSelect: (v) => setState(() => _customerType = v),
               ),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28 * fem),
             _FormField(
               number: 7,
               label: "What's the special occasion you're buying for today?",
@@ -324,9 +307,9 @@ class _CustomerFeedbackFormState extends State<_CustomerFeedbackForm> {
                 onSelect: (v) => setState(() => _occasion = v),
               ),
             ),
-            const SizedBox(height: 36),
+            SizedBox(height: 36 * fem),
             _SubmitButton(label: 'Submit', onTap: widget.onNext),
-            const SizedBox(height: 8),
+            SizedBox(height: 8 * fem),
           ],
         ),
       ),
@@ -382,32 +365,32 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16 * fem),
       child: Container(
         decoration: BoxDecoration(
           color: _cardBg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16 * fem),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
+              blurRadius: 12 * fem,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24 * fem),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            MyText(
               'Form to be filled by Sales Executive',
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 15 * fem,
                 fontWeight: FontWeight.w500,
                 color: _textDark,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24 * fem),
 
             // Q8 Sales Staff
             _FormField(
@@ -427,7 +410,7 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         border: Border.all(color: _borderColor),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8 * fem),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.08),
@@ -449,9 +432,9 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                                     horizontal: 16,
                                     vertical: 12,
                                   ),
-                                  child: Text(
+                                  child: MyText(
                                     s,
-                                    style: const TextStyle(fontSize: 14),
+                                    style: TextStyle(fontSize: 14 * fem),
                                   ),
                                 ),
                               ),
@@ -462,7 +445,7 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                 ],
               ),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28 * fem),
 
             // Q9 Purchase Category
             _FormField(
@@ -488,10 +471,10 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28 * fem),
 
             // Add Product UID
-            const Text(
+            const MyText(
               'Add Product UID',
               style: TextStyle(
                 fontSize: 14,
@@ -499,7 +482,7 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                 color: _textDark,
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10 * fem),
             Row(
               children: [
                 Expanded(
@@ -507,34 +490,34 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                     controller: _uidCtrl,
                     decoration: InputDecoration(
                       hintText: 'Enter UID',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         color: _textGrey,
-                        fontSize: 14,
+                        fontSize: 14 * fem,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 14 * fem,
+                        vertical: 12 * fem,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8 * fem),
                         borderSide: const BorderSide(color: _borderColor),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8 * fem),
                         borderSide: const BorderSide(color: _borderColor),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8 * fem),
                         borderSide: const BorderSide(color: _teal, width: 1.5),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12 * fem),
                 ElevatedButton.icon(
                   onPressed: _addProduct,
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add'),
+                  icon: Icon(Icons.add, size: 16 * fem),
+                  label: MyText('Add'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _teal,
                     foregroundColor: Colors.white,
@@ -570,7 +553,7 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                       child: Row(
                         children: const [
                           Expanded(
-                            child: Text(
+                            child: MyText(
                               'PRODUCT UID',
                               style: TextStyle(
                                 fontSize: 12,
@@ -580,7 +563,7 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                               ),
                             ),
                           ),
-                          Text(
+                          MyText(
                             'MRP',
                             style: TextStyle(
                               fontSize: 12,
@@ -607,17 +590,17 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text(
+                                  child: MyText(
                                     p.uid,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
                                       color: _textDark,
                                     ),
                                   ),
                                 ),
-                                Text(
+                                MyText(
                                   '${p.mrp}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     color: _textDark,
                                   ),
@@ -651,16 +634,16 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              const MyText(
                                 'Total UIDs',
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: _textGrey,
                                 ),
                               ),
-                              Text(
+                              MyText(
                                 '${_products.length}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: _textDark,
@@ -672,14 +655,14 @@ class _SalesExecutiveFormState extends State<_SalesExecutiveForm> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              const Text(
+                              const MyText(
                                 'Total MRP',
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: _textGrey,
                                 ),
                               ),
-                              Text(
+                              MyText(
                                 '₹${_totalMrp.toStringAsFixed(0)}',
                                 style: const TextStyle(
                                   fontSize: 16,
@@ -736,7 +719,7 @@ class _FormField extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            MyText(
               '$number  ',
               style: const TextStyle(
                 fontSize: 14,
@@ -902,7 +885,7 @@ class _ChipButton extends StatelessWidget {
             width: 1.5,
           ),
         ),
-        child: Text(
+        child: MyText(
           label,
           style: TextStyle(
             fontSize: 13,
@@ -962,7 +945,7 @@ class _RadioGroup extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
+                  child: MyText(
                     opt,
                     style: TextStyle(
                       fontSize: 14,
@@ -1003,9 +986,9 @@ class _SubmitButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
           ),
           child: Center(
-            child: Text(
+            child: MyText(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
