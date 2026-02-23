@@ -62,6 +62,8 @@ class CartSummaryPanel extends StatelessWidget {
     final allItems = [...orderProducts, ...readyProducts];
 
     return Dialog(
+      backgroundColor: Colors.white,
+      clipBehavior: Clip.hardEdge,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16 * fem),
       ),
@@ -69,108 +71,116 @@ class CartSummaryPanel extends StatelessWidget {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.8,
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              _buildHeader(fem, context),
+        child: Column(
+          children: [
+            // Header
+            _buildHeader(fem, context),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Scrollable products (Flexible instead of Expanded)
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(horizontal: 32 * fem),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            //SizedBox(height: 24 * fem),
+                            if (orderProducts.isNotEmpty) ...[
+                              _buildSectionTitle('Order Product', fem),
+                              SizedBox(height: 8 * fem),
+                              for (int i = 0; i < orderProducts.length; i++)
+                                _buildProductCard(
+                                  itemNumber: '${i + 1}',
+                                  productName:
+                                      '${orderProducts[i].productCategory ?? ''} - ${orderProducts[i].productCode ?? ''}',
+                                  priceRange: _formatPriceRange(
+                                    orderProducts[i].productAmtMin,
+                                    orderProducts[i].productAmtMax,
+                                  ),
+                                  description:
+                                      'Divine Solitaire: ${orderProducts[i].solitaireShape ?? ''} '
+                                      '${orderProducts[i].solitaireSlab ?? ''} '
+                                      '${orderProducts[i].solitaireColor ?? ''} '
+                                      '${orderProducts[i].solitaireQuality ?? ''} '
+                                      '(${orderProducts[i].solitairePcs ?? 0} Pcs)',
+                                  quantity: orderProducts[i].productQty ?? 1,
+                                  isTopRounded: i == 0,
+                                  isBottomRounded:
+                                      i == orderProducts.length - 1,
+                                  fem: fem,
+                                ),
+                              SizedBox(height: 32 * fem),
+                            ],
 
-              // Scrollable products (Flexible instead of Expanded)
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: 32 * fem),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      //SizedBox(height: 24 * fem),
-                      if (orderProducts.isNotEmpty) ...[
-                        _buildSectionTitle('Order Product', fem),
-                        SizedBox(height: 8 * fem),
-                        for (int i = 0; i < orderProducts.length; i++)
-                          _buildProductCard(
-                            itemNumber: '${i + 1}',
-                            productName:
-                                '${orderProducts[i].productCategory ?? ''} - ${orderProducts[i].productCode ?? ''}',
-                            priceRange: _formatPriceRange(
-                              orderProducts[i].productAmtMin,
-                              orderProducts[i].productAmtMax,
-                            ),
-                            description:
-                                'Divine Solitaire: ${orderProducts[i].solitaireShape ?? ''} '
-                                '${orderProducts[i].solitaireSlab ?? ''} '
-                                '${orderProducts[i].solitaireColor ?? ''} '
-                                '${orderProducts[i].solitaireQuality ?? ''} '
-                                '(${orderProducts[i].solitairePcs ?? 0} Pcs)',
-                            quantity: orderProducts[i].productQty ?? 1,
-                            isTopRounded: i == 0,
-                            isBottomRounded: i == orderProducts.length - 1,
-                            fem: fem,
-                          ),
-                        SizedBox(height: 32 * fem),
-                      ],
+                            if (readyProducts.isNotEmpty) ...[
+                              _buildSectionTitle('Ready Product', fem),
+                              const SizedBox(height: 8),
+                              for (int i = 0; i < readyProducts.length; i++)
+                                _buildProductCard(
+                                  itemNumber: '${i + 1}',
+                                  productName:
+                                      '${readyProducts[i].productCategory ?? ''} - ${readyProducts[i].productCode ?? ''}',
+                                  priceRange: _formatPriceRange(
+                                    readyProducts[i].productAmtMin,
+                                    readyProducts[i].productAmtMax,
+                                  ),
+                                  description:
+                                      'Divine Solitaire: ${readyProducts[i].solitaireShape ?? ''} '
+                                      '${readyProducts[i].solitaireSlab ?? ''} '
+                                      '${readyProducts[i].solitaireColor ?? ''} '
+                                      '${readyProducts[i].solitaireQuality ?? ''} '
+                                      '(${readyProducts[i].solitairePcs ?? 0} Pcs)',
+                                  quantity: readyProducts[i].productQty ?? 1,
+                                  isTopRounded: i == 0,
+                                  isBottomRounded:
+                                      i == readyProducts.length - 1,
+                                  fem: fem,
+                                ),
+                              SizedBox(height: 24 * fem),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
 
-                      if (readyProducts.isNotEmpty) ...[
-                        _buildSectionTitle('Ready Product', fem),
-                        const SizedBox(height: 8),
-                        for (int i = 0; i < readyProducts.length; i++)
-                          _buildProductCard(
-                            itemNumber: '${i + 1}',
-                            productName:
-                                '${readyProducts[i].productCategory ?? ''} - ${readyProducts[i].productCode ?? ''}',
-                            priceRange: _formatPriceRange(
-                              readyProducts[i].productAmtMin,
-                              readyProducts[i].productAmtMax,
-                            ),
-                            description:
-                                'Divine Solitaire: ${readyProducts[i].solitaireShape ?? ''} '
-                                '${readyProducts[i].solitaireSlab ?? ''} '
-                                '${readyProducts[i].solitaireColor ?? ''} '
-                                '${readyProducts[i].solitaireQuality ?? ''} '
-                                '(${readyProducts[i].solitairePcs ?? 0} Pcs)',
-                            quantity: readyProducts[i].productQty ?? 1,
-                            isTopRounded: i == 0,
-                            isBottomRounded: i == readyProducts.length - 1,
-                            fem: fem,
-                          ),
-                        SizedBox(height: 24 * fem),
-                      ],
-                    ],
-                  ),
+                    // Price Summary
+                    _buildPriceSummary(
+                      subtotal: subtotal,
+                      engravingCost: engravingTotal,
+                      engravingGst: engravingGst,
+                      gst: gst,
+                      grandTotal: grandTotal,
+                      fem: fem,
+                    ),
+
+                    // Delivery Info
+                    _buildDeliveryInfo(fem),
+                  ],
                 ),
               ),
-
-              // Price Summary
-              _buildPriceSummary(
-                subtotal: subtotal,
-                engravingCost: engravingTotal,
-                engravingGst: engravingGst,
-                gst: gst,
-                grandTotal: grandTotal,
-                fem: fem,
-              ),
-
-              // Delivery Info
-              _buildDeliveryInfo(fem),
-
-              // Confirm Button
-              _buildConfirmButton(
-                engravingCost: engravingTotal, //1000 per item
-                engravingGst: TaxConstants.engravingGstPercent, //18% of 1000
-                engravingtaxamt: engravingGst, // GST amount for engraving
-                gst: TaxConstants.gstPercent, // 3% of product subtotal
-                productTaxAmt: gst, // GST amount for products
-                grandTotal:
-                    grandTotal, // subtotal + engravingCost + gst + engravingGst
-                items: allItems,
-                //expDlvDate: expDlvDate,
-                fem: fem,
-              ),
-            ],
-          ),
+            ),
+            //Spacer(),
+            SizedBox(height: 10 * fem),
+            // Confirm Button
+            _buildConfirmButton(
+              engravingCost: engravingTotal, //1000 per item
+              engravingGst: TaxConstants.engravingGstPercent, //18% of 1000
+              engravingtaxamt: engravingGst, // GST amount for engraving
+              gst: TaxConstants.gstPercent, // 3% of product subtotal
+              productTaxAmt: gst, // GST amount for products
+              grandTotal:
+                  grandTotal, // subtotal + engravingCost + gst + engravingGst
+              items: allItems,
+              //expDlvDate: expDlvDate,
+              fem: fem,
+            ),
+          ],
         ),
       ),
     );

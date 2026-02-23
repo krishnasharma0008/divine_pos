@@ -10,10 +10,10 @@ class FilterNotifier extends Notifier<FilterState> {
       selectedPriceRange: null, // RangeValues(10000, 1000000),
       selectedCategory: {},
       selectedSubCategory: {},
-      colorStartLabel: 'D',
-      colorEndLabel: 'J',
-      clarityStartLabel: 'IF',
-      clarityEndLabel: 'SI2',
+      colorStartLabel: null, //'D',
+      colorEndLabel: null, //'J',
+      clarityStartLabel: null, //'IF',
+      clarityEndLabel: null, //'SI2',
       caratStartLabel: null, // '0.10',
       caratEndLabel: null, // '2.99',
       selectedShape: {},
@@ -133,21 +133,37 @@ class FilterNotifier extends Notifier<FilterState> {
     caratEndLabel: const Nullable(null),
   );
 
+  // void removeColor() =>
+  //     state = state.copyWith(colorStartLabel: null, colorEndLabel: null);
+
+  // void removeClarity() =>
+  //     state = state.copyWith(clarityStartLabel: null, clarityEndLabel: null);
+
+  // void setColorRange(String s, String e) =>
+  //     state = state.copyWith(colorStartLabel: s, colorEndLabel: e);
+
+  // void setClarityRange(String s, String e) =>
+  //     state = state.copyWith(clarityStartLabel: s, clarityEndLabel: e);
+
+  void setColorRange(String s, String e) => state = state.copyWith(
+    colorStartLabel: Nullable(s),
+    colorEndLabel: Nullable(e),
+  );
+
   void removeColor() => state = state.copyWith(
-    colorStartLabel: null,
-    colorEndLabel: null,
+    colorStartLabel: const Nullable(null),
+    colorEndLabel: const Nullable(null),
+  );
+
+  void setClarityRange(String s, String e) => state = state.copyWith(
+    clarityStartLabel: Nullable(s),
+    clarityEndLabel: Nullable(e),
   );
 
   void removeClarity() => state = state.copyWith(
-    clarityStartLabel: null,
-    clarityEndLabel: null,
+    clarityStartLabel: const Nullable(null),
+    clarityEndLabel: const Nullable(null),
   );
-
-  void setColorRange(String s, String e) =>
-      state = state.copyWith(colorStartLabel: s, colorEndLabel: e);
-
-  void setClarityRange(String s, String e) =>
-      state = state.copyWith(clarityStartLabel: s, clarityEndLabel: e);
 
   // void setCaratRange(String s, String e) =>
   //     state = state.copyWith(caratStartLabel: s, caratEndLabel: e);
@@ -169,10 +185,10 @@ class FilterNotifier extends Notifier<FilterState> {
       selectedPriceRange: null, // const RangeValues(10000, 1000000),
       selectedCategory: {},
       selectedSubCategory: {},
-      colorStartLabel: 'D',
-      colorEndLabel: 'J',
-      clarityStartLabel: 'IF',
-      clarityEndLabel: 'SI2',
+      colorStartLabel: null, //'D',
+      colorEndLabel: null, //'J',
+      clarityStartLabel: null, //'IF',
+      clarityEndLabel: null, //'SI2',
       caratStartLabel: null, // '0.10',
       caratEndLabel: null, // '2.99',
       selectedShape: {},

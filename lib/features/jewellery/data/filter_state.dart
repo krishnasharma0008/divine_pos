@@ -5,10 +5,10 @@ class FilterState {
   final RangeValues? selectedPriceRange;
   final Set<String> selectedCategory;
   final Set<String> selectedSubCategory;
-  final String colorStartLabel;
-  final String colorEndLabel;
-  final String clarityStartLabel;
-  final String clarityEndLabel;
+  final String? colorStartLabel;
+  final String? colorEndLabel;
+  final String? clarityStartLabel;
+  final String? clarityEndLabel;
   final String? caratStartLabel;
   final String? caratEndLabel;
   final Set<String> selectedShape;
@@ -30,10 +30,10 @@ class FilterState {
     this.selectedPriceRange,
     required this.selectedCategory,
     required this.selectedSubCategory,
-    required this.colorStartLabel,
-    required this.colorEndLabel,
-    required this.clarityStartLabel,
-    required this.clarityEndLabel,
+    this.colorStartLabel,
+    this.colorEndLabel,
+    this.clarityStartLabel,
+    this.clarityEndLabel,
     this.caratStartLabel,
     this.caratEndLabel,
     required this.selectedShape,
@@ -58,10 +58,10 @@ class FilterState {
     Nullable<RangeValues>? selectedPriceRange,
     Set<String>? selectedCategory,
     Set<String>? selectedSubCategory,
-    String? colorStartLabel,
-    String? colorEndLabel,
-    String? clarityStartLabel,
-    String? clarityEndLabel,
+    Nullable<String>? colorStartLabel,
+    Nullable<String>? colorEndLabel,
+    Nullable<String>? clarityStartLabel,
+    Nullable<String>? clarityEndLabel,
     Nullable<String>? caratStartLabel,
     Nullable<String>? caratEndLabel,
     Set<String>? selectedShape,
@@ -86,10 +86,23 @@ class FilterState {
 
       selectedCategory: selectedCategory ?? this.selectedCategory,
       selectedSubCategory: selectedSubCategory ?? this.selectedSubCategory,
-      colorStartLabel: colorStartLabel ?? this.colorStartLabel,
-      colorEndLabel: colorEndLabel ?? this.colorEndLabel,
-      clarityStartLabel: clarityStartLabel ?? this.clarityStartLabel,
-      clarityEndLabel: clarityEndLabel ?? this.clarityEndLabel,
+
+      colorStartLabel: colorStartLabel != null
+          ? colorStartLabel.value
+          : this.colorStartLabel,
+      colorEndLabel: colorEndLabel != null
+          ? colorEndLabel.value
+          : this.colorEndLabel,
+      //colorStartLabel: colorStartLabel ?? this.colorStartLabel,
+      //colorEndLabel: colorEndLabel ?? this.colorEndLabel,
+      clarityStartLabel: clarityStartLabel != null
+          ? clarityStartLabel.value
+          : this.clarityStartLabel,
+      clarityEndLabel: clarityEndLabel != null
+          ? clarityEndLabel.value
+          : this.clarityEndLabel,
+      // clarityStartLabel: clarityStartLabel ?? this.clarityStartLabel,
+      // clarityEndLabel: clarityEndLabel ?? this.clarityEndLabel,
       //caratStartLabel: caratStartLabel ?? this.caratStartLabel,
       caratStartLabel: caratStartLabel != null
           ? caratStartLabel.value

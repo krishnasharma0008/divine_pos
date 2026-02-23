@@ -98,49 +98,55 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         return Scaffold(
           backgroundColor: const Color(0xFFE7F7F4),
           appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
-          body: ListView(
-            padding: EdgeInsets.only(bottom: 24 * fem),
-            children: [
-              CartHeader(customerName: activeCustomer?.name ?? ''),
-              Padding(
-                padding: EdgeInsets.fromLTRB(72 * fem, 8 * fem, 24 * fem, 0),
-                child: MyText(
-                  'Shopping Cart (${items.length})',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 52 * fem),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1194),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _Section(
-                          title: 'Order Products',
-                          items: orderProducts,
-                          fem: fem,
-                        ),
-                        _Section(
-                          title: 'Ready Products',
-                          items: readyProducts,
-                          fem: fem,
-                        ),
-                      ],
+          body: SafeArea(
+            bottom: false,
+            child: ListView(
+              padding: EdgeInsets.only(bottom: 24 * fem),
+              children: [
+                CartHeader(customerName: activeCustomer?.name ?? ''),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(72 * fem, 8 * fem, 24 * fem, 0),
+                  child: MyText(
+                    'Shopping Cart (${items.length})',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Montserrat',
                     ),
                   ),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 52 * fem),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1194),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _Section(
+                            title: 'Order Products',
+                            items: orderProducts,
+                            fem: fem,
+                          ),
+                          _Section(
+                            title: 'Ready Products',
+                            items: readyProducts,
+                            fem: fem,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          bottomNavigationBar: _BottomProceedBar(
-            orderProducts: orderProducts,
-            readyProducts: readyProducts,
-            subtotal: subtotal,
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: _BottomProceedBar(
+              orderProducts: orderProducts,
+              readyProducts: readyProducts,
+              subtotal: subtotal,
+            ),
           ),
         );
       },

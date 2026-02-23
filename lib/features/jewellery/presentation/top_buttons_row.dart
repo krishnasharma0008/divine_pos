@@ -13,6 +13,7 @@ class TopButtonsRow extends ConsumerStatefulWidget {
   final ValueChanged<String>? onSortSelected;
   final ValueChanged<StoreDetail>? onBranchSelected;
   final List<StoreDetail>? branchStores;
+  final bool isSolitaire;
 
   const TopButtonsRow({
     super.key,
@@ -20,6 +21,7 @@ class TopButtonsRow extends ConsumerStatefulWidget {
     this.onSortSelected,
     this.onBranchSelected,
     this.branchStores,
+    required this.isSolitaire,
   });
 
   @override
@@ -75,13 +77,25 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
 
                 SizedBox(width: 14),
 
-                _PillButton(
-                  title: 'All Designs',
-                  selected: _selectedTab == 2,
-                  width: 155 * fem,
-                  onTap: () => _selectTab(2),
-                ),
-                //SizedBox(width: 251),
+                // if (!widget.isSolitaire) ...[
+                //   _PillButton(
+                //     title: 'All Designs',
+                //     selected: _selectedTab == 2,
+                //     width: 155 * fem,
+                //     onTap: () => _selectTab(2),
+                //   ),
+                //   //SizedBox(width: 251),
+                //   Spacer(),
+                // ],
+                if (!widget.isSolitaire)
+                  _PillButton(
+                    title: 'All Designs',
+                    selected: _selectedTab == 2,
+                    width: 155 * fem,
+                    onTap: () => _selectTab(2),
+                  )
+                else
+                  SizedBox(width: 155 * fem),
                 Spacer(),
 
                 UltraDropdown<String>(

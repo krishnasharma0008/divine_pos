@@ -104,6 +104,7 @@ class SideDrawer extends ConsumerWidget {
                           routePage: RoutePages.feedback,
                           drawerState: drawerState,
                           drawerNotifier: drawerNotifier,
+                          ispushReplacement: false,
                         ),
 
                         _nav(
@@ -297,6 +298,7 @@ class SideDrawer extends ConsumerWidget {
     required RoutePages routePage,
     required DrawerState drawerState,
     required DrawerNotifier drawerNotifier,
+    bool ispushReplacement = true,
   }) {
     final isActive = drawerState.routePage == routePage;
     final activeColor = isActive ? Colors.blue : const Color(0xFF232323);
@@ -306,7 +308,11 @@ class SideDrawer extends ConsumerWidget {
       onTap: () {
         Navigator.of(context).pop();
         drawerNotifier.routePage = routePage;
-        GoRouter.of(context).pushReplacement(routePage.routePath);
+        if (ispushReplacement) {
+          GoRouter.of(context).pushReplacement(routePage.routePath);
+        } else {
+          GoRouter.of(context).push(routePage.routePath);
+        }
       },
       child: Container(
         padding: EdgeInsets.only(

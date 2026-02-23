@@ -164,6 +164,7 @@ class _JewelleryListingScreenState
                 /// 🔹 Top controls
                 TopButtonsRow(
                   branchStores: storeState.stores,
+                  isSolitaire: isSolitaire ? true : false,
                   onBranchSelected: (store) {
                     ref.read(storeProvider.notifier).selectStore(store);
                     filterNotifier.setProductsAtOtherBranch(store.code);
