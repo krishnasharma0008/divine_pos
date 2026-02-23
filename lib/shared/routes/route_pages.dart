@@ -40,7 +40,7 @@ extension RoutePagesExtension on RoutePages {
         return "/catalogue";
 
       case RoutePages.feedback:
-        return "/feedback";
+        return "/feedback_form";
 
       case RoutePages.knowDiamond:
         return "/know_diamond";
@@ -95,7 +95,7 @@ extension RoutePagesExtension on RoutePages {
         return "catalogue";
 
       case RoutePages.feedback:
-        return "feedback";
+        return "feedback_form";
 
       case RoutePages.knowDiamond:
         return "know_diamond";
@@ -150,7 +150,7 @@ extension RoutePagesExtension on RoutePages {
         return "Catalogue";
 
       case RoutePages.feedback:
-        return "Feedback";
+        return "Feedback Form";
 
       case RoutePages.knowDiamond:
         return "Know Diamond";

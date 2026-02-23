@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:divine_pos/features/accounts/presentation/account_screen.dart';
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:divine_pos/features/feedback_form/presentation/feedback_form_screen.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/jewellery_customize_screen.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -134,12 +135,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         //builder: (context, state) => const ProfileScreen(),
         builder: (context, state) => const AccountScreen(),
       ),
-      // GoRoute(
-      //   path: RoutePages.feedbackform.routePath,
-      //   name: RoutePages.feedbackform.routeName,
-      //   //builder: (context, state) => const ProfileScreen(),
-      //   builder: (context, state) => const DivineFeedbackScreen(),
-      // ),
+      GoRoute(
+        path: RoutePages.feedback.routePath,
+        name: RoutePages.feedback.routeName,
+        //builder: (context, state) => const ProfileScreen(),
+        builder: (context, state) => const FeedbackFormPage(),
+      ),
       GoRoute(
         name: RoutePages.feedbackform.routeName,
         path: '/Order_feedback_form',
