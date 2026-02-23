@@ -230,7 +230,7 @@ class FilterNotifier extends Notifier<FilterState> {
       caratStartLabel: null, // '0.10',
       caratEndLabel: null, // '2.99',
       selectedShape: {},
-      selectedMetalPurity: {},
+      selectedMetalPurity: {'18KT'},
       selectedMetalColor: {}, // {'Yellow'},
       selectedOccasions: {},
       // selectedColors: {},
