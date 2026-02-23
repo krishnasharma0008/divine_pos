@@ -30,9 +30,12 @@ class CartItemCard extends ConsumerStatefulWidget {
 class _CartItemCardState extends ConsumerState<CartItemCard> {
   late final TextEditingController _engravingController;
 
+  bool _engravingEnabled = false;
+
   @override
   void initState() {
     super.initState();
+    _engravingEnabled = (widget.item.engraving ?? '').trim().isNotEmpty;
     _engravingController = TextEditingController(
       text: widget.item.engraving ?? '',
     );
@@ -72,7 +75,7 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     );
 
     // Engraving derived from remarks
-    final isEngravingEnabled = (currentItem.engraving ?? '').trim().isNotEmpty;
+    //final isEngravingEnabled = (currentItem.engraving ?? '').trim().isNotEmpty;
 
     // Keep controller in sync with current item
     // final engravingText = currentItem.engraving ?? '';
@@ -130,8 +133,18 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
                           Row(
                             children: [
                               Checkbox(
-                                value: isEngravingEnabled,
+                                //value: isEngravingEnabled,
+                                // onChanged: (value) {
+                                //   notifier.toggleEngraving(
+                                //     currentItem.id ?? 0,
+                                //     value ?? false,
+                                //   );
+                                // },
+                                value: _engravingEnabled,
                                 onChanged: (value) {
+                                  setState(
+                                    () => _engravingEnabled = value ?? false,
+                                  );
                                   notifier.toggleEngraving(
                                     currentItem.id ?? 0,
                                     value ?? false,
@@ -177,7 +190,7 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
                           SizedBox(height: 14 * fem),
 
                           /// ENGRAVING TEXT AREA
-                          if (isEngravingEnabled)
+                          if (_engravingEnabled)
                             Container(
                               margin: EdgeInsets.only(top: 8 * fem),
                               padding: EdgeInsets.all(16 * fem),
