@@ -1,3 +1,4 @@
+import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -8,7 +9,8 @@ import '../../../shared/utils/enums.dart';
 import '../../../shared/utils/scale_size.dart';
 
 class DivineFeedbackScreen extends StatefulWidget {
-  const DivineFeedbackScreen({super.key});
+  final CustomerDetail customer;
+  const DivineFeedbackScreen({super.key, required this.customer});
 
   @override
   State<DivineFeedbackScreen> createState() => _DivineFeedbackScreenState();
@@ -39,10 +41,25 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
 
   // Text fields
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _mobileController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _salesStaffController = TextEditingController();
+  // final _nameController = TextEditingController();
+  // final _mobileController = TextEditingController();
+  // final _emailController = TextEditingController();
+  // final _salesStaffController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _mobileController;
+  late TextEditingController _emailController;
+  late TextEditingController _salesStaffController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.customer.name ?? '');
+    _mobileController = TextEditingController(
+      text: widget.customer.contactNo ?? '',
+    );
+    _emailController = TextEditingController(text: widget.customer.email ?? '');
+    _salesStaffController = TextEditingController();
+  }
 
   @override
   void dispose() {
@@ -77,7 +94,7 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            feedbackHeader(fem),
+            feedbackHeader(fem, widget.customer.name ?? ''),
             SizedBox(height: 20 * fem),
             stepHeader(
               fem,
@@ -519,7 +536,7 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
 }
 
 // header with thanks + customer chip
-Widget feedbackHeader(double fem) {
+Widget feedbackHeader(double fem, String customerName) {
   return Container(
     height: 103 * fem,
     color: const Color(0xFFF8F8F8),
@@ -584,7 +601,7 @@ Widget feedbackHeader(double fem) {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Customer Name',
+                        customerName, // Customer Name
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: const Color(0xFF5E5E5E),

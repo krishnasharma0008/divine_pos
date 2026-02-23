@@ -141,10 +141,10 @@ class _MobileNumberDialogState extends State<MobileNumberDialog> {
                       // Submit Button
                       GestureDetector(
                         onTap: () {
-                          if (_phoneController.text.isNotEmpty) {
-                            widget.onSubmit?.call(_phoneController.text);
-                            Navigator.of(context).pop(_phoneController.text);
-                          }
+                          //if (_phoneController.text.isNotEmpty) {
+                          widget.onSubmit?.call(_phoneController.text);
+                          Navigator.of(context).pop(_phoneController.text);
+                          //}
                         },
                         child: Container(
                           width: 213 * fem,

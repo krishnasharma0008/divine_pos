@@ -16,8 +16,6 @@ String? _s(dynamic v) => v?.toString();
 
 class CartDetail {
   final int? id;
-  // final String? username; // 🔥 NEW (UI ONLY
-  // final String? orderFrom; // 🔥 NEW (UI ONLY)
   final String? orderFor;
   final int? customerId;
   final String? customerCode;
@@ -74,13 +72,8 @@ class CartDetail {
   final double? product_taxamt;
   final double? product_netamt;
 
-  /// 🔥 NEW (UI ONLY)
-  //final bool engravingEnabled;
-
   const CartDetail({
     this.id,
-    // this.username, // 🔥 NEW (UI ONLY)
-    // this.orderFrom, // 🔥 NEW (UI ONLY)
     this.orderFor,
     this.customerId,
     this.customerCode,
@@ -143,8 +136,6 @@ class CartDetail {
   factory CartDetail.fromJson(Map<String, dynamic> json) {
     return CartDetail(
       id: _i(json['id']),
-      // username: _s(json['username']),
-      // orderFrom: _s(json['order_from']),
       orderFor: _s(json['order_for']),
       customerId: _i(json['customer_id']),
       customerCode: _s(json['customer_code']),
@@ -218,8 +209,6 @@ class CartDetail {
 
   CartDetail copyWith({
     int? id,
-    // String? username, // 🔥 NEW (UI ONLY
-    // String? orderFrom, // 🔥 NEW (UI ONLY)
     String? orderFor,
     int? customerId,
     String? customerCode,
@@ -277,8 +266,6 @@ class CartDetail {
   }) {
     return CartDetail(
       id: id ?? this.id,
-      // username: username ?? this.username, // 🔥 NEW (UI ONLY
-      // orderFrom: orderFrom ?? this.orderFrom, // 🔥 NEW (UI ONLY)
       orderFor: orderFor ?? this.orderFor,
       customerId: customerId ?? this.customerId,
       customerCode: customerCode ?? this.customerCode,
@@ -340,8 +327,6 @@ class CartDetail {
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{
       'id': id,
-      // 'username': username, // 🔥 NEW (UI ONLY
-      // 'order_from': orderFrom, // 🔥 NEW (UI ONLY
       'order_for': orderFor,
       'customer_id': customerId,
       'customer_code': customerCode,
@@ -399,7 +384,7 @@ class CartDetail {
       'product_netamt': product_netamt,
     };
 
-    map.removeWhere((_, v) => v == null || (v is String && v.isEmpty));
+    //map.removeWhere((_, v) => v == null || (v is String && v.isEmpty));
     return map;
   }
 }

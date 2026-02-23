@@ -8,20 +8,30 @@ class CartSummaryPanel extends StatelessWidget {
   final List<CartDetail> orderProducts;
   final List<CartDetail> readyProducts;
   final double subtotal;
-  //final double? engravingCost;
-  // final double engravingGstPercent;
-  // final double gstPercent;
 
-  final VoidCallback? onConfirm;
+  final String customerName;
+  //final String expDlvDate;
+
+  // ← typed callback instead of VoidCallback
+  final void Function({
+    required double engravingCost, //1000 per item
+    required double engravingGst, //18% of 1000
+    required double engravingtaxamt, // GST amount for engraving
+    required double gst, //3% of product subtotal
+    required double productTaxAmt, // GST amount for products
+    required double grandTotal, // subtotal + engravingCost + gst + engravingGst
+    //required String expDlvDate,
+    required List<CartDetail> items,
+  })?
+  onConfirm;
 
   const CartSummaryPanel({
     super.key,
     required this.orderProducts,
     required this.readyProducts,
     required this.subtotal,
-    //this.engravingCost, // = 1000,
-    //this.engravingGstPercent,// 18,
-    //this.gstPercent,// = 3,
+    required this.customerName,
+    //required this.expDlvDate,
     this.onConfirm,
   });
 
@@ -31,36 +41,25 @@ class CartSummaryPanel extends StatelessWidget {
     // 1) Base subtotal comes from parent (product amounts only)
     final baseSubtotal = subtotal;
 
-    // 2) Compute engraving cost dynamically from both lists
-    // double engravingTotal = 0;
-    // for (final item in [...orderProducts, ...readyProducts]) {
-    //   final hasRemarks =
-    //       item.cartRemarks != null && item.cartRemarks!.trim().isNotEmpty;
-    //   if (hasRemarks) {
-    //     engravingTotal += 1000; // per engraved item
-    //   }
-    // }
-
     // Compute engraving cost using constant
     double engravingTotal = 0;
     for (final item in [...orderProducts, ...readyProducts]) {
-      final hasRemarks =
-          item.cartRemarks != null && item.cartRemarks!.trim().isNotEmpty;
-      if (hasRemarks) {
+      final hasEngraving =
+          item.engraving != null && item.engraving!.trim().isNotEmpty;
+      if (hasEngraving) {
         engravingTotal += TaxConstants.engravingCostPerItem; // Use constant
       }
     }
 
-    //debugPrint("Base Subtotal: $baseSubtotal");
     debugPrint("Engraving Total: $engravingTotal");
 
     // 3) Compute taxes
-    // final engravingGst = engravingTotal * (engravingGstPercent / 100);
-    // final gst = baseSubtotal * (gstPercent / 100);
-    // final grandTotal = baseSubtotal + engravingTotal + engravingGst + gst;
     final engravingGst = TaxConstants.calculateEngravingGst(engravingTotal);
     final gst = TaxConstants.calculateGst(baseSubtotal);
     final grandTotal = baseSubtotal + engravingTotal + engravingGst + gst;
+
+    // ✅ combine all items shown in summary
+    final allItems = [...orderProducts, ...readyProducts];
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -158,7 +157,18 @@ class CartSummaryPanel extends StatelessWidget {
               _buildDeliveryInfo(fem),
 
               // Confirm Button
-              _buildConfirmButton(onConfirm: onConfirm, fem: fem),
+              _buildConfirmButton(
+                engravingCost: engravingTotal, //1000 per item
+                engravingGst: TaxConstants.engravingGstPercent, //18% of 1000
+                engravingtaxamt: engravingGst, // GST amount for engraving
+                gst: TaxConstants.gstPercent, // 3% of product subtotal
+                productTaxAmt: gst, // GST amount for products
+                grandTotal:
+                    grandTotal, // subtotal + engravingCost + gst + engravingGst
+                items: allItems,
+                //expDlvDate: expDlvDate,
+                fem: fem,
+              ),
             ],
           ),
         ),
@@ -245,14 +255,6 @@ class CartSummaryPanel extends StatelessWidget {
               ],
             ),
           ),
-          // Container(
-          //   width: 32 * fem,
-          //   height: 32 * fem,
-          //   decoration: BoxDecoration(
-          //     borderRadius: BorderRadius.circular(16 * fem),
-          //   ),
-          //   child: Icon(Icons.close, size: 20 * fem, color: Color(0xFF61738D)),
-          // ),
           GestureDetector(
             onTap: () => Navigator.of(context).pop(), // dialog close
             child: Container(
@@ -559,12 +561,36 @@ class CartSummaryPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildConfirmButton({VoidCallback? onConfirm, required double fem}) {
+  Widget _buildConfirmButton({
+    required double engravingCost, //1000 per item
+    required double engravingGst, //18% of 1000
+    required double engravingtaxamt, // GST amount for engraving
+    required double gst, //3% of product subtotal
+    required double productTaxAmt, // GST amount for products
+    required double grandTotal, // subtotal + engravingCost + gst + engravingGst
+    //required String expDlvDate,
+    required List<CartDetail> items,
+    required double fem,
+  }) {
     return Padding(
       padding: EdgeInsets.fromLTRB(32 * fem, 0, 32 * fem, 20 * fem),
       child: GestureDetector(
         // tap पकड़ने के लिए
-        onTap: onConfirm,
+        //onTap: onConfirm,
+        onTap: () {
+          // ← data flows OUT to parent here
+
+          onConfirm?.call(
+            engravingCost: engravingCost,
+            engravingGst: engravingGst,
+            engravingtaxamt: engravingtaxamt,
+            gst: gst,
+            productTaxAmt: productTaxAmt,
+            grandTotal: grandTotal,
+            //expDlvDate: expDlvDate,
+            items: items,
+          );
+        },
         child: Container(
           width: double.infinity,
           height: 51 * fem,

@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:math';
+import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../shared/app_bar.dart';
 import '../../../shared/utils/enums.dart';
@@ -614,8 +617,22 @@ class _BottomProceedBar extends ConsumerWidget {
     required this.subtotal,
   });
 
-  Future<void> _handleProceed(BuildContext context, WidgetRef ref) async {
-    // update existing customer mobile if changed or new mobile entered
+  Future<void> _handleProceed(
+    BuildContext context,
+    WidgetRef ref, {
+    required double engravingCost,
+    required double engravingGst, // percent
+    required double engravingtaxamt, // amount
+    required double gst, // percent
+    required double productTaxAmt, // amount
+    required double grandTotal,
+    //required String expDlvDate,
+    required List<CartDetail> items,
+  }) async {
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    // 1) Ask mobile
     final phone = await showDialog<String>(
       context: context,
       barrierDismissible: false,
@@ -623,26 +640,52 @@ class _BottomProceedBar extends ConsumerWidget {
           MobileNumberDialog(onSubmit: (value) => Navigator.of(ctx).pop(value)),
     );
 
-    if (phone == null || phone.isEmpty) return;
-
-    // selected customer का mobile अपडेट
     final selected = ref.read(selectedCustomerProvider);
-    if (selected != null && selected.id != null) {
-      await ref
-          .read(cartNotifierProvider.notifier)
-          .updateCustomerMobile(customerId: selected.id!, mobile: phone);
+
+    // 2) Update selected customer mobile
+    if (phone != null && phone.isNotEmpty) {
+      if (selected != null && selected.id != null) {
+        await ref
+            .read(cartNotifierProvider.notifier)
+            .updateCustomerMobile(
+              customerId: selected.id!,
+              mobile: phone.toString(),
+            );
+      }
     }
 
-    //end
-    //update cart
+    // 3) Close summary dialog
+    if (!context.mounted) return;
+    //Navigator.of(context).pop();
 
-    if (context.mounted) {
-      Navigator.of(context).pop();
+    if (!context.mounted) return;
+    final result = await ref
+        .read(cartNotifierProvider.notifier)
+        .proceedToCheckout(
+          items,
+          engravingCost,
+          engravingGst,
+          engravingtaxamt,
+          gst,
+          productTaxAmt,
+          grandTotal,
+        );
+
+    debugPrint('checkout result: $result');
+
+    // ✅ Check mounted again after the long async call
+    //if (!context.mounted) return;
+    //debugPrint("working");
+    final customer = selected;
+
+    if (result['success'] == true) {
+      //context.pushNamed(RoutePages.feedback.routeName);
+      router.pushNamed(RoutePages.feedbackform.routeName, extra: customer);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['msg'] ?? 'Checkout failed')),
+      );
     }
-
-    debugPrint('Customer Number: $phone');
-
-    await ref.read(cartNotifierProvider.notifier).proceedToCheckout();
   }
 
   @override
@@ -678,7 +721,33 @@ class _BottomProceedBar extends ConsumerWidget {
                     orderProducts: orderProducts,
                     readyProducts: readyProducts,
                     subtotal: subtotal,
-                    onConfirm: () => _handleProceed(context, ref),
+                    customerName:
+                        ref.read(selectedCustomerProvider)?.name ?? '',
+                    //expDlvDate: expDlvDate,
+                    onConfirm:
+                        ({
+                          required double engravingCost,
+                          required double engravingGst,
+                          required double engravingtaxamt,
+                          required double gst,
+                          required double productTaxAmt,
+                          required double grandTotal,
+                          //required String expDlvDate,
+                          required List<CartDetail> items,
+                        }) {
+                          _handleProceed(
+                            context,
+                            ref,
+                            engravingCost: engravingCost,
+                            engravingGst: engravingGst,
+                            engravingtaxamt: engravingtaxamt,
+                            gst: gst,
+                            productTaxAmt: productTaxAmt,
+                            grandTotal: grandTotal,
+                            items: items,
+                            //expDlvDate: expDlvDate,
+                          );
+                        },
                   ),
                 ),
                 child: Container(

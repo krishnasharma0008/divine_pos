@@ -114,6 +114,16 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   }
 
   Future<void> _editCart(CartDetail item) async {
+    //debugPrint('Editing cart item: ${item.toJson()}');
+    //print('Editing cart item: ${item.toJson()}');
+    // debugPrint('engraving in payload: "${item.engraving}"'); // ← just this
+    // debugPrint('toJson engraving: ${item.toJson()['engraving']}'); // ← and this
+    final json = item.toJson().toString();
+    for (int i = 0; i < json.length; i += 800) {
+      debugPrint(
+        json.substring(i, i + 800 > json.length ? json.length : i + 800),
+      );
+    }
     try {
       await dio.put(ApiEndPoint.update_cart, data: item.toJson());
     } on DioException {
@@ -285,6 +295,9 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     if (index == -1) return;
 
     final item = list[index];
+
+    debugPrint('BEFORE copyWith: engraving="${item.engraving}"');
+
     final newEngraving = enabled
         ? ((item.engraving?.trim().isNotEmpty ?? false)
               ? item.engraving!
@@ -292,10 +305,18 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
         : '';
 
     final updated = item.copyWith(engraving: newEngraving);
+
+    debugPrint('AFTER copyWith: engraving="${updated.engraving}"');
+
     final updatedList = [...list];
     updatedList[index] = updated;
 
     state = AsyncData(updatedList);
+
+    debugPrint(
+      'Toggling engraving for item $id to ${enabled ? 'enabled' : 'disabled'}',
+    );
+    debugPrint('Updated List: "$updated"');
 
     try {
       await _editCart(updated);
@@ -305,18 +326,20 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   }
 
   Future<void> updateEngravingText(int id, String text) async {
-    final index = _cartData.indexWhere((e) => e.id == id);
+    final list =
+        state.value ?? _cartData; // ← use state.value like updateQuantity
+    final index = list.indexWhere((e) => e.id == id);
     if (index == -1) return;
 
     final words = text.trim().split(RegExp(r'\s+'));
     if (words.length > maxEngravingWords) return;
 
-    final item = _cartData[index];
-    final updated = item.copyWith(engraving: text);
+    final updated = list[index].copyWith(engraving: text);
+    final updatedList = [...list];
+    updatedList[index] = updated;
 
-    // Local update
-    _cartData[index] = updated;
-    state = AsyncData(_cartData);
+    _cartData = updatedList; // keep in sync
+    state = AsyncData(updatedList);
 
     try {
       await _editCart(updated);
@@ -325,91 +348,200 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     }
   }
 
+  void debugEngraving(int id) {
+    final item = _cartData.firstWhere(
+      (e) => e.id == id,
+      orElse: () => throw Exception('Item not found'),
+    );
+    debugPrint('engraving for $id: "${item.engraving}"');
+  }
+
   // ==================== CHECKOUT ====================
 
-  Future<Map<String, dynamic>> proceedToCheckout() async {
-    if (_selectedItems.isEmpty) {
+  // Future<Map<String, dynamic>> proceedToCheckout(List<CartDetail> items) async {
+  //   // debugPrint(
+  //   //   "Starting checkout with selected items: ${items.map((e) => e.id)}",
+  //   // );
+
+  //   if (items.isEmpty) {
+  //     _errorMsg = 'Please select at least one item';
+  //     return {'success': false, 'msg': _errorMsg};
+  //   }
+
+  //   // items is already List<CartDetail> for this customer; just use that
+  //   final selected = items;
+
+  //   //debugPrint("Selected items for checkout: ${selected.map((e) => e.id)}");
+
+  //   if (selected.map((e) => e.customerName).toSet().length != 1) {
+  //     _errorMsg = 'Only one partner jeweller allowed';
+  //     return {'success': false, 'msg': _errorMsg};
+  //   }
+
+  //   // 1) per‑item tax calculation + local update + API update
+  //   for (final item in selected) {
+  //     final baseAmt = (item.productAmtMax ?? item.productAmtMin ?? 0);
+  //     final qty = item.productQty ?? 1;
+  //     final lineBase = baseAmt * qty;
+
+  //     // engraving per item based on engraving text
+  //     final hasEngraving = item.engraving?.trim().isNotEmpty ?? false;
+  //     final lineEngravingCost = hasEngraving
+  //         ? TaxConstants.engravingCostPerItem
+  //         : 0.0;
+  //     final lineEngravingTaxPer = TaxConstants.engravingGstPercent;
+  //     final lineEngravingTaxAmt = TaxConstants.calculateEngravingGst(
+  //       lineEngravingCost,
+  //     );
+
+  //     // product tax per line
+  //     final lineProductTaxPer = TaxConstants.gstPercent;
+  //     final lineProductTaxAmt = TaxConstants.calculateGst(lineBase);
+
+  //     // net amount = base + engraving + both taxes
+  //     final lineNetAmt =
+  //         lineBase +
+  //         lineEngravingCost +
+  //         lineEngravingTaxAmt +
+  //         lineProductTaxAmt;
+
+  //     final updated = item.copyWith(
+  //       // id stays same, no need to pass
+  //       engraving_cost: lineEngravingCost,
+  //       engraving_taxper: lineEngravingTaxPer,
+  //       engraving_taxamt: lineEngravingTaxAmt,
+  //       product_taxper: lineProductTaxPer,
+  //       product_taxamt: lineProductTaxAmt,
+  //       product_netamt: lineNetAmt,
+  //     );
+
+  //     //debugPrint("working ");
+  //     final idx = _cartData.indexWhere((e) => e.id == item.id);
+  //     if (idx != -1) {
+  //       _cartData[idx] = updated;
+  //     }
+
+  //     //debugPrint("data to be updated : ${updated.toJson()}");
+
+  //     try {
+  //       await _editCart(updated);
+  //     } catch (e) {
+  //       debugPrint('Cart tax update error for item ${item.id}: $e');
+  //     }
+  //   }
+
+  //   // 2) अब order create करो – still use ids from selected items
+  //   final ids = selected.map((e) => e.id).whereType<int>().toList();
+  //   state = const AsyncLoading();
+  //   try {
+  //     final response = await _createOrder(ids);
+
+  //     if ((response['msg'] ?? '').toLowerCase() == 'sucess') {
+  //       _cartData.removeWhere((item) => ids.contains(item.id));
+  //       _selectedItems.removeWhere(ids.contains);
+  //       state = AsyncData(_cartData);
+  //       return {'success': true, 'data': response};
+  //     }
+
+  //     return {'success': false, 'msg': response['msg'] ?? 'Failed'};
+  //   } catch (e) {
+  //     _errorMsg = e.toString();
+  //     state = AsyncError(e, StackTrace.current);
+  //     return {'success': false, 'msg': _errorMsg};
+  //   }
+  // }
+
+  Future<Map<String, dynamic>> proceedToCheckout(
+    List<CartDetail> items,
+    double engravingCostTotal,
+    double engravingGstPer,
+    double engravingGstAmtTotal,
+    double gstPer,
+    double productTaxAmtTotal,
+    double grandTotal,
+  ) async {
+    if (items.isEmpty) {
       _errorMsg = 'Please select at least one item';
       return {'success': false, 'msg': _errorMsg};
     }
 
-    final selected = _cartData
-        .where((i) => _selectedItems.contains(i.id))
+    final latestCart = state.value ?? _cartData;
+    final selected = latestCart
+        .where((e) => items.map((i) => i.id).contains(e.id))
         .toList();
 
-    if (selected.map((e) => e.customerName).toSet().length != 1) {
-      _errorMsg = 'Only one partner jeweller allowed';
-      return {'success': false, 'msg': _errorMsg};
-    }
+    // per-item calculations + local update
+    final List<Map<String, dynamic>> engravingAndTax = [];
 
-    // 1) per-item tax calculation + local update + API update
-    for (var i = 0; i < selected.length; i++) {
-      final item = selected[i];
-
+    for (final item in selected) {
+      //debugPrint('checkout item ${item.id} engraving="${item.engraving}"');
       final baseAmt = (item.productAmtMax ?? item.productAmtMin ?? 0);
       final qty = item.productQty ?? 1;
       final lineBase = baseAmt * qty;
 
-      // engraving
-      final hasEngraving = item.cartRemarks != null;
-      final engravingCost = hasEngraving
+      final hasEngraving = item.engraving?.trim().isNotEmpty ?? false;
+      final lineEngravingCost = hasEngraving
           ? TaxConstants.engravingCostPerItem
-          : 0.0; // 1000 per item fixed cost for engraving
-      final engravingTaxPer =
-          TaxConstants.engravingGstPercent; // 18% GST on engraving
-      final engravingTaxAmt = TaxConstants.calculateEngravingGst(
-        engravingCost,
-      ); // GST amount for engraving
-
-      // product tax
-      final productTaxPer = TaxConstants.gstPercent; // 3% GST on product
-      final productTaxAmt = TaxConstants.calculateGst(
-        lineBase,
-      ); // GST amount for product
-
-      // net amount = base + engraving + both taxes
-      final productNetAmt =
-          lineBase +
-          engravingCost +
-          engravingTaxAmt +
-          productTaxAmt; // final net amount for the line item
-
-      final updated = item.copyWith(
-        engraving_cost: engravingCost,
-        engraving_taxper: engravingTaxPer,
-        engraving_taxamt: engravingTaxAmt,
-        product_taxper: productTaxPer,
-        product_taxamt: productTaxAmt,
-        product_netamt: productNetAmt,
+          : 0.0;
+      final lineEngravingTaxPer = TaxConstants.engravingGstPercent;
+      final lineEngravingTaxAmt = TaxConstants.calculateEngravingGst(
+        lineEngravingCost,
       );
 
-      // local list में replace
+      final lineProductTaxPer = TaxConstants.gstPercent;
+      final lineProductTaxAmt = TaxConstants.calculateGst(lineBase);
+
+      final lineNetAmt =
+          lineBase +
+          lineEngravingCost +
+          lineEngravingTaxAmt +
+          lineProductTaxAmt;
+
+      final updated = item.copyWith(
+        engraving: item.engraving,
+        engraving_cost: lineEngravingCost,
+        engraving_taxper: lineEngravingTaxPer,
+        engraving_taxamt: lineEngravingTaxAmt,
+        product_taxper: lineProductTaxPer,
+        product_taxamt: lineProductTaxAmt,
+        product_netamt: lineNetAmt,
+      );
+
       final idx = _cartData.indexWhere((e) => e.id == item.id);
       if (idx != -1) {
         _cartData[idx] = updated;
       }
 
-      // backend पर भी update
-      try {
-        await _editCart(updated);
-      } catch (e) {
-        debugPrint('Cart tax update error for item ${item.id}: $e');
-      }
+      engravingAndTax.add({
+        'id': item.id,
+        'engraving': updated.engraving,
+        'engraving_cost': updated.engraving_cost,
+        'engraving_taxper': updated.engraving_taxper,
+        'engraving_taxamt': updated.engraving_taxamt,
+        'product_taxper': updated.product_taxper,
+        'product_taxamt': updated.product_taxamt,
+        'product_netamt': updated.product_netamt,
+      });
     }
-
-    // 2) अब order create करो
+    final ids = selected.map((e) => e.id).whereType<int>().toList();
+    //debugPrint("Ids: $ids");
+    //debugPrint('engravingAndTax: $engravingAndTax');
     state = const AsyncLoading();
     try {
-      final response = await _createOrder(_selectedItems);
+      final response = await dio.post(
+        ApiEndPoint.create_order, // or your new endpoint
+        data: {'ids': ids, 'engraving_and_tax': engravingAndTax},
+      );
 
-      if ((response['msg'] ?? '').toLowerCase() == 'sucess') {
-        _cartData.removeWhere((item) => _selectedItems.contains(item.id));
-        _selectedItems.clear();
+      //debugPrint("Response ${response.data}");
+      if ((response.data['msg'] ?? '').toString().toLowerCase() == 'sucess') {
+        _cartData.removeWhere((item) => ids.contains(item.id));
+        _selectedItems.removeWhere(ids.contains);
         state = AsyncData(_cartData);
-        return {'success': true, 'data': response};
+        return {'success': true, 'data': response.data};
       }
 
-      return {'success': false, 'msg': response['msg'] ?? 'Failed'};
+      return {'success': false, 'msg': response.data['msg'] ?? 'Failed'};
     } catch (e) {
       _errorMsg = e.toString();
       state = AsyncError(e, StackTrace.current);

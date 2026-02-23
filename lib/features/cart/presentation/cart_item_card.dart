@@ -34,15 +34,15 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
   void initState() {
     super.initState();
     _engravingController = TextEditingController(
-      text: widget.item.cartRemarks ?? '',
+      text: widget.item.engraving ?? '',
     );
   }
 
   @override
   void didUpdateWidget(covariant CartItemCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.item.cartRemarks != widget.item.cartRemarks) {
-      _engravingController.text = widget.item.cartRemarks ?? '';
+    if (oldWidget.item.engraving != widget.item.engraving) {
+      _engravingController.text = widget.item.engraving ?? '';
     }
   }
 
@@ -72,20 +72,18 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     );
 
     // Engraving derived from remarks
-    final isEngravingEnabled = (currentItem.cartRemarks ?? '')
-        .trim()
-        .isNotEmpty;
+    final isEngravingEnabled = (currentItem.engraving ?? '').trim().isNotEmpty;
 
     // Keep controller in sync with current item
-    final engravingText = currentItem.cartRemarks ?? '';
-    if (_engravingController.text != engravingText) {
-      _engravingController.value = TextEditingValue(
-        text: engravingText,
-        selection: TextSelection.fromPosition(
-          TextPosition(offset: engravingText.length),
-        ),
-      );
-    }
+    // final engravingText = currentItem.engraving ?? '';
+    // if (_engravingController.text != engravingText) {
+    //   _engravingController.value = TextEditingValue(
+    //     text: engravingText,
+    //     selection: TextSelection.fromPosition(
+    //       TextPosition(offset: engravingText.length),
+    //     ),
+    //   );
+    // }
 
     final fem = ScaleSize.aspectRatio;
 

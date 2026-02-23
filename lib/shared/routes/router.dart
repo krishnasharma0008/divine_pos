@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:divine_pos/features/accounts/presentation/account_screen.dart';
+import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/jewellery_customize_screen.dart';
 import 'package:flutter/widgets.dart';
@@ -133,11 +134,31 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         //builder: (context, state) => const ProfileScreen(),
         builder: (context, state) => const AccountScreen(),
       ),
+      // GoRoute(
+      //   path: RoutePages.feedbackform.routePath,
+      //   name: RoutePages.feedbackform.routeName,
+      //   //builder: (context, state) => const ProfileScreen(),
+      //   builder: (context, state) => const DivineFeedbackScreen(),
+      // ),
       GoRoute(
-        path: RoutePages.feedbackform.routePath,
         name: RoutePages.feedbackform.routeName,
-        //builder: (context, state) => const ProfileScreen(),
-        builder: (context, state) => const DivineFeedbackScreen(),
+        path: '/Order_feedback_form',
+        builder: (context, state) {
+          final customer =
+              state.extra as CustomerDetail? ??
+              CustomerDetail(
+                id: null,
+                name: '',
+                contactNo: '',
+                email: '',
+                address: '',
+                pan: '',
+                gender: '',
+                dob: '',
+                pincode: '',
+              );
+          return DivineFeedbackScreen(customer: customer);
+        },
       ),
       GoRoute(
         path: RoutePages.cart.routePath,
