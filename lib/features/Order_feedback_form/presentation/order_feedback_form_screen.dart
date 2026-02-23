@@ -1,7 +1,9 @@
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
+import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/app_bar.dart';
@@ -926,14 +928,21 @@ void _showSuccessDialog(BuildContext context, double fem) {
                   ),
                 ),
                 SizedBox(height: 32 * fem),
-                Container(
-                  width: 80 * fem,
-                  height: 4 * fem,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
-                    borderRadius: BorderRadius.circular(2 * fem),
-                  ),
+                Center(
+                  child: submitButton(fem, () {
+                    //Navigator.of(_).pop();
+                    context.pushNamed(RoutePages.dashboard.routeName);
+                  }, label: 'OK'),
                 ),
+                SizedBox(height: 32 * fem),
+                // Container(
+                //   width: 80 * fem,
+                //   height: 4 * fem,
+                //   decoration: BoxDecoration(
+                //     color: const Color(0xFFE0E0E0),
+                //     borderRadius: BorderRadius.circular(2 * fem),
+                //   ),
+                // ),
               ],
             ),
           ),
