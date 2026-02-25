@@ -60,11 +60,29 @@ class StyledDropdown extends StatelessWidget {
                 fontFamily: 'Rushter Glory',
                 color: Colors.black,
               ),
+              // items: items
+              //     .map(
+              //       (e) => DropdownMenuItem<String>(value: e, child: MyText(e)),
+              //     )
+              //     .toList(),
               items: items
                   .map(
-                    (e) => DropdownMenuItem<String>(value: e, child: MyText(e)),
+                    (e) => DropdownMenuItem<String>(
+                      value: e,
+                      child: Text(
+                        e,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14 * fem,
+                          fontFamily: 'Rushter Glory',
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
                   )
                   .toList(),
+
               onChanged: onChanged,
             ),
           ),

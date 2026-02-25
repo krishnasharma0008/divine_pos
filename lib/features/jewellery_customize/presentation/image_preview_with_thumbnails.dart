@@ -14,8 +14,17 @@ Widget buildProductImage(
   double? height,
   BoxFit fit = BoxFit.contain,
 }) {
+  // if (url.isEmpty) {
+  //   return const Icon(Icons.image_not_supported, size: 40);
+  // }
+
   if (url.isEmpty) {
-    return const Icon(Icons.image_not_supported, size: 40);
+    return Image.asset(
+      'assets/jewellery/No_Image_Available.jpg',
+      width: width,
+      height: height,
+      fit: fit,
+    );
   }
 
   final isAsset = !url.startsWith('http');
@@ -31,7 +40,19 @@ Widget buildProductImage(
     fit: fit,
     placeholder: (_, __) =>
         const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-    errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 40),
+    // errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 40),
+    // placeholder: (_, __) => Image.asset(
+    //   'assets/jewellery/No_Image_Available.jpg',
+    //   width: width,
+    //   height: height,
+    //   fit: fit,
+    // ),
+    errorWidget: (_, __, ___) => Image.asset(
+      'assets/jewellery/No_Image_Available.jpg',
+      width: width,
+      height: height,
+      fit: fit,
+    ),
   );
 }
 

@@ -663,7 +663,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                                       value,
                                                 );
                                               },
-                                              width: 100 * fem,
+                                              width: 145 * fem,
                                             ),
                                           ],
                                         ],

@@ -50,15 +50,15 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
   @override
   Widget build(BuildContext context) {
     // ✅ Handle empty image list
+    const _fallbackAsset = 'assets/jewellery/No_Image_Available.jpg';
+
     if (_flatUrls.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(
           child: Stack(
             children: [
-              const Center(
-                child: Text('No images', style: TextStyle(color: Colors.white)),
-              ),
+              Center(child: Image.asset(_fallbackAsset, fit: BoxFit.contain)),
               Positioned(
                 top: 8,
                 right: 8,
@@ -92,20 +92,22 @@ class _FullscreenGalleryState extends State<FullscreenGallery> {
                     minScale: 1,
                     maxScale: 4,
                     child: isAsset
-                        ? Image.asset(url, fit: BoxFit.contain)
+                        ? Image.asset(
+                            url.isEmpty ? _fallbackAsset : url,
+                            fit: BoxFit.contain,
+                          )
                         : CachedNetworkImage(
                             imageUrl: url,
                             fit: BoxFit.contain,
-                            placeholder: (_, __) => const Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                            placeholder: (_, __) => Center(
+                              child: Image.asset(
+                                _fallbackAsset,
+                                fit: BoxFit.contain,
                               ),
                             ),
-                            errorWidget: (_, __, ___) => const Icon(
-                              Icons.broken_image,
-                              color: Colors.white,
-                              size: 40,
+                            errorWidget: (_, __, ___) => Image.asset(
+                              _fallbackAsset,
+                              fit: BoxFit.contain,
                             ),
                           ),
                   ),

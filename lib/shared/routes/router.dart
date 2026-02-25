@@ -139,7 +139,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePages.feedback.routePath,
         name: RoutePages.feedback.routeName,
         //builder: (context, state) => const ProfileScreen(),
-        builder: (context, state) => const FeedbackFormPage(),
+        builder: (context, state) => const FeedbackFormScreen(),
       ),
       GoRoute(
         name: RoutePages.feedbackform.routeName,

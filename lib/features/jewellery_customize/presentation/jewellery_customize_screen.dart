@@ -50,7 +50,9 @@ class _JewelleryCustomiseScreenState
     super.initState();
     // load detail + initial calc
     Future.microtask(() {
-      ref.read(jewelleryCalcProvider.notifier).loadDetail(widget.productCode);
+      ref
+          .read(jewelleryCalcProvider.notifier)
+          .loadDetail(widget.productCode); //('DRF12826'); //
     });
   }
 
