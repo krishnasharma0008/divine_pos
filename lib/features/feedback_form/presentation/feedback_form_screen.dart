@@ -62,15 +62,17 @@ class _FeedbackFormScreenState extends ConsumerState<FeedbackFormScreen> {
         Scaffold(
           backgroundColor: FeedbackTheme.pageBg,
           appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
-          body: Column(
-            children: [
-              StepIndicator(currentStep: _currentStep),
-              Expanded(
-                child: _currentStep == 0
-                    ? CustomerFeedbackForm(onNext: _goToStep2)
-                    : SalesExecutiveForm(onSubmit: _submitAll),
-              ),
-            ],
+          body: SafeArea(
+            child: Column(
+              children: [
+                StepIndicator(currentStep: _currentStep),
+                Expanded(
+                  child: _currentStep == 0
+                      ? CustomerFeedbackForm(onNext: _goToStep2)
+                      : SalesExecutiveForm(onSubmit: _submitAll),
+                ),
+              ],
+            ),
           ),
         ),
         if (formState.isLoading)

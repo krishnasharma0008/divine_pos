@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:divine_pos/features/accounts/presentation/account_screen.dart';
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:divine_pos/features/diamond_value/presentation/diamond_value_screen.dart';
 import 'package:divine_pos/features/feedback_form/presentation/feedback_form_screen.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/jewellery_customize_screen.dart';
 import 'package:flutter/widgets.dart';
@@ -192,7 +193,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: RoutePages.cart.routeName,
         builder: (context, state) => CartScreen(),
       ),
-
+      GoRoute(
+        path: RoutePages.knowDiamond.routePath,
+        name: RoutePages.knowDiamond.routeName,
+        builder: (context, state) => DiamondValueScreen(),
+      ),
       // ⭐ MAIN APP LAYOUT (Bottom Navigation)
       // ShellRoute(
       //   builder: (context, state, child) {

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:divine_pos/constants/tax_constants.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,21 +22,20 @@ class SelectedCustomerNotifier extends Notifier<CustomerDetail?> {
   CustomerDetail? build() => null;
 
   void setCustomer(CustomerDetail? customer) => state = customer;
-
   void clear() => state = null;
 }
 
 final lastCustomerProvider = Provider<CustomerDetail?>((ref) {
-  final cartAsync = ref.watch(cartNotifierProvider);
-
-  return cartAsync.maybeWhen(
-    data: (cart) {
-      if (cart.isEmpty) return null;
-      final last = cart.last;
-      return CustomerDetail(id: last.customerId, name: last.customerName);
-    },
-    orElse: () => null,
-  );
+  return ref
+      .watch(cartNotifierProvider)
+      .maybeWhen(
+        data: (cart) {
+          if (cart.isEmpty) return null;
+          final last = cart.last;
+          return CustomerDetail(id: last.customerId, name: last.customerName);
+        },
+        orElse: () => null,
+      );
 });
 
 final filteredCartProvider = Provider<List<CartDetail>>((ref) {
@@ -91,12 +89,9 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
 
       if (response.statusCode == 200) {
         final res = response.data;
-        final rawList = res['data'] as List<dynamic>? ?? [];
-
-        _cartData = rawList
+        _cartData = (res['data'] as List<dynamic>? ?? [])
             .map((e) => CartDetail.fromJson(e as Map<String, dynamic>))
             .toList();
-
         _orderSummaryRemark = res['order_remarks'] ?? '';
         state = AsyncData(_cartData);
         return _cartData;
@@ -114,16 +109,6 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   }
 
   Future<void> _editCart(CartDetail item) async {
-    //debugPrint('Editing cart item: ${item.toJson()}');
-    //print('Editing cart item: ${item.toJson()}');
-    // debugPrint('engraving in payload: "${item.engraving}"'); // ← just this
-    // debugPrint('toJson engraving: ${item.toJson()['engraving']}'); // ← and this
-    final json = item.toJson().toString();
-    for (int i = 0; i < json.length; i += 800) {
-      debugPrint(
-        json.substring(i, i + 800 > json.length ? json.length : i + 800),
-      );
-    }
     try {
       await dio.put(ApiEndPoint.update_cart, data: item.toJson());
     } on DioException {
@@ -131,28 +116,17 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     }
   }
 
-  Future<Map<String, dynamic>> _createOrder(List<int> ids) async {
-    final response = await dio.post(
-      ApiEndPoint.create_cart,
-      data: {'ids': ids},
-    );
-    return response.data as Map<String, dynamic>;
-  }
-
   // ==================== PUBLIC GETTERS ====================
 
   List<int> get selectedItems => _selectedItems;
   String get orderSummaryRemark => _orderSummaryRemark;
   String get errorMsg => _errorMsg;
-  Map<String, dynamic> get totals => _calculateTotals();
 
   List<CustomerDetail> get cartCustomers {
     final map = <int, CustomerDetail>{};
-
     for (final item in _cartData) {
       final id = item.customerId;
       final name = item.customerName;
-
       if (id != null && name?.isNotEmpty == true) {
         map[id] = CustomerDetail(
           id: id,
@@ -174,28 +148,16 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
 
   Future<void> createCart(CartDetail item) async {
     final current = state.value ?? _cartData;
-
-    // ✅ optimistic update
-    final updated = [...current, item];
-    _cartData = updated;
-    state = AsyncData(updated);
-
-    debugPrint('Creating cart item: ${item.toJson()}');
+    _cartData = [...current, item];
+    state = AsyncData(_cartData);
 
     try {
       final res = await dio.post(
         ApiEndPoint.create_cart,
         data: [item.toJson()],
       );
-
-      if (res.data['success'] != true) {
-        throw Exception(res.data['msg']);
-      }
-
-      // ✅ DONE
-      // don't modify state again
+      if (res.data['success'] != true) throw Exception(res.data['msg']);
     } catch (e, st) {
-      // rollback only if API fails
       _cartData = current;
       state = AsyncError(e, st);
       rethrow;
@@ -231,15 +193,13 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   }
 
   void toggleItem(int id) {
-    if (_selectedItems.contains(id)) {
-      _selectedItems.remove(id);
-    } else {
-      _selectedItems.add(id);
-    }
+    _selectedItems.contains(id)
+        ? _selectedItems.remove(id)
+        : _selectedItems.add(id);
     state = AsyncData(_cartData);
   }
 
-  // ==================== QUANTITY UPDATE ====================
+  // ==================== QUANTITY ====================
 
   Future<void> updateQuantity(int id, bool increase) async {
     final list = state.value ?? const <CartDetail>[];
@@ -249,7 +209,6 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     final item = list[index];
     final oldQty = item.productQty ?? 1;
     final newQty = increase ? oldQty + 1 : (oldQty > 1 ? oldQty - 1 : 1);
-
     final unitMin = (item.productAmtMin ?? 0) / (oldQty == 0 ? 1 : oldQty);
     final unitMax = (item.productAmtMax ?? 0) / (oldQty == 0 ? 1 : oldQty);
 
@@ -259,9 +218,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
       productAmtMax: unitMax * newQty,
     );
 
-    // Optimistic update
-    final updatedList = [...list];
-    updatedList[index] = updated;
+    final updatedList = [...list]..[index] = updated;
     state = AsyncData(updatedList);
 
     try {
@@ -273,22 +230,6 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
 
   // ==================== ENGRAVING ====================
 
-  bool isEngravingEnabled(int id) {
-    final item = _cartData.firstWhere(
-      (e) => e.id == id,
-      orElse: () => throw Exception('Item not found'),
-    );
-    return (item.engraving?.trim().isNotEmpty ?? false);
-  }
-
-  String getEngravingText(int id) {
-    final item = _cartData.firstWhere(
-      (e) => e.id == id,
-      orElse: () => throw Exception('Item not found'),
-    );
-    return item.engraving ?? '';
-  }
-
   Future<void> toggleEngraving(int id, bool enabled) async {
     final list = state.value ?? const <CartDetail>[];
     final index = list.indexWhere((e) => e.id == id);
@@ -296,27 +237,14 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
 
     final item = list[index];
 
-    debugPrint('BEFORE copyWith: engraving="${item.engraving}"');
-
+    // ✅ Empty string when enabled with no prior text (not 'Engraving')
     final newEngraving = enabled
-        ? ((item.engraving?.trim().isNotEmpty ?? false)
-              ? item.engraving!
-              : 'Engraving')
+        ? ((item.engraving?.trim().isNotEmpty ?? false) ? item.engraving! : '')
         : '';
 
     final updated = item.copyWith(engraving: newEngraving);
-
-    debugPrint('AFTER copyWith: engraving="${updated.engraving}"');
-
-    final updatedList = [...list];
-    updatedList[index] = updated;
-
+    final updatedList = [...list]..[index] = updated;
     state = AsyncData(updatedList);
-
-    debugPrint(
-      'Toggling engraving for item $id to ${enabled ? 'enabled' : 'disabled'}',
-    );
-    debugPrint('Updated List: "$updated"');
 
     try {
       await _editCart(updated);
@@ -326,8 +254,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   }
 
   Future<void> updateEngravingText(int id, String text) async {
-    final list =
-        state.value ?? _cartData; // ← use state.value like updateQuantity
+    final list = state.value ?? _cartData;
     final index = list.indexWhere((e) => e.id == id);
     if (index == -1) return;
 
@@ -335,10 +262,8 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     if (words.length > maxEngravingWords) return;
 
     final updated = list[index].copyWith(engraving: text);
-    final updatedList = [...list];
-    updatedList[index] = updated;
-
-    _cartData = updatedList; // keep in sync
+    final updatedList = [...list]..[index] = updated;
+    _cartData = updatedList;
     state = AsyncData(updatedList);
 
     try {
@@ -348,108 +273,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     }
   }
 
-  void debugEngraving(int id) {
-    final item = _cartData.firstWhere(
-      (e) => e.id == id,
-      orElse: () => throw Exception('Item not found'),
-    );
-    debugPrint('engraving for $id: "${item.engraving}"');
-  }
-
   // ==================== CHECKOUT ====================
-
-  // Future<Map<String, dynamic>> proceedToCheckout(List<CartDetail> items) async {
-  //   // debugPrint(
-  //   //   "Starting checkout with selected items: ${items.map((e) => e.id)}",
-  //   // );
-
-  //   if (items.isEmpty) {
-  //     _errorMsg = 'Please select at least one item';
-  //     return {'success': false, 'msg': _errorMsg};
-  //   }
-
-  //   // items is already List<CartDetail> for this customer; just use that
-  //   final selected = items;
-
-  //   //debugPrint("Selected items for checkout: ${selected.map((e) => e.id)}");
-
-  //   if (selected.map((e) => e.customerName).toSet().length != 1) {
-  //     _errorMsg = 'Only one partner jeweller allowed';
-  //     return {'success': false, 'msg': _errorMsg};
-  //   }
-
-  //   // 1) per‑item tax calculation + local update + API update
-  //   for (final item in selected) {
-  //     final baseAmt = (item.productAmtMax ?? item.productAmtMin ?? 0);
-  //     final qty = item.productQty ?? 1;
-  //     final lineBase = baseAmt * qty;
-
-  //     // engraving per item based on engraving text
-  //     final hasEngraving = item.engraving?.trim().isNotEmpty ?? false;
-  //     final lineEngravingCost = hasEngraving
-  //         ? TaxConstants.engravingCostPerItem
-  //         : 0.0;
-  //     final lineEngravingTaxPer = TaxConstants.engravingGstPercent;
-  //     final lineEngravingTaxAmt = TaxConstants.calculateEngravingGst(
-  //       lineEngravingCost,
-  //     );
-
-  //     // product tax per line
-  //     final lineProductTaxPer = TaxConstants.gstPercent;
-  //     final lineProductTaxAmt = TaxConstants.calculateGst(lineBase);
-
-  //     // net amount = base + engraving + both taxes
-  //     final lineNetAmt =
-  //         lineBase +
-  //         lineEngravingCost +
-  //         lineEngravingTaxAmt +
-  //         lineProductTaxAmt;
-
-  //     final updated = item.copyWith(
-  //       // id stays same, no need to pass
-  //       engraving_cost: lineEngravingCost,
-  //       engraving_taxper: lineEngravingTaxPer,
-  //       engraving_taxamt: lineEngravingTaxAmt,
-  //       product_taxper: lineProductTaxPer,
-  //       product_taxamt: lineProductTaxAmt,
-  //       product_netamt: lineNetAmt,
-  //     );
-
-  //     //debugPrint("working ");
-  //     final idx = _cartData.indexWhere((e) => e.id == item.id);
-  //     if (idx != -1) {
-  //       _cartData[idx] = updated;
-  //     }
-
-  //     //debugPrint("data to be updated : ${updated.toJson()}");
-
-  //     try {
-  //       await _editCart(updated);
-  //     } catch (e) {
-  //       debugPrint('Cart tax update error for item ${item.id}: $e');
-  //     }
-  //   }
-
-  //   // 2) अब order create करो – still use ids from selected items
-  //   final ids = selected.map((e) => e.id).whereType<int>().toList();
-  //   state = const AsyncLoading();
-  //   try {
-  //     final response = await _createOrder(ids);
-
-  //     if ((response['msg'] ?? '').toLowerCase() == 'sucess') {
-  //       _cartData.removeWhere((item) => ids.contains(item.id));
-  //       _selectedItems.removeWhere(ids.contains);
-  //       state = AsyncData(_cartData);
-  //       return {'success': true, 'data': response};
-  //     }
-
-  //     return {'success': false, 'msg': response['msg'] ?? 'Failed'};
-  //   } catch (e) {
-  //     _errorMsg = e.toString();
-  //     state = AsyncError(e, StackTrace.current);
-  //     return {'success': false, 'msg': _errorMsg};
-  //   }
-  // }
 
   Future<Map<String, dynamic>> proceedToCheckout(
     List<CartDetail> items,
@@ -470,27 +294,20 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
         .where((e) => items.map((i) => i.id).contains(e.id))
         .toList();
 
-    // per-item calculations + local update
     final List<Map<String, dynamic>> engravingAndTax = [];
 
     for (final item in selected) {
-      //debugPrint('checkout item ${item.id} engraving="${item.engraving}"');
-      final baseAmt = (item.productAmtMax ?? item.productAmtMin ?? 0);
-      final qty = item.productQty ?? 1;
-      final lineBase = baseAmt * qty;
+      final baseAmt = item.productAmtMax ?? item.productAmtMin ?? 0;
+      final lineBase = baseAmt * (item.productQty ?? 1);
 
       final hasEngraving = item.engraving?.trim().isNotEmpty ?? false;
       final lineEngravingCost = hasEngraving
           ? TaxConstants.engravingCostPerItem
           : 0.0;
-      final lineEngravingTaxPer = TaxConstants.engravingGstPercent;
       final lineEngravingTaxAmt = TaxConstants.calculateEngravingGst(
         lineEngravingCost,
       );
-
-      final lineProductTaxPer = TaxConstants.gstPercent;
       final lineProductTaxAmt = TaxConstants.calculateGst(lineBase);
-
       final lineNetAmt =
           lineBase +
           lineEngravingCost +
@@ -500,17 +317,15 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
       final updated = item.copyWith(
         engraving: item.engraving,
         engraving_cost: lineEngravingCost,
-        engraving_taxper: lineEngravingTaxPer,
+        engraving_taxper: TaxConstants.engravingGstPercent,
         engraving_taxamt: lineEngravingTaxAmt,
-        product_taxper: lineProductTaxPer,
+        product_taxper: TaxConstants.gstPercent,
         product_taxamt: lineProductTaxAmt,
         product_netamt: lineNetAmt,
       );
 
       final idx = _cartData.indexWhere((e) => e.id == item.id);
-      if (idx != -1) {
-        _cartData[idx] = updated;
-      }
+      if (idx != -1) _cartData[idx] = updated;
 
       engravingAndTax.add({
         'id': item.id,
@@ -523,17 +338,16 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
         'product_netamt': updated.product_netamt,
       });
     }
+
     final ids = selected.map((e) => e.id).whereType<int>().toList();
-    //debugPrint("Ids: $ids");
-    //debugPrint('engravingAndTax: $engravingAndTax');
     state = const AsyncLoading();
+
     try {
       final response = await dio.post(
-        ApiEndPoint.create_order, // or your new endpoint
+        ApiEndPoint.create_order,
         data: {'ids': ids, 'engraving_and_tax': engravingAndTax},
       );
 
-      //debugPrint("Response ${response.data}");
       if ((response.data['msg'] ?? '').toString().toLowerCase() == 'sucess') {
         _cartData.removeWhere((item) => ids.contains(item.id));
         _selectedItems.removeWhere(ids.contains);
@@ -549,7 +363,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     }
   }
 
-  // ==================== CUSTOMER OPERATIONS ====================
+  // ==================== CUSTOMER ====================
 
   Future<List<CustomerDetail>> searchCustomer(String value) async {
     final query = value.trim();
@@ -560,10 +374,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
         '${ApiEndPoint.customerSearch}find',
         queryParameters: {'value': query},
       );
-
-      final data = res.data['data'] as List<dynamic>? ?? [];
-
-      return data
+      return (res.data['data'] as List<dynamic>? ?? [])
           .map((e) => CustomerDetail.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
@@ -578,12 +389,8 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
 
     try {
       final res = await dio.get('${ApiEndPoint.customerSearch}$query');
-
-      final data = res.data['data']; // a Map, not a List
-      debugPrint('Searched CUSTOMER data: $data');
-
+      final data = res.data['data'];
       if (data == null) return null;
-
       return CustomerDetail.fromJson(data as Map<String, dynamic>);
     } catch (e) {
       debugPrint('Customer search error: $e');
@@ -601,15 +408,12 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     );
 
     final body = res.data as Map<String, dynamic>;
-
     if (body['success'] != true) {
       throw Exception(body['msg'] ?? 'Customer create failed');
     }
 
     final id = body['id'] as int?;
-    if (id == null) {
-      throw Exception('No id returned from API');
-    }
+    if (id == null) throw Exception('No id returned from API');
 
     return CustomerDetail(
       id: id,
@@ -631,8 +435,9 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     final selected = ref.read(selectedCustomerProvider);
     if (selected == null || selected.id != customerId) return;
 
-    final updatedCustomer = selected.copyWith(contactNo: mobile);
-    ref.read(selectedCustomerProvider.notifier).setCustomer(updatedCustomer);
+    ref
+        .read(selectedCustomerProvider.notifier)
+        .setCustomer(selected.copyWith(contactNo: mobile));
 
     try {
       await dio.post(
@@ -645,30 +450,6 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     }
   }
 
-  List<CartDetail> getItemsForCustomer(int customerId) {
-    return _cartData.where((e) => e.customerId == customerId).toList();
-  }
-
-  // ==================== CALCULATIONS ====================
-
-  Map<String, dynamic> _calculateTotals() {
-    final selected = _cartData
-        .where((item) => _selectedItems.contains(item.id))
-        .toList();
-
-    return {
-      'totalQty': selected.fold<int>(
-        0,
-        (sum, item) => sum + (item.productQty ?? 0),
-      ),
-      'totalAmtMin': selected.fold<double>(
-        0,
-        (sum, item) => sum + (item.productAmtMin ?? 0),
-      ),
-      'totalAmtMax': selected.fold<double>(
-        0,
-        (sum, item) => sum + (item.productAmtMax ?? 0),
-      ),
-    };
-  }
+  List<CartDetail> getItemsForCustomer(int customerId) =>
+      _cartData.where((e) => e.customerId == customerId).toList();
 }

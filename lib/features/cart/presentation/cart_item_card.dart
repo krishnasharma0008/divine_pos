@@ -29,7 +29,6 @@ class CartItemCard extends ConsumerStatefulWidget {
 
 class _CartItemCardState extends ConsumerState<CartItemCard> {
   late final TextEditingController _engravingController;
-
   bool _engravingEnabled = false;
 
   @override
@@ -55,12 +54,262 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     super.dispose();
   }
 
+  // ─── Helpers ────────────────────────────────────────────────────────────────
+
+  Widget _buildImage(String? url) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        width: 180,
+        height: 180,
+        child: url != null && url.isNotEmpty
+            ? Image.network(
+                url,
+                fit: BoxFit.cover,
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : Container(
+                        color: const Color(0xFFF5F5F5),
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                errorBuilder: (_, __, ___) => Image.asset(
+                  'assets/jewellery/No_Image_Available.jpg',
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Image.asset(
+                'assets/jewellery/No_Image_Available.jpg',
+                fit: BoxFit.cover,
+              ),
+      ),
+    );
+  }
+
+  Widget _buildDetails(CartDetail item, CartNotifier notifier, double fem) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        MyText(
+          '${item.productSubCategory ?? ''} - ${item.productCode ?? ''}',
+          style: TextStyle(
+            color: const Color(0xFF0A0A0A),
+            fontSize: 18 * fem,
+            fontFamily: 'Montserrat',
+            fontWeight: FontWeight.w700,
+            height: 1.56,
+          ),
+        ),
+        const SizedBox(height: 6),
+        ...[
+          'Divine Solitaire Round ${item.solitaireSlab ?? ''} '
+              '${item.solitaireColor ?? ''} ${item.solitaireQuality ?? ''} '
+              '(${item.solitairePcs ?? 0} Pcs)',
+          'Divine Mount:  Metal- ${item.metalPurity ?? ''} '
+              '${item.metalColor ?? ''} ${item.metalWeight ?? 0}gms',
+          'Side Diamonds Qty ${item.sideStonePcs ?? 0} / '
+              '${item.sideStoneCts ?? 0}ct. ${item.sideStoneColor ?? ''} ${item.sideStoneQuality ?? ''}',
+          'Size: ${item.sizeFrom ?? ''}',
+        ].map(
+          (text) => MyText(
+            text,
+            style: TextStyle(
+              color: const Color(0xFF354152),
+              fontSize: 14 * fem,
+              fontFamily: 'Montserrat',
+              fontWeight: FontWeight.w400,
+              height: 1.43,
+            ),
+          ),
+        ),
+        SizedBox(height: 14 * fem),
+        _buildQtyControl(item, notifier, fem),
+      ],
+    );
+  }
+
+  Widget _buildQtyControl(CartDetail item, CartNotifier notifier, double fem) {
+    return Container(
+      width: 136.16 * fem,
+      height: 41.74 * fem,
+      clipBehavior: Clip.antiAlias,
+      decoration: ShapeDecoration(
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(width: 0.88, color: Color(0xFFE5E7EB)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      child: Row(
+        children: [
+          _qtyButton(
+            Icons.remove,
+            fem,
+            () => notifier.updateQuantity(item.id ?? 0, false),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                '${item.productQty ?? 1}',
+                style: TextStyle(
+                  color: const Color(0xFF0A0A0A),
+                  fontSize: 16 * fem,
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.w400,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ),
+          _qtyButton(
+            Icons.add,
+            fem,
+            () => notifier.updateQuantity(item.id ?? 0, true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _qtyButton(IconData icon, double fem, VoidCallback onTap) {
+    return SizedBox(
+      width: 39.98 * fem,
+      height: 39.98 * fem,
+      child: InkWell(
+        onTap: onTap,
+        child: Center(
+          child: Icon(icon, size: 16 * fem, color: const Color(0xFF0A0A0A)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrice(CartDetail item, double fem) {
+    final min = item.productAmtMin ?? 0;
+    final max = item.productAmtMax ?? 0;
+    return MyText(
+      '${min.inRupeesFormat()} - ${max.inRupeesFormat()}',
+      style: TextStyle(
+        color: const Color(0xFF0A0A0A),
+        fontSize: 24 * fem,
+        fontFamily: 'Montserrat',
+        fontWeight: FontWeight.w700,
+        height: 1.33,
+      ),
+      textAlign: TextAlign.right,
+    );
+  }
+
+  Widget _buildEngravingSection(
+    CartDetail item,
+    CartNotifier notifier,
+    double fem,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Checkbox(
+              value: _engravingEnabled,
+              onChanged: (value) {
+                setState(() => _engravingEnabled = value ?? false);
+                notifier.toggleEngraving(item.id ?? 0, value ?? false);
+              },
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4 * fem),
+              ),
+              side: BorderSide(
+                width: 0.88,
+                color: Colors.black.withValues(alpha: 0.10),
+              ),
+              activeColor: Colors.black,
+              checkColor: Colors.white,
+            ),
+            MyText(
+              'Add Engraving',
+              style: TextStyle(
+                color: const Color(0xFF0A0A0A),
+                fontSize: 14 * fem,
+                fontWeight: FontWeight.w400,
+                height: 1.43,
+              ),
+            ),
+            SizedBox(width: 4 * fem),
+            MyText(
+              '(+ ₹ 1,000)',
+              style: TextStyle(
+                color: const Color(0xFF697282),
+                fontSize: 14 * fem,
+                fontWeight: FontWeight.w400,
+                height: 1.43,
+              ),
+            ),
+          ],
+        ),
+        if (_engravingEnabled) ...[
+          SizedBox(height: 8 * fem),
+          Container(
+            padding: EdgeInsets.all(16 * fem),
+            decoration: BoxDecoration(
+              color: const Color(0x19BEE4DD),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0x4CBEE4DD)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MyText(
+                  'Engraving Text',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14 * fem,
+                  ),
+                ),
+                SizedBox(height: 10 * fem),
+                TextField(
+                  key: ValueKey('engraving_${item.id}'),
+                  maxLength: 100,
+                  controller: _engravingController,
+                  onChanged: (val) =>
+                      notifier.updateEngravingText(item.id ?? 0, val),
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your engraving text (max 10 words)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                      borderSide: BorderSide(color: Color(0xFFE2ECE9)),
+                    ),
+                    counterText: '',
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Maximum 10 words',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+        SizedBox(height: 14 * fem),
+      ],
+    );
+  }
+
+  // ─── Build ───────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    //final cartState = ref.watch(cartNotifierProvider);
     final notifier = ref.read(cartNotifierProvider.notifier);
+    final fem = ScaleSize.aspectRatio;
 
-    // Get latest version of this item from cart state
     final currentItem = ref.watch(
       cartNotifierProvider.select(
         (state) => state.when(
@@ -74,24 +323,8 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
       ),
     );
 
-    // Engraving derived from remarks
-    //final isEngravingEnabled = (currentItem.engraving ?? '').trim().isNotEmpty;
-
-    // Keep controller in sync with current item
-    // final engravingText = currentItem.engraving ?? '';
-    // if (_engravingController.text != engravingText) {
-    //   _engravingController.value = TextEditingValue(
-    //     text: engravingText,
-    //     selection: TextSelection.fromPosition(
-    //       TextPosition(offset: engravingText.length),
-    //     ),
-    //   );
-    // }
-
-    final fem = ScaleSize.aspectRatio;
-
     return Container(
-      margin: EdgeInsets.fromLTRB(24 * fem, 0 * fem, 24 * fem, 0),
+      margin: EdgeInsets.fromLTRB(24 * fem, 0, 24 * fem, 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(
@@ -99,185 +332,33 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
           bottom: Radius.circular(widget.isBottomRounded ? 18 * fem : 0),
         ),
       ),
-
       child: Stack(
         children: [
-          // main content with padding
           Padding(
             padding: EdgeInsets.fromLTRB(24 * fem, 24 * fem, 24 * fem, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                /// TOP ROW: image + details(with qty) + price
-                Row(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.center, // vertical center
-                  children: [
-                    _Image(currentItem.imageUrl),
-
-                    SizedBox(width: 24 * fem),
-
-                    // left: title + details + qty
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _Details(
-                            item: currentItem,
-                            notifier: notifier,
-                            fem: fem,
-                          ),
-                          SizedBox(height: 15 * fem),
-
-                          /// ENGRAVING CHECKBOX
-                          Row(
-                            children: [
-                              Checkbox(
-                                //value: isEngravingEnabled,
-                                // onChanged: (value) {
-                                //   notifier.toggleEngraving(
-                                //     currentItem.id ?? 0,
-                                //     value ?? false,
-                                //   );
-                                // },
-                                value: _engravingEnabled,
-                                onChanged: (value) {
-                                  setState(
-                                    () => _engravingEnabled = value ?? false,
-                                  );
-                                  notifier.toggleEngraving(
-                                    currentItem.id ?? 0,
-                                    value ?? false,
-                                  );
-                                },
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4 * fem),
-                                ),
-                                side: BorderSide(
-                                  width: 0.88,
-                                  color: Colors.black.withValues(alpha: 0.10),
-                                ),
-                                activeColor:
-                                    Colors.black, // background when checked
-                                checkColor: Colors.white,
-                              ),
-                              MyText(
-                                'Add Engraving',
-                                style: TextStyle(
-                                  color: const Color(0xFF0A0A0A),
-                                  fontSize: 14 * fem,
-                                  fontFamily: 'Montserrat',
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.43,
-                                ),
-                              ),
-                              SizedBox(width: 4 * fem),
-                              MyText(
-                                '(+ ₹ 1,000)',
-                                style: TextStyle(
-                                  color: const Color(0xFF697282),
-                                  fontSize: 14 * fem,
-                                  fontFamily: 'Montserrat',
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.43,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 14 * fem),
-
-                          /// ENGRAVING TEXT AREA
-                          if (_engravingEnabled)
-                            Container(
-                              margin: EdgeInsets.only(top: 8 * fem),
-                              padding: EdgeInsets.all(16 * fem),
-                              decoration: BoxDecoration(
-                                color: const Color(0x19BEE4DD),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: const Color(0x4CBEE4DD),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  MyText(
-                                    'Engraving Text',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14 * fem,
-                                    ),
-                                  ),
-                                  SizedBox(height: 10 * fem),
-                                  TextField(
-                                    key: ValueKey(
-                                      'engraving_${currentItem.id}',
-                                    ),
-                                    maxLength: 100,
-                                    controller: _engravingController,
-                                    onChanged: (val) {
-                                      notifier.updateEngravingText(
-                                        currentItem.id ?? 0,
-                                        val,
-                                      );
-                                    },
-                                    decoration: const InputDecoration(
-                                      hintText:
-                                          'Enter your engraving text (max 10 words)',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(10),
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: Color(0xFFE2ECE9),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      counterText: '',
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 10,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Maximum 10 words',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          SizedBox(height: 14 * fem),
-                        ],
-                      ),
-                    ),
-
-                    //SizedBox(width: 48 * fem),
-
-                    // right: price block, vertically centered
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [_Price(currentItem, fem)],
-                    ),
-                  ],
+                _buildImage(currentItem.imageUrl),
+                SizedBox(width: 24 * fem),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDetails(currentItem, notifier, fem),
+                      _buildEngravingSection(currentItem, notifier, fem),
+                    ],
+                  ),
                 ),
-
-                //SizedBox(height: 18 * fem),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [_buildPrice(currentItem, fem)],
+                ),
               ],
             ),
           ),
-          // X absolutely at top-right of card
           Positioned(
             top: 24 * fem,
             right: 43 * fem,
@@ -286,273 +367,8 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
               iconSize: 20 * fem,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
-              color: Color(0xFF99A1AF),
+              color: const Color(0xFF99A1AF),
               onPressed: widget.onDelete,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// IMAGE
-// class _Image extends StatelessWidget {
-//   final String? url;
-
-//   const _Image(this.url);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return ClipRRect(
-//       borderRadius: BorderRadius.circular(16),
-//       child: SizedBox(
-//         width: 180,
-//         height: 180,
-//         child: url != null && url!.isNotEmpty
-//             ? Image.network(url!, fit: BoxFit.cover)
-//             : Image.asset('assets/no_image.jpg'),
-//       ),
-//     );
-//   }
-// }
-
-class _Image extends StatelessWidget {
-  final String? url;
-
-  const _Image(this.url);
-
-  @override
-  Widget build(BuildContext context) {
-    //debugPrint('Cart image URL: "$url"');
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        width: 180,
-        height: 180,
-        child: url != null && url!.isNotEmpty
-            ? Image.network(
-                url!,
-                fit: BoxFit.cover,
-                // ✅ Show fallback while loading
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: const Color(0xFFF5F5F5),
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  );
-                },
-                // ✅ Show fallback on any error (404, malformed URL, network fail)
-                errorBuilder: (context, error, stackTrace) {
-                  //debugPrint('Image load error: $error');
-                  return Image.asset(
-                    'assets/jewellery/No_Image_Available.jpg',
-                    fit: BoxFit.cover,
-                  );
-                },
-              )
-            : Image.asset(
-                'assets/jewellery/No_Image_Available.jpg',
-                fit: BoxFit.cover,
-              ),
-      ),
-    );
-  }
-}
-
-/// DETAILS + QTY
-class _Details extends StatelessWidget {
-  final CartDetail item;
-  final CartNotifier notifier;
-  final double fem;
-
-  const _Details({
-    required this.item,
-    required this.notifier,
-    required this.fem,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    //final isEngravingEnabled = (item.cartRemarks ?? '').trim().isNotEmpty;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        MyText(
-          'Rings- ${item.productCode ?? ''}',
-          style: TextStyle(
-            color: const Color(0xFF0A0A0A),
-            fontSize: 18 * fem,
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.w700,
-            height: 1.56,
-          ),
-        ),
-        SizedBox(height: 6),
-        MyText(
-          'Divine Solitaire Round ${item.solitaireSlab ?? ''} '
-          '${item.solitaireColor ?? ''} ${item.solitaireQuality ?? ''} '
-          '(${item.solitairePcs ?? 0} Pcs)',
-          style: TextStyle(
-            color: const Color(0xFF354152),
-            fontSize: 14 * fem,
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.w400,
-            height: 1.43,
-          ),
-        ),
-        MyText(
-          'Divine Mount:  Metal- ${item.metalPurity ?? ''} '
-          '${item.metalColor ?? ''} ${item.metalWeight ?? 0}gms',
-          style: TextStyle(
-            color: const Color(0xFF354152),
-            fontSize: 14 * fem,
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.w400,
-            height: 1.43,
-          ),
-        ),
-        MyText(
-          'Side Diamonds Qty ${item.sideStonePcs ?? 0} / '
-          '${item.sideStoneCts ?? 0}ct. ${item.sideStoneColor ?? ''} ${item.sideStoneQuality ?? ''}',
-          style: TextStyle(
-            color: const Color(0xFF354152),
-            fontSize: 14 * fem,
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.w400,
-            height: 1.43,
-          ),
-        ),
-        MyText(
-          'Size: ${item.sizeFrom ?? ''}',
-          style: TextStyle(
-            color: const Color(0xFF354152),
-            fontSize: 14 * fem,
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.w400,
-            height: 1.43,
-          ),
-        ),
-        SizedBox(height: 14 * fem),
-        _QtyControl(
-          value: item.productQty ?? 1,
-          onMinus: () => notifier.updateQuantity(item.id ?? 0, false),
-          onPlus: () => notifier.updateQuantity(item.id ?? 0, true),
-          fem: fem,
-        ),
-      ],
-    );
-  }
-}
-
-/// PRICE
-class _Price extends StatelessWidget {
-  final CartDetail item;
-  final double fem;
-
-  const _Price(this.item, this.fem);
-
-  @override
-  Widget build(BuildContext context) {
-    final min = item.productAmtMin ?? 0;
-    final max = item.productAmtMax ?? 0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        MyText(
-          '${min.inRupeesFormat()} - ${max.inRupeesFormat()}',
-          style: TextStyle(
-            color: const Color(0xFF0A0A0A),
-            fontSize: 24 * fem,
-            fontFamily: 'Montserrat',
-            fontWeight: FontWeight.w700,
-            height: 1.33,
-          ),
-          textAlign: TextAlign.right,
-        ),
-      ],
-    );
-  }
-}
-
-/// QTY BUTTON
-class _QtyControl extends StatelessWidget {
-  final int value;
-  final VoidCallback onMinus;
-  final VoidCallback onPlus;
-  final double fem;
-
-  const _QtyControl({
-    required this.value,
-    required this.onMinus,
-    required this.onPlus,
-    required this.fem,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 136.16 * fem,
-      height: 41.74 * fem,
-      clipBehavior: Clip.antiAlias,
-      decoration: ShapeDecoration(
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(width: 0.88, color: Color(0xFFE5E7EB)),
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-      child: Row(
-        children: [
-          // minus box
-          SizedBox(
-            width: 39.98 * fem,
-            height: 39.98 * fem,
-            child: InkWell(
-              onTap: onMinus,
-              child: Center(
-                child: Icon(
-                  Icons.remove,
-                  size: 16 * fem,
-                  color: Color(0xFF0A0A0A),
-                ),
-              ),
-            ),
-          ),
-
-          // number
-          Expanded(
-            child: Center(
-              child: Text(
-                '$value',
-                style: TextStyle(
-                  color: Color(0xFF0A0A0A),
-                  fontSize: 16 * fem,
-                  fontFamily: 'Montserrat',
-                  fontWeight: FontWeight.w400,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          ),
-
-          // plus box
-          SizedBox(
-            width: 39.98 * fem,
-            height: 39.98 * fem,
-            child: InkWell(
-              onTap: onPlus,
-              child: Center(
-                child: Icon(
-                  Icons.add,
-                  size: 16 * fem,
-                  color: Color(0xFF0A0A0A),
-                ),
-              ),
             ),
           ),
         ],

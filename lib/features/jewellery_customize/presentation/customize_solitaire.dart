@@ -648,7 +648,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                                       value,
                                                 );
                                               },
-                                              width: 155 * fem,
+                                              width: 150 * fem,
                                             ),
                                           if (widget.metalPurity?.isNotEmpty ??
                                               false) ...[
@@ -663,7 +663,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                                       value,
                                                 );
                                               },
-                                              width: 145 * fem,
+                                              width: 120 * fem,
                                             ),
                                           ],
                                         ],

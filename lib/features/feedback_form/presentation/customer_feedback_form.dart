@@ -118,7 +118,7 @@ class _CustomerFeedbackFormState extends State<CustomerFeedbackForm> {
               required: true,
               child: FeedbackInput(
                 controller: _nameCtrl,
-                hint: 'Sukanya Naiknaware',
+                hint: 'Enter your name',
                 hasError: _isEmpty(_nameCtrl.text),
                 onChanged: (_) => setState(() {}),
               ),

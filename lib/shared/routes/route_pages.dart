@@ -43,7 +43,7 @@ extension RoutePagesExtension on RoutePages {
         return "/feedback_form";
 
       case RoutePages.knowDiamond:
-        return "/know_diamond";
+        return "/diamond_value";
 
       case RoutePages.verifyTrack:
         return "/verify_track";
@@ -98,7 +98,7 @@ extension RoutePagesExtension on RoutePages {
         return "feedback_form";
 
       case RoutePages.knowDiamond:
-        return "know_diamond";
+        return "diamond_value";
 
       case RoutePages.verifyTrack:
         return "verify_track";
@@ -153,7 +153,7 @@ extension RoutePagesExtension on RoutePages {
         return "Feedback Form";
 
       case RoutePages.knowDiamond:
-        return "Know Diamond";
+        return "Know Your Diamond Value";
 
       case RoutePages.verifyTrack:
         return "Verify / Track";

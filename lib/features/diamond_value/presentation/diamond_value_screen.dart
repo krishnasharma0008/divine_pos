@@ -1,3 +1,5 @@
+import 'package:divine_pos/shared/app_bar.dart';
+import 'package:divine_pos/shared/utils/enums.dart';
 import 'package:flutter/material.dart';
 import 'widgets/shape_selector.dart';
 import 'widgets/diamond_display.dart';
@@ -38,12 +40,11 @@ class _DiamondValueScreenState extends State<DiamondValueScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5F2),
+      backgroundColor: Colors.white,
+      appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
+      // ✅ Fixed: wrapped Expanded + PriceFooter in a Column as the body
       body: Column(
         children: [
-          // Top mint header bar
-          _buildHeader(),
-
           // Main content
           Expanded(
             child: SingleChildScrollView(
@@ -81,33 +82,6 @@ class _DiamondValueScreenState extends State<DiamondValueScreen> {
 
           // Footer price bar
           PriceFooter(config: _config, onCompare: _showPriceChart),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      color: const Color(0xFFB8D8D0),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {},
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                SizedBox(height: 2),
-                _HamburgerLine(),
-                SizedBox(height: 5),
-                _HamburgerLine(),
-                SizedBox(height: 5),
-                _HamburgerLine(),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -180,22 +154,6 @@ class _DiamondValueScreenState extends State<DiamondValueScreen> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _HamburgerLine extends StatelessWidget {
-  const _HamburgerLine();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 22,
-      height: 2,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(2),
-      ),
     );
   }
 }

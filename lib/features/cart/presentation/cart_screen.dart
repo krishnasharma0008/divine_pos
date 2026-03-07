@@ -40,7 +40,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
         final lastCustomer = ref.read(lastCustomerProvider);
         if (lastCustomer != null && lastCustomer.id != null) {
-          // fetch full details by id
           final full = await ref
               .read(cartNotifierProvider.notifier)
               .getCustomerDetailValue(lastCustomer.id!.toString());
@@ -48,8 +47,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           final chosen = full ?? lastCustomer;
 
           ref.read(selectedCustomerProvider.notifier).setCustomer(chosen);
-
-          //debugPrint("Last Customer Phone : ${chosen.contactNo}");
         }
       } else {
         ref.invalidate(cartNotifierProvider);
@@ -63,7 +60,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       final quantity = item.productQty ?? 1;
       double lineTotal = amount * quantity;
 
-      if (item.cartRemarks?.trim().isNotEmpty ?? false) {
+      // ✅ Fixed: use engraving field (not cartRemarks)
+      if (item.engraving?.trim().isNotEmpty ?? false) {
         lineTotal += 1000;
       }
 
@@ -95,13 +93,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             ref.watch(selectedCustomerProvider) ??
             ref.watch(lastCustomerProvider);
 
-        //debugPrint('ACTIVE CUSTOMER: ${activeCustomer?.toJson()}');
-
         final orderProducts = items
             .where((e) => e.productCode == e.designno)
             .toList();
         final readyProducts = items
-            //.where((e) => e.orderType == 'READY')
             .where((e) => e.productCode != e.designno)
             .toList();
         final subtotal = _calculateSubtotal(items);
@@ -111,44 +106,57 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
           body: SafeArea(
             bottom: false,
-            child: ListView(
-              padding: EdgeInsets.only(bottom: 24 * fem),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CartHeader(
-                  customerName: activeCustomer?.name ?? '',
-                  //customerMob: activeCustomer.contactNo ?? '',
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(72 * fem, 8 * fem, 24 * fem, 0),
-                  child: MyText(
-                    'Shopping Cart (${items.length})',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Montserrat',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 52 * fem),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1194),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _Section(
-                            title: 'Order Products',
-                            items: orderProducts,
-                            fem: fem,
-                          ),
-                          _Section(
-                            title: 'Ready Products',
-                            items: readyProducts,
-                            fem: fem,
-                          ),
-                        ],
+                // ✅ Fixed header — never scrolls
+                CartHeader(customerName: activeCustomer?.name ?? ''),
+
+                // ✅ Only cart items scroll
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.only(bottom: 24 * fem),
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          72 * fem,
+                          8 * fem,
+                          24 * fem,
+                          0,
+                        ),
+                        child: MyText(
+                          'Shopping Cart (${items.length})',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Montserrat',
+                              ),
+                        ),
                       ),
-                    ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 52 * fem),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1194),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _Section(
+                                  title: 'Order Products',
+                                  items: orderProducts,
+                                  fem: fem,
+                                ),
+                                _Section(
+                                  title: 'Ready Products',
+                                  items: readyProducts,
+                                  fem: fem,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -170,13 +178,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
 class CartHeader extends StatelessWidget {
   final String customerName;
-  //final String customerMob;
 
-  const CartHeader({
-    super.key,
-    required this.customerName,
-    //required this.customerMob,
-  });
+  const CartHeader({super.key, required this.customerName});
 
   @override
   Widget build(BuildContext context) {
@@ -260,7 +263,6 @@ class _StepPill extends StatelessWidget {
             style: TextStyle(
               fontSize: 12 * fem,
               color: active ? Colors.white : const Color(0xFF6B7280),
-              fontFamily: 'Montserrat',
             ),
           ),
         ),
@@ -269,7 +271,6 @@ class _StepPill extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 13 * fem,
-            fontFamily: 'Montserrat',
             fontWeight: FontWeight.w500,
             color: const Color(0xFF111827),
           ),
@@ -597,33 +598,34 @@ class _Section extends ConsumerWidget {
             ),
           ),
           SizedBox(height: 8 * fem),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.5,
-            child: ListView.separated(
-              itemCount: items.length,
-              separatorBuilder: (_, __) => Container(
-                width: 1049 * fem,
-                height: 1 * fem,
-                margin: EdgeInsets.symmetric(horizontal: 24 * fem),
-                decoration: ShapeDecoration(
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(
-                      width: 0.50 * fem,
-                      color: const Color(0xFFDADADC),
-                    ),
+          // ✅ No SizedBox height wrapper — shrinkWrap + NeverScrollableScrollPhysics
+          // hands all scrolling to the outer ListView
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => Container(
+              width: 1049 * fem,
+              height: 1 * fem,
+              margin: EdgeInsets.symmetric(horizontal: 24 * fem),
+              decoration: ShapeDecoration(
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(
+                    width: 0.50 * fem,
+                    color: const Color(0xFFDADADC),
                   ),
                 ),
               ),
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return CartItemCard(
-                  item: item,
-                  onDelete: () => notifier.deleteItem(item.id ?? 0),
-                  isTopRounded: index == 0,
-                  isBottomRounded: index == items.length - 1,
-                );
-              },
             ),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return CartItemCard(
+                item: item,
+                onDelete: () => notifier.deleteItem(item.id ?? 0),
+                isTopRounded: index == 0,
+                isBottomRounded: index == items.length - 1,
+              );
+            },
           ),
         ],
       ),
@@ -646,12 +648,11 @@ class _BottomProceedBar extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref, {
     required double engravingCost,
-    required double engravingGst, // percent
-    required double engravingtaxamt, // amount
-    required double gst, // percent
-    required double productTaxAmt, // amount
+    required double engravingGst,
+    required double engravingtaxamt,
+    required double gst,
+    required double productTaxAmt,
     required double grandTotal,
-    //required String expDlvDate,
     required List<CartDetail> items,
   }) async {
     final router = GoRouter.of(context);
@@ -659,28 +660,21 @@ class _BottomProceedBar extends ConsumerWidget {
 
     final selected = ref.read(selectedCustomerProvider);
 
-    // 1) Ask mobile
     final phone = await showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => MobileNumberDialog(
         initialMobile: selected?.contactNo ?? '',
         custname: selected?.name ?? '',
-        //onSubmit: (value) => Navigator.of(ctx).pop(value),
       ),
     );
 
     if (phone != null) {
-      // user pressed Submit (phone may be empty string "")
       print('Submitted phone: $phone');
     } else {
-      // user pressed Close or dismissed the dialog
       print('Dialog closed');
     }
 
-    //final selected = ref.read(selectedCustomerProvider);
-
-    // 2) Update selected customer mobile uncomment belo to update customer mobileno
     if (phone != null && phone.isNotEmpty) {
       if (selected != null && selected.id != null) {
         await ref
@@ -696,11 +690,8 @@ class _BottomProceedBar extends ConsumerWidget {
       }
     }
 
-    // 3) Close summary dialog
     if (!context.mounted) return;
-    //Navigator.of(context).pop();
 
-    if (!context.mounted) return;
     final result = await ref
         .read(cartNotifierProvider.notifier)
         .proceedToCheckout(
@@ -715,14 +706,9 @@ class _BottomProceedBar extends ConsumerWidget {
 
     debugPrint('checkout result: $result');
 
-    // ✅ Check mounted again after the long async call
-    //if (!context.mounted) return;
-    //debugPrint("working");
     final customer = selected;
 
     if (result['success'] == true) {
-      //context.pushNamed(RoutePages.feedback.routeName);
-      //router.pushNamed(RoutePages.feedbackform.routeName, extra: customer);
       final data = result['data'] as Map<String, dynamic>?;
       final infoList = data?['cart_to_order_info'] as List<dynamic>?;
       int? orderNo;
@@ -731,10 +717,6 @@ class _BottomProceedBar extends ConsumerWidget {
         orderNo = first['orderno'] as int?;
       }
 
-      //debugPrint('created Order no . : $orderNo');
-      //final updatedCustomer = ref.read(selectedCustomerProvider);
-
-      // Use router from parentRouter, not dialog context
       router.pushNamed(
         RoutePages.feedbackform.routeName,
         extra: {'customer': customer, 'orderNo': orderNo},
@@ -779,8 +761,6 @@ class _BottomProceedBar extends ConsumerWidget {
                     orderProducts: orderProducts,
                     readyProducts: readyProducts,
                     subtotal: subtotal,
-                    //customerName:ref.read(selectedCustomerProvider)?.name ?? '',
-                    //expDlvDate: expDlvDate,
                     onConfirm:
                         ({
                           required double engravingCost,
@@ -789,7 +769,6 @@ class _BottomProceedBar extends ConsumerWidget {
                           required double gst,
                           required double productTaxAmt,
                           required double grandTotal,
-                          //required String expDlvDate,
                           required List<CartDetail> items,
                         }) {
                           _handleProceed(
@@ -802,7 +781,6 @@ class _BottomProceedBar extends ConsumerWidget {
                             productTaxAmt: productTaxAmt,
                             grandTotal: grandTotal,
                             items: items,
-                            //expDlvDate: expDlvDate,
                           );
                         },
                   ),
@@ -859,27 +837,76 @@ class _EmptyCartView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFE7F7F4),
+      backgroundColor: Colors.white,
       appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.shopping_cart_outlined,
-              size: 90,
-              color: Color(0xFF90DCD0),
+            // Cart icon with radial glow background
+            Container(
+              width: 180 * fem,
+              height: 180 * fem,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Color(0xFFBEE4DD), Color(0xFFFFFFFF)],
+                  stops: [0.0, 1.0],
+                ),
+              ),
+              child: Icon(
+                Icons.shopping_cart_outlined,
+                size: 80 * fem,
+                color: const Color(0xFF90DCD0),
+              ),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 28 * fem),
             Text(
-              "Your cart is empty",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              'Your cart is empty',
+              style: TextStyle(
+                fontSize: 22 * fem,
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1A1A2E),
+              ),
             ),
-            SizedBox(height: 6),
+            SizedBox(height: 10 * fem),
             Text(
-              "Start adding items to see them here!",
-              style: TextStyle(color: Colors.black54),
+              'Discover amazing products and start\nadding items to your cart today!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14 * fem,
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF6B7280),
+                height: 1.6,
+              ),
+            ),
+            SizedBox(height: 32 * fem),
+            TextButton(
+              onPressed: () => context.pop(),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF90DCD0),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 40 * fem,
+                  vertical: 14 * fem,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30 * fem),
+                ),
+              ),
+              child: Text(
+                'Start Shopping',
+                style: TextStyle(
+                  fontSize: 15 * fem,
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF1A1A2E),
+                ),
+              ),
             ),
           ],
         ),

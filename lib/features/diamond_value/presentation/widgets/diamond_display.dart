@@ -14,21 +14,13 @@ class DiamondDisplay extends StatelessWidget {
       children: [
         // Diamond circle
         Container(
-          width: 200,
-          height: 200,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              center: const Alignment(-0.2, -0.2),
-              colors: [const Color(0xFFEFECEC), const Color(0xFFD5D5D5)],
+          width: 225.03,
+          height: 225.03,
+          decoration: ShapeDecoration(
+            color: const Color(0xFFF6F6F6),
+            shape: OvalBorder(
+              side: BorderSide(width: 1, color: const Color(0xFFCECECE)),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
           child: Center(
             child: CustomPaint(
