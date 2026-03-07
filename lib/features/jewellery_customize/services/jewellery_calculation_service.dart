@@ -236,7 +236,15 @@ class JewelleryCalculationService {
   /// -----------------------------
   ///
 
-  static Future<({double solFrom, double solTo})>
+  static Future<
+    ({
+      double solFrom,
+      double solTo,
+      String shapeLabel,
+      String caratLabel,
+      String pcsLabel,
+    })
+  >
   calculateSolitaireAmountRangeLocal({
     required JewelleryDetail detail,
     required int qty,
@@ -257,9 +265,19 @@ class JewelleryCalculationService {
   }) async {
     double amountFrom = 0;
     double amountTo = 0;
+    final shapes = <String>{}; // set for uniqueness
+    final carats = <String>{}; // set for uniqueness
+    final pcss = <String>[]; //
 
     final variants = detail.variants ?? [];
-    if (variants.isEmpty) return (solFrom: 0.0, solTo: 0.0);
+    if (variants.isEmpty)
+      return (
+        solFrom: 0.0,
+        solTo: 0.0,
+        shapeLabel: "",
+        caratLabel: "",
+        pcsLabel: "",
+      );
 
     // JS: Variant_id === data.variantId (हम यहाँ base variant ले रहे हैं;
     // अगर तुम variantId state में रख रहे हो तो उसे यहाँ pass कर सकते हो)
@@ -271,20 +289,33 @@ class JewelleryCalculationService {
 
     final bomList = detail.bom.where(
       (b) =>
-          b.variantId == activeVariantId &&
+          //b.variantId == activeVariantId &&
           (b.itemGroup ?? '').trim().toUpperCase() == 'SOLITAIRE' &&
           (b.itemType ?? '').trim().toUpperCase() == 'STONE',
     );
 
     for (final row in bomList) {
+      // debugPrint(
+      //   'MultiSize BOM → id=${row.bomId}, variant=${row.variantId}, '
+      //   'group=${row.itemGroup}, type=${row.itemType}, '
+      //   'name=${row.bomVariantName}, pcs=${row.pcs}, wt=${row.weight}',
+      // );
       final name = row.bomVariantName ?? '';
       final parts = name.trim().split('-').map((p) => p.trim()).toList();
       if (parts.length < 4) continue;
 
-      final shape = parts[1]; // RND / PER / PRN / OVL ...
+      final shapeCode = parts[1]; // RND / PER / PRN / OVL ...
+      final carat = parts[2] + '-' + parts[3];
       final bomCaratFrom = double.tryParse(parts[2]) ?? 0.0;
       final bomCaratTo = double.tryParse(parts[3]) ?? 0.0;
       final pcs = row.pcs.toDouble();
+
+      final shapeName = JewelleryCalculationService.mapShapeCodeToName(
+        shapeCode,
+      );
+      shapes.add(shapeName);
+      carats.add(carat);
+      pcss.add(row.pcs.toString());
 
       // -------- JS वाले 4 rules ----------
       String bomColorMin = '';
@@ -295,7 +326,7 @@ class JewelleryCalculationService {
       final cFrom = bomCaratFrom;
       final cTo = bomCaratTo;
 
-      if ((shape == 'PER' || shape == 'PRN' || shape == 'OVL') &&
+      if ((shapeCode == 'PER' || shapeCode == 'PRN' || shapeCode == 'OVL') &&
           cFrom >= 0.10 &&
           cTo <= 0.17) {
         // Fancy 0.10–0.17
@@ -303,7 +334,9 @@ class JewelleryCalculationService {
         bomColorMax = 'EF';
         bomClarityMin = 'VS';
         bomClarityMax = 'VVS';
-      } else if ((shape == 'PER' || shape == 'PRN' || shape == 'OVL') &&
+      } else if ((shapeCode == 'PER' ||
+              shapeCode == 'PRN' ||
+              shapeCode == 'OVL') &&
           cFrom >= 0.18 &&
           cTo <= 0.22) {
         // Fancy 0.18–0.22
@@ -311,13 +344,13 @@ class JewelleryCalculationService {
         bomColorMax = 'D';
         bomClarityMin = 'SI1';
         bomClarityMax = 'IF';
-      } else if (shape == 'RND' && cFrom >= 0.10 && cTo <= 0.17) {
+      } else if (shapeCode == 'RND' && cFrom >= 0.10 && cTo <= 0.17) {
         // Round 0.10–0.17
         bomColorMin = 'IJ';
         bomColorMax = 'EF';
         bomClarityMin = 'SI';
         bomClarityMax = 'VVS';
-      } else if (shape == 'RND' && cFrom >= 0.18 && cTo <= 0.22) {
+      } else if (shapeCode == 'RND' && cFrom >= 0.18 && cTo <= 0.22) {
         // Round 0.18–0.22
         bomColorMin = 'K';
         bomColorMax = 'D';
@@ -360,7 +393,7 @@ class JewelleryCalculationService {
       final priceFrom = await fetchPrice(
         itemGroup: 'SOLITAIRE',
         slab: bomCaratFrom.toStringAsFixed(2),
-        shape: shape,
+        shape: shapeCode,
         color: JewelleryCalculationService.getSolitaireColor(fromColor),
         quality: fromClarity,
       );
@@ -371,7 +404,7 @@ class JewelleryCalculationService {
       final priceTo = await fetchPrice(
         itemGroup: 'SOLITAIRE',
         slab: bomCaratTo.toStringAsFixed(2),
-        shape: shape,
+        shape: shapeCode,
         color: JewelleryCalculationService.getSolitaireColor(toColor),
         quality: toClarity,
       );
@@ -384,15 +417,27 @@ class JewelleryCalculationService {
 
       amountFrom += priceFrom * bomCaratFrom * qty * pcs;
       debugPrint(
-        'BOM Row: shape=$shape, caratFrom=$bomCaratFrom, pcs=$pcs, priceFrom=$priceFrom, amountFrom=${priceFrom * bomCaratFrom * qty * pcs}',
+        'BOM Row: shape=$shapeCode, caratFrom=$bomCaratFrom, pcs=$pcs, priceFrom=$priceFrom, amountFrom=${priceFrom * bomCaratFrom * qty * pcs}',
       );
       amountTo += priceTo * bomCaratTo * qty * pcs;
       debugPrint(
-        'BOM Row: shape=$shape, caratTo=$bomCaratTo, pcs=$pcs, priceTo=$priceTo,  amountTo=${priceTo * bomCaratTo * qty * pcs}',
+        'BOM Row: shape=$shapeCode, caratTo=$bomCaratTo, pcs=$pcs, priceTo=$priceTo,  amountTo=${priceTo * bomCaratTo * qty * pcs}',
       );
     }
 
-    return (solFrom: amountFrom, solTo: amountTo);
+    final shapeLabel = shapes.join(', ');
+    final caratLabel = carats.join(', ');
+    final pcsLabel = pcss.join(', ');
+    // debugPrint('Shape : ${shapeLabel}');
+    // debugPrint('Carats range : ${caratLabel}');
+
+    return (
+      solFrom: amountFrom,
+      solTo: amountTo,
+      shapeLabel: shapeLabel,
+      caratLabel: caratLabel,
+      pcsLabel: pcsLabel,
+    );
   }
 
   // static ({double solFrom, double solTo}) calculateSolitaireAmountRangeLocal({

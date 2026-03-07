@@ -93,30 +93,30 @@ class _JewelleryCustomiseScreenState
     try {
       final notifier = ref.read(jewelleryCalcProvider.notifier);
 
-      print('Step 1: building cart payload');
+      //print('Step 1: building cart payload');
       final cartItem = await notifier.buildCartPayload(customer: customer);
-      print('Step 2: cartItem = ${cartItem?.toJson()}');
+      //print('Step 2: cartItem = ${cartItem?.toJson()}');
 
       if (cartItem == null) {
-        print('Step 3: cartItem is NULL — returning early');
+        //print('Step 3: cartItem is NULL — returning early');
         return;
       }
 
-      print('Step 4: calling createCart');
+      //print('Step 4: calling createCart');
       await ref.read(cartNotifierProvider.notifier).createCart(cartItem);
-      print('Step 5: createCart done, mounted = ${context.mounted}');
+      //print('Step 5: createCart done, mounted = ${context.mounted}');
 
       if (!context.mounted) {
-        print('Step 6: context NOT mounted — cannot navigate');
+        //print('Step 6: context NOT mounted — cannot navigate');
         return;
       }
 
-      print('Step 7: attempting navigation');
+      //print('Step 7: attempting navigation');
       context.pushNamed(RoutePages.cart.routeName);
-      print('Step 8: pushNamed called successfully');
+      //print('Step 8: pushNamed called successfully');
     } catch (e, st) {
-      print('ERROR: $e');
-      print('STACKTRACE: $st');
+      //print('ERROR: $e');
+      //print('STACKTRACE: $st');
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -268,7 +268,8 @@ class _JewelleryCustomiseScreenState
                                     caratRange: calc.caratRange,
                                     colorRange: calc.colorRange,
                                     clarityRange: calc.clarityRange,
-                                    soltpcs: calc.totalSolitairePcs ?? 0,
+                                    //soltpcs: calc.totalSolitairePcs ?? 0,
+                                    soltpcs: calc.SolitairePcs,
                                     ringSize: calc.ringSize,
                                     totalMetalWeight:
                                         calc.netMetalWeight ?? 0.0,
@@ -639,7 +640,8 @@ class _JewelleryCustomiseScreenState
                             final customer = await showDialog<CustomerDetail>(
                               context: context,
                               barrierDismissible: true,
-                              builder: (_) => const ContinueCartPopup(),
+                              builder: (_) =>
+                                  ContinueCartPopup(parentContext: context),
                             );
 
                             if (customer == null) return;
@@ -649,9 +651,9 @@ class _JewelleryCustomiseScreenState
                             //call here cart create and set data
                             //final customerId = customer.id;
 
-                            // debugPrint(
-                            //   'Selected customer: ${customer.name} (${customer.id})',
-                            // );
+                            debugPrint(
+                              'Selected customer: ${customer.name} (${customer.id} phone : (${customer.contactNo})',
+                            );
                           },
                           borderRadius: BorderRadius.circular(20),
                           child: Container(

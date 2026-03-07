@@ -34,7 +34,13 @@ class ApiEndPoint {
 
   static const create_customer = "retail-customer/";
 
-  static const update_customer = "retail-customer/";
+  static const update_customer = "retail-customer/upd-contactno";
 
   static const create_order = 'cart/toorder';
+
+  static const create_feedback = 'feedback';
+
+  static const create_dfeedback = 'feedback/';
+
+  static const sale_by = 'user/listby-pjcode';
 }

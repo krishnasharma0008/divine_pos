@@ -39,8 +39,17 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         await ref.read(cartNotifierProvider.notifier).refresh(user!);
 
         final lastCustomer = ref.read(lastCustomerProvider);
-        if (lastCustomer != null) {
-          ref.read(selectedCustomerProvider.notifier).setCustomer(lastCustomer);
+        if (lastCustomer != null && lastCustomer.id != null) {
+          // fetch full details by id
+          final full = await ref
+              .read(cartNotifierProvider.notifier)
+              .getCustomerDetailValue(lastCustomer.id!.toString());
+
+          final chosen = full ?? lastCustomer;
+
+          ref.read(selectedCustomerProvider.notifier).setCustomer(chosen);
+
+          //debugPrint("Last Customer Phone : ${chosen.contactNo}");
         }
       } else {
         ref.invalidate(cartNotifierProvider);
@@ -86,6 +95,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             ref.watch(selectedCustomerProvider) ??
             ref.watch(lastCustomerProvider);
 
+        //debugPrint('ACTIVE CUSTOMER: ${activeCustomer?.toJson()}');
+
         final orderProducts = items
             .where((e) => e.productCode == e.designno)
             .toList();
@@ -103,7 +114,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             child: ListView(
               padding: EdgeInsets.only(bottom: 24 * fem),
               children: [
-                CartHeader(customerName: activeCustomer?.name ?? ''),
+                CartHeader(
+                  customerName: activeCustomer?.name ?? '',
+                  //customerMob: activeCustomer.contactNo ?? '',
+                ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(72 * fem, 8 * fem, 24 * fem, 0),
                   child: MyText(
@@ -156,8 +170,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
 class CartHeader extends StatelessWidget {
   final String customerName;
+  //final String customerMob;
 
-  const CartHeader({super.key, required this.customerName});
+  const CartHeader({
+    super.key,
+    required this.customerName,
+    //required this.customerMob,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -638,25 +657,42 @@ class _BottomProceedBar extends ConsumerWidget {
     final router = GoRouter.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
+    final selected = ref.read(selectedCustomerProvider);
+
     // 1) Ask mobile
     final phone = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) =>
-          MobileNumberDialog(onSubmit: (value) => Navigator.of(ctx).pop(value)),
+      builder: (ctx) => MobileNumberDialog(
+        initialMobile: selected?.contactNo ?? '',
+        custname: selected?.name ?? '',
+        //onSubmit: (value) => Navigator.of(ctx).pop(value),
+      ),
     );
 
-    final selected = ref.read(selectedCustomerProvider);
+    if (phone != null) {
+      // user pressed Submit (phone may be empty string "")
+      print('Submitted phone: $phone');
+    } else {
+      // user pressed Close or dismissed the dialog
+      print('Dialog closed');
+    }
 
-    // 2) Update selected customer mobile
+    //final selected = ref.read(selectedCustomerProvider);
+
+    // 2) Update selected customer mobile uncomment belo to update customer mobileno
     if (phone != null && phone.isNotEmpty) {
       if (selected != null && selected.id != null) {
         await ref
             .read(cartNotifierProvider.notifier)
-            .updateCustomerMobile(
-              customerId: selected.id!,
-              mobile: phone.toString(),
-            );
+            .updateCustomerMobile(customerId: selected.id!, mobile: phone);
+
+        ref
+            .read(selectedCustomerProvider.notifier)
+            .setCustomer(selected.copyWith(contactNo: phone));
+
+        final updated = ref.read(selectedCustomerProvider);
+        debugPrint('After update: ${updated?.toJson()}');
       }
     }
 
@@ -686,7 +722,23 @@ class _BottomProceedBar extends ConsumerWidget {
 
     if (result['success'] == true) {
       //context.pushNamed(RoutePages.feedback.routeName);
-      router.pushNamed(RoutePages.feedbackform.routeName, extra: customer);
+      //router.pushNamed(RoutePages.feedbackform.routeName, extra: customer);
+      final data = result['data'] as Map<String, dynamic>?;
+      final infoList = data?['cart_to_order_info'] as List<dynamic>?;
+      int? orderNo;
+      if (infoList != null && infoList.isNotEmpty) {
+        final first = infoList.first as Map<String, dynamic>;
+        orderNo = first['orderno'] as int?;
+      }
+
+      //debugPrint('created Order no . : $orderNo');
+      //final updatedCustomer = ref.read(selectedCustomerProvider);
+
+      // Use router from parentRouter, not dialog context
+      router.pushNamed(
+        RoutePages.feedbackform.routeName,
+        extra: {'customer': customer, 'orderNo': orderNo},
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result['msg'] ?? 'Checkout failed')),
@@ -727,8 +779,7 @@ class _BottomProceedBar extends ConsumerWidget {
                     orderProducts: orderProducts,
                     readyProducts: readyProducts,
                     subtotal: subtotal,
-                    customerName:
-                        ref.read(selectedCustomerProvider)?.name ?? '',
+                    //customerName:ref.read(selectedCustomerProvider)?.name ?? '',
                     //expDlvDate: expDlvDate,
                     onConfirm:
                         ({

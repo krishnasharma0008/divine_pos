@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:divine_pos/features/feedback_form/data/feedback_model.dart';
+import 'package:divine_pos/features/feedback_form/provider/uid_lookup_provider.dart';
 import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../theme.dart';
 
@@ -8,62 +12,114 @@ final fem = ScaleSize.aspectRatio;
 
 // ─── Add UID Row (input + Add button) ────────────────────────────────────────
 
-class AddUidRow extends StatelessWidget {
+class AddUidRow extends ConsumerWidget {
   final TextEditingController controller;
-  final VoidCallback onAdd;
+  final void Function(ProductDetail product)
+  onAdd; // ← changed from VoidCallback
 
   const AddUidRow({super.key, required this.controller, required this.onAdd});
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lookupState = ref.watch(uidLookupProvider);
+    final isLoading = lookupState is AsyncLoading;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: 'Enter UID',
-              hintStyle: const TextStyle(
-                color: FeedbackTheme.textGrey,
-                fontSize: 14,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: FeedbackTheme.borderColor),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: FeedbackTheme.borderColor),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: FeedbackTheme.teal,
-                  width: 1.5,
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                enabled: !isLoading,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  hintText: 'Enter UID',
+                  hintStyle: const TextStyle(
+                    color: FeedbackTheme.textGrey,
+                    fontSize: 14,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: FeedbackTheme.borderColor,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: FeedbackTheme.borderColor,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: FeedbackTheme.teal,
+                      width: 1.5,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton.icon(
-          onPressed: onAdd,
-          icon: const Icon(Icons.add, size: 16),
-          label: const Text('Add'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: FeedbackTheme.teal,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+            const SizedBox(width: 12),
+            ElevatedButton.icon(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      final uid = controller.text.trim();
+                      if (uid.isEmpty) return;
+
+                      final result = await ref
+                          .read(uidLookupProvider.notifier)
+                          .fetch(uid);
+
+                      if (result != null) {
+                        onAdd(ProductDetail(uid: result.uid, mrp: result.mrp));
+                        controller.clear();
+                        ref.read(uidLookupProvider.notifier).reset();
+                      }
+                    },
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.add, size: 16),
+              label: Text(isLoading ? 'Fetching...' : 'Add'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: FeedbackTheme.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
             ),
-            elevation: 0,
-          ),
+          ],
         ),
+
+        // ─── inline error ─────────────────────────────────────────────────
+        if (lookupState is AsyncError)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Text(
+              lookupState.error.toString().replaceFirst('Exception: ', ''),
+              style: const TextStyle(fontSize: 12, color: Colors.red),
+            ),
+          ),
       ],
     );
   }
@@ -72,7 +128,7 @@ class AddUidRow extends StatelessWidget {
 // ─── Product UID Table ────────────────────────────────────────────────────────
 
 class ProductUidTable extends StatelessWidget {
-  final List<ProductUIDEntry> products;
+  final List<ProductDetail> products;
   final void Function(int index) onRemove;
 
   const ProductUidTable({

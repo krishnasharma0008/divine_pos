@@ -1,13 +1,174 @@
+import 'package:divine_pos/features/auth/data/auth_notifier.dart';
 import 'package:divine_pos/features/feedback_form/data/feedback_model.dart';
 import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'product_uid_table.dart';
+import '../../../shared/utils/api_endpointen.dart';
+import '../../../shared/utils/http_client.dart';
 import '../presentation/widget/shared_widgets.dart';
 import '../theme.dart';
 
 final fem = ScaleSize.aspectRatio;
+
+// ─── UID Add Row (ConsumerStatefulWidget — needs ref for API lookup) ──────────
+
+class _UpgradeAddUidRow extends ConsumerStatefulWidget {
+  final void Function(ProductDetail product) onAdd;
+
+  const _UpgradeAddUidRow({required this.onAdd});
+
+  @override
+  ConsumerState<_UpgradeAddUidRow> createState() => _UpgradeAddUidRowState();
+}
+
+class _UpgradeAddUidRowState extends ConsumerState<_UpgradeAddUidRow> {
+  final _ctrl = TextEditingController();
+  bool _isLoading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleAdd() async {
+    final uid = _ctrl.text.trim();
+    if (uid.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final dio = ref.read(httpClientProvider);
+      final auth = ref.read(authProvider);
+      final pjcode = auth.user?.pjcode;
+
+      final res = await dio.post(
+        ApiEndPoint.get_jewellery_listing,
+        data: {
+          'item_number': uid,
+          'pageno': 1,
+          if (pjcode != null) 'laying_with': pjcode,
+        },
+      );
+
+      final raw = res.data;
+      if (raw['success'] != true)
+        throw Exception(raw['message'] ?? 'Not found');
+
+      final list = raw['data'] as List?;
+      if (list == null || list.isEmpty) throw Exception('UID "$uid" not found');
+
+      final item = list.first as Map<String, dynamic>;
+      final rawMrp = item['price'];
+      if (rawMrp == null) throw Exception('Price not found for UID "$uid"');
+
+      widget.onAdd(
+        ProductDetail(
+          uid: item['designno']?.toString() ?? uid,
+          mrp: (rawMrp as num).toDouble(),
+        ),
+      );
+
+      _ctrl.clear();
+    } catch (e) {
+      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _ctrl,
+                enabled: !_isLoading,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  hintText: 'Enter UID',
+                  hintStyle: const TextStyle(
+                    color: FeedbackTheme.textGrey,
+                    fontSize: 14,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: FeedbackTheme.borderColor,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: FeedbackTheme.borderColor,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: FeedbackTheme.teal,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : _handleAdd,
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.add, size: 16),
+              label: Text(_isLoading ? 'Fetching...' : 'Add'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: FeedbackTheme.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ],
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Text(
+              _error!,
+              style: const TextStyle(fontSize: 12, color: Colors.red),
+            ),
+          ),
+      ],
+    );
+  }
+}
 
 // ─── Upgrade Amount display field ─────────────────────────────────────────────
 
@@ -75,13 +236,11 @@ class UpgradeAmountField extends StatelessWidget {
   }
 }
 
-// ─── Upgrade Section ──────────────────────────────────────────────────────────
+// ─── Upgrade Section (StatefulWidget — GlobalKey works correctly) ─────────────
 
 class UpgradeSection extends StatefulWidget {
   const UpgradeSection({super.key});
 
-  /// Call [UpgradeSectionState.buildData()] to collect the UpgradeData
-  /// before submitting the parent form.
   @override
   UpgradeSectionState createState() => UpgradeSectionState();
 }
@@ -90,12 +249,10 @@ class UpgradeSectionState extends State<UpgradeSection> {
   final _oldUidCtrl = TextEditingController();
   final _oldMrpCtrl = TextEditingController();
   final _orderAmountCtrl = TextEditingController();
-  final _uidCtrl = TextEditingController();
 
-  String _newPurchaseCategory = 'Ready Product'; // 'Ready Product' | 'Order'
-  List<ProductUIDEntry> _products = [];
+  String _newPurchaseCategory = 'Ready Product';
+  List<ProductDetail> _products = [];
 
-  // ── Derived ───────────────────────────────────────────────────────────────
   bool get _isOrder => _newPurchaseCategory == 'Order';
 
   double get _oldMrp =>
@@ -114,18 +271,6 @@ class UpgradeSectionState extends State<UpgradeSection> {
   double get _newValueForValidation => _isOrder ? _orderAmount : _totalNewMrp;
   bool get _upgradeAmountValid => _newValueForValidation >= 49999;
 
-  // ── Product table ─────────────────────────────────────────────────────────
-  void _addProduct() {
-    final uid = _uidCtrl.text.trim();
-    if (uid.isEmpty) return;
-    setState(() {
-      _products.add(ProductUIDEntry(uid: uid, mrp: 67999));
-      _uidCtrl.clear();
-    });
-  }
-
-  // ── Public: collect data for parent submit ────────────────────────────────
-  /// Returns null + shows a SnackBar if validation fails.
   UpgradeData? buildData(BuildContext context) {
     if (_oldUidCtrl.text.trim().isEmpty || _oldMrpCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -169,7 +314,6 @@ class UpgradeSectionState extends State<UpgradeSection> {
     _oldUidCtrl.dispose();
     _oldMrpCtrl.dispose();
     _orderAmountCtrl.dispose();
-    _uidCtrl.dispose();
     super.dispose();
   }
 
@@ -199,7 +343,7 @@ class UpgradeSectionState extends State<UpgradeSection> {
         ),
         SizedBox(height: 28 * fem),
 
-        // Q11 New Purchase Category (Ready Product | Order)
+        // Q11 New Purchase Category
         FeedbackFormField(
           number: 11,
           label: 'Purchase Category',
@@ -224,9 +368,11 @@ class UpgradeSectionState extends State<UpgradeSection> {
         ),
         SizedBox(height: 28 * fem),
 
-        // Add Product UID (hidden when Order sub-category)
+        // Ready Product path — UID table
         if (!_isOrder) ...[
-          AddUidRow(controller: _uidCtrl, onAdd: _addProduct),
+          _UpgradeAddUidRow(
+            onAdd: (product) => setState(() => _products.add(product)),
+          ),
           const SizedBox(height: 20),
           if (_products.isNotEmpty) ...[
             ProductUidTable(
@@ -235,7 +381,6 @@ class UpgradeSectionState extends State<UpgradeSection> {
             ),
             SizedBox(height: 28 * fem),
           ],
-          // Q12 Upgrade Amount (Ready Product path)
           UpgradeAmountField(
             questionNumber: 12,
             amount: _upgradeAmount,
@@ -244,7 +389,7 @@ class UpgradeSectionState extends State<UpgradeSection> {
           ),
         ],
 
-        // Q12 Order Amount + Q13 Upgrade Amount (Order path)
+        // Order path
         if (_isOrder) ...[
           FeedbackFormField(
             number: 12,

@@ -10,7 +10,7 @@ class DetailsScreen extends StatefulWidget {
   final String? caratRange;
   final String? colorRange;
   final String? clarityRange;
-  final int? soltpcs;
+  final String? soltpcs;
   final String? ringSize;
   //const DetailsScreen({super.key, required this.r});
   final String metalColors; // ✅ from database
@@ -256,7 +256,7 @@ class ProductDetailsTab extends StatelessWidget {
   final String? caratRange;
   final String? colorRange;
   final String? clarityRange;
-  final int? soltpcs;
+  final String? soltpcs;
   final String? ringSize;
   final String metalColors; // ✅ from database
   final String metalPurity;
@@ -292,7 +292,8 @@ class ProductDetailsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MyText(_buildSolitaireLine(), style: TextStyle(fontSize: 12 * r)),
+          //MyText(_buildSolitaireLine(), style: TextStyle(fontSize: 12 * r)),
+          _buildSolitaireLine(r),
           SizedBox(height: 24 * r),
           _sectionHeader(r, 'Divine Mount'),
           SizedBox(height: 16 * r),
@@ -311,33 +312,61 @@ class ProductDetailsTab extends StatelessWidget {
     );
   }
 
-  String _buildSolitaireLine() {
-    //final price = '₹${caratRange ?? '57,900'}';
-    final carat = caratRange ?? '0.15–0.18 ct';
-    final color =
-        () {
-          final parts = (colorRange ?? '')
-              .split('-')
-              .map((e) => e.trim())
-              .toList();
-          if (parts.length < 2) return colorRange;
-          return '${parts.last}-${parts.first}';
-        }() ??
-        'F-G';
-    final clarity =
-        () {
-          final parts = (clarityRange ?? '')
-              .split('-')
-              .map((e) => e.trim())
-              .toList();
-          if (parts.length < 2) return clarityRange;
-          return '${parts.last}-${parts.first}';
-        }() ??
-        'VVS1-VS1';
-    final solpcs = soltpcs ?? 1;
-    //final ringsize = 'Size 12';
+  List<String> _splitComma(String? value) {
+    if (value == null || value.trim().isEmpty) return [];
+    return value
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
 
-    return '$Shape $carat $color $clarity  ( $solpcs Pcs )';
+  Widget _buildSolitaireLine(double r) {
+    final shapes = _splitComma(Shape); // ["Oval", "Pear"]
+    final carats = _splitComma(caratRange); // ["0.80-0.89", "0.23-0.29"]
+    final pcsList = _splitComma(soltpcs); // ["1", "1"] या ["3"]
+
+    final color = () {
+      final parts = (colorRange ?? '').split('-').map((e) => e.trim()).toList();
+      if (parts.length < 2) return colorRange ?? 'F-G';
+      return '${parts.last}-${parts.first}';
+    }();
+
+    final clarity = () {
+      final parts = (clarityRange ?? '')
+          .split('-')
+          .map((e) => e.trim())
+          .toList();
+      if (parts.length < 2) return clarityRange ?? 'VVS1-VS1';
+      return '${parts.last}-${parts.first}';
+    }();
+
+    // अगर कुछ भी नहीं मिला तो पुराना single line fallback
+    if (shapes.isEmpty || carats.isEmpty) {
+      final pcs = soltpcs ?? '1';
+      return MyText(
+        '$Shape ${caratRange ?? ''} $color $clarity ( $pcs Pcs )',
+        style: TextStyle(fontSize: 12 * r),
+      );
+    }
+
+    final itemCount = shapes.length < carats.length
+        ? shapes.length
+        : carats.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(itemCount, (i) {
+        final shape = shapes[i];
+        final carat = carats[i];
+        final pcsStr = i < pcsList.length ? pcsList[i] : (soltpcs ?? '1');
+
+        return MyText(
+          '$shape $carat $color $clarity ( $pcsStr Pcs )',
+          style: TextStyle(fontSize: 12 * r),
+        );
+      }),
+    );
   }
 }
 

@@ -141,12 +141,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         //builder: (context, state) => const ProfileScreen(),
         builder: (context, state) => const FeedbackFormScreen(),
       ),
+      // GoRoute(
+      //   name: RoutePages.feedbackform.routeName,
+      //   path: '/Order_feedback_form',
+      //   builder: (context, state) {
+      //     final customer =
+      //         state.extra as CustomerDetail? ??
+      //         CustomerDetail(
+      //           id: null,
+      //           name: '',
+      //           contactNo: '',
+      //           email: '',
+      //           address: '',
+      //           pan: '',
+      //           gender: '',
+      //           dob: '',
+      //           pincode: '',
+      //         );
+      //     return DivineFeedbackScreen(customer: customer);
+      //   },
+      // ),
       GoRoute(
         name: RoutePages.feedbackform.routeName,
         path: '/Order_feedback_form',
         builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+
           final customer =
-              state.extra as CustomerDetail? ??
+              extra?['customer'] as CustomerDetail? ??
               CustomerDetail(
                 id: null,
                 name: '',
@@ -158,9 +180,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 dob: '',
                 pincode: '',
               );
-          return DivineFeedbackScreen(customer: customer);
+
+          final int? orderNo = extra?['orderNo'] as int?;
+
+          return DivineFeedbackScreen(customer: customer, orderNo: orderNo);
         },
       ),
+
       GoRoute(
         path: RoutePages.cart.routePath,
         name: RoutePages.cart.routeName,

@@ -8,7 +8,9 @@ import '../../../cart/providers/cart_providers.dart';
 import '../../../cart/data/customer_detail_model.dart';
 
 class ContinueCartPopup extends ConsumerStatefulWidget {
-  const ContinueCartPopup({super.key});
+  final BuildContext parentContext;
+
+  const ContinueCartPopup({super.key, required this.parentContext});
 
   @override
   ConsumerState<ContinueCartPopup> createState() => _ContinueCartPopupState();
@@ -169,12 +171,40 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
     });
   }
 
-  void _onCustomerTap(CustomerDetail c) {
-    _selectedCustomer = c;
-    _searchController.text = c.name ?? '';
-    _searchController.selection = TextSelection.fromPosition(
-      TextPosition(offset: _searchController.text.length),
-    );
+  // void _onCustomerTap(CustomerDetail c) {
+  //   _selectedCustomer = c;
+  //   _searchController.text = c.name ?? '';
+  //   _searchController.selection = TextSelection.fromPosition(
+  //     TextPosition(offset: _searchController.text.length),
+  //   );
+  //   _removeOverlay();
+  //   FocusScope.of(context).unfocus();
+  // }
+
+  void _onCustomerTap(CustomerDetail c) async {
+    CustomerDetail? chosen = c;
+
+    if (c.id != null) {
+      final full = await ref
+          .read(cartNotifierProvider.notifier)
+          .getCustomerDetailValue(c.id!.toString());
+
+      if (!mounted) return;
+
+      if (full != null) {
+        debugPrint('Full customer: ${full.toJson()}');
+        chosen = full;
+      }
+    }
+
+    setState(() {
+      _selectedCustomer = chosen;
+      _searchController.text = _selectedCustomer?.name ?? '';
+      _searchController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _searchController.text.length),
+      );
+    });
+
     _removeOverlay();
     FocusScope.of(context).unfocus();
   }
@@ -407,7 +437,9 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                           final mobile = _newMobileController.text.trim();
 
                           if (name.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(
+                              widget.parentContext,
+                            ).showSnackBar(
                               const SnackBar(
                                 content: Text('Please enter customer name'),
                                 backgroundColor: Colors.orange,
@@ -416,7 +448,9 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                             return;
                           }
                           if (mobile.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(
+                              widget.parentContext,
+                            ).showSnackBar(
                               const SnackBar(
                                 content: Text('Please enter mobile number'),
                                 backgroundColor: Colors.orange,
@@ -434,7 +468,9 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
 
                             if (!mounted) return;
 
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(
+                              widget.parentContext,
+                            ).showSnackBar(
                               const SnackBar(
                                 content: Text('Customer created successfully'),
                                 backgroundColor: Colors.green,
@@ -448,9 +484,13 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
 
                             // mark this new customer as selected
                             _selectedCustomer = newCustomer;
+
+                            _handleAddToCart(); // auto click add to cart
                           } catch (e) {
                             if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(
+                              widget.parentContext,
+                            ).showSnackBar(
                               SnackBar(
                                 content: Text('Failed to create customer: $e'),
                                 backgroundColor: Colors.red,

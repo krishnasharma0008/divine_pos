@@ -558,10 +558,11 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     try {
       final res = await dio.get(
         '${ApiEndPoint.customerSearch}find',
-        queryParameters: {'value': query, 'useronly': 1},
+        queryParameters: {'value': query},
       );
 
       final data = res.data['data'] as List<dynamic>? ?? [];
+
       return data
           .map((e) => CustomerDetail.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -571,13 +572,32 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     }
   }
 
+  Future<CustomerDetail?> getCustomerDetailValue(String value) async {
+    final query = value.trim();
+    if (query.isEmpty) return null;
+
+    try {
+      final res = await dio.get('${ApiEndPoint.customerSearch}$query');
+
+      final data = res.data['data']; // a Map, not a List
+      debugPrint('Searched CUSTOMER data: $data');
+
+      if (data == null) return null;
+
+      return CustomerDetail.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('Customer search error: $e');
+      return null;
+    }
+  }
+
   Future<CustomerDetail> createCustomer({
     required String name,
     required String mobile,
   }) async {
     final res = await dio.post(
       ApiEndPoint.create_customer,
-      data: {'name': name, 'mobile': mobile},
+      data: {'name': name, 'contactno': mobile},
     );
 
     final body = res.data as Map<String, dynamic>;
@@ -608,10 +628,16 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     required int customerId,
     required String mobile,
   }) async {
+    final selected = ref.read(selectedCustomerProvider);
+    if (selected == null || selected.id != customerId) return;
+
+    final updatedCustomer = selected.copyWith(contactNo: mobile);
+    ref.read(selectedCustomerProvider.notifier).setCustomer(updatedCustomer);
+
     try {
-      await dio.put(
-        ApiEndPoint.update_customer, // अपना endpoint
-        data: {'id': customerId, 'mobile': mobile},
+      await dio.post(
+        ApiEndPoint.update_customer,
+        data: {'id': customerId, 'contactno': mobile},
       );
     } catch (e) {
       debugPrint('Update customer error: $e');

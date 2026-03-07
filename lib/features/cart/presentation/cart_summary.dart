@@ -9,7 +9,7 @@ class CartSummaryPanel extends StatelessWidget {
   final List<CartDetail> readyProducts;
   final double subtotal;
 
-  final String customerName;
+  //final String customerName;
   //final String expDlvDate;
 
   // ← typed callback instead of VoidCallback
@@ -30,7 +30,7 @@ class CartSummaryPanel extends StatelessWidget {
     required this.orderProducts,
     required this.readyProducts,
     required this.subtotal,
-    required this.customerName,
+    //required this.customerName,
     //required this.expDlvDate,
     this.onConfirm,
   });

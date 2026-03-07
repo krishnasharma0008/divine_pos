@@ -13,6 +13,7 @@ class JewelleryCalcState {
   final int? totalSidePcs;
   final double? totalSideWeight;
   final int? totalSolitairePcs;
+  final String? SolitairePcs;
   final double? baseSize;
   final String? baseCarat;
   final String? ringSize;
@@ -40,6 +41,7 @@ class JewelleryCalcState {
     this.totalSidePcs,
     this.totalSideWeight,
     this.totalSolitairePcs,
+    this.SolitairePcs,
     this.baseSize,
     this.baseCarat,
     this.ringSize,
@@ -68,6 +70,7 @@ class JewelleryCalcState {
     int? totalSidePcs,
     double? totalSideWeight,
     int? totalSolitairePcs,
+    String? SolitairePcs,
     double? baseSize,
     String? baseCarat,
     String? ringSize,
@@ -95,6 +98,7 @@ class JewelleryCalcState {
       totalSidePcs: totalSidePcs ?? this.totalSidePcs,
       totalSideWeight: totalSideWeight ?? this.totalSideWeight,
       totalSolitairePcs: totalSolitairePcs ?? this.totalSolitairePcs,
+      SolitairePcs: SolitairePcs ?? this.SolitairePcs,
       baseSize: baseSize ?? this.baseSize,
       baseCarat: baseCarat ?? this.baseCarat,
       ringSize: ringSize ?? this.ringSize,

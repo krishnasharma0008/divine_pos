@@ -3,16 +3,35 @@ import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 
 class MobileNumberDialog extends StatefulWidget {
-  final Function(String)? onSubmit;
+  //final Function(String)? onSubmit;
+  final String custname;
+  final String? initialMobile;
 
-  const MobileNumberDialog({super.key, this.onSubmit});
+  const MobileNumberDialog({
+    super.key,
+    //this.onSubmit,
+    this.initialMobile,
+    required this.custname,
+  });
 
   @override
   State<MobileNumberDialog> createState() => _MobileNumberDialogState();
 }
 
 class _MobileNumberDialogState extends State<MobileNumberDialog> {
-  final TextEditingController _phoneController = TextEditingController();
+  //final TextEditingController _phoneController = TextEditingController();
+  late final TextEditingController _phoneController;
+
+  @override
+  void initState() {
+    super.initState();
+    debugPrint("Initial Phone Number : ${widget.initialMobile}");
+    _phoneController = TextEditingController(text: widget.initialMobile ?? '');
+
+    debugPrint(
+      'Customer Name : ${widget.custname}  and Mobile No. : ${widget.initialMobile}',
+    );
+  }
 
   @override
   void dispose() {
@@ -140,11 +159,17 @@ class _MobileNumberDialogState extends State<MobileNumberDialog> {
 
                       // Submit Button
                       GestureDetector(
+                        // onTap: () {
+                        //   final phone = _phoneController.text;
+                        //   widget.onSubmit?.call(phone);
+                        //   Navigator.of(context).pop(
+                        //     MobileDialogResult(phone: phone, submitted: true),
+                        //   );
+                        // },
                         onTap: () {
-                          //if (_phoneController.text.isNotEmpty) {
-                          widget.onSubmit?.call(_phoneController.text);
-                          Navigator.of(context).pop(_phoneController.text);
-                          //}
+                          Navigator.of(
+                            context,
+                          ).pop(_phoneController.text); // returns String
                         },
                         child: Container(
                           width: 213 * fem,
@@ -196,12 +221,19 @@ class _MobileNumberDialogState extends State<MobileNumberDialog> {
 
             // Close Button
             Positioned(
-              right: 18 * fem,
-              top: 9.57 * fem,
+              right: 8 * fem,
+              top: 8 * fem,
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () => Navigator.of(context).pop(),
-                child: Opacity(
-                  opacity: 0.70,
+
+                // onTap: () {
+                //   Navigator.of(
+                //     context,
+                //   ).pop(MobileDialogResult(phone: '', submitted: false));
+                // },
+                child: Padding(
+                  padding: EdgeInsets.all(8 * fem),
                   child: Container(
                     width: 16 * fem,
                     height: 16 * fem,
@@ -224,3 +256,9 @@ class _MobileNumberDialogState extends State<MobileNumberDialog> {
     );
   }
 }
+
+// class MobileDialogResult {
+//   final String phone;
+//   final bool submitted;
+//   MobileDialogResult({required this.phone, required this.submitted});
+// }

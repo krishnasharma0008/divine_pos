@@ -1,35 +1,38 @@
 class DivineFeedbackModel {
   // Step 1 – customer part
-  final double experienceRating; // Q1
-  final String discoverySource; // Q2
-  final String customerType; // Q3
-  final String occasion; // Q4
-  final String customerName; // Q5
-  final String mobileNumber; // Q6
+  final int? orderno;
+  final String customer_type; // Q3
+  final String customer_name; // Q5
+  final String contact_no; // Q6
   final String email; // Q7
+  final int experience_rating; // Q1
+  final String discovery_source; // Q2
+  final String occasion; // Q4
 
   // Step 2 – sales part
-  final String salesStaff; // Q8
+  final String sales_by; // Q8
 
   DivineFeedbackModel({
-    required this.experienceRating,
-    required this.discoverySource,
-    required this.customerType,
-    required this.occasion,
-    required this.customerName,
-    required this.mobileNumber,
+    required this.orderno,
+    required this.customer_type,
+    required this.customer_name,
+    required this.contact_no,
     required this.email,
-    required this.salesStaff,
+    required this.experience_rating,
+    required this.discovery_source,
+    required this.occasion,
+    required this.sales_by,
   });
 
   Map<String, dynamic> toJson() => {
-    'experience_rating': experienceRating,
-    'discovery_source': discoverySource,
-    'customer_type': customerType,
-    'occasion': occasion,
-    'customer_name': customerName,
-    'mobile_number': mobileNumber,
+    'orderno': orderno,
+    'customer_type': customer_type,
+    'customer_name': customer_name,
+    'contact_no': contact_no,
     'email': email,
-    'sales_staff': salesStaff,
+    'experience_rating': experience_rating,
+    'discovery_source': discovery_source,
+    'occasion': occasion,
+    'sales_by': sales_by,
   };
 }

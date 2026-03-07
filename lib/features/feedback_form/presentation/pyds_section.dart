@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:divine_pos/features/feedback_form/data/feedback_model.dart';
 import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/utils/api_endpointen.dart';
+import '../../../shared/utils/http_client.dart';
 import '../presentation/widget/shared_widgets.dart';
 import '../theme.dart';
 
@@ -52,43 +57,107 @@ const _caratSteps = [
 const _colorSteps = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
 const _claritySteps = ['IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
 
-// ─── MRP Input Dialog ─────────────────────────────────────────────────────────
+// ─── PYDS Add Button (ConsumerWidget — needs ref for API call) ────────────────
 
-Future<double?> showMrpDialog(BuildContext context) async {
-  final ctrl = TextEditingController();
-  return showDialog<double>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Enter MRP'),
-      content: TextField(
-        controller: ctrl,
-        autofocus: true,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(
-          hintText: 'e.g. 3516000',
-          prefixText: '₹ ',
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: FeedbackTheme.teal),
-          onPressed: () {
-            final v = double.tryParse(ctrl.text.trim());
-            Navigator.pop(ctx, v);
-          },
-          child: const Text('Add', style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    ),
-  );
+class _PydsAddButton extends ConsumerStatefulWidget {
+  final String shape;
+  final String carat;
+  final String color;
+  final String clarity;
+  final void Function(PydsProductEntry entry) onAdd;
+
+  const _PydsAddButton({
+    required this.shape,
+    required this.carat,
+    required this.color,
+    required this.clarity,
+    required this.onAdd,
+  });
+
+  @override
+  ConsumerState<_PydsAddButton> createState() => _PydsAddButtonState();
 }
 
-// ─── PYDS Section ─────────────────────────────────────────────────────────────
+class _PydsAddButtonState extends ConsumerState<_PydsAddButton> {
+  bool _isFetching = false;
+
+  Future<void> _handleAdd() async {
+    setState(() => _isFetching = true);
+    try {
+      final dio = ref.read(httpClientProvider);
+      final response = await dio.post(
+        ApiEndPoint.get_price,
+        data: {
+          'itemgroup': 'SOLITAIRE',
+          'weight': double.parse(widget.carat),
+          'shape': widget.shape,
+          'color': widget.color,
+          'quality': widget.clarity,
+        },
+      );
+
+      if (response.statusCode != HttpStatus.ok) {
+        throw HttpException('Failed to fetch solitaire price');
+      }
+
+      final body = response.data;
+      if (body == null || body['success'] != true) {
+        throw Exception('Invalid price response');
+      }
+
+      final price = body['price'];
+      if (price is! num) throw Exception('Invalid price response: $body');
+
+      widget.onAdd(
+        PydsProductEntry(
+          shape: widget.shape,
+          carat: widget.carat,
+          color: widget.color,
+          clarity: widget.clarity,
+          mrp: price.toDouble(),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFetching = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: _isFetching ? null : _handleAdd,
+      icon: _isFetching
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Icon(Icons.add, size: 16),
+      label: Text(_isFetching ? 'Fetching...' : 'Add'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: FeedbackTheme.teal,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        elevation: 0,
+      ),
+    );
+  }
+}
+
+// ─── PYDS Section (StatefulWidget — GlobalKey works correctly) ────────────────
 
 class PydsSection extends StatefulWidget {
   const PydsSection({super.key});
@@ -116,23 +185,6 @@ class PydsSectionState extends State<PydsSection> {
       return null;
     }
     return PydsData(products: List.from(_products));
-  }
-
-  // ── Add product ───────────────────────────────────────────────────────────
-  Future<void> _handleAdd() async {
-    final mrp = await showMrpDialog(context);
-    if (mrp == null || mrp <= 0) return;
-    setState(() {
-      _products.add(
-        PydsProductEntry(
-          shape: _selectedShape,
-          carat: _caratSteps[_caratIndex],
-          color: _colorSteps[_colorIndex],
-          clarity: _claritySteps[_clarityIndex],
-          mrp: mrp,
-        ),
-      );
-    });
   }
 
   @override
@@ -191,22 +243,15 @@ class PydsSectionState extends State<PydsSection> {
         ),
         SizedBox(height: 20 * fem),
 
-        // + Add button
+        // + Add button — ConsumerWidget handles API call, passes result back
         Align(
           alignment: Alignment.centerRight,
-          child: ElevatedButton.icon(
-            onPressed: _handleAdd,
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('Add'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: FeedbackTheme.teal,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              elevation: 0,
-            ),
+          child: _PydsAddButton(
+            shape: _selectedShape,
+            carat: _caratSteps[_caratIndex],
+            color: _colorSteps[_colorIndex],
+            clarity: _claritySteps[_clarityIndex],
+            onAdd: (entry) => setState(() => _products.add(entry)),
           ),
         ),
         SizedBox(height: 16 * fem),
@@ -293,7 +338,7 @@ class DiamondShapeSelector extends StatelessWidget {
 
 // ─── Discrete Step Slider ─────────────────────────────────────────────────────
 
-class DiscreteSlider extends StatelessWidget {
+class DiscreteSlider extends StatefulWidget {
   final List<String> steps;
   final int selectedIndex;
   final ValueChanged<int> onChanged;
@@ -306,6 +351,33 @@ class DiscreteSlider extends StatelessWidget {
   });
 
   @override
+  State<DiscreteSlider> createState() => _DiscreteSliderState();
+}
+
+class _DiscreteSliderState extends State<DiscreteSlider> {
+  late double _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.selectedIndex.clamp(0, widget.steps.length - 1).toDouble();
+  }
+
+  @override
+  void didUpdateWidget(covariant DiscreteSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
+      setState(() {
+        _value = widget.selectedIndex
+            .clamp(0, widget.steps.length - 1)
+            .toDouble();
+      });
+    }
+  }
+
+  int get _index => _value.round();
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16 * fem, vertical: 16 * fem),
@@ -316,70 +388,164 @@ class DiscreteSlider extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Labels
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(steps.length, (i) {
-              final isSelected = i == selectedIndex;
-              return Expanded(
-                child: Center(
-                  child: Text(
-                    steps[i],
-                    style: TextStyle(
-                      fontSize: 11 * fem,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w400,
-                      color: isSelected
-                          ? FeedbackTheme.teal
-                          : FeedbackTheme.textGrey,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const double sliderPadding = 24.0;
+              final double trackWidth =
+                  constraints.maxWidth - sliderPadding * 2;
+              final int count = widget.steps.length;
+              final double step = count > 1 ? trackWidth / (count - 1) : 0;
+
+              return Column(
+                children: [
+                  SizedBox(
+                    height: 18 * fem,
+                    child: Stack(
+                      children: List.generate(count, (i) {
+                        final double x = sliderPadding + i * step;
+                        final isSelected = i == _index;
+                        return Positioned(
+                          left: x - 20,
+                          width: 40,
+                          child: Center(
+                            child: Text(
+                              widget.steps[i],
+                              style: TextStyle(
+                                fontSize: 11 * fem,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w400,
+                                color: isSelected
+                                    ? FeedbackTheme.teal
+                                    : FeedbackTheme.textGrey,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                   ),
-                ),
-              );
-            }),
-          ),
-          SizedBox(height: 6 * fem),
-          // Tick marks
-          Row(
-            children: List.generate(
-              steps.length,
-              (i) => Expanded(
-                child: Center(
-                  child: Container(
-                    width: 1.5,
-                    height: 8 * fem,
-                    color: i == selectedIndex
-                        ? FeedbackTheme.teal
-                        : FeedbackTheme.borderColor,
+                  SizedBox(height: 4 * fem),
+                  SizedBox(
+                    height: 48 * fem,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        ...List.generate(count, (i) {
+                          final double x = sliderPadding + i * step;
+                          return Positioned(
+                            left: x - 1,
+                            top: 0,
+                            child: Container(
+                              width: 2 * fem,
+                              height: 10 * fem,
+                              decoration: BoxDecoration(
+                                color: i == _index
+                                    ? const Color(0xFFBEE4DD)
+                                    : const Color(0xFFCFE1DD),
+                                borderRadius: BorderRadius.circular(3 * fem),
+                              ),
+                            ),
+                          );
+                        }),
+                        Container(
+                          height: 6 * fem,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(3 * fem),
+                            border: Border.all(
+                              color: const Color(0xFFBEE4DD),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        SliderTheme(
+                          data: SliderThemeData(
+                            trackHeight: 4 * fem,
+                            trackShape: const RoundedRectSliderTrackShape(),
+                            activeTrackColor: const Color(0xFFCFF4EE),
+                            inactiveTrackColor: Colors.transparent,
+                            thumbColor: const Color(0xFFA9E7DF),
+                            overlayColor: const Color(
+                              0xFFBFE8E3,
+                            ).withOpacity(0.25),
+                            overlayShape: RoundSliderOverlayShape(
+                              overlayRadius: 16 * fem,
+                            ),
+                            thumbShape: DiamondSliderThumbShape(
+                              width: 10 * fem,
+                              height: 15 * fem,
+                            ),
+                            tickMarkShape: SliderTickMarkShape.noTickMark,
+                          ),
+                          child: Slider(
+                            value: _value,
+                            min: 0,
+                            max: (count - 1).toDouble(),
+                            divisions: count - 1,
+                            onChanged: (v) {
+                              final newIndex = v.round();
+                              if (newIndex == _index) return;
+                              setState(() => _value = newIndex.toDouble());
+                              widget.onChanged(newIndex);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-            ),
-          ),
-          // Slider
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 2,
-              activeTrackColor: FeedbackTheme.teal,
-              inactiveTrackColor: FeedbackTheme.borderColor,
-              thumbColor: FeedbackTheme.teal,
-              thumbShape: RoundSliderThumbShape(enabledThumbRadius: 9 * fem),
-              overlayShape: RoundSliderOverlayShape(overlayRadius: 16 * fem),
-              overlayColor: FeedbackTheme.teal.withOpacity(0.15),
-              tickMarkShape: SliderTickMarkShape.noTickMark,
-            ),
-            child: Slider(
-              value: selectedIndex.toDouble(),
-              min: 0,
-              max: (steps.length - 1).toDouble(),
-              divisions: steps.length - 1,
-              onChanged: (v) => onChanged(v.round()),
-            ),
+                ],
+              );
+            },
           ),
         ],
       ),
     );
+  }
+}
+
+// ─── Diamond Thumb ────────────────────────────────────────────────────────────
+
+class DiamondSliderThumbShape extends SliderComponentShape {
+  final double width;
+  final double height;
+
+  const DiamondSliderThumbShape({this.width = 10, this.height = 15});
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size(width, height);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required Size sizeWithOverflow,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double textScaleFactor,
+    required double value,
+  }) {
+    final canvas = context.canvas;
+    final paint = Paint()
+      ..color = sliderTheme.thumbColor ?? Colors.teal
+      ..style = PaintingStyle.fill;
+
+    final halfW = width / 2;
+    final halfH = height / 2;
+
+    final path = Path()
+      ..moveTo(center.dx, center.dy - halfH)
+      ..lineTo(center.dx + halfW, center.dy)
+      ..lineTo(center.dx, center.dy + halfH)
+      ..lineTo(center.dx - halfW, center.dy)
+      ..close();
+
+    canvas.drawPath(path, paint);
   }
 }
 
@@ -420,11 +586,8 @@ class PydsProductTable extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
           _PydsTableHeader(),
           const Divider(height: 1, color: FeedbackTheme.borderColor),
-
-          // Product + installment rows
           ...List.generate(products.length, (i) {
             final p = products[i];
             return Column(
@@ -441,8 +604,6 @@ class PydsProductTable extends StatelessWidget {
               ],
             );
           }),
-
-          // Footer
           const Divider(height: 1, color: FeedbackTheme.borderColor),
           _PydsTableFooter(downPayment: _fmt(_totalDownPayment)),
         ],
@@ -554,7 +715,7 @@ class _PydsInstallmentRow extends StatelessWidget {
             installment,
             style: const TextStyle(fontSize: 14, color: FeedbackTheme.textDark),
           ),
-          const SizedBox(width: 26), // aligns with × column above
+          const SizedBox(width: 26),
         ],
       ),
     );

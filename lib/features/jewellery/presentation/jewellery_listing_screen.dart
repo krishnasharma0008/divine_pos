@@ -127,10 +127,6 @@ class _JewelleryListingScreenState
         storeState.isLoading ||
         (jewelleryAsync.isLoading && !jewelleryNotifier.isLoadingMore);
 
-    // isSolitaire = isSolitaire
-    //     ? filter.applySolitaireCategory
-    //     : filter.resetFilters();
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: MyAppBar(
@@ -469,7 +465,8 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
                         final customer = await showDialog<CustomerDetail>(
                           context: context,
                           barrierDismissible: true,
-                          builder: (_) => const ContinueCartPopup(),
+                          builder: (_) =>
+                              ContinueCartPopup(parentContext: context),
                         );
                         if (customer == null) return;
 

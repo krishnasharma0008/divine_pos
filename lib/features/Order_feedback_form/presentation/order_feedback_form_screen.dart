@@ -1,31 +1,35 @@
+import 'package:divine_pos/features/Order_feedback_form/data/order_feedback_model.dart';
+import 'package:divine_pos/features/Order_feedback_form/provider/feedback_notifier.dart';
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/app_bar.dart';
 import '../../../shared/utils/enums.dart';
 import '../../../shared/utils/scale_size.dart';
+import '../../feedback_form/provider/sales_staff_provider.dart';
+import '../../feedback_form/presentation/widget/shared_widgets.dart';
 
-class DivineFeedbackScreen extends StatefulWidget {
+class DivineFeedbackScreen extends ConsumerStatefulWidget {
   final CustomerDetail customer;
-  const DivineFeedbackScreen({super.key, required this.customer});
+  final int? orderNo;
+
+  const DivineFeedbackScreen({super.key, required this.customer, this.orderNo});
 
   @override
-  State<DivineFeedbackScreen> createState() => _DivineFeedbackScreenState();
+  ConsumerState<DivineFeedbackScreen> createState() =>
+      _DivineFeedbackScreenState();
 }
 
-class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
-  // STEP STATE
-  int _currentStep = 1; // 1 = Customer, 2 = Sales Executive
+class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
+  int _currentStep = 1;
 
-  // Q1: rating
-  double _experienceRating = 4;
-
-  // Q2: discovery source (single choice chips)
+  double _experienceRating = 0; // ← 0 means not selected
   final List<String> _sources = const [
     'Social Media',
     'Friends And Family',
@@ -33,24 +37,27 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
     'Banners, Posters Or Newspaper',
     'Salesman',
   ];
-  String _selectedSource = 'Social Media';
+  String? _selectedSource; // ← null means not selected
+  String? _customerType;
+  String? _occasion;
 
-  // Q3: customer type (radio)
-  String _customerType = 'Repeat Divine Customer';
-
-  // Q4: occasion (radio)
-  String _occasion = 'Engagement or wedding';
-
-  // Text fields
   final _formKey = GlobalKey<FormState>();
-  // final _nameController = TextEditingController();
-  // final _mobileController = TextEditingController();
-  // final _emailController = TextEditingController();
-  // final _salesStaffController = TextEditingController();
   late TextEditingController _nameController;
   late TextEditingController _mobileController;
   late TextEditingController _emailController;
   late TextEditingController _salesStaffController;
+  late TextEditingController _staffCtrl;
+  bool _showSuggestions = false;
+
+  List<String> _filteredStaff(List<String> allStaff) {
+    final q = _staffCtrl.text.toLowerCase();
+    if (q.isEmpty) return [];
+    return allStaff.where((s) => s.toLowerCase().contains(q)).toList();
+  }
+
+  // ── Validation flags (set true on Next / Submit tap) ─────────────────────
+  bool _step1Submitted = false;
+  bool _step2Submitted = false;
 
   @override
   void initState() {
@@ -61,10 +68,12 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
     );
     _emailController = TextEditingController(text: widget.customer.email ?? '');
     _salesStaffController = TextEditingController();
+    _staffCtrl = TextEditingController();
   }
 
   @override
   void dispose() {
+    _staffCtrl.dispose();
     _salesStaffController.dispose();
     _emailController.dispose();
     _mobileController.dispose();
@@ -72,23 +81,90 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
     super.dispose();
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      debugPrint('Rating: $_experienceRating');
-      debugPrint('Source: $_selectedSource');
-      debugPrint('CustomerType: $_customerType');
-      debugPrint('Occasion: $_occasion');
-      debugPrint('Name: ${_nameController.text}');
-      debugPrint('Mobile: ${_mobileController.text}');
-      debugPrint('Email: ${_emailController.text}');
-      debugPrint('Sales Staff: ${_salesStaffController.text}');
-      _showSuccessDialog(context, ScaleSize.aspectRatio);
-    }
+  // ── Mappers ───────────────────────────────────────────────────────────────
+  String _mapSource(String ui) => switch (ui) {
+    'Social Media' => 'social_media',
+    'Friends And Family' => 'friends_family',
+    'Radio Or Cinema' => 'radio_cinema',
+    'Banners, Posters Or Newspaper' => 'banners_posters_newspaper',
+    'Salesman' => 'salesman',
+    _ => 'other',
+  };
+
+  String _mapCustomerType(String ui) => switch (ui) {
+    'Repeat Divine Customer' => 'repeat_divine',
+    'Repeat Store Customer (buying divine first time)' =>
+      'repeat_store_first_divine',
+    'First Time Customer (For store and Divine)' => 'first_time',
+    _ => 'unknown',
+  };
+
+  String _mapOccasion(String ui) => switch (ui) {
+    'Birthday or celebration gift' => 'birthday',
+    'Engagement or wedding' => 'engagement_wedding',
+    'Gift to family' => 'gift_family',
+    'Self gift / self-purchase' => 'self_purchase',
+    'Other' => 'other',
+    _ => 'other',
+  };
+
+  // ── Step 1 validation ─────────────────────────────────────────────────────
+  bool get _step1Valid =>
+      _experienceRating > 0 &&
+      _selectedSource != null &&
+      _customerType != null &&
+      _occasion != null &&
+      _nameController.text.trim().isNotEmpty &&
+      _mobileController.text.trim().isNotEmpty &&
+      _emailController.text.trim().isNotEmpty;
+
+  void _handleNext() {
+    setState(() => _step1Submitted = true);
+    if (!_step1Valid) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _currentStep = 2);
   }
+
+  // ── Step 2 submit ─────────────────────────────────────────────────────────
+  Future<void> _submit() async {
+    setState(() => _step2Submitted = true);
+    if (_staffCtrl.text.trim().isEmpty) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final feedback = DivineFeedbackModel(
+      orderno: widget.orderNo,
+      customer_type: _mapCustomerType(_customerType ?? ''),
+      customer_name: _nameController.text.trim(),
+      contact_no: _mobileController.text.trim(),
+      email: _emailController.text.trim(),
+      experience_rating: _experienceRating.toInt(),
+      discovery_source: _mapSource(_selectedSource ?? ''),
+      occasion: _mapOccasion(_occasion ?? ''),
+      sales_by: _staffCtrl.text.trim(),
+    );
+
+    final notifier = ref.read(feedbackProvider.notifier);
+    await notifier.createOrderFeedback(feedback);
+
+    final feedbackState = ref.read(feedbackProvider);
+    feedbackState.when(
+      data: (_) => _showSuccessDialog(context, ScaleSize.aspectRatio),
+      error: (err, _) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit feedback: $err')),
+      ),
+      loading: () {},
+    );
+  }
+
+  // ── Error helpers ─────────────────────────────────────────────────────────
+  String? _fieldError(String value, String message) =>
+      _step1Submitted && value.trim().isEmpty ? message : null;
 
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
+    final feedbackState = ref.watch(feedbackProvider);
+    final isSubmitting = feedbackState.isLoading;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDFDFD),
@@ -101,9 +177,7 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
             stepHeader(
               fem,
               currentStep: _currentStep,
-              onStepChanged: (step) {
-                setState(() => _currentStep = step);
-              },
+              onStepChanged: (step) => setState(() => _currentStep = step),
             ),
             SizedBox(height: 25 * fem),
             Expanded(
@@ -125,17 +199,15 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: 24 * fem),
-                        SizedBox(
-                          child: MyText(
-                            'Form to be filled by Sales Executive',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: const Color(0xFF3F3F3F),
-                              fontSize: 16 * fem,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w400,
-                              height: 2.25,
-                            ),
+                        MyText(
+                          'Form to be filled by Sales Executive',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: const Color(0xFF3F3F3F),
+                            fontSize: 16 * fem,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w400,
+                            height: 2.25,
                           ),
                         ),
                         SizedBox(height: 30 * fem),
@@ -148,7 +220,7 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
                           ),
                           child: _currentStep == 1
                               ? _buildStep1(fem)
-                              : _buildStep2(fem),
+                              : _buildStep2(fem, isSubmitting),
                         ),
                       ],
                     ),
@@ -162,71 +234,82 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
     );
   }
 
-  // STEP 1: Customer questions + Next
   Widget _buildStep1(double fem) {
+    final ratingError = _step1Submitted && _experienceRating == 0;
+    final sourceError = _step1Submitted && _selectedSource == null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Q1
+        // Q1 Rating
         QuestionSection(
           index: 1,
           fem: fem,
           title: 'How Was Your Experience With Divine Solitaires? *',
-          child: RatingBar.builder(
-            initialRating: _experienceRating,
-            minRating: 1,
-            direction: Axis.horizontal,
-            allowHalfRating: false,
-            itemPadding: const EdgeInsets.symmetric(horizontal: 4),
-            itemCount: 5,
-            itemBuilder: (context, _) =>
-                const Icon(Icons.star, color: Color(0xFF90DCD0)),
-            onRatingUpdate: (rating) {
-              setState(() => _experienceRating = rating);
-            },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RatingBar.builder(
+                initialRating: _experienceRating,
+                minRating: 1,
+                direction: Axis.horizontal,
+                allowHalfRating: false,
+                itemPadding: const EdgeInsets.symmetric(horizontal: 4),
+                itemCount: 5,
+                itemBuilder: (context, _) =>
+                    const Icon(Icons.star, color: Color(0xFF90DCD0)),
+                onRatingUpdate: (rating) =>
+                    setState(() => _experienceRating = rating),
+              ),
+              if (ratingError) _errorText('Please select a rating'),
+            ],
           ),
         ),
 
-        // Q2
+        // Q2 Discovery source
         QuestionSection(
           index: 2,
           fem: fem,
           title: 'How did you know about Divine Solitaires? *',
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: _sources.map((s) {
-              final selected = _selectedSource == s;
-              return ChoiceChip(
-                label: MyText(
-                  s,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: selected ? Colors.black : const Color(0xFF595959),
-                    fontSize: 14 * fem,
-                    fontFamily: 'Montserrat',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                showCheckmark: false,
-                selected: selected,
-                onSelected: (_) {
-                  setState(() => _selectedSource = s);
-                },
-                selectedColor: const Color(0xFF90DCD0),
-                labelStyle: TextStyle(
-                  color: selected ? Colors.black87 : const Color(0xFF595959),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                backgroundColor: const Color(0xFFBEE4DD),
-              );
-            }).toList(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: _sources.map((s) {
+                  final selected = _selectedSource == s;
+                  return ChoiceChip(
+                    label: MyText(
+                      s,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: selected
+                            ? Colors.black
+                            : const Color(0xFF595959),
+                        fontSize: 14 * fem,
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    showCheckmark: false,
+                    selected: selected,
+                    onSelected: (_) => setState(() => _selectedSource = s),
+                    selectedColor: const Color(0xFF90DCD0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    backgroundColor: const Color(0xFFBEE4DD),
+                  );
+                }).toList(),
+              ),
+              if (sourceError)
+                _errorText('Please select how you heard about us'),
+            ],
           ),
         ),
 
-        // Q3
+        // Q3 Customer type
         QuestionSection(
           index: 3,
           fem: fem,
@@ -253,15 +336,17 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
                 onChanged: (v) => setState(() => _customerType = v!),
                 fem: fem,
               ),
+              if (_step1Submitted && _customerType == null)
+                _errorText('Please select an option'),
             ],
           ),
         ),
 
-        // Q4
+        // Q4 Occasion
         QuestionSection(
           index: 4,
           fem: fem,
-          title: 'What\'s the special occasion you\'re buying for today? *',
+          title: "What's the special occasion you're buying for today? *",
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -296,11 +381,13 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
                 fem: fem,
                 onChanged: (v) => setState(() => _occasion = v!),
               ),
+              if (_step1Submitted && _occasion == null)
+                _errorText('Please select an occasion'),
             ],
           ),
         ),
 
-        // Q5
+        // Q5 Name
         QuestionSection(
           index: 5,
           fem: fem,
@@ -309,39 +396,15 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 8 * fem),
-              TextFormField(
+              _inputField(
                 controller: _nameController,
-                style: TextStyle(fontSize: 14 * fem, fontFamily: 'Montserrat'),
-                decoration: InputDecoration(
-                  hintText: 'Customer Name',
-                  filled: true,
-                  fillColor: const Color(0xFFF9F9F9),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 15 * fem,
-                    vertical: 15 * fem,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFBFBED0),
-                      width: 0.5,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFBFBED0),
-                      width: 0.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF8FBED0),
-                      width: 0.5,
-                    ),
-                  ),
+                hint: 'Customer Name',
+                fem: fem,
+                errorText: _fieldError(
+                  _nameController.text,
+                  'Please enter name',
                 ),
+                onChanged: (_) => setState(() {}),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? 'Please enter name'
                     : null,
@@ -350,7 +413,7 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
           ),
         ),
 
-        // Q6
+        // Q6 Mobile
         QuestionSection(
           index: 6,
           fem: fem,
@@ -359,40 +422,16 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 8 * fem),
-              TextFormField(
+              _inputField(
                 controller: _mobileController,
-                style: TextStyle(fontSize: 14 * fem, fontFamily: 'Montserrat'),
+                hint: 'Enter your mobile number',
+                fem: fem,
                 keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  hintText: 'Enter your mobile number',
-                  filled: true,
-                  fillColor: const Color(0xFFF9F9F9),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 15 * fem,
-                    vertical: 15 * fem,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFBFBED0),
-                      width: 0.5,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFBFBED0),
-                      width: 0.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF8FBED0),
-                      width: 0.5,
-                    ),
-                  ),
+                errorText: _fieldError(
+                  _mobileController.text,
+                  'Please enter mobile number',
                 ),
+                onChanged: (_) => setState(() {}),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? 'Please enter mobile number'
                     : null,
@@ -401,7 +440,7 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
           ),
         ),
 
-        // Q7
+        // Q7 Email
         QuestionSection(
           index: 7,
           fem: fem,
@@ -410,48 +449,21 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 8 * fem),
-              TextFormField(
+              _inputField(
                 controller: _emailController,
-                style: TextStyle(fontSize: 14 * fem, fontFamily: 'Montserrat'),
+                hint: 'Enter your email id',
+                fem: fem,
                 keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  hintText: 'Enter your email id',
-                  filled: true,
-                  fillColor: const Color(0xFFF9F9F9),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 15 * fem,
-                    vertical: 15 * fem,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFBFBED0),
-                      width: 0.5,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFBFBED0),
-                      width: 0.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF8FBED0),
-                      width: 0.5,
-                    ),
-                  ),
+                errorText: _fieldError(
+                  _emailController.text,
+                  'Please enter email',
                 ),
+                onChanged: (_) => setState(() {}),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
+                  if (v == null || v.trim().isEmpty)
                     return 'Please enter email';
-                  }
-                  final regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                  if (!regex.hasMatch(v.trim())) {
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim()))
                     return 'Enter valid email';
-                  }
                   return null;
                 },
               ),
@@ -460,84 +472,152 @@ class _DivineFeedbackScreenState extends State<DivineFeedbackScreen> {
         ),
 
         SizedBox(height: 30 * fem),
-        Center(
-          child: submitButton(fem, () {
-            if (_formKey.currentState?.validate() ?? false) {
-              setState(() => _currentStep = 2);
-            }
-          }, label: 'Next'),
-        ),
+        Center(child: submitButton(fem, _handleNext, label: 'Next')),
         SizedBox(height: 43 * fem),
       ],
     );
   }
 
-  // STEP 2: Sales staff + Submit
-  Widget _buildStep2(double fem) {
+  Widget _buildStep2(double fem, bool isSubmitting) {
+    final staffAsync = ref.watch(salesStaffProvider);
+    final staffError = _step2Submitted && _staffCtrl.text.trim().isEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        QuestionSection(
-          index: 8,
-          fem: fem,
-          title: 'Sales Staff',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 8 * fem),
-              TextFormField(
-                controller: _salesStaffController,
-                style: TextStyle(fontSize: 14 * fem, fontFamily: 'Montserrat'),
-                keyboardType: TextInputType.name,
-                decoration: InputDecoration(
-                  hintText: 'Enter your full name',
-                  filled: true,
-                  fillColor: const Color(0xFFF9F9F9),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 15 * fem,
-                    vertical: 15 * fem,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFBFBED0),
-                      width: 0.5,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFBFBED0),
-                      width: 0.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15 * fem),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF8FBED0),
-                      width: 0.5,
-                    ),
+        FeedbackFormField(
+          number: 8,
+          label: 'Sales Staff',
+          required: true,
+          error: staffError ? 'Please select sales staff' : null,
+          child: staffAsync.when(
+            loading: () => const LinearProgressIndicator(),
+            error: (e, _) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _inputField(
+                  controller: _staffCtrl,
+                  hint: 'Enter staff name',
+                  fem: fem,
+                  errorText: staffError
+                      ? 'Please enter sales staff name'
+                      : null,
+                  onChanged: (_) => setState(() {}),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'Could not load staff list — type manually',
+                    style: TextStyle(fontSize: 12 * fem, color: Colors.orange),
                   ),
                 ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Please enter your full name';
-                  }
-                  return null;
-                },
-              ),
-            ],
+              ],
+            ),
+            data: (staffList) => Column(
+              children: [
+                _inputField(
+                  controller: _staffCtrl,
+                  hint: 'Search staff name',
+                  fem: fem,
+                  errorText: staffError ? 'Please select sales staff' : null,
+                  onChanged: (v) =>
+                      setState(() => _showSuggestions = v.isNotEmpty),
+                ),
+                if (_showSuggestions && _filteredStaff(staffList).isNotEmpty)
+                  StaffDropdown(
+                    items: _filteredStaff(staffList),
+                    onSelect: (s) {
+                      _staffCtrl.text = s;
+                      setState(() => _showSuggestions = false);
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
         SizedBox(height: 30 * fem),
-        Center(child: submitButton(fem, _submit, label: 'Submit')),
+        Center(
+          child: submitButton(
+            fem,
+            isSubmitting ? () {} : _submit,
+            label: isSubmitting ? 'Submitting...' : 'Submit',
+          ),
+        ),
         SizedBox(height: 43 * fem),
       ],
     );
   }
+
+  // ── Reusable input with error border ──────────────────────────────────────
+  Widget _inputField({
+    required TextEditingController controller,
+    required String hint,
+    required double fem,
+    TextInputType keyboardType = TextInputType.text,
+    String? errorText,
+    ValueChanged<String>? onChanged,
+    FormFieldValidator<String>? validator,
+  }) {
+    final hasError = errorText != null;
+    final borderColor = hasError ? Colors.red : const Color(0xFFBFBED0);
+
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      onChanged: onChanged,
+      validator: validator,
+      style: TextStyle(fontSize: 14 * fem, fontFamily: 'Montserrat'),
+      decoration: InputDecoration(
+        hintText: hint,
+        errorText: errorText,
+        filled: true,
+        fillColor: hasError ? const Color(0xFFFFF0F0) : const Color(0xFFF9F9F9),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 15 * fem,
+          vertical: 15 * fem,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15 * fem),
+          borderSide: BorderSide(color: borderColor, width: 0.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15 * fem),
+          borderSide: BorderSide(
+            color: borderColor,
+            width: hasError ? 1.5 : 0.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15 * fem),
+          borderSide: BorderSide(
+            color: hasError ? Colors.red : const Color(0xFF8FBED0),
+            width: 1,
+          ),
+        ),
+        errorStyle: const TextStyle(fontSize: 12, color: Colors.red),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15 * fem),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15 * fem),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _errorText(String message) => Padding(
+    padding: const EdgeInsets.only(top: 6, left: 2),
+    child: Text(
+      message,
+      style: const TextStyle(fontSize: 12, color: Colors.red),
+    ),
+  );
 }
 
-// header with thanks + customer chip
+// ── Unchanged helpers below ───────────────────────────────────────────────────
+
 Widget feedbackHeader(double fem, String customerName) {
   return Container(
     height: 103 * fem,
@@ -603,7 +683,7 @@ Widget feedbackHeader(double fem, String customerName) {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        customerName, // Customer Name
+                        customerName,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: const Color(0xFF5E5E5E),
@@ -636,7 +716,6 @@ Widget feedbackHeader(double fem, String customerName) {
   );
 }
 
-// interactive 2-step header
 Widget stepHeader(
   double fem, {
   required int currentStep,
@@ -720,7 +799,6 @@ Widget stepHeader(
   );
 }
 
-// Question section wrapper
 class QuestionSection extends StatelessWidget {
   final double fem;
   final int index;
@@ -784,12 +862,11 @@ Widget _questionTitle({
 
 Widget _radioTile({
   required String value,
-  required String groupValue,
+  required String? groupValue,
   required ValueChanged<String?> onChanged,
   required double fem,
 }) {
   final isSelected = value == groupValue;
-
   return RadioListTile<String>(
     contentPadding: EdgeInsets.zero,
     value: value,
@@ -930,19 +1007,10 @@ void _showSuccessDialog(BuildContext context, double fem) {
                 SizedBox(height: 32 * fem),
                 Center(
                   child: submitButton(fem, () {
-                    //Navigator.of(_).pop();
                     context.pushNamed(RoutePages.dashboard.routeName);
                   }, label: 'OK'),
                 ),
                 SizedBox(height: 32 * fem),
-                // Container(
-                //   width: 80 * fem,
-                //   height: 4 * fem,
-                //   decoration: BoxDecoration(
-                //     color: const Color(0xFFE0E0E0),
-                //     borderRadius: BorderRadius.circular(2 * fem),
-                //   ),
-                // ),
               ],
             ),
           ),

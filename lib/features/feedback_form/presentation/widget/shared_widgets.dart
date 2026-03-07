@@ -14,6 +14,7 @@ class FeedbackFormField extends StatelessWidget {
   final String label;
   final bool required;
   final Widget child;
+  final String? error; //for error siapley
 
   const FeedbackFormField({
     super.key,
@@ -21,6 +22,7 @@ class FeedbackFormField extends StatelessWidget {
     required this.label,
     this.required = false,
     required this.child,
+    this.error,
   });
 
   @override
@@ -64,6 +66,15 @@ class FeedbackFormField extends StatelessWidget {
         ),
         SizedBox(height: 10 * fem),
         child,
+        // ── inline error message ──────────────────────────────────────────
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 2),
+            child: Text(
+              error!,
+              style: const TextStyle(fontSize: 12, color: Colors.red),
+            ),
+          ),
       ],
     );
   }
@@ -79,6 +90,7 @@ class FeedbackInput extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final bool readOnly;
   final Color? fillColor;
+  final bool hasError;
 
   const FeedbackInput({
     super.key,
@@ -89,10 +101,13 @@ class FeedbackInput extends StatelessWidget {
     this.onChanged,
     this.readOnly = false,
     this.fillColor,
+    this.hasError = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final errorColor = hasError ? Colors.red : FeedbackTheme.borderColor;
+
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
@@ -107,23 +122,26 @@ class FeedbackInput extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: FeedbackTheme.textGrey, fontSize: 14 * fem),
-        filled: fillColor != null,
-        fillColor: fillColor,
+        filled: fillColor != null || hasError,
+        fillColor: hasError ? const Color(0xFFFFF0F0) : fillColor,
         contentPadding: EdgeInsets.symmetric(
           horizontal: 14 * fem,
           vertical: 12 * fem,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: FeedbackTheme.borderColor),
+          borderSide: BorderSide(color: errorColor), // ← remove const
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: FeedbackTheme.borderColor),
+          borderSide: BorderSide(color: errorColor), // ← remove const
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: FeedbackTheme.teal, width: 1.5),
+          borderSide: BorderSide(
+            color: hasError ? Colors.red : FeedbackTheme.teal,
+            width: 1.5,
+          ),
         ),
       ),
     );
@@ -363,22 +381,39 @@ class SubmitButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 200 * fem,
-          padding: EdgeInsets.symmetric(vertical: 14 * fem),
-          decoration: BoxDecoration(
+          width: 258 * fem,
+          height: 52 * fem,
+          padding: EdgeInsets.symmetric(
+            horizontal: 30 * fem,
+            vertical: 6 * fem,
+          ),
+          decoration: ShapeDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF8ECFC7), Color(0xFFB5D5C5)],
+              begin: Alignment(0.0, 0.5),
+              end: Alignment(0.96, 1.12),
+              colors: [Color(0xFFBEE4DD), Color(0xA5D1B193)],
             ),
-            borderRadius: BorderRadius.circular(28),
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(width: 1, color: Color(0xFFACA584)),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            shadows: const [
+              BoxShadow(
+                color: Color(0x7C000000),
+                blurRadius: 4,
+                offset: Offset(2, 2),
+                spreadRadius: 0,
+              ),
+            ],
           ),
           child: Center(
-            child: MyText(
+            child: Text(
               label,
-              style: TextStyle(
-                fontSize: 16 * fem,
+              style: const TextStyle(
+                color: Color(0xFF6C5022),
+                fontSize: 20,
+                fontFamily: 'Montserrat',
                 fontWeight: FontWeight.w500,
-                color: Colors.white,
-                letterSpacing: 0.3,
               ),
             ),
           ),

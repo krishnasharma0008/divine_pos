@@ -216,7 +216,7 @@ class ProductGrid extends ConsumerWidget {
         final customer = await showDialog<CustomerDetail>(
           context: context,
           barrierDismissible: true,
-          builder: (_) => const ContinueCartPopup(),
+          builder: (_) => ContinueCartPopup(parentContext: context),
         );
         if (customer == null) return;
 

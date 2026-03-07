@@ -236,58 +236,6 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       'STONE',
     );
 
-    // // 8) BASIC SOLITAIRE RATE
-    // final double rateFromPerCtRaw = await _fetchPrice(
-    //   itemGroup: 'SOLITAIRE',
-    //   slab: minCt.toStringAsFixed(2),
-    //   shape: shapeCode,
-    //   color: selectedColorTo,
-    //   quality: selectedClarityTo,
-    // );
-
-    // final double rateToPerCtRaw = await _fetchPrice(
-    //   itemGroup: 'SOLITAIRE',
-    //   slab: maxCt.toStringAsFixed(2),
-    //   shape: shapeCode,
-    //   color: selectedColorFrom,
-    //   quality: selectedClarityFrom,
-    // );
-
-    // // 9) PREMIUM
-    // const double premiumPct = 0.0;
-    // final double rateFromWithPremium =
-    //     rateFromPerCtRaw + rateFromPerCtRaw * (premiumPct / 100);
-    // final double rateToWithPremium =
-    //     rateToPerCtRaw + rateToPerCtRaw * (premiumPct / 100);
-
-    // // 10) MULTI‑SIZE OR SINGLE‑SIZE SOLITAIRE
-    // final int rowCount = JewelleryCalculationService.getSolitaireRowCount(
-    //   detail.variants ?? [],
-    //   detail.bom ?? [],
-    // );
-
-    // double solFrom = 0;
-    // double solTo = 0;
-
-    // if (rowCount > 1) {
-    //   final result =
-    //       JewelleryCalculationService.calculateSolitaireAmountRangeLocal(
-    //         detail: detail,
-    //         qty: current.selectedQty,
-    //         rateFromPerCt: rateFromWithPremium,
-    //         rateToPerCt: rateToWithPremium,
-    //       );
-    //   solFrom = result.solFrom;
-    //   solTo = result.solTo;
-    // } else {
-    //   final pcs = (totalSolitairePcs ?? 0);
-    //   final minAmountPerCt = rateFromWithPremium;
-    //   final maxAmountPerCt = rateToWithPremium;
-
-    //   solFrom = minAmountPerCt * minCt * pcs * current.selectedQty;
-    //   solTo = maxAmountPerCt * maxCt * pcs * current.selectedQty;
-    // }
-
     // 8) BASIC SOLITAIRE RATE (single-size के लिए)
     final double rateFromPerCtRaw = await _fetchPrice(
       itemGroup: 'SOLITAIRE',
@@ -328,6 +276,9 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
 
     double solFrom = 0;
     double solTo = 0;
+    String? multiShapeLabel;
+    String? multiCaratLabel;
+    String? multipcsLabel;
 
     if (rowCount > 1) {
       // MULTI‑SIZE: JS वाले BOM loop जैसा
@@ -360,6 +311,10 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
           );
       solFrom = result.solFrom;
       solTo = result.solTo;
+      multiShapeLabel = result.shapeLabel; // "Oval, Pear"
+      multiCaratLabel = result.caratLabel; // "0.80-0.89, 0.23-0.29"
+      multipcsLabel = result.pcsLabel;
+      debugPrint("Multi Pcs : ${multipcsLabel}");
     } else {
       // SINGLE‑SIZE (तुम्हारा पुराना logic ही)
       final pcs = (totalSolitairePcs ?? 0);
@@ -411,7 +366,20 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       totalSideWeight: totalSideWeight,
       totalSolitairePcs: totalSolitairePcs,
       solitaireMessage: msg.isEmpty ? null : msg,
-      solitaireShape: getShape,
+      //solitaireShape: getShape,
+      // shape/carat के लिए:
+      solitaireShape: rowCount > 1
+          ? (multiShapeLabel?.isNotEmpty == true
+                ? multiShapeLabel
+                : current.solitaireShape)
+          : getShape, // single-size वाला existing shape
+
+      caratRange: rowCount > 1
+          ? (multiCaratLabel?.isNotEmpty == true
+                ? multiCaratLabel
+                : current.caratRange)
+          : current.caratRange, // single-size में पहले जैसा
+      SolitairePcs: multipcsLabel,
     );
 
     state = AsyncData(updated);

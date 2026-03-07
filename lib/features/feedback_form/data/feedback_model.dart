@@ -1,47 +1,53 @@
 // ─── Feedback Form Data Models ───────────────────────────────────────────────
 
 class CustomerFeedbackData {
-  final String name;
-  final String mobile;
-  final String email;
-  final int rating;
-  final String? heardFrom;
-  final String? customerType;
-  final String? occasion;
+  //final int? orderno;
+  final String customer_type; // Q3
+  final String customer_name; // Q5
+  final String contact_no; // Q6
+  final String email; // Q7
+  final int experience_rating; // Q1
+  final String discovery_source; // Q2
+  final String occasion;
 
   const CustomerFeedbackData({
-    required this.name,
-    required this.mobile,
+    //required this.orderno,
+    required this.customer_type,
+    required this.customer_name,
+    required this.contact_no,
     required this.email,
-    required this.rating,
-    this.heardFrom,
-    this.customerType,
-    this.occasion,
+    required this.experience_rating,
+    required this.discovery_source,
+    required this.occasion,
   });
 
   Map<String, dynamic> toJson() => {
-    'name': name,
-    'mobile': mobile,
+    //'orderno': orderno,
+    'customer_type': customer_type,
+    'customer_name': customer_name,
+    'contact_no': contact_no,
     'email': email,
-    'rating': rating,
-    'heard_from': heardFrom,
-    'customer_type': customerType,
+    'experience_rating': experience_rating,
+    'discovery_source': discovery_source,
     'occasion': occasion,
   };
 }
 
-// ─── Purchase Category: Ready Product / Exchange (generic UID) ────────────────
+// ─── Purchase Category: Ready Product / Exchange (product_detail rows) ──────
 
-class ProductUIDEntry {
+class ProductDetail {
   final String uid;
   final double mrp;
 
-  const ProductUIDEntry({required this.uid, required this.mrp});
+  const ProductDetail({required this.uid, required this.mrp});
 
-  Map<String, dynamic> toJson() => {'uid': uid, 'mrp': mrp};
+  Map<String, dynamic> toJson() => {
+    'detail': uid, // DB / API expects "detail"
+    'price': mrp.toStringAsFixed(2), // "5000.00"
+  };
 }
 
-// ─── Purchase Category: Upgrade ───────────────────────────────────────────────
+// ─── Purchase Category: Upgrade ──────────────────────────────────────────────
 
 /// The old product being traded in during an Upgrade
 class OldProductEntry {
@@ -61,7 +67,7 @@ extension UpgradeSubCategoryX on UpgradeSubCategory {
       this == UpgradeSubCategory.readyProduct ? 'Ready Product' : 'Order';
 }
 
-/// Full data for an Upgrade purchase
+/// Full data for an Upgrade purchase (internal UI model)
 class UpgradeData {
   /// Q10 – old product being exchanged
   final OldProductEntry oldProduct;
@@ -73,7 +79,7 @@ class UpgradeData {
   final double? orderAmount;
 
   /// New products added via UID table (only when subCategory == readyProduct)
-  final List<ProductUIDEntry> newProducts;
+  final List<ProductDetail> newProducts;
 
   const UpgradeData({
     required this.oldProduct,
@@ -101,7 +107,7 @@ class UpgradeData {
   };
 }
 
-// ─── Purchase Category: PYDS ──────────────────────────────────────────────────
+// ─── Purchase Category: PYDS ─────────────────────────────────────────────────
 
 /// A single diamond configured via the shape / carat / color / clarity sliders
 class PydsProductEntry {
@@ -158,7 +164,7 @@ class PydsData {
   };
 }
 
-// ─── Purchase Category Enum ───────────────────────────────────────────────────
+// ─── Purchase Category Enum ──────────────────────────────────────────────────
 
 enum PurchaseCategory { readyProduct, upgrade, pyds, exchange }
 
@@ -182,11 +188,11 @@ extension PurchaseCategoryX on PurchaseCategory {
 // ─── Sales Executive Data (all categories) ───────────────────────────────────
 
 class SalesExecutiveData {
-  final String salesStaff;
-  final PurchaseCategory purchaseCategory;
+  final String sales_by;
+  final PurchaseCategory purchase_category;
 
   /// Populated when category is readyProduct or exchange
-  final List<ProductUIDEntry> products;
+  final List<ProductDetail> products;
 
   /// Populated when category is upgrade
   final UpgradeData? upgradeData;
@@ -195,15 +201,15 @@ class SalesExecutiveData {
   final PydsData? pydsData;
 
   const SalesExecutiveData({
-    required this.salesStaff,
-    required this.purchaseCategory,
+    required this.sales_by,
+    required this.purchase_category,
     this.products = const [],
     this.upgradeData,
     this.pydsData,
   });
 
   double get totalMrp {
-    switch (purchaseCategory) {
+    switch (purchase_category) {
       case PurchaseCategory.readyProduct:
       case PurchaseCategory.exchange:
         return products.fold(0, (s, p) => s + p.mrp);
@@ -218,22 +224,57 @@ class SalesExecutiveData {
 
   Map<String, dynamic> toJson() {
     final base = <String, dynamic>{
-      'sales_staff': salesStaff,
-      'purchase_category': purchaseCategory.label,
+      'sales_by': sales_by,
+      'purchase_category': purchase_category.name.toLowerCase(),
     };
 
-    switch (purchaseCategory) {
+    switch (purchase_category) {
       case PurchaseCategory.readyProduct:
       case PurchaseCategory.exchange:
-        base['products'] = products.map((p) => p.toJson()).toList();
-        base['total_uids'] = totalUids;
-        base['total_mrp'] = totalMrp;
+        base['product_detail'] = products.isEmpty
+            ? null
+            : products.map((p) => p.toJson()).toList();
+        base['product_tot_qty'] = totalUids;
+        base['product_tot_amt'] = totalMrp;
         break;
+
+      // Upgrade: flatten UpgradeData into top-level fields
       case PurchaseCategory.upgrade:
-        base['upgrade'] = upgradeData?.toJson();
+        final u = upgradeData;
+        if (u != null) {
+          base['product_detail'] = u.newProducts.isEmpty
+              ? null
+              : u.newProducts.map((p) => p.toJson()).toList();
+          base['product_tot_qty'] = u.newProducts.length;
+          base['product_tot_amt'] = u.newProducts.fold(
+            0.0,
+            (s, p) => s + p.mrp,
+          );
+          base['old_product_code'] = u.oldProduct.uid;
+          base['old_product_price'] = u.oldProduct.mrp;
+          base['purchase_type'] = 'new';
+          base['order_price'] = u.orderAmount ?? 0;
+          base['upgrade_price'] = u.upgradeAmount;
+        }
         break;
+
+      // PYDS: flatten to product_detail / totals
       case PurchaseCategory.pyds:
-        base['pyds'] = pydsData?.toJson();
+        final p = pydsData;
+        if (p != null) {
+          base['product_detail'] = p.products.isEmpty
+              ? null
+              : p.products
+                    .map(
+                      (e) => {
+                        'detail': e.label,
+                        'price': e.mrp.toStringAsFixed(2),
+                      },
+                    )
+                    .toList();
+          base['product_tot_qty'] = p.products.length;
+          base['product_tot_amt'] = p.totalMrp;
+        }
         break;
     }
 
@@ -241,7 +282,7 @@ class SalesExecutiveData {
   }
 }
 
-// ─── Top-level combined form data ─────────────────────────────────────────────
+// ─── Top-level combined form data ────────────────────────────────────────────
 
 class FeedbackFormData {
   final CustomerFeedbackData customer;
