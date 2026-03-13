@@ -1,11 +1,22 @@
+import 'package:divine_pos/shared/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
 import '../../data/diamond_config.dart';
 
 class PriceFooter extends StatelessWidget {
   final DiamondConfig config;
+  final double? price; // null = not yet loaded
+  final double? carats;
+  final bool isLoading;
   final VoidCallback onCompare;
 
-  const PriceFooter({super.key, required this.config, required this.onCompare});
+  const PriceFooter({
+    super.key,
+    required this.config,
+    required this.onCompare,
+    this.price,
+    this.carats,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,19 +31,28 @@ class PriceFooter extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                config.priceFormatted,
-                style: const TextStyle(
-                  fontFamily: 'Georgia',
-                  fontSize: 28,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF2A2A2A),
-                  letterSpacing: 0.5,
-                ),
+              // Price — shimmer while loading
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: isLoading
+                    ? _PriceShimmer(key: const ValueKey('loading'))
+                    : Text(
+                        price != null && carats != null
+                            ? (price! * carats!).inRupeesFormat()
+                            : '—',
+                        key: const ValueKey('price'),
+                        style: const TextStyle(
+                          fontFamily: 'Georgia',
+                          fontSize: 28,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF2A2A2A),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
               ),
               const SizedBox(width: 12),
               const Text(
-                '22nd September 2025',
+                'Today\'s Rate',
                 style: TextStyle(fontSize: 11, color: Color(0xFF6B6B6B)),
               ),
             ],
@@ -58,6 +78,51 @@ class PriceFooter extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Simple shimmer placeholder while price is loading
+class _PriceShimmer extends StatefulWidget {
+  const _PriceShimmer({super.key});
+
+  @override
+  State<_PriceShimmer> createState() => _PriceShimmerState();
+}
+
+class _PriceShimmerState extends State<_PriceShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _anim = Tween(begin: 0.3, end: 1.0).animate(_ctrl);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _anim,
+      child: Container(
+        width: 140,
+        height: 32,
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2A2A).withOpacity(0.12),
+          borderRadius: BorderRadius.circular(6),
+        ),
       ),
     );
   }

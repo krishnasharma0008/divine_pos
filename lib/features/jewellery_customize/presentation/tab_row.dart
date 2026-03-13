@@ -29,6 +29,8 @@ class DetailsScreen extends StatefulWidget {
   final double? approxPriceFrom;
   final double? approxPriceTo;
 
+  final bool hidePriceBreakup; // 🔹 NEW
+
   const DetailsScreen({
     super.key,
     required this.r,
@@ -52,6 +54,7 @@ class DetailsScreen extends StatefulWidget {
     required this.solitaireAmountTo,
     required this.approxPriceFrom,
     required this.approxPriceTo,
+    this.hidePriceBreakup = false, // 🔹 default
   });
 
   @override
@@ -86,14 +89,19 @@ class _DetailsScreenState extends State<DetailsScreen> {
           _TabHeader(
             r: r,
             activeTab: activeTab,
-            onTabChange: (v) => setState(() => activeTab = v),
+            //onTabChange: (v) => setState(() => activeTab = v),
+            onTabChange: (v) {
+              if (widget.hidePriceBreakup && v == 2) return; // block tab2
+              setState(() => activeTab = v);
+            },
+            hidePriceBreakup: widget.hidePriceBreakup,
           ),
           SizedBox(height: 16 * r),
           // NO Expanded here -> parent controls height
-          activeTab == 1
+          // if hide, always show ProductDetailsTab
+          widget.hidePriceBreakup || activeTab == 1
               ? ProductDetailsTab(
                   r: r,
-                  //priceRange: widget.priceRange,
                   Shape: widget.shape,
                   caratRange: widget.caratRange,
                   colorRange: widget.colorRange,
@@ -102,10 +110,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   ringSize: widget.ringSize,
                   metalColors: widget.metalColors,
                   metalPurity: widget.metalPurity,
-                  totalMetalWeight: widget.totalMetalWeight,
                   totalSidePcs: widget.totalSidePcs,
-                  sideDiamondQuality: widget.sideDiamondQuality,
                   totalSideWeight: widget.totalSideWeight,
+                  sideDiamondQuality: widget.sideDiamondQuality,
+                  totalMetalWeight: widget.totalMetalWeight,
                 )
               : PriceBreakupTab(
                   r,
@@ -128,11 +136,13 @@ class _TabHeader extends StatelessWidget {
   final double r;
   final int activeTab;
   final ValueChanged<int> onTabChange;
+  final bool hidePriceBreakup;
 
   const _TabHeader({
     required this.r,
     required this.activeTab,
     required this.onTabChange,
+    this.hidePriceBreakup = false,
   });
 
   @override
@@ -147,11 +157,17 @@ class _TabHeader extends StatelessWidget {
               isActive: activeTab == 1,
               onTap: () => onTabChange(1),
             ),
-            _tab(
-              'Price Breakup',
-              isActive: activeTab == 2,
-              onTap: () => onTabChange(2),
-            ),
+            if (!hidePriceBreakup)
+              _tab(
+                'Price Breakup',
+                isActive: activeTab == 2,
+                onTap: () => onTabChange(2),
+              ),
+            // _tab(
+            //   'Price Breakup',
+            //   isActive: activeTab == 2,
+            //   onTap: () => onTabChange(2),
+            // ),
           ],
         ),
         SizedBox(height: 6 * r),

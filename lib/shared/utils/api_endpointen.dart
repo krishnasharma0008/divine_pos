@@ -43,4 +43,8 @@ class ApiEndPoint {
   static const create_dfeedback = 'feedback/';
 
   static const sale_by = 'user/listby-pjcode';
+
+  static const getStonePrice = 'api/getstoneprice';
+
+  static const comparePastPrices = "api/check_price_difference";
 }

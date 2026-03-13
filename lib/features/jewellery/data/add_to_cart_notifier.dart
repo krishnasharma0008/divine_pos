@@ -439,7 +439,7 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
   }
 
   // ---------------------------------------------------------------------------
-  // solitaire inser cart API (not implemented yet)
+  // solitaire inser cart API
   // ---------------------------------------------------------------------------
 
   Future<void> createCartFromRows({

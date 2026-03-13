@@ -477,49 +477,48 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
   Future<CartDetail?> buildCartPayload({
     required CustomerDetail customer,
   }) async {
-    // from calc
     final s = state.value;
     if (s == null || s.detail == null) return null;
 
-    final d = s.detail!; // from jewellery detail
+    final d = s.detail!;
 
-    /// ---------- VALIDATIONS (same as JS) ----------
-    if ((s.netMetalWeight ?? 0) <= 0) {
-      throw Exception('Metal weight not calculated');
-    }
+    final skipValidation =
+        d.productCategory == 'COIN' ||
+        d.productSubCategory == 'Solitaire Coin' ||
+        d.productSubCategory == 'Locket';
 
-    if ((s.metalAmount ?? 0) <= 0) {
-      throw Exception('Metal amount not calculated');
-    }
+    // ---------- VALIDATIONS ----------
+    if (!skipValidation) {
+      if ((s.netMetalWeight ?? 0) <= 0) {
+        throw Exception('Metal weight not calculated');
+      }
 
-    if ((s.metalprice ?? 0) <= 0) {
-      throw Exception('Metal price invalid');
-    }
+      if ((s.metalAmount ?? 0) <= 0) {
+        throw Exception('Metal amount not calculated');
+      }
 
-    if (d.currentStatus == 'Discarded') {
-      throw Exception('Product Code is Discarded');
-    }
+      if ((s.metalprice ?? 0) <= 0) {
+        throw Exception('Metal price invalid');
+      }
 
-    if (s.solitaireShape == null ||
-        s.caratRange == null ||
-        s.colorRange == null ||
-        s.clarityRange == null) {
-      throw Exception('Customise solitaire to add in cart');
+      if (d.currentStatus == 'Discarded') {
+        throw Exception('Product Code is Discarded');
+      }
+
+      if (s.solitaireShape == null ||
+          s.caratRange == null ||
+          s.colorRange == null ||
+          s.clarityRange == null) {
+        throw Exception('Customise solitaire to add in cart');
+      }
     }
 
     debugPrint('Customer dETAILS: ${customer.name}, ${customer.id}');
     final branch = await _resolveCustomerBranch();
-    //final dt = DateTime.now().add(const Duration(days: 15));
     final dt = DateTime.now().add(const Duration(days: 15)).toUtc();
-    // final expDate =
-    //     '${dt.year.toString().padLeft(4, '0')}-'
-    //     '${dt.month.toString().padLeft(2, '0')}-'
-    //     '${dt.day.toString().padLeft(2, '0')}';
 
-    /// ---------- BUILD PAYLOAD (mirror JS) ----------
+    // ---------- BUILD PAYLOAD ----------
     return CartDetail(
-      // username: customer.name, // or login user
-      // orderFrom: 'app',
       orderFor: 'Retail Customer',
       customerId: customer.id,
       customerCode: '',
@@ -531,29 +530,25 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       productCategory: d.productCategory,
       productSubCategory: d.productSubCategory,
       collection: d.collection,
-      expDlvDate: DateTime.now()
-          .add(const Duration(days: 15))
-          .toUtc()
-          .toIso8601String(),
+      expDlvDate: dt.toIso8601String(),
 
       oldVarient: d.oldVariant,
 
       productCode: d.itemNumber,
       designno: d.designno,
 
-      solitairePcs: s.totalSolitairePcs ?? 1, //
+      solitairePcs: s.totalSolitairePcs ?? 1,
       productQty: s.selectedQty ?? 1,
 
       productAmtMin: (d.productPrice == null || d.productPrice == 0)
           ? (s.approxPriceFrom ?? 0).roundToDouble()
           : d.productPrice?.toDouble(),
-
       productAmtMax: (d.productPrice == null || d.productPrice == 0)
           ? (s.approxPriceTo ?? 0).roundToDouble()
           : d.productPrice?.toDouble(),
 
       solitaireShape: s.solitaireShape ?? '',
-      solitaireSlab: s.caratRange?.replaceAll('ct', '').replaceAll(' ', ''), //
+      solitaireSlab: s.caratRange?.replaceAll('ct', '').replaceAll(' ', ''),
 
       solitaireColor: () {
         final parts = (s.colorRange ?? '')
@@ -563,7 +558,6 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
         if (parts.length < 2) return s.colorRange;
         return '${parts.last}-${parts.first}';
       }(),
-
       solitaireQuality: () {
         final parts = (s.clarityRange ?? '')
             .split('-')
@@ -572,8 +566,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
         if (parts.length < 2) return s.clarityRange;
         return '${parts.last}-${parts.first}';
       }(),
-      solitairePremSize: '', // not avaiable field in customise screen
-      solitairePremPct: 0, // not avaiable field in customise screen
+      solitairePremSize: '',
+      solitairePremPct: 0,
 
       solitaireAmtMin: (s.solitaireAmountFrom ?? 0).roundToDouble(),
       solitaireAmtMax: (s.solitaireAmountTo ?? 0).roundToDouble(),
@@ -582,7 +576,6 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       metalPurity: s.selectedMetalPurity ?? '',
       metalColor: s.selectedMetalColor ?? '',
       metalWeight: s.netMetalWeight ?? 0,
-
       metalPrice: (s.metalprice ?? 0).roundToDouble(),
 
       mountAmtMin: (((s.metalAmount ?? 0) + (s.sideDiamondAmount ?? 0)))
@@ -599,7 +592,6 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       sideStoneQuality: (s.selectedSideDiamondQuality ?? '').split('-').last,
       cartRemarks: '',
       orderRemarks: '',
-      //imageUrl: '',
       style: d.style,
       wearStyle: d.wearStyle,
       look: d.look,

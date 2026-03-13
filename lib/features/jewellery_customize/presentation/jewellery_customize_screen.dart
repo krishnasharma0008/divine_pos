@@ -196,6 +196,11 @@ class _JewelleryCustomiseScreenState
           });
         }
 
+        final hidePriceBreakup =
+            detail.productCategory == 'COIN' ||
+            detail.productSubCategory == 'Solitaire Coin' ||
+            detail.productSubCategory == 'Locket';
+
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: MyAppBar(
@@ -287,6 +292,7 @@ class _JewelleryCustomiseScreenState
                                     solitaireAmountTo: calc.solitaireAmountTo,
                                     approxPriceFrom: calc.approxPriceFrom,
                                     approxPriceTo: calc.approxPriceTo,
+                                    hidePriceBreakup: hidePriceBreakup,
                                   ),
 
                                   Padding(

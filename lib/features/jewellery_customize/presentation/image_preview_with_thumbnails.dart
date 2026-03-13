@@ -246,7 +246,7 @@ class _ImagePreviewWithThumbnailsState
                     SizedBox(height: 6 * r),
 
                     MyText(
-                      'UID: ${widget.uid ?? ''}',
+                      'Design No. : ${widget.uid ?? ''}',
                       style: TextStyle(
                         fontSize: 11 * r,
                         fontFamily: 'Rushter Glory',

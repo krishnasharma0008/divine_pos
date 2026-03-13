@@ -1,8 +1,5 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import '../../data/diamond_config.dart';
-import 'diamond_painter.dart';
 
 class DiamondDisplay extends StatelessWidget {
   final DiamondConfig config;
@@ -12,23 +9,8 @@ class DiamondDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Diamond circle
-        Container(
-          width: 225.03,
-          height: 225.03,
-          decoration: ShapeDecoration(
-            color: const Color(0xFFF6F6F6),
-            shape: OvalBorder(
-              side: BorderSide(width: 1, color: const Color(0xFFCECECE)),
-            ),
-          ),
-          child: Center(
-            child: CustomPaint(
-              size: const Size(160, 100),
-              painter: DiamondRingPainter(config: config),
-            ),
-          ),
-        ),
+        // Diamond circle with real image
+        _DiamondCircle(config: config),
         const SizedBox(height: 14),
 
         // Diamond code
@@ -44,7 +26,7 @@ class DiamondDisplay extends StatelessWidget {
         ),
         const SizedBox(height: 14),
 
-        // Hearts & Arrows (only for round)
+        // Hearts & Arrows (only for Round white diamond)
         if (config.isRound) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -66,6 +48,43 @@ class DiamondDisplay extends StatelessWidget {
         // Features grid
         _FeaturesGrid(),
       ],
+    );
+  }
+}
+
+class _DiamondCircle extends StatelessWidget {
+  final DiamondConfig config;
+  const _DiamondCircle({required this.config});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: ScaleTransition(scale: anim, child: child),
+      ),
+      child: Container(
+        key: ValueKey(config.shapeAsset),
+        width: 200,
+        height: 200,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const RadialGradient(
+            center: Alignment(-0.2, -0.2),
+            colors: [Color(0xFFEFECEC), Color(0xFFD5D5D5)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(28),
+        child: Image.asset(config.shapeAsset, fit: BoxFit.contain),
+      ),
     );
   }
 }
@@ -101,63 +120,48 @@ class _RadialDotsPainter extends CustomPainter {
   final bool isHearts;
   _RadialDotsPainter({required this.isHearts});
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFE88888).withOpacity(0.85)
-      ..style = PaintingStyle.fill;
-
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    const r = 10.0;
-    const dotR = 2.2;
-
-    for (int i = 0; i < 8; i++) {
-      final angle = (i * 45 - 90) * 3.14159 / 180;
-      final x = cx + r * cos(angle);
-      final y = cy + r * sin(angle);
-      if (isHearts) {
-        canvas.drawCircle(Offset(x, y), dotR, paint);
-      } else {
-        final path = Path();
-        path.moveTo(x, y - dotR * 1.5);
-        path.lineTo(x + dotR, y + dotR);
-        path.lineTo(x - dotR, y + dotR);
-        path.close();
-        canvas.drawPath(path, paint);
-      }
+  static double _sin(double x) {
+    double result = x, term = x;
+    for (int i = 1; i <= 8; i++) {
+      term *= -x * x / ((2 * i) * (2 * i + 1));
+      result += term;
     }
+    return result;
   }
 
-  double cos(double rad) => _cos(rad);
-  double _cos(double x) {
-    // Simple cos approximation using dart:math via import
-    return (x < 0 ? -x : x) > 1e10 ? 1.0 : _mathCos(x);
-  }
-
-  double _mathCos(double x) {
-    // Use series - just delegate to dart math
-    return cosFromMath(x);
-  }
-
-  static double cosFromMath(double x) {
-    double result = 1;
-    double term = 1;
-    for (int i = 1; i <= 10; i++) {
+  static double _cos(double x) {
+    double result = 1, term = 1;
+    for (int i = 1; i <= 8; i++) {
       term *= -x * x / ((2 * i - 1) * (2 * i));
       result += term;
     }
     return result;
   }
 
-  static double sinFromMath(double x) {
-    double result = x;
-    double term = x;
-    for (int i = 1; i <= 10; i++) {
-      term *= -x * x / ((2 * i) * (2 * i + 1));
-      result += term;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFE88888).withOpacity(0.85)
+      ..style = PaintingStyle.fill;
+    final cx = size.width / 2, cy = size.height / 2;
+    const r = 10.0, dotR = 2.2;
+    const pi = 3.14159265358979;
+
+    for (int i = 0; i < 8; i++) {
+      final angle = (i * 45 - 90) * pi / 180;
+      final x = cx + r * _cos(angle);
+      final y = cy + r * _sin(angle);
+      if (isHearts) {
+        canvas.drawCircle(Offset(x, y), dotR, paint);
+      } else {
+        final path = Path()
+          ..moveTo(x, y - dotR * 1.5)
+          ..lineTo(x + dotR, y + dotR)
+          ..lineTo(x - dotR, y + dotR)
+          ..close();
+        canvas.drawPath(path, paint);
+      }
     }
-    return result;
   }
 
   @override

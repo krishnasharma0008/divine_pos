@@ -101,6 +101,14 @@ flutter:
     - assets/jewellery_pdp/
     - assets/feedback_form/
     - assets/cart/
+    # - know your diamond value
+    - assets/diamond_value/round.png
+    - assets/diamond_value/princess.png
+    - assets/diamond_value/pear.png
+    - assets/diamond_value/oval.png
+    - assets/diamond_value/radiant.png
+    - assets/diamond_value/cushion.png
+    - assets/diamond_value/heart.png
     # - assets/config/
     # - .env
 
