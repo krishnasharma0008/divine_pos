@@ -94,7 +94,7 @@ class _JewelleryCustomiseScreenState
       final notifier = ref.read(jewelleryCalcProvider.notifier);
 
       //print('Step 1: building cart payload');
-      final cartItem = await notifier.buildCartPayload(customer: customer);
+      final cartItem = await notifier.buildCartPayload(Ordercustomer: customer);
       //print('Step 2: cartItem = ${cartItem?.toJson()}');
 
       if (cartItem == null) {

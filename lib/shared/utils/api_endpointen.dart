@@ -47,4 +47,20 @@ class ApiEndPoint {
   static const getStonePrice = 'api/getstoneprice';
 
   static const comparePastPrices = "api/check_price_difference";
+
+  // verify and track
+  /// GET /{uid}?countrycode={cc}&islocal=0
+  static const String verifyTrack = '/verify-track';
+
+  /// GET /wishlist/status?uid={uid}
+  static const String wishlistStatus = '/wishlist/status';
+
+  /// GET /portfolio/status?uid={uid}
+  static const String portfolioStatus = '/portfolio/status';
+
+  /// POST /wishlist/add
+  static const String addToWishlist = '/wishlist/add';
+
+  /// POST /portfolio/add
+  static const String addToPortfolio = '/portfolio/add';
 }

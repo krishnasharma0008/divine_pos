@@ -69,8 +69,11 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
   Future<void> addToCart({
     required String productCode,
     //required String designno,
+    required int customerid,
+    required String customercode,
+    required String customername,
     required String branch,
-    required CustomerDetail customer,
+    required CustomerDetail customerOrder,
   }) async {
     if (productCode.isEmpty || branch.isEmpty) return;
 
@@ -80,7 +83,10 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
       final detail = await _fetchDetail(productCode, branch);
       final cartItem = await _buildCartPayload(
         detail: detail,
-        customer: customer,
+        customerOrder: customerOrder,
+        customerid: customerid,
+        customercode: customercode,
+        customername: customername,
         branch: branch,
         //designno: designno,
       );
@@ -260,7 +266,10 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
 
   Future<CartDetail> _buildCartPayload({
     required JewelleryDetail detail,
-    required CustomerDetail customer,
+    required CustomerDetail customerOrder,
+    required int customerid,
+    required String customercode,
+    required String customername,
     required String branch,
     //required String designno,
   }) async {
@@ -365,9 +374,9 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
     // Build payload -----------------------------------------------------------
     return CartDetail(
       orderFor: 'Retail Customer',
-      customerId: customer.id,
-      customerCode: '',
-      customerName: customer.name,
+      customerId: customerid,
+      customerCode: customercode,
+      customerName: customername,
       customerBranch: branch,
       productType: 'jewellery',
       orderType: 'RCO',
@@ -413,6 +422,8 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
       look: detail.look,
       portfolioType: detail.portfolioType,
       gender: detail.gender,
+      end_customer_id: customerOrder?.id ?? 0,
+      end_customer_name: customerOrder?.name ?? '',
     );
   }
 
@@ -445,6 +456,9 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
   Future<void> createCartFromRows({
     required List<Jewellery> rows,
     required CustomerDetail? customerOrder,
+    required int customerid,
+    required String customercode,
+    required String customername,
     required String branch,
   }) async {
     state = const AsyncData(AddToCartState(status: AddToCartStatus.loading));
@@ -462,10 +476,10 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
         final co = customerOrder;
 
         return CartDetail(
-          orderFor: 'Retail Customer',
-          customerId: co?.id ?? 0,
-          customerCode: '',
-          customerName: co?.name ?? '',
+          orderFor: 'Customer',
+          customerId: customerid, // co?.id ?? 0,
+          customerCode: customercode,
+          customerName: customername,
           customerBranch: branch,
           productType: 'Solitaire',
           orderType: 'RCO',
@@ -510,6 +524,8 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
           sideStoneQuality: '',
           cartRemarks: '',
           orderRemarks: '',
+          end_customer_id: co?.id ?? 0,
+          end_customer_name: co?.name ?? '',
         );
       }).toList();
 
@@ -517,6 +533,7 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
         throw Exception('No valid rows to create cart');
       }
 
+      debugPrint('data : ${payloads.map((p) => p.toJson()).toList()}');
       final response = await _dio
           .post(
             ApiEndPoint.create_cart,

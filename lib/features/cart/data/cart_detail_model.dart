@@ -72,6 +72,9 @@ class CartDetail {
   final double? product_taxamt;
   final double? product_netamt;
 
+  final int? end_customer_id;
+  final String? end_customer_name;
+
   const CartDetail({
     this.id,
     this.orderFor,
@@ -129,6 +132,9 @@ class CartDetail {
     this.product_taxper,
     this.product_taxamt,
     this.product_netamt,
+
+    this.end_customer_id,
+    this.end_customer_name,
 
     //this.engravingEnabled = false, // ✅ default
   });
@@ -204,6 +210,8 @@ class CartDetail {
       product_netamt: json.containsKey('product_netamt')
           ? _d(json['product_netamt'])
           : null,
+      end_customer_id: _i(json['end_customer_id']),
+      end_customer_name: _s(json['end_customer_name']),
     );
   }
 
@@ -263,6 +271,8 @@ class CartDetail {
     double? product_taxper,
     double? product_taxamt,
     double? product_netamt,
+    int? end_customer_id,
+    String? end_customer_name,
   }) {
     return CartDetail(
       id: id ?? this.id,
@@ -321,6 +331,9 @@ class CartDetail {
       product_taxper: product_taxper ?? this.product_taxper,
       product_taxamt: product_taxamt ?? this.product_taxamt,
       product_netamt: product_netamt ?? this.product_netamt,
+
+      end_customer_id: end_customer_id ?? this.end_customer_id,
+      end_customer_name: end_customer_name ?? this.end_customer_name,
     );
   }
 
@@ -382,6 +395,8 @@ class CartDetail {
       'product_taxper': product_taxper,
       'product_taxamt': product_taxamt,
       'product_netamt': product_netamt,
+      'end_customer_id': end_customer_id,
+      'end_customer_name': end_customer_name,
     };
 
     //map.removeWhere((_, v) => v == null || (v is String && v.isEmpty));

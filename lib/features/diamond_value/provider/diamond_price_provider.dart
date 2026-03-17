@@ -100,7 +100,7 @@ class DiamondPriceRepository {
 
   // -------------------------------------------------------------------------
   // comparePastPrices
-  // mirrors JS: callWebService(`${url}?countrycode=${countryCode}&islocal=0`, {
+  // mirrors callWebService(`${url}?countrycode=${countryCode}&islocal=0`, {
   //               method, params: state })
   // state = { shape, colour, clarity, cts, month, year, day }
   // returns: res.data.data = IPastPrice { past_price, difference }

@@ -42,7 +42,13 @@ class ProductGrid extends ConsumerWidget {
     final storeState = ref.read(storeProvider);
 
     String branch = '';
+    int customerid = 0;
+    String customername = '';
+    String customercode = '';
     if (storeState.selectedStore?.nickName != null) {
+      customerid = storeState.selectedStore!.customerID;
+      customercode = storeState.selectedStore?.code ?? '';
+      customername = storeState.selectedStore?.name ?? '';
       branch = storeState.selectedStore!.nickName;
     }
 
@@ -58,8 +64,11 @@ class ProductGrid extends ConsumerWidget {
         .read(addToCartProvider.notifier)
         .addToCart(
           productCode: productCode,
+          customerid: customerid,
+          customercode: customercode,
+          customername: customername,
           branch: branch,
-          customer: customer,
+          customerOrder: customer, // retail customer whom to sale
           //designno: designno,
         );
 

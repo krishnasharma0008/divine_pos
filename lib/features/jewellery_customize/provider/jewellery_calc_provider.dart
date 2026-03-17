@@ -456,26 +456,63 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
   }
 
   //customer branch
-  Future<String> _resolveCustomerBranch() async {
+  // Future<String> _resolveCustomerBranch() async {
+  //   final auth = ref.read(authProvider);
+  //   final pjcode = auth.user?.pjcode ?? '';
+  //   final storeState = ref.read(storeProvider);
+
+  //   // reuse cached store if already fetched
+  //   if (storeState.selectedStore?.nickName != null) {
+  //     return storeState.selectedStore!.nickName;
+  //   }
+
+  //   if (pjcode.isNotEmpty) {
+  //     await ref.read(storeProvider.notifier).getPJStore(pjcode: pjcode);
+
+  //     return ref.read(storeProvider).selectedStore?.nickName ?? '';
+  //   }
+
+  //   return '';
+  // }
+
+  Future<Map<String, dynamic>> _resolveCustomerBranch() async {
     final auth = ref.read(authProvider);
     final pjcode = auth.user?.pjcode ?? '';
     final storeState = ref.read(storeProvider);
 
-    // reuse cached store if already fetched
-    if (storeState.selectedStore?.nickName != null) {
-      return storeState.selectedStore!.nickName;
+    final selected = storeState.selectedStore;
+
+    if (selected?.nickName != null) {
+      return {
+        'branchName': selected!.nickName,
+        'customerId': selected.customerID,
+        'customerName': selected.name,
+        'customerCode': selected.code,
+      };
     }
 
     if (pjcode.isNotEmpty) {
       await ref.read(storeProvider.notifier).getPJStore(pjcode: pjcode);
-      return ref.read(storeProvider).selectedStore?.nickName ?? '';
+      final fresh = ref.read(storeProvider).selectedStore;
+
+      return {
+        'branchName': fresh?.nickName ?? '',
+        'customerId': fresh?.customerID,
+        'customerName': fresh?.name,
+        'customerCode': fresh?.code,
+      };
     }
 
-    return '';
+    return {
+      'branchName': '',
+      'customerId': null,
+      'customerName': null,
+      'customerCode': null,
+    };
   }
 
   Future<CartDetail?> buildCartPayload({
-    required CustomerDetail customer,
+    required CustomerDetail Ordercustomer,
   }) async {
     final s = state.value;
     if (s == null || s.detail == null) return null;
@@ -513,17 +550,19 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       }
     }
 
-    debugPrint('Customer dETAILS: ${customer.name}, ${customer.id}');
-    final branch = await _resolveCustomerBranch();
+    debugPrint('Customer dETAILS: ${Ordercustomer.name}, ${Ordercustomer.id}');
+    //final branch = await _resolveCustomerBranch();
+    final branchInfo = await _resolveCustomerBranch();
+
     final dt = DateTime.now().add(const Duration(days: 15)).toUtc();
 
     // ---------- BUILD PAYLOAD ----------
     return CartDetail(
       orderFor: 'Retail Customer',
-      customerId: customer.id,
-      customerCode: '',
-      customerName: customer.name,
-      customerBranch: branch.isEmpty ? 'Mumbai HO' : branch,
+      customerId: branchInfo['customerId'],
+      customerCode: branchInfo['customerCode'] ?? '',
+      customerName: branchInfo['customerName'] ?? '',
+      customerBranch: branchInfo['branchName'] ?? '',
       productType: 'jewellery',
       orderType: 'RCO',
 
@@ -597,6 +636,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       look: d.look,
       portfolioType: d.portfolioType,
       gender: d.gender,
+      end_customer_id: Ordercustomer?.id ?? 0,
+      end_customer_name: Ordercustomer?.name ?? '',
     );
   }
 }

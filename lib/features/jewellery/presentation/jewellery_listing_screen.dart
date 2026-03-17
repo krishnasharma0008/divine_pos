@@ -121,6 +121,15 @@ class _JewelleryListingScreenState
         .any((c) => c.trim().toLowerCase() == 'solitaires');
 
     final Selectedbranch = storeState.selectedStore?.nickName ?? '';
+    final customerid = storeState.selectedStore?.customerID;
+    final customername = storeState.selectedStore?.name;
+    final customercode = storeState.selectedStore?.code;
+
+    debugPrint('customerid : ${customerid}');
+    debugPrint('customercode : ${customercode}');
+    debugPrint('customername : ${customername}');
+    debugPrint('Selectedbranch : ${Selectedbranch}');
+
     // ────────────────────────────────────────────────────
 
     final showInitialLoader =
@@ -255,11 +264,27 @@ class _JewelleryListingScreenState
                                             ),
                                           );
                                         }
+                                        // debugPrint(
+                                        //   'customerid : ${customerid}',
+                                        // );
+                                        // debugPrint(
+                                        //   'customercode : ${customercode}',
+                                        // );
+                                        // debugPrint(
+                                        //   'customername : ${customername}',
+                                        // );
+                                        // debugPrint(
+                                        //   'Selectedbranch : ${Selectedbranch}',
+                                        // );
+
                                         return _SolitaireListView(
                                           scrollController: _scrollController,
                                           fem: fem,
                                           items:
                                               solitaireItems, // ← वही DB data
+                                          customerid: customerid ?? 0,
+                                          customercode: customercode ?? '',
+                                          customername: customername ?? '',
                                           Selectedbranch: Selectedbranch,
                                         );
                                       },
@@ -329,12 +354,18 @@ class _SolitaireListView extends ConsumerStatefulWidget {
   final ScrollController scrollController;
   final double fem;
   final List<Jewellery> items;
+  final int customerid;
+  final String customercode;
+  final String customername;
   final String Selectedbranch;
 
   const _SolitaireListView({
     required this.scrollController,
     required this.fem,
     required this.items,
+    required this.customerid,
+    required this.customercode,
+    required this.customername,
     required this.Selectedbranch,
   });
 
@@ -488,6 +519,9 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
                             .createCartFromRows(
                               rows: selectedRows,
                               customerOrder: customer,
+                              customerid: widget.customerid,
+                              customercode: widget.customercode,
+                              customername: widget.customername,
                               branch: widget.Selectedbranch,
                             );
 

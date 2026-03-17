@@ -6,6 +6,7 @@ import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart
 import 'package:divine_pos/features/diamond_value/presentation/diamond_value_screen.dart';
 import 'package:divine_pos/features/feedback_form/presentation/feedback_form_screen.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/jewellery_customize_screen.dart';
+import 'package:divine_pos/features/verify_track/presentation/verifyandtrack_screen.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -197,6 +198,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePages.knowDiamond.routePath,
         name: RoutePages.knowDiamond.routeName,
         builder: (context, state) => DiamondValueScreen(),
+      ),
+      GoRoute(
+        path: RoutePages.verifyTrack.routePath,
+        name: RoutePages.verifyTrack.routeName,
+        builder: (context, state) => VerifyAndTrackScreen(),
       ),
       // ⭐ MAIN APP LAYOUT (Bottom Navigation)
       // ShellRoute(
