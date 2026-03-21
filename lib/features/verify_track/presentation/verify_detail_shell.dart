@@ -1,4 +1,4 @@
-// lib/features/verify_track/screens/verify_detail_shell.dart
+// lib/features/verify_track/presentation/verify_detail_shell.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +10,6 @@ import 'tabs/certificate_screen.dart';
 import 'tabs/insurance_screen.dart';
 import 'tabs/hearts_arrows_screen.dart';
 import 'tabs/resale_screen.dart';
-//import 'tabs/loan_screen.dart';
 import 'tabs/journey_screen.dart';
 
 // =============================================================================
@@ -28,23 +27,39 @@ class AppColors {
   static const textLight = Color(0xFF999999);
   static const divider = Color(0xFFDDDDDD);
   static const cardShadow = Color(0x14000000);
-  static const gold = Color(0xFFB8972A);
+  static const gold = Color(0xFF826344);
 }
 
 // =============================================================================
-// GLOBAL HELPER
+// CURRENCY HELPER
+// Used by tab screens that import verify_detail_shell.dart
+// Falls back gracefully if inRupeesFormat() extension is unavailable
 // =============================================================================
 
-/// Formats a double to Indian rupee string e.g. ₹ 52,500
-String formatInr(double amount) {
-  final str = amount.toStringAsFixed(0);
-  final reversed = str.split('').reversed.toList();
-  final out = <String>[];
-  for (int i = 0; i < reversed.length; i++) {
-    if (i == 3 || (i > 3 && (i - 3) % 2 == 0)) out.add(',');
-    out.add(reversed[i]);
+String formatInr(num? value) {
+  if (value == null || value == 0) return '₹0';
+  // Format as Indian rupees with comma separators: 1,22,681
+  final str = value.abs().toStringAsFixed(0);
+  final buffer = StringBuffer();
+  final isNegative = value < 0;
+
+  if (str.length <= 3) {
+    buffer.write(str);
+  } else {
+    // Last 3 digits
+    final last3 = str.substring(str.length - 3);
+    final rest = str.substring(0, str.length - 3);
+    // Remaining digits in groups of 2
+    final groups = <String>[];
+    for (int i = rest.length; i > 0; i -= 2) {
+      groups.add(rest.substring(i - 2 < 0 ? 0 : i - 2, i));
+    }
+    buffer.write(groups.reversed.join(','));
+    buffer.write(',');
+    buffer.write(last3);
   }
-  return '₹ ${out.reversed.join()}';
+
+  return '${isNegative ? '-' : ''}₹${buffer.toString()}';
 }
 
 // =============================================================================
@@ -286,7 +301,6 @@ const _tabLabels = {
   VtTab.insurance: 'Insurance',
   VtTab.ha: 'H&A',
   VtTab.resale: 'Resale',
-  //VtTab.loan: 'Loan',
   VtTab.journey: 'Journey',
 };
 
@@ -296,7 +310,7 @@ const _tabLabels = {
 
 class VerifyDetailShell extends ConsumerStatefulWidget {
   final String uid;
-  const VerifyDetailShell({super.key, required this.uid});
+  const VerifyDetailShell({super.key, this.uid = ''});
 
   @override
   ConsumerState<VerifyDetailShell> createState() => _VerifyDetailShellState();
@@ -311,25 +325,26 @@ class _VerifyDetailShellState extends ConsumerState<VerifyDetailShell> {
 
     if (product == null) {
       return const Scaffold(
-        backgroundColor: AppColors.bgGrey,
+        backgroundColor: AppColors.white,
         body: Center(
           child: CircularProgressIndicator(color: AppColors.mintDark),
         ),
       );
     }
 
-    // H&A only for Diamond — fallback to Summary if Jewellery
+    // H&A only for Diamond
     final tabs = VtTab.values.where((t) {
       if (t == VtTab.ha && !product.isDiamond) return false;
       return true;
     }).toList();
 
     return Scaffold(
-      backgroundColor: AppColors.bgGrey,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: Column(
           children: [
             _TopBar(uid: product.uid, isSold: product.isSold),
+            // Mint gradient underline
             Container(
               height: 3,
               decoration: const BoxDecoration(
@@ -343,10 +358,9 @@ class _VerifyDetailShellState extends ConsumerState<VerifyDetailShell> {
               ),
             ),
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
                 children: [
-                  _Sidebar(
+                  _TopTabs(
                     tabs: tabs,
                     active: _active,
                     onTap: (t) => setState(() => _active = t),
@@ -373,8 +387,6 @@ class _VerifyDetailShellState extends ConsumerState<VerifyDetailShell> {
         return HeartsArrowsScreen(product: p);
       case VtTab.resale:
         return ResaleScreen(product: p);
-      // case VtTab.loan:
-      //   return LoanScreen(product: p);
       case VtTab.journey:
         return JourneyScreen(product: p);
     }
@@ -392,7 +404,7 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    color: AppColors.white,
+    color: AppColors.mintLight,
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     child: Row(
       children: [
@@ -404,17 +416,16 @@ class _TopBar extends StatelessWidget {
             color: AppColors.textDark,
           ),
         ),
-        const SizedBox(width: 12),
-        // Replace with Image.asset('assets/images/divine_logo.png', height:36)
-        const Text(
-          'DIVINE SOLITAIRES',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.5,
-            color: AppColors.textDark,
-          ),
-        ),
+        // const SizedBox(width: 12),
+        // const Text(
+        //   'DIVINE SOLITAIRES',
+        //   style: TextStyle(
+        //     fontSize: 13,
+        //     fontWeight: FontWeight.w800,
+        //     letterSpacing: 1.5,
+        //     color: AppColors.textDark,
+        //   ),
+        // ),
         const Spacer(),
         if (isSold)
           Container(
@@ -457,14 +468,14 @@ class _TopBar extends StatelessWidget {
 }
 
 // =============================================================================
-// SIDEBAR
+// TOP TAB BAR — horizontal scrollable tabs
 // =============================================================================
 
-class _Sidebar extends StatelessWidget {
+class _TopTabs extends StatelessWidget {
   final List<VtTab> tabs;
   final VtTab active;
   final ValueChanged<VtTab> onTap;
-  const _Sidebar({
+  const _TopTabs({
     required this.tabs,
     required this.active,
     required this.onTap,
@@ -472,28 +483,37 @@ class _Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: 110,
     color: AppColors.white,
-    padding: const EdgeInsets.symmetric(vertical: 16),
-    child: Column(
-      children: tabs
-          .map(
-            (tab) => _SidebarItem(
-              label: _tabLabels[tab]!,
-              isActive: active == tab,
-              onTap: () => onTap(tab),
-            ),
-          )
-          .toList(),
+    width: double.infinity,
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minWidth: MediaQuery.of(context).size.width - 16,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: tabs
+              .map(
+                (tab) => _TopTabItem(
+                  label: _tabLabels[tab]!,
+                  isActive: active == tab,
+                  onTap: () => onTap(tab),
+                ),
+              )
+              .toList(),
+        ),
+      ),
     ),
   );
 }
 
-class _SidebarItem extends StatelessWidget {
+class _TopTabItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
-  const _SidebarItem({
+  const _TopTabItem({
     required this.label,
     required this.isActive,
     required this.onTap,
@@ -504,16 +524,14 @@ class _SidebarItem extends StatelessWidget {
     onTap: onTap,
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: isActive ? AppColors.textDark : AppColors.bgGrey,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         label,
-        textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,

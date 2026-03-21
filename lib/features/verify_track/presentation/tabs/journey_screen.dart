@@ -1,5 +1,3 @@
-// lib/features/verify_track/screens/tabs/journey_screen.dart
-
 import 'package:flutter/material.dart';
 import '../../data/verify_track_model.dart';
 import '../verify_detail_shell.dart';
@@ -12,59 +10,56 @@ class JourneyScreen extends StatefulWidget {
   State<JourneyScreen> createState() => _JourneyScreenState();
 }
 
-class _JourneyScreenState extends State<JourneyScreen> {
-  int _subTab = 0;
+class _JourneyScreenState extends State<JourneyScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tc;
 
-  static const _tabs = ['Diamond Formed', 'Mined From', 'About Diamond'];
+  @override
+  void initState() {
+    super.initState();
+    _tc = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tc.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Sub-tab bar
+        // ── TabBar — same style as ResaleScreen ───────────────────────────────
         Container(
           color: AppColors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(_tabs.length, (i) {
-                final active = i == _subTab;
-                return GestureDetector(
-                  onTap: () => setState(() => _subTab = i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: active ? AppColors.textDark : AppColors.bgGrey,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: active ? AppColors.textDark : AppColors.divider,
-                      ),
-                    ),
-                    child: Text(
-                      _tabs[i],
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: active ? AppColors.white : AppColors.textMid,
-                      ),
-                    ),
-                  ),
-                );
-              }),
+          child: TabBar(
+            controller: _tc,
+            labelColor: AppColors.textDark,
+            unselectedLabelColor: AppColors.textLight,
+            indicatorColor: AppColors.mintDark,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
             ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            tabs: const [
+              Tab(text: 'DIAMOND FORMED'),
+              Tab(text: 'MINED FROM'),
+              Tab(text: 'ABOUT DIAMOND'),
+            ],
           ),
         ),
 
-        // Content
+        // ── Content ───────────────────────────────────────────────────────────
         Expanded(
-          child: IndexedStack(
-            index: _subTab,
+          child: TabBarView(
+            controller: _tc,
             children: [
               _DiamondFormed(product: widget.product),
               _MinedFrom(product: widget.product),
@@ -78,7 +73,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
 }
 
 // =============================================================================
-// SUB-TAB 1: Diamond Formed
+// TAB 1: Diamond Formed
 // =============================================================================
 
 class _DiamondFormed extends StatelessWidget {
@@ -93,8 +88,7 @@ class _DiamondFormed extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Banner
-            _JourneyBanner(icon: Icons.local_fire_department_outlined),
+            _JourneyBanner(image: 'assets/vtdia/Rectangle 40.png'),
             const SizedBox(height: 16),
 
             const Text(
@@ -107,21 +101,24 @@ class _DiamondFormed extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Stats row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: const [
-                _Stat(icon: Icons.history, label: 'Up to 3 billion\nyears ago'),
-                _Stat(icon: Icons.south, label: 'Up to 200 km\nin depth'),
                 _Stat(
-                  icon: Icons.thermostat,
+                  image: 'assets/vtdia/image 20.png',
+                  label: 'Up to 3 billion\nyears ago',
+                ),
+                _Stat(
+                  image: 'assets/vtdia/image 14.png',
+                  label: 'Up to 200 km\nin depth',
+                ),
+                _Stat(
+                  image: 'assets/vtdia/image 15.png',
                   label: 'At 900-1300\nDegree Celsius',
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            const Divider(color: AppColors.divider),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
 
             const Text(
               'Your diamond was formed hundreds of kilometers below the earth\'s '
@@ -142,7 +139,7 @@ class _DiamondFormed extends StatelessWidget {
 }
 
 // =============================================================================
-// SUB-TAB 2: Mined From
+// TAB 2: Mined From
 // =============================================================================
 
 class _MinedFrom extends StatelessWidget {
@@ -157,8 +154,8 @@ class _MinedFrom extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _JourneyBanner(icon: Icons.terrain_outlined),
-            const SizedBox(height: 16),
+            _JourneyBanner(image: 'assets/vtdia/Rectangle40.png'),
+            const SizedBox(height: 24),
 
             const Text(
               'Mined From',
@@ -169,23 +166,6 @@ class _MinedFrom extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Mining locations
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: const [
-                _CountryChip('Canada'),
-                _CountryChip('Botswana'),
-                _CountryChip('Russia'),
-                _CountryChip('South Africa'),
-                _CountryChip('Australia'),
-                _CountryChip('Angola'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Divider(color: AppColors.divider),
-            const SizedBox(height: 12),
 
             const Text(
               'Every Divine Solitaires diamond is ethically sourced from one of '
@@ -199,37 +179,6 @@ class _MinedFrom extends StatelessWidget {
               ),
               textAlign: TextAlign.justify,
             ),
-            const SizedBox(height: 16),
-
-            // Kimberley process badge
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.mintLight,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.verified_outlined,
-                    size: 20,
-                    color: AppColors.mintDark,
-                  ),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Kimberley Process Certified\nConflict-Free Diamond',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.mintDark,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
@@ -238,7 +187,7 @@ class _MinedFrom extends StatelessWidget {
 }
 
 // =============================================================================
-// SUB-TAB 3: About Diamond
+// TAB 3: About Diamond
 // =============================================================================
 
 class _AboutDiamond extends StatelessWidget {
@@ -256,27 +205,15 @@ class _AboutDiamond extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _JourneyBanner(icon: Icons.diamond_outlined),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
 
-            const Text(
-              'About Diamond',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDark,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Journey stages with real carat data
+            // Journey stages
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _JourneyStage(
-                  icon: Icons.lens_outlined,
+                  image: 'assets/vtdia/image 17.png',
                   label: 'Rough Diamond',
-                  // rough is ~2x the final carat
                   value: slt != null
                       ? '${(slt.carat * 2).toStringAsFixed(2)} Carat'
                       : '',
@@ -287,7 +224,7 @@ class _AboutDiamond extends StatelessWidget {
                   color: AppColors.textLight,
                 ),
                 _JourneyStage(
-                  icon: Icons.blur_circular_outlined,
+                  image: 'assets/vtdia/image 18.png',
                   label: 'Planned Model',
                   value: slt != null
                       ? '${(slt.carat * 1.5).toStringAsFixed(2)} Carat'
@@ -299,16 +236,13 @@ class _AboutDiamond extends StatelessWidget {
                   color: AppColors.textLight,
                 ),
                 _JourneyStage(
-                  icon: Icons.diamond_outlined,
+                  image: 'assets/vtdia/image 19.png',
                   label: 'Polished',
-                  // actual final carat from API
                   value: slt != null ? '${slt.carat} Carat' : '',
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            const Divider(color: AppColors.divider),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
 
             const Text(
               'The rough stone of carat is planned and after numerous stages of '
@@ -333,18 +267,6 @@ class _AboutDiamond extends StatelessWidget {
               ),
               textAlign: TextAlign.justify,
             ),
-
-            // Diamond specs if available
-            if (slt != null) ...[
-              const SizedBox(height: 16),
-              const Divider(color: AppColors.divider),
-              const SizedBox(height: 12),
-              const VtSectionTitle('Your Diamond'),
-              VtInfoRow(label: 'Shape', value: slt.shape),
-              VtInfoRow(label: 'Carat', value: '${slt.carat}'),
-              VtInfoRow(label: 'Colour', value: slt.colour),
-              VtInfoRow(label: 'Clarity', value: slt.clarity),
-            ],
           ],
         ),
       ),
@@ -353,52 +275,64 @@ class _AboutDiamond extends StatelessWidget {
 }
 
 // =============================================================================
-// SHARED JOURNEY WIDGETS
+// SHARED WIDGETS
 // =============================================================================
 
+/// Full-width banner — fills width, fixed height, gradient fallback
 class _JourneyBanner extends StatelessWidget {
-  final IconData icon;
-  const _JourneyBanner({required this.icon});
+  final String image;
+  const _JourneyBanner({required this.image});
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: 140,
-    width: double.infinity,
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [AppColors.mintDark, Color(0xFF4A8A83)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(6),
+    child: Image.asset(
+      image,
+      height: 160,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        height: 160,
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.mintDark, Color(0xFF4A8A83)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
       ),
-      borderRadius: BorderRadius.circular(6),
     ),
-    child: Center(child: Icon(icon, size: 60, color: AppColors.white)),
   );
 }
 
+/// Stat icon + label — no circle clipping, natural image display
 class _Stat extends StatelessWidget {
-  final IconData icon;
+  final String image;
   final String label;
-  const _Stat({required this.icon, required this.label});
+  const _Stat({required this.image, required this.label});
 
   @override
   Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
     children: [
-      Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: AppColors.mintLight,
-          shape: BoxShape.circle,
+      Image.asset(
+        image,
+        width: 66,
+        height: 50,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => const Icon(
+          Icons.circle_outlined,
+          size: 44,
+          color: AppColors.mintDark,
         ),
-        child: Icon(icon, size: 22, color: AppColors.mintDark),
       ),
       const SizedBox(height: 6),
       Text(
         label,
         textAlign: TextAlign.center,
         style: const TextStyle(
-          fontSize: 10,
+          fontSize: 11,
           color: AppColors.textMid,
           height: 1.4,
         ),
@@ -407,28 +341,36 @@ class _Stat extends StatelessWidget {
   );
 }
 
+/// Journey stage — circular container with ClipOval image
 class _JourneyStage extends StatelessWidget {
-  final IconData icon;
+  final String image;
   final String label;
   final String value;
   const _JourneyStage({
-    required this.icon,
+    required this.image,
     required this.label,
     required this.value,
   });
 
   @override
   Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
     children: [
       Container(
-        width: 56,
-        height: 56,
+        width: 64,
+        height: 64,
         decoration: BoxDecoration(
           color: AppColors.mintLight,
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.mintDark),
         ),
-        child: Icon(icon, size: 24, color: AppColors.mintDark),
+        child: ClipOval(
+          child: Image.asset(
+            image,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox(width: 64, height: 64),
+          ),
+        ),
       ),
       const SizedBox(height: 4),
       Text(
@@ -451,28 +393,5 @@ class _JourneyStage extends StatelessWidget {
           ),
         ),
     ],
-  );
-}
-
-class _CountryChip extends StatelessWidget {
-  final String country;
-  const _CountryChip(this.country);
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(
-      color: AppColors.mintLight,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.mintDark),
-    ),
-    child: Text(
-      country,
-      style: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: AppColors.mintDark,
-      ),
-    ),
   );
 }

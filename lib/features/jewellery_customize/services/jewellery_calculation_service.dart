@@ -318,84 +318,91 @@ class JewelleryCalculationService {
       pcss.add(row.pcs.toString());
 
       // -------- JS वाले 4 rules ----------
-      String bomColorMin = '';
-      String bomColorMax = '';
-      String bomClarityMin = '';
-      String bomClarityMax = '';
+      // String bomColorMin = '';
+      // String bomColorMax = '';
+      // String bomClarityMin = '';
+      // String bomClarityMax = '';
 
-      final cFrom = bomCaratFrom;
-      final cTo = bomCaratTo;
+      // final cFrom = bomCaratFrom;
+      // final cTo = bomCaratTo;
 
-      if ((shapeCode == 'PER' || shapeCode == 'PRN' || shapeCode == 'OVL') &&
-          cFrom >= 0.10 &&
-          cTo <= 0.17) {
-        // Fancy 0.10–0.17
-        bomColorMin = 'GH';
-        bomColorMax = 'EF';
-        bomClarityMin = 'VS';
-        bomClarityMax = 'VVS';
-      } else if ((shapeCode == 'PER' ||
-              shapeCode == 'PRN' ||
-              shapeCode == 'OVL') &&
-          cFrom >= 0.18 &&
-          cTo <= 0.22) {
-        // Fancy 0.18–0.22
-        bomColorMin = 'K';
-        bomColorMax = 'D';
-        bomClarityMin = 'SI1';
-        bomClarityMax = 'IF';
-      } else if (shapeCode == 'RND' && cFrom >= 0.10 && cTo <= 0.17) {
-        // Round 0.10–0.17
-        bomColorMin = 'IJ';
-        bomColorMax = 'EF';
-        bomClarityMin = 'SI';
-        bomClarityMax = 'VVS';
-      } else if (shapeCode == 'RND' && cFrom >= 0.18 && cTo <= 0.22) {
-        // Round 0.18–0.22
-        bomColorMin = 'K';
-        bomColorMax = 'D';
-        bomClarityMin = 'SI2';
-        bomClarityMax = 'IF';
-      }
+      // if ((shapeCode == 'PER' || shapeCode == 'PRN' || shapeCode == 'OVL') &&
+      //     cFrom >= 0.10 &&
+      //     cTo <= 0.17) {
+      //   // Fancy 0.10–0.17
+      //   bomColorMin = 'GH';
+      //   bomColorMax = 'EF';
+      //   bomClarityMin = 'VS';
+      //   bomClarityMax = 'VVS';
+      // } else if ((shapeCode == 'PER' ||
+      //         shapeCode == 'PRN' ||
+      //         shapeCode == 'OVL') &&
+      //     cFrom >= 0.18 &&
+      //     cTo <= 0.22) {
+      //   // Fancy 0.18–0.22
+      //   bomColorMin = 'K';
+      //   bomColorMax = 'D';
+      //   bomClarityMin = 'SI1';
+      //   bomClarityMax = 'IF';
+      // } else if (shapeCode == 'RND' && cFrom >= 0.10 && cTo <= 0.17) {
+      //   // Round 0.10–0.17
+      //   bomColorMin = 'IJ';
+      //   bomColorMax = 'EF';
+      //   bomClarityMin = 'SI';
+      //   bomClarityMax = 'VVS';
+      // } else if (shapeCode == 'RND' && cFrom >= 0.18 && cTo <= 0.22) {
+      //   // Round 0.18–0.22
+      //   bomColorMin = 'K';
+      //   bomColorMax = 'D';
+      //   bomClarityMin = 'SI2';
+      //   bomClarityMax = 'IF';
+      // }
 
       // -------- user selection override logic (JS जैसा) ----------
       // JS cond: parseFloat(carat[0]) === bomCaratFrom ? user color/clarity : bom defaults
-      final bool isUserSlab =
-          userMinCt != null && (userMinCt - bomCaratFrom).abs() < 0.0001;
+      // final bool isUserSlab =
+      //     userMinCt != null && (userMinCt - bomCaratFrom).abs() < 0.0001;
 
-      final fromColor =
-          isUserSlab && userColorFrom != null && userColorFrom.isNotEmpty
-          ? userColorFrom
-          : bomColorMin;
-      final toColor =
-          isUserSlab && userColorTo != null && userColorTo.isNotEmpty
-          ? userColorTo
-          : bomColorMax;
+      // final fromColor =
+      //     isUserSlab && userColorFrom != null && userColorFrom.isNotEmpty
+      //     ? userColorFrom
+      //     : bomColorMin;
+      // final toColor =
+      //     isUserSlab && userColorTo != null && userColorTo.isNotEmpty
+      //     ? userColorTo
+      //     : bomColorMax;
 
-      final fromClarity =
-          isUserSlab && userClarityFrom != null && userClarityFrom.isNotEmpty
-          ? userClarityFrom
-          : bomClarityMin;
-      final toClarity =
-          isUserSlab && userClarityTo != null && userClarityTo.isNotEmpty
-          ? userClarityTo
-          : bomClarityMax;
+      // final fromClarity =
+      //     isUserSlab && userClarityFrom != null && userClarityFrom.isNotEmpty
+      //     ? userClarityFrom
+      //     : bomClarityMin;
+      // final toClarity =
+      //     isUserSlab && userClarityTo != null && userClarityTo.isNotEmpty
+      //     ? userClarityTo
+      //     : bomClarityMax;
 
-      if (fromColor.isEmpty ||
-          toColor.isEmpty ||
-          fromClarity.isEmpty ||
-          toClarity.isEmpty) {
-        // अगर rules से कुछ भी नहीं मिला तो इस row को skip कर दो
-        continue;
-      }
+      // if (fromColor.isEmpty ||
+      //     toColor.isEmpty ||
+      //     fromClarity.isEmpty ||
+      //     toClarity.isEmpty) {
+      //   // अगर rules से कुछ भी नहीं मिला तो इस row को skip कर दो
+      //   continue;
+      // }
+
+      debugPrint('User Color From : $userColorFrom');
+      debugPrint('User Color To : $userColorTo');
+      debugPrint('User Clarity From : $userClarityFrom');
+      debugPrint('User Clarity To : $userClarityTo');
 
       // -------- price fetch per BOM row ----------
       final priceFrom = await fetchPrice(
         itemGroup: 'SOLITAIRE',
         slab: bomCaratFrom.toStringAsFixed(2),
         shape: shapeCode,
-        color: JewelleryCalculationService.getSolitaireColor(fromColor),
-        quality: fromClarity,
+        color: JewelleryCalculationService.getSolitaireColor(
+          userColorFrom ?? '',
+        ),
+        quality: userClarityFrom,
       );
       // debugPrint(
       //   'Fetched priceFrom for shape=$shape, carat=$bomCaratFrom, color=$fromColor, clarity=$fromClarity: $priceFrom',
@@ -405,8 +412,8 @@ class JewelleryCalculationService {
         itemGroup: 'SOLITAIRE',
         slab: bomCaratTo.toStringAsFixed(2),
         shape: shapeCode,
-        color: JewelleryCalculationService.getSolitaireColor(toColor),
-        quality: toClarity,
+        color: JewelleryCalculationService.getSolitaireColor(userColorTo ?? ''),
+        quality: userClarityTo,
       );
       // debugPrint(
       //   'Fetched priceTo for shape=$shape, carat=$bomCaratTo, color=$toColor, clarity=$toClarity: $priceTo',
@@ -417,11 +424,11 @@ class JewelleryCalculationService {
 
       amountFrom += priceFrom * bomCaratFrom * qty * pcs;
       debugPrint(
-        'BOM Row: shape=$shapeCode, caratFrom=$bomCaratFrom, pcs=$pcs, priceFrom=$priceFrom, amountFrom=${priceFrom * bomCaratFrom * qty * pcs}',
+        'BOM Row: shape=$shapeCode, caratFrom=$bomCaratFrom, ColorFrom=$userColorFrom, ClarityFrom=$userClarityFrom, pcs=$pcs, priceFrom=$priceFrom, amountFrom=${priceFrom * bomCaratFrom * qty * pcs}',
       );
       amountTo += priceTo * bomCaratTo * qty * pcs;
       debugPrint(
-        'BOM Row: shape=$shapeCode, caratTo=$bomCaratTo, pcs=$pcs, priceTo=$priceTo,  amountTo=${priceTo * bomCaratTo * qty * pcs}',
+        'BOM Row: shape=$shapeCode, caratTo=$bomCaratTo, ColorTo=$userColorTo, ClaeityTo=$userClarityTo, pcs=$pcs, priceTo=$priceTo,  amountTo=${priceTo * bomCaratTo * qty * pcs}',
       );
     }
 

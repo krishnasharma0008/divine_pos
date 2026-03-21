@@ -117,17 +117,11 @@ class VerifyTrackNotifier extends Notifier<VerifyTrackState> {
       }
 
       final product = response.data!;
-      final trackSegment = product.uidStatus == 'SOLD' ? 'track' : 'verify';
-      final typeSegment = product.productType == 'Diamond'
-          ? 'solitaire'
-          : 'jewellery';
-      final path = '/$trackSegment/$typeSegment/${uid.trim().toUpperCase()}';
-
       state = state.copyWith(
         status: VerifyTrackStatus.idle,
         lastResult: product,
       );
-      onNavigate(path, isPortfolio: isPortfolio);
+      onNavigate('/verify-detail', isPortfolio: isPortfolio);
     } catch (e) {
       state = state.copyWith(
         status: VerifyTrackStatus.error,

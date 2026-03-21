@@ -109,6 +109,7 @@ flutter:
     - assets/diamond_value/radiant.png
     - assets/diamond_value/cushion.png
     - assets/diamond_value/heart.png
+    - assets/vtdia/
     # - assets/config/
     # - .env
 

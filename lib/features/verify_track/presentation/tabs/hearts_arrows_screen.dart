@@ -1,5 +1,3 @@
-// lib/features/verify_track/screens/tabs/hearts_arrows_screen.dart
-
 import 'package:flutter/material.dart';
 import '../../data/verify_track_model.dart';
 import '../verify_detail_shell.dart';
@@ -19,8 +17,11 @@ class HeartsArrowsScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: const [
-                _HaImage(label: '8 HEARTS'),
-                _HaImage(label: '8 ARROWS'),
+                _HaImage(
+                  label: '8 HEARTS',
+                  url: 'assets/vtdia/circle-heart.png',
+                ),
+                _HaImage(label: '8 ARROWS', url: 'assets/vtdia/circle.png'),
               ],
             ),
             const SizedBox(height: 24),
@@ -58,7 +59,8 @@ class HeartsArrowsScreen extends StatelessWidget {
 
 class _HaImage extends StatelessWidget {
   final String label;
-  const _HaImage({required this.label});
+  final String url;
+  const _HaImage({required this.label, required this.url});
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +74,7 @@ class _HaImage extends StatelessWidget {
             color: AppColors.mintLight,
             border: Border.all(color: AppColors.mintDark, width: 1.5),
           ),
-          child: const Center(
-            child: Icon(Icons.favorite_border, size: 40, color: Colors.red),
-          ),
+          child: Center(child: Image.asset('$url')),
         ),
         const SizedBox(height: 8),
         Text(

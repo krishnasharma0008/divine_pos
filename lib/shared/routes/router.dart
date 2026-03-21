@@ -6,6 +6,7 @@ import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart
 import 'package:divine_pos/features/diamond_value/presentation/diamond_value_screen.dart';
 import 'package:divine_pos/features/feedback_form/presentation/feedback_form_screen.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/jewellery_customize_screen.dart';
+import 'package:divine_pos/features/verify_track/presentation/verify_detail_shell.dart';
 import 'package:divine_pos/features/verify_track/presentation/verifyandtrack_screen.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -203,6 +204,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePages.verifyTrack.routePath,
         name: RoutePages.verifyTrack.routeName,
         builder: (context, state) => VerifyAndTrackScreen(),
+      ),
+      GoRoute(
+        path: '/verify-detail',
+        builder: (context, state) => const VerifyDetailShell(uid: ''),
       ),
       // ⭐ MAIN APP LAYOUT (Bottom Navigation)
       // ShellRoute(
