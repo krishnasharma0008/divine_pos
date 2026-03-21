@@ -32,13 +32,10 @@ class AppColors {
 
 // =============================================================================
 // CURRENCY HELPER
-// Used by tab screens that import verify_detail_shell.dart
-// Falls back gracefully if inRupeesFormat() extension is unavailable
 // =============================================================================
 
 String formatInr(num? value) {
   if (value == null || value == 0) return '₹0';
-  // Format as Indian rupees with comma separators: 1,22,681
   final str = value.abs().toStringAsFixed(0);
   final buffer = StringBuffer();
   final isNegative = value < 0;
@@ -46,10 +43,8 @@ String formatInr(num? value) {
   if (str.length <= 3) {
     buffer.write(str);
   } else {
-    // Last 3 digits
     final last3 = str.substring(str.length - 3);
     final rest = str.substring(0, str.length - 3);
-    // Remaining digits in groups of 2
     final groups = <String>[];
     for (int i = rest.length; i > 0; i -= 2) {
       groups.add(rest.substring(i - 2 < 0 ? 0 : i - 2, i));
@@ -305,19 +300,83 @@ const _tabLabels = {
 };
 
 // =============================================================================
+// DYNAMIC TAB BUILDER
+//
+// Mirrors the React getTabNavProps logic:
+//
+//   isJewellery &  isSold  → Summary, Certificate, Insurance, Resale
+//   isJewellery & !isSold  → Summary, Certificate, Insurance
+//  !isJewellery &  isSold  → Summary, Certificate, Insurance, H&A, Resale, Journey
+//  !isJewellery & !isSold  → Summary, Certificate, Insurance, H&A, Journey
+// =============================================================================
+
+List<VtTab> _buildTabs({required bool isJewellery, required bool isSold}) {
+  if (isJewellery && isSold) {
+    return [VtTab.summary, VtTab.certificate, VtTab.insurance, VtTab.resale];
+  }
+  if (isJewellery && !isSold) {
+    return [VtTab.summary, VtTab.certificate, VtTab.insurance];
+  }
+  if (!isJewellery && isSold) {
+    return [
+      VtTab.summary,
+      VtTab.certificate,
+      VtTab.insurance,
+      VtTab.ha,
+      VtTab.resale,
+      VtTab.journey,
+    ];
+  }
+  // !isJewellery && !isSold
+  return [
+    VtTab.summary,
+    VtTab.certificate,
+    VtTab.insurance,
+    VtTab.ha,
+    VtTab.journey,
+  ];
+}
+
+// =============================================================================
 // SHELL
 // =============================================================================
 
 class VerifyDetailShell extends ConsumerStatefulWidget {
   final String uid;
-  const VerifyDetailShell({super.key, this.uid = ''});
+
+  /// Jump straight to the Resale tab on open (e.g. from portfolio deep-link).
+  final bool openResale;
+
+  /// Jump straight to the Insurance tab on open (e.g. switchToInsurance flag).
+  final bool openInsurance;
+
+  const VerifyDetailShell({
+    super.key,
+    this.uid = '',
+    this.openResale = false,
+    this.openInsurance = false,
+  });
 
   @override
   ConsumerState<VerifyDetailShell> createState() => _VerifyDetailShellState();
 }
 
 class _VerifyDetailShellState extends ConsumerState<VerifyDetailShell> {
-  VtTab _active = VtTab.summary;
+  VtTab? _active; // null until first product load
+
+  /// Mirrors React's initialTab logic:
+  ///   openInsurance → Insurance tab
+  ///   openResale    → Resale tab  (only if present in tabs)
+  ///   default       → Summary
+  VtTab _resolveInitialTab(List<VtTab> tabs) {
+    // if (widget.openInsurance && tabs.contains(VtTab.insurance)) {
+    //   return VtTab.insurance;
+    // }
+    // if (widget.openResale && tabs.contains(VtTab.resale)) {
+    //   return VtTab.resale;
+    // }
+    return VtTab.summary;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -332,11 +391,16 @@ class _VerifyDetailShellState extends ConsumerState<VerifyDetailShell> {
       );
     }
 
-    // H&A only for Diamond
-    final tabs = VtTab.values.where((t) {
-      if (t == VtTab.ha && !product.isDiamond) return false;
-      return true;
-    }).toList();
+    final tabs = _buildTabs(
+      isJewellery: !product.isDiamond,
+      isSold: product.isSold,
+    );
+
+    // Initialise active tab on first render, or reset if the current tab is
+    // no longer available after a product change.
+    if (_active == null || !tabs.contains(_active)) {
+      _active = _resolveInitialTab(tabs);
+    }
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -344,7 +408,6 @@ class _VerifyDetailShellState extends ConsumerState<VerifyDetailShell> {
         child: Column(
           children: [
             _TopBar(uid: product.uid, isSold: product.isSold),
-            // Mint gradient underline
             Container(
               height: 3,
               decoration: const BoxDecoration(
@@ -362,7 +425,7 @@ class _VerifyDetailShellState extends ConsumerState<VerifyDetailShell> {
                 children: [
                   _TopTabs(
                     tabs: tabs,
-                    active: _active,
+                    active: _active!,
                     onTap: (t) => setState(() => _active = t),
                   ),
                   Expanded(child: _buildScreen(product)),
@@ -389,6 +452,8 @@ class _VerifyDetailShellState extends ConsumerState<VerifyDetailShell> {
         return ResaleScreen(product: p);
       case VtTab.journey:
         return JourneyScreen(product: p);
+      default:
+        return SummaryScreen(product: p);
     }
   }
 }
@@ -416,16 +481,6 @@ class _TopBar extends StatelessWidget {
             color: AppColors.textDark,
           ),
         ),
-        // const SizedBox(width: 12),
-        // const Text(
-        //   'DIVINE SOLITAIRES',
-        //   style: TextStyle(
-        //     fontSize: 13,
-        //     fontWeight: FontWeight.w800,
-        //     letterSpacing: 1.5,
-        //     color: AppColors.textDark,
-        //   ),
-        // ),
         const Spacer(),
         if (isSold)
           Container(
@@ -468,7 +523,7 @@ class _TopBar extends StatelessWidget {
 }
 
 // =============================================================================
-// TOP TAB BAR — horizontal scrollable tabs
+// TOP TAB BAR
 // =============================================================================
 
 class _TopTabs extends StatelessWidget {
