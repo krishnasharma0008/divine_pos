@@ -1,3 +1,5 @@
+import 'package:divine_pos/shared/utils/scale_size.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import '../../data/diamond_config.dart';
 
@@ -7,6 +9,7 @@ class DiamondDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     return Column(
       children: [
         // Diamond circle with real image
@@ -16,15 +19,16 @@ class DiamondDisplay extends StatelessWidget {
         // Diamond code
         Text(
           config.diamondCode,
-          style: const TextStyle(
-            fontFamily: 'Georgia',
-            fontSize: 17,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20 * fem,
+            fontFamily: 'Montserrat',
             fontWeight: FontWeight.w500,
-            color: Color(0xFF2A2A2A),
-            letterSpacing: 1.0,
+            height: 1.35,
+            letterSpacing: 0.40,
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14 * fem),
 
         // Hearts & Arrows (only for Round white diamond)
         if (config.isRound) ...[
@@ -36,10 +40,15 @@ class DiamondDisplay extends StatelessWidget {
               _HeartsArrowsIcon(isHearts: false),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
+          SizedBox(height: 6 * fem),
+          MyText(
             'Guaranteed on all Round Brilliant Diamond',
-            style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 12 * fem,
+              fontFamily: 'Montserrat',
+              fontWeight: FontWeight.w300,
+            ),
           ),
           const SizedBox(height: 14),
         ] else
@@ -54,38 +63,45 @@ class DiamondDisplay extends StatelessWidget {
 
 class _DiamondCircle extends StatelessWidget {
   final DiamondConfig config;
-  const _DiamondCircle({required this.config});
+  const _DiamondCircle({super.key, required this.config});
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('Check selected Data : ${config}');
-
+    debugPrint('Shape: ${config.shapeAsset}');
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, anim) => FadeTransition(
-        opacity: anim,
-        child: ScaleTransition(scale: anim, child: child),
-      ),
       child: Container(
         key: ValueKey(config.shapeAsset),
-        width: 200,
-        height: 200,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const RadialGradient(
-            center: Alignment(-0.2, -0.2),
-            colors: [Color(0xFFEFECEC), Color(0xFFD5D5D5)],
+        width: 200 * ScaleSize.aspectRatio,
+        height: 200 * ScaleSize.aspectRatio,
+        alignment: Alignment.center,
+        decoration: const ShapeDecoration(
+          color: Color(0xFFF6F6F6),
+          shape: OvalBorder(
+            side: BorderSide(width: 1, color: Color(0xFFCECECE)),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            /// Ring (only if exists)
+            // if (config.ringAsset != null)
+            // Image.asset(
+            //   'assets/diamond_value/grayring.png',
+            //   width: 180 * ScaleSize.aspectRatio,
+            //   fit: BoxFit.contain,
+            //   filterQuality: FilterQuality.high,
+            // ),
+
+            /// Diamond always shows
+            Image.asset(
+              config.shapeAsset,
+              width: 82 * ScaleSize.aspectRatio,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
             ),
           ],
         ),
-        padding: const EdgeInsets.all(28),
-        child: Image.asset(config.shapeAsset, fit: BoxFit.contain),
       ),
     );
   }
@@ -97,119 +113,94 @@ class _HeartsArrowsIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
+
     return Column(
       children: [
         Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFE88888), width: 1.5),
+          width: 44 * fem,
+          height: 44 * fem,
+          padding: EdgeInsets.all(6 * fem),
+          // decoration: BoxDecoration(
+          //   shape: BoxShape.circle,
+          //   border: Border.all(color: const Color(0xFFE88888), width: 1.5),
+          // ),
+          child: Image.asset(
+            isHearts
+                ? 'assets/vtdia/circle-heart.png'
+                : 'assets/vtdia/circle.png',
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
           ),
-          child: CustomPaint(painter: _RadialDotsPainter(isHearts: isHearts)),
         ),
-        const SizedBox(height: 4),
-        Text(
+        SizedBox(height: 4 * fem),
+        MyText(
           isHearts ? '8 Hearts' : '8 Arrows',
-          style: const TextStyle(fontSize: 10, color: Color(0xFF6B6B6B)),
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 12 * fem,
+            fontFamily: 'Montserrat',
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
   }
 }
 
-class _RadialDotsPainter extends CustomPainter {
-  final bool isHearts;
-  _RadialDotsPainter({required this.isHearts});
-
-  static double _sin(double x) {
-    double result = x, term = x;
-    for (int i = 1; i <= 8; i++) {
-      term *= -x * x / ((2 * i) * (2 * i + 1));
-      result += term;
-    }
-    return result;
-  }
-
-  static double _cos(double x) {
-    double result = 1, term = 1;
-    for (int i = 1; i <= 8; i++) {
-      term *= -x * x / ((2 * i - 1) * (2 * i));
-      result += term;
-    }
-    return result;
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFE88888).withOpacity(0.85)
-      ..style = PaintingStyle.fill;
-    final cx = size.width / 2, cy = size.height / 2;
-    const r = 10.0, dotR = 2.2;
-    const pi = 3.14159265358979;
-
-    for (int i = 0; i < 8; i++) {
-      final angle = (i * 45 - 90) * pi / 180;
-      final x = cx + r * _cos(angle);
-      final y = cy + r * _sin(angle);
-      if (isHearts) {
-        canvas.drawCircle(Offset(x, y), dotR, paint);
-      } else {
-        final path = Path()
-          ..moveTo(x, y - dotR * 1.5)
-          ..lineTo(x + dotR, y + dotR)
-          ..lineTo(x - dotR, y + dotR)
-          ..close();
-        canvas.drawPath(path, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_RadialDotsPainter old) => old.isHearts != isHearts;
-}
-
 class _FeaturesGrid extends StatelessWidget {
-  final features = const [
+  const _FeaturesGrid();
+
+  final List<String> features = const [
     'Excellent cut',
-    'None fluorescence',
+    'None\nfluorescence',
     'Excellent polish',
     'No overtone',
     'Excellent symmetry',
-    'Faceted girdle',
-    'Ultimate light performance',
-    'Pointed cullet. Many more...',
+    'faceted girdle',
+    'Ultimate light\nperformance',
+    'Pointed cullet\nMany more..',
   ];
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
+
     return Container(
+      width: double.infinity,
+      height: 103 * fem,
       decoration: BoxDecoration(
-        color: const Color(0xFFB8D8D0),
-        borderRadius: BorderRadius.circular(8),
+        gradient: const LinearGradient(
+          begin: Alignment(0.01, 1.04),
+          end: Alignment(0.97, 0.0),
+          colors: [Color(0xFF6FA198), Color(0xFF8AC0B6)],
+        ),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.white),
       ),
       child: GridView.builder(
-        shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 3.5,
-        ),
+        padding: EdgeInsets.zero,
         itemCount: features.length,
-        itemBuilder: (_, i) {
-          final isLastRow = i >= features.length - 2;
-          final isRightCol = i.isOdd;
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          childAspectRatio: 2.8,
+        ),
+        itemBuilder: (context, index) {
+          final row = index ~/ 4;
+          final col = index % 4;
+
           return Container(
+            padding: EdgeInsets.symmetric(horizontal: 10 * fem),
             decoration: BoxDecoration(
               border: Border(
-                bottom: isLastRow
+                right: col == 3
                     ? BorderSide.none
                     : BorderSide(
                         color: Colors.white.withOpacity(0.35),
                         width: 1,
                       ),
-                right: isRightCol
+                bottom: row == 1
                     ? BorderSide.none
                     : BorderSide(
                         color: Colors.white.withOpacity(0.35),
@@ -217,19 +208,45 @@ class _FeaturesGrid extends StatelessWidget {
                       ),
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Icon(Icons.check, size: 12, color: Color(0xFF3AA09A)),
-                const SizedBox(width: 5),
-                Flexible(
+                /// Tick badge
+                Container(
+                  width: 18 * fem,
+                  height: 18 * fem,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/vtdia/Star 2.png',
+                        width: 18 * fem,
+                        height: 18 * fem,
+                        fit: BoxFit.contain,
+                      ),
+                      Image.asset(
+                        'assets/vtdia/green-rick.png',
+                        width: 9 * fem,
+                        height: 9 * fem,
+                        fit: BoxFit.contain,
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(width: 8 * fem),
+
+                /// Feature text
+                Expanded(
                   child: Text(
-                    features[i],
-                    style: const TextStyle(
-                      fontSize: 9.5,
-                      color: Color(0xFF2A2A2A),
+                    features[index],
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11 * fem,
+                      fontFamily: 'Montserrat',
+                      fontWeight: FontWeight.w400,
+                      height: 1.2,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

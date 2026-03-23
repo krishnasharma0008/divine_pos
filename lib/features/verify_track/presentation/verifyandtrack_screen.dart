@@ -3,6 +3,8 @@ import 'package:divine_pos/shared/app_bar.dart';
 import 'package:divine_pos/shared/routes/app_drawer.dart';
 import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:divine_pos/shared/utils/enums.dart';
+import 'package:divine_pos/shared/utils/scale_size.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -92,7 +94,7 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
   Widget build(BuildContext context) {
     final uidController = ref.watch(uidControllerProvider);
     final isLoading = ref.watch(verifyTrackProvider.select((s) => s.isLoading));
-
+    final fem = ScaleSize.aspectRatio;
     return Scaffold(
       backgroundColor: AppColors.bgGrey,
 
@@ -121,71 +123,73 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
 
       // ---- Swap with your SideDrawer ----
       drawer: SideDrawer(),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _MintAccentBar(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 28,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _SectionLabel(
-                        title: 'VERIFY & TRACK',
-                        subtitle:
-                            'Enter your UID or scan the QR code on your product',
-                      ),
-                      const SizedBox(height: 24),
-                      _ContentCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _UidTextField(
-                              controller: uidController,
-                              enabled: !isLoading,
-                              onSubmitted: (_) => _doSearch(uidController.text),
-                            ),
-                            const SizedBox(height: 16),
-                            _SubmitButton(
-                              //isLoading: isLoading,
-                              onPressed: () => _doSearch(uidController.text),
-                            ),
-                            const SizedBox(height: 24),
-                            const _OrDivider(),
-                            const SizedBox(height: 24),
-                            const _QrScannerFrame(),
-                            const SizedBox(height: 20),
-                            _ScanQrButton(
-                              isLoading: isLoading,
-                              onPressed: isLoading
-                                  ? null
-                                  : () {
-                                      // TODO: open mobile_scanner
-                                      // On result: _doSearch(scannedUid)
-                                      debugPrint('Open QR scanner');
-                                    },
-                            ),
-                          ],
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _MintAccentBar(),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: fem * 20,
+                      vertical: fem * 15,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _SectionLabel(
+                          title: 'VERIFY & TRACK',
+                          subtitle:
+                              'Enter your UID or scan the QR code on your product',
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      const _AboutCard(),
-                    ],
+                        SizedBox(height: fem * 15),
+                        _ContentCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _UidTextField(
+                                controller: uidController,
+                                enabled: !isLoading,
+                                onSubmitted: (_) =>
+                                    _doSearch(uidController.text),
+                              ),
+                              SizedBox(height: fem * 16),
+                              _SubmitButton(
+                                //isLoading: isLoading,
+                                onPressed: () => _doSearch(uidController.text),
+                              ),
+                              SizedBox(height: fem * 20),
+                              _OrDivider(),
+                              SizedBox(height: fem * 16),
+                              // _QrScannerFrame(),
+                              // SizedBox(height: fem * 16),
+                              _ScanQrButton(
+                                isLoading: isLoading,
+                                onPressed: isLoading
+                                    ? null
+                                    : () {
+                                        // On result: _doSearch(scannedUid)
+                                        debugPrint('Open QR scanner');
+                                      },
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: fem * 20),
+                        _AboutCard(),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          // Full-screen loader — mirrors JS showLoader/hideLoader
-          if (isLoading) const _LoaderOverlay(),
-        ],
+            // Full-screen loader — mirrors JS showLoader/hideLoader
+            if (isLoading) const _LoaderOverlay(),
+          ],
+        ),
       ),
     );
   }
@@ -220,23 +224,24 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     return Column(
       children: [
-        Text(
+        MyText(
           title,
-          style: const TextStyle(
-            fontSize: 15,
+          style: TextStyle(
+            fontSize: fem * 15,
             fontWeight: FontWeight.w700,
             letterSpacing: 3,
             color: AppColors.textDark,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 6),
-        Text(
+        SizedBox(height: fem * 6),
+        MyText(
           subtitle,
-          style: const TextStyle(
-            fontSize: 12,
+          style: TextStyle(
+            fontSize: fem * 12,
             color: AppColors.textMid,
             letterSpacing: 0.2,
           ),
@@ -253,8 +258,9 @@ class _ContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(fem * 20),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
@@ -323,26 +329,30 @@ class _SubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
+
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
+        constraints: BoxConstraints(maxWidth: fem * 400),
         child: SizedBox(
-          height: 50,
+          height: fem * 45,
           child: ElevatedButton(
             onPressed: onPressed,
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.textDark,
               backgroundColor: AppColors.mintLight,
-              disabledBackgroundColor: AppColors.mintLight.withOpacity(0.5),
+              disabledBackgroundColor: AppColors.mintLight.withValues(
+                alpha: 0.5,
+              ),
               side: const BorderSide(color: AppColors.mintDark, width: 1.5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: isLoading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
+                ? SizedBox(
+                    width: fem * 18,
+                    height: fem * 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(
@@ -350,10 +360,10 @@ class _SubmitButton extends StatelessWidget {
                       ),
                     ),
                   )
-                : const Text(
+                : MyText(
                     'SUBMIT',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 2,
                     ),
@@ -398,59 +408,6 @@ class _OrDivider extends StatelessWidget {
   }
 }
 
-class _QrScannerFrame extends StatelessWidget {
-  const _QrScannerFrame();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 190,
-        height: 190,
-        decoration: BoxDecoration(
-          color: AppColors.bgGrey,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: CustomPaint(
-          painter: _QrFramePainter(),
-          child: Center(
-            child: Icon(
-              Icons.bar_chart,
-              size: 68,
-              color: AppColors.textDark.withOpacity(0.65),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QrFramePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.mintDark
-      ..strokeWidth = 3.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.square;
-    const c = 32.0;
-    final w = size.width;
-    final h = size.height;
-    canvas.drawLine(const Offset(0, c), Offset.zero, paint);
-    canvas.drawLine(Offset.zero, Offset(c, 0), paint);
-    canvas.drawLine(Offset(w - c, 0), Offset(w, 0), paint);
-    canvas.drawLine(Offset(w, 0), Offset(w, c), paint);
-    canvas.drawLine(Offset(0, h - c), Offset(0, h), paint);
-    canvas.drawLine(Offset(0, h), Offset(c, h), paint);
-    canvas.drawLine(Offset(w - c, h), Offset(w, h), paint);
-    canvas.drawLine(Offset(w, h), Offset(w, h - c), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
-}
-
 class _ScanQrButton extends StatelessWidget {
   const _ScanQrButton({required this.onPressed, this.isLoading = false});
   final VoidCallback? onPressed;
@@ -458,41 +415,47 @@ class _ScanQrButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: SizedBox(
-          height: 50,
-          child: OutlinedButton.icon(
-            onPressed: onPressed,
-            icon: isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.mintDark,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: isLoading ? null : onPressed,
+        child: IntrinsicWidth(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset('assets/vtdia/barcode_big.jpeg'),
+
+              SizedBox(height: fem * 16),
+
+              // Custom button container
+              Container(
+                height: fem * 40,
+                padding: EdgeInsets.symmetric(horizontal: fem * 16),
+                decoration: BoxDecoration(
+                  color: AppColors.mintLight,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.mintDark, width: 1.5),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.qr_code_scanner, size: 18),
+
+                    SizedBox(width: fem * 8),
+
+                    MyText(
+                      'Scan QR Code',
+                      style: TextStyle(
+                        fontSize: fem * 14,
+                        fontWeight: FontWeight.w600,
+                        //letterSpacing: 0.4,
                       ),
                     ),
-                  )
-                : const Icon(Icons.qr_code_scanner, size: 18),
-            label: const Text(
-              'Scan QR Code',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.4,
+                  ],
+                ),
               ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textDark,
-              backgroundColor: AppColors.mintLight,
-              side: const BorderSide(color: AppColors.mintDark, width: 1.5),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-              ),
-            ),
+            ],
           ),
         ),
       ),
@@ -505,8 +468,9 @@ class _AboutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(fem * 16),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
@@ -531,8 +495,8 @@ class _AboutCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: 10),
-              const Text(
+              SizedBox(width: fem * 10),
+              MyText(
                 'About Verify & Track',
                 style: TextStyle(
                   fontSize: 13,
@@ -543,8 +507,8 @@ class _AboutCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: fem * 12),
+          MyText(
             "Divine Solitaires 'Verify & Track' is a never-seen-before digital experience "
             "which brings a distinctive diamond experience to the consumers' fingertips. "
             "With the help of the UID (Product ID), you can know the price & quality of your "

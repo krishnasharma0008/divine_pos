@@ -172,6 +172,21 @@ class DiamondConfig {
     }
   }
 
+  String? get ringAsset {
+    if (shapeType != ShapeType.regular) return null;
+
+    switch (shape) {
+      case DiamondShape.round:
+        return 'assets/diamond_value/goldring.png';
+
+      case DiamondShape.princess:
+      case DiamondShape.oval:
+      case DiamondShape.pear:
+      case DiamondShape.marquise:
+        return 'assets/diamond_value/grayring.png';
+    }
+  }
+
   String get shapeCode {
     if (isYellowColor) {
       switch (yellowShape) {

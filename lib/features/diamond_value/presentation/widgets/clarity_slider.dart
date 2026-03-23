@@ -1,8 +1,7 @@
+import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'carat_range_selector.dart'; // ScaleSize, MyText, DiamondThumbShape
 
-class ClaritySlider extends StatefulWidget {
+class ClaritySlider extends StatelessWidget {
   final List<String> values;
   final int index;
   final ValueChanged<int> onChanged;
@@ -14,57 +13,17 @@ class ClaritySlider extends StatefulWidget {
     required this.onChanged,
   });
 
-  @override
-  State<ClaritySlider> createState() => _ClaritySliderState();
-}
+  static const Color _tickActive = Color(0xFF1A9E8F);
+  static const Color _tickInactive = Color(0xFFD9D9D9);
+  static const Color _trackBorder = Color(0xFFBEE4DD);
+  static const Color _thumbColor = Color(0xFFA9E7DF);
 
-class _ClaritySliderState extends State<ClaritySlider> {
-  final ScrollController _scrollController = ScrollController();
-
-  final Color tickColor = const Color(0xFFBEE4DD);
-  final Color activeTrackColor = const Color(0xFFCFF4EE);
-
-  // Parent owns the index — no internal copy needed.
-  int get _currentIndex => widget.index.clamp(0, widget.values.length - 1);
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _scrollLeft() {
-    if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      (_scrollController.offset - 150).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-  }
-
-  void _scrollRight() {
-    if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      (_scrollController.offset + 150).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-  }
+  int get _currentIndex => index.clamp(0, values.length - 1);
 
   @override
   Widget build(BuildContext context) {
-    ScaleSize.init(context);
     final fem = ScaleSize.aspectRatio;
-    final double thumbRadius = (10 * fem) / 2;
-    // Width each item occupies in the slider row.
     final double itemWidth = 50 * fem;
-    // Total width arrows + gaps consume when visible: 2×(30+8)×fem.
     final double arrowsWidth = 76 * fem;
 
     return Container(
@@ -74,48 +33,106 @@ class _ClaritySliderState extends State<ClaritySlider> {
         border: Border.all(color: Colors.transparent, width: 1.5),
         borderRadius: BorderRadius.circular(16 * fem),
       ),
-      // Single LayoutBuilder that owns BOTH arrow-visibility and scroll logic.
-      // No async setState — no flicker.
       child: LayoutBuilder(
         builder: (context, constraints) {
           final totalWidth = constraints.maxWidth;
-          final contentWidth = widget.values.length * itemWidth;
-
-          // Show arrows only when content overflows the full available width.
+          final contentWidth = values.length * itemWidth;
           final showArrows = contentWidth > totalWidth;
-          // Slider gets whatever is left after arrows are placed.
           final sliderWidth = showArrows
               ? totalWidth - arrowsWidth
               : totalWidth;
           final needsScroll = contentWidth > sliderWidth;
 
+          final scrollController = ScrollController();
+
+          void scrollLeft() {
+            if (!scrollController.hasClients) return;
+            scrollController.animateTo(
+              (scrollController.offset - 150).clamp(
+                0.0,
+                scrollController.position.maxScrollExtent,
+              ),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+
+          void scrollRight() {
+            if (!scrollController.hasClients) return;
+            scrollController.animateTo(
+              (scrollController.offset + 150).clamp(
+                0.0,
+                scrollController.position.maxScrollExtent,
+              ),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+
+          void selectIndex(int i) {
+            onChanged(i);
+            if (!needsScroll || !scrollController.hasClients) return;
+            final offset = i * itemWidth;
+            final viewportW = scrollController.position.viewportDimension;
+            final currentOff = scrollController.offset;
+
+            if (offset < currentOff) {
+              scrollController.animateTo(
+                (offset - itemWidth).clamp(
+                  0.0,
+                  scrollController.position.maxScrollExtent,
+                ),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            } else if (offset > currentOff + viewportW - itemWidth) {
+              scrollController.animateTo(
+                (offset - viewportW + itemWidth * 2).clamp(
+                  0.0,
+                  scrollController.position.maxScrollExtent,
+                ),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            }
+          }
+
           return Row(
             children: [
               if (showArrows) ...[
-                _arrowBtn(Icons.chevron_left, _scrollLeft, fem),
+                _ArrowButton(
+                  icon: Icons.chevron_left,
+                  fem: fem,
+                  onTap: scrollLeft,
+                ),
                 SizedBox(width: 8 * fem),
               ],
               Expanded(
                 child: SingleChildScrollView(
-                  controller: _scrollController,
+                  controller: scrollController,
                   scrollDirection: Axis.horizontal,
                   physics: needsScroll
                       ? null
                       : const NeverScrollableScrollPhysics(),
                   child: SizedBox(
                     width: needsScroll ? contentWidth : sliderWidth,
-                    child: _buildContent(
-                      fem,
-                      thumbRadius,
-                      needsScroll,
-                      itemWidth,
+                    child: _buildItems(
+                      fem: fem,
+                      needsScroll: needsScroll,
+                      itemWidth: itemWidth,
+                      trackWidth: needsScroll ? contentWidth : sliderWidth,
+                      onSelect: selectIndex,
                     ),
                   ),
                 ),
               ),
               if (showArrows) ...[
                 SizedBox(width: 8 * fem),
-                _arrowBtn(Icons.chevron_right, _scrollRight, fem),
+                _ArrowButton(
+                  icon: Icons.chevron_right,
+                  fem: fem,
+                  onTap: scrollRight,
+                ),
               ],
             ],
           );
@@ -124,136 +141,196 @@ class _ClaritySliderState extends State<ClaritySlider> {
     );
   }
 
-  Widget _buildContent(
-    double fem,
-    double thumbRadius,
-    bool needsScroll,
-    double itemWidth,
-  ) {
+  Widget _buildItems({
+    required double fem,
+    required bool needsScroll,
+    required double itemWidth,
+    required double trackWidth,
+    required ValueChanged<int> onSelect,
+  }) {
+    final double thumbW = 10 * fem;
+    final double thumbH = 15 * fem;
+
+    // Shared cell width for labels, ticks, and thumb alignment.
+    final int count = values.isEmpty ? 1 : values.length;
+    final double cellWidth = needsScroll
+        ? itemWidth
+        : (trackWidth / count.toDouble());
+
+    // Thumb center under selected label.
+    final double thumbLeft =
+        _currentIndex * cellWidth + (cellWidth - thumbW) / 2;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Labels — active (≤ current) in black, inactive in light grey.
+        // LABELS (tappable)
         Row(
-          children: List.generate(widget.values.length, (i) {
-            final label = Text(
-              widget.values[i],
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11 * fem,
-                fontWeight: FontWeight.w500,
-                color: i <= _currentIndex
-                    ? Colors.black
-                    : const Color(0xFFD9D9D9),
+          children: List.generate(values.length, (i) {
+            final isSelected = i == _currentIndex;
+            final label = GestureDetector(
+              onTap: () => onSelect(i),
+              behavior: HitTestBehavior.opaque,
+              child: Text(
+                values[i],
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11 * fem,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? _tickActive : _tickInactive,
+                ),
               ),
             );
             return needsScroll
-                ? SizedBox(width: itemWidth, child: label)
+                ? SizedBox(width: cellWidth, child: label)
                 : Expanded(child: label);
           }),
         ),
+
         SizedBox(height: 10 * fem),
-        // Tick marks — filled up to current index.
+
+        // TICKS (tappable)
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: thumbRadius),
+          padding: EdgeInsets.symmetric(horizontal: thumbW / 2),
           child: Row(
-            children: List.generate(
-              widget.values.length,
-              (i) => Expanded(
+            children: List.generate(values.length, (i) {
+              final isSelected = i == _currentIndex;
+              final tick = GestureDetector(
+                onTap: () => onSelect(i),
+                behavior: HitTestBehavior.opaque,
                 child: Center(
-                  child: Container(
-                    width: 3 * fem,
-                    height: (i % 3 == 0) ? 11 * fem : 7 * fem,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    width: isSelected ? 4 * fem : 3 * fem,
+                    height: isSelected
+                        ? 14 * fem
+                        : (i % 3 == 0 ? 11 * fem : 7 * fem),
                     decoration: BoxDecoration(
-                      color: i <= _currentIndex
-                          ? tickColor
-                          : const Color(0xFFD9D9D9),
+                      color: isSelected ? _tickActive : _tickInactive,
                       borderRadius: BorderRadius.circular(1.5 * fem),
                     ),
                   ),
                 ),
-              ),
-            ),
+              );
+              return needsScroll
+                  ? SizedBox(width: cellWidth, child: tick)
+                  : Expanded(child: tick);
+            }),
           ),
         ),
+
         SizedBox(height: 10 * fem),
-        // Track + slider thumb.
+
+        // TRACK + DIAMOND THUMB (aligned under label)
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: thumbRadius),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                height: 6 * fem,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(3 * fem),
-                  border: Border.all(color: tickColor, width: 1),
-                ),
-              ),
-              SliderTheme(
-                data: SliderThemeData(
-                  trackHeight: 4 * fem,
-                  inactiveTrackColor: Colors.transparent,
-                  activeTrackColor: activeTrackColor,
-                  thumbColor: const Color(0xFFA9E7DF),
-                  overlayColor: const Color(0xFFBFE8E3).withOpacity(0.25),
-                  thumbShape: DiamondThumbShape(
-                    width: 10 * fem,
-                    height: 15 * fem,
+          padding: EdgeInsets.symmetric(horizontal: thumbW / 2),
+          child: SizedBox(
+            height: thumbH,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Track bar
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    height: 6 * fem,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(3 * fem),
+                      border: Border.all(color: _trackBorder, width: 1),
+                    ),
                   ),
-                  overlayShape: RoundSliderOverlayShape(
-                    overlayRadius: 16 * fem,
+                ),
+
+                // Hit areas for each segment
+                Row(
+                  children: List.generate(values.length, (i) {
+                    final hit = GestureDetector(
+                      onTap: () => onSelect(i),
+                      behavior: HitTestBehavior.opaque,
+                      child: const SizedBox.expand(),
+                    );
+                    return needsScroll
+                        ? SizedBox(width: cellWidth, height: thumbH, child: hit)
+                        : Expanded(child: hit);
+                  }),
+                ),
+
+                // Diamond thumb
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  left: thumbLeft,
+                  top: 0,
+                  bottom: 0,
+                  child: IgnorePointer(
+                    child: SizedBox(
+                      width: thumbW,
+                      child: Center(
+                        child: CustomPaint(
+                          size: Size(thumbW, thumbH),
+                          painter: _DiamondPainter(color: _thumbColor),
+                        ),
+                      ),
+                    ),
                   ),
-                  trackShape: const RoundedRectSliderTrackShape(),
                 ),
-                child: Slider(
-                  min: 0,
-                  max: (widget.values.length - 1).toDouble(),
-                  divisions: widget.values.length - 1,
-                  value: _currentIndex.toDouble(),
-                  onChanged: (v) {
-                    final i = v.round();
-                    widget.onChanged(i);
-                    if (needsScroll) _autoScrollToIndex(i, itemWidth);
-                  },
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
     );
   }
+}
 
-  void _autoScrollToIndex(int index, double itemWidth) {
-    if (!mounted || !_scrollController.hasClients) return;
-    final offset = index * itemWidth;
-    final viewportW = _scrollController.position.viewportDimension;
-    final currentOff = _scrollController.offset;
-    if (offset < currentOff) {
-      _scrollController.animateTo(
-        (offset - itemWidth).clamp(
-          0.0,
-          _scrollController.position.maxScrollExtent,
-        ),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    } else if (offset > currentOff + viewportW - itemWidth) {
-      _scrollController.animateTo(
-        (offset - viewportW + itemWidth * 2).clamp(
-          0.0,
-          _scrollController.position.maxScrollExtent,
-        ),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+// ---------------------------------------------------------------------------
+// Diamond thumb painter
+// ---------------------------------------------------------------------------
+class _DiamondPainter extends CustomPainter {
+  final Color color;
+  const _DiamondPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final path = Path()
+      ..moveTo(cx, 0)
+      ..lineTo(size.width, cy)
+      ..lineTo(cx, size.height)
+      ..lineTo(0, cy)
+      ..close();
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.fill,
+    );
   }
 
-  Widget _arrowBtn(IconData icon, VoidCallback onTap, double fem) {
+  @override
+  bool shouldRepaint(_DiamondPainter old) => old.color != color;
+}
+
+// ---------------------------------------------------------------------------
+// Reusable arrow button
+// ---------------------------------------------------------------------------
+class _ArrowButton extends StatelessWidget {
+  final IconData icon;
+  final double fem;
+  final VoidCallback onTap;
+
+  const _ArrowButton({
+    required this.icon,
+    required this.fem,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
       child: Container(

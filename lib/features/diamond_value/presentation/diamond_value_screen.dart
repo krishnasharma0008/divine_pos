@@ -5,6 +5,8 @@ import 'package:divine_pos/features/diamond_value/domain/diamond_rule_engine.dar
 import 'package:divine_pos/features/diamond_value/provider/diamond_price_provider.dart';
 import 'package:divine_pos/shared/app_bar.dart';
 import 'package:divine_pos/shared/utils/enums.dart';
+import 'package:divine_pos/shared/utils/scale_size.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -98,47 +100,6 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   // -------------------------------------------------------------------------
   // Shape change
   // -------------------------------------------------------------------------
-  // void _onShapeChanged(DiamondShape shape) {
-  //   const resetCaratIndex = 4; // 0.18
-  //   const resetCts = 0.18;
-
-  //   final isRound =
-  //       shape == DiamondShape.round && _config.shapeType == ShapeType.regular;
-  //   final newColorOptions = DiamondConfig.getColorOptions(
-  //     caratTo: resetCts,
-  //     isRound: isRound,
-  //     shapeType: _config.shapeType,
-  //   );
-  //   final newClarityOptions = DiamondConfig.getClarityOptions(
-  //     caratTo: resetCts,
-  //     isRound: isRound,
-  //     shapeType: _config.shapeType,
-  //   );
-
-  //   final currentColor =
-  //       _config.colorOptions[_config.colorIndex.clamp(
-  //         0,
-  //         _config.colorOptions.length - 1,
-  //       )];
-  //   final currentClarity =
-  //       _config.clarityOptions[_config.clarityIndex.clamp(
-  //         0,
-  //         _config.clarityOptions.length - 1,
-  //       )];
-
-  //   _updateConfig(
-  //     _config.copyWith(
-  //       shape: shape,
-  //       caratIndex: resetCaratIndex,
-  //       colorIndex: newColorOptions.contains(currentColor)
-  //           ? newColorOptions.indexOf(currentColor)
-  //           : 0,
-  //       clarityIndex: newClarityOptions.contains(currentClarity)
-  //           ? newClarityOptions.indexOf(currentClarity)
-  //           : 0,
-  //     ),
-  //   );
-  // }
 
   void _onShapeChanged(DiamondShape shape) {
     final newConfig = _config.copyWith(shape: shape, caratIndex: 4);
@@ -155,48 +116,6 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   // -------------------------------------------------------------------------
   // Carat change
   // -------------------------------------------------------------------------
-  // void _onCaratChanged(String value) {
-  //   final i = caratSteps.indexOf(value);
-  //   if (i < 0) return;
-  //   final newCts = double.parse(value);
-  //   final isRound =
-  //       _config.shape == DiamondShape.round &&
-  //       _config.shapeType == ShapeType.regular;
-
-  //   final newColorOptions = DiamondConfig.getColorOptions(
-  //     caratTo: newCts,
-  //     isRound: isRound,
-  //     shapeType: _config.shapeType,
-  //   );
-  //   final newClarityOptions = DiamondConfig.getClarityOptions(
-  //     caratTo: newCts,
-  //     isRound: isRound,
-  //     shapeType: _config.shapeType,
-  //   );
-
-  //   final currentColor =
-  //       _config.colorOptions[_config.colorIndex.clamp(
-  //         0,
-  //         _config.colorOptions.length - 1,
-  //       )];
-  //   final currentClarity =
-  //       _config.clarityOptions[_config.clarityIndex.clamp(
-  //         0,
-  //         _config.clarityOptions.length - 1,
-  //       )];
-
-  //   _updateConfig(
-  //     _config.copyWith(
-  //       caratIndex: i,
-  //       colorIndex: newColorOptions.contains(currentColor)
-  //           ? newColorOptions.indexOf(currentColor)
-  //           : 0,
-  //       clarityIndex: newClarityOptions.contains(currentClarity)
-  //           ? newClarityOptions.indexOf(currentClarity)
-  //           : 0,
-  //     ),
-  //   );
-  // }
 
   void _onCaratChanged(String value) {
     final i = caratSteps.indexOf(value);
@@ -212,43 +131,6 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   // -------------------------------------------------------------------------
   // Color change
   // -------------------------------------------------------------------------
-  // void _onColorChanged(int newColorIndex) {
-  //   final colorList = _config.colorOptions;
-  //   final selectedColor =
-  //       colorList[newColorIndex.clamp(0, colorList.length - 1)];
-
-  //   ShapeType newShapeType;
-  //   if (selectedColor == 'Yellow Vivid') {
-  //     newShapeType = ShapeType.vdf;
-  //   } else if (selectedColor == 'Yellow Intense') {
-  //     newShapeType = ShapeType.iny;
-  //   } else {
-  //     newShapeType = ShapeType.regular;
-  //   }
-
-  //   final newClarityOptions = DiamondConfig.getClarityOptions(
-  //     caratTo: _config.caratDouble,
-  //     isRound:
-  //         _config.shape == DiamondShape.round &&
-  //         newShapeType == ShapeType.regular,
-  //     shapeType: newShapeType,
-  //   );
-  //   final currentClarity =
-  //       _config.clarityOptions[_config.clarityIndex.clamp(
-  //         0,
-  //         _config.clarityOptions.length - 1,
-  //       )];
-
-  //   _updateConfig(
-  //     _config.copyWith(
-  //       shapeType: newShapeType,
-  //       colorIndex: newColorIndex.clamp(0, colorList.length - 1),
-  //       clarityIndex: newClarityOptions.contains(currentClarity)
-  //           ? newClarityOptions.indexOf(currentClarity)
-  //           : 0,
-  //     ),
-  //   );
-  // }
 
   void _onColorChanged(int index) {
     final newConfig = _config.copyWith(colorIndex: index);
@@ -282,8 +164,11 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5F2),
+      //backgroundColor: const Color(0xFFF7F5F2),
+      backgroundColor: Color(0xFFFFFFFF),
       appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
       body: SafeArea(
         child: Column(
@@ -291,11 +176,16 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 28, 32, 0),
+                  padding: EdgeInsets.fromLTRB(
+                    12 * fem,
+                    28 * fem,
+                    8 * fem,
+                    0 * fem,
+                  ),
                   child: Column(
                     children: [
-                      _buildTitle(),
-                      const SizedBox(height: 28),
+                      _buildTitle(fem: fem),
+                      SizedBox(height: 28 * fem),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -303,8 +193,8 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
                             flex: 5,
                             child: DiamondDisplay(config: _config),
                           ),
-                          const SizedBox(width: 28),
-                          Expanded(flex: 7, child: _buildControls()),
+                          SizedBox(width: 28 * fem),
+                          Expanded(flex: 7, child: _buildControls(fem: fem)),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -327,65 +217,80 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
     );
   }
 
-  Widget _buildTitle() {
+  Widget _buildTitle({required double fem}) {
     return Column(
       children: [
-        const Text(
+        MyText(
           'Know Your Diamond Value',
           style: TextStyle(
-            fontFamily: 'Georgia',
-            fontSize: 26,
+            color: Colors.black,
+            fontSize: 24,
+            fontFamily: 'Rushter Glory',
             fontWeight: FontWeight.w400,
-            color: Color(0xFF2A2A2A),
-            letterSpacing: 0.5,
+            height: 1.67,
+            letterSpacing: 1.20,
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
+        SizedBox(height: 6 * fem),
+        MyText(
           "Know Your Divine Diamond's Value – Select Shape, Carat, Color & Clarity To Get The Price.",
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[500],
-            fontWeight: FontWeight.w300,
+            color: const Color(0xFF303030),
+            fontSize: 15,
+            fontFamily: 'Montserrat',
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildControls() {
+  Widget _buildControls({required double fem}) {
     return Column(
       children: [
         _ControlCard(
           label: 'Shape',
+          fem: fem,
           child: ShapeSelector(
             config: _config,
             onShapeChanged: _onShapeChanged,
             onYellowShapeChanged: _onYellowShapeChanged,
           ),
         ),
-        const SizedBox(height: 12),
-        CaratSelector(
+        SizedBox(height: 12 * fem),
+        _ControlCard(
           label: 'Carat',
-          values: caratSteps,
-          initialIndex: _config.caratIndex,
-          onChanged: _onCaratChanged,
-        ),
-        const SizedBox(height: 12),
-        ColorSliderWidget(
-          values: _config.colorOptions,
-          index: _config.colorIndex.clamp(0, _config.colorOptions.length - 1),
-          onChanged: _onColorChanged,
-        ),
-        const SizedBox(height: 12),
-        ClaritySlider(
-          values: _config.clarityOptions,
-          index: _config.clarityIndex.clamp(
-            0,
-            _config.clarityOptions.length - 1,
+          fem: fem,
+          child: CaratSelector(
+            label: '',
+            values: caratSteps,
+            initialIndex: _config.caratIndex,
+            onChanged: _onCaratChanged,
           ),
-          onChanged: _onClarityChanged,
+        ),
+        SizedBox(height: 12 * fem),
+        _ControlCard(
+          label: 'Color',
+          fem: fem,
+          child: ColorSliderWidget(
+            values: _config.colorOptions,
+            index: _config.colorIndex.clamp(0, _config.colorOptions.length - 1),
+            onChanged: _onColorChanged,
+          ),
+        ),
+        SizedBox(height: 12 * fem),
+        _ControlCard(
+          label: 'Clarity',
+          fem: fem,
+          child: ClaritySlider(
+            values: _config.clarityOptions,
+            index: _config.clarityIndex.clamp(
+              0,
+              _config.clarityOptions.length - 1,
+            ),
+            onChanged: _onClarityChanged,
+          ),
         ),
       ],
     );
@@ -395,7 +300,12 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
 class _ControlCard extends StatelessWidget {
   final String label;
   final Widget child;
-  const _ControlCard({required this.label, required this.child});
+  final double fem;
+  const _ControlCard({
+    required this.label,
+    required this.child,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -406,15 +316,15 @@ class _ControlCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE4E4E0)),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      padding: EdgeInsets.fromLTRB(16 * fem, 14 * fem, 16 * fem, 16 * fem),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          MyText(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Georgia',
-              fontSize: 16,
+              fontSize: 16 * fem,
               fontWeight: FontWeight.w500,
               color: Color(0xFF2A2A2A),
             ),
