@@ -54,10 +54,15 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
   }
 
   Future<void> _doSearch(String uid, {bool isPortfolio = false}) async {
+    if (uid.trim().isEmpty) {
+      _showError("Please enter UID");
+      return;
+    }
+
     await ref
         .read(verifyTrackProvider.notifier)
         .searchData(
-          uid: uid,
+          uid: uid.trim(),
           isPortfolio: isPortfolio,
           onNavigate: (path, {isPortfolio = false}) {
             if (isPortfolio) {
@@ -148,10 +153,8 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
                             ),
                             const SizedBox(height: 16),
                             _SubmitButton(
-                              isLoading: isLoading,
-                              onPressed: isLoading
-                                  ? null
-                                  : () => _doSearch(uidController.text),
+                              //isLoading: isLoading,
+                              onPressed: () => _doSearch(uidController.text),
                             ),
                             const SizedBox(height: 24),
                             const _OrDivider(),
