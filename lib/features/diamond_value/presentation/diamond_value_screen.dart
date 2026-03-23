@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:divine_pos/features/diamond_value/data/diamond_config_normalizer.dart';
+import 'package:divine_pos/features/diamond_value/domain/diamond_rule_engine.dart';
 import 'package:divine_pos/features/diamond_value/provider/diamond_price_provider.dart';
 import 'package:divine_pos/shared/app_bar.dart';
 import 'package:divine_pos/shared/utils/enums.dart';
@@ -35,6 +37,8 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   double? _price;
   bool _loadingPrice = false;
   Timer? _debounce;
+  final _ruleEngine = DiamondRuleEngine();
+  double? _totalPrice;
 
   @override
   void initState() {
@@ -67,7 +71,13 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
               color: config.colorLabel,
               quality: config.clarityLabel,
             );
-        if (mounted) setState(() => _price = price);
+        if (mounted) {
+          //setState(() => _price = price);
+          setState(() {
+            _price = price;
+            _totalPrice = price * config.caratDouble;
+          });
+        }
       } catch (e) {
         // Keep previous price on error; optionally show snackbar
         debugPrint('fetchPrice error: $e');
@@ -88,46 +98,54 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   // -------------------------------------------------------------------------
   // Shape change
   // -------------------------------------------------------------------------
+  // void _onShapeChanged(DiamondShape shape) {
+  //   const resetCaratIndex = 4; // 0.18
+  //   const resetCts = 0.18;
+
+  //   final isRound =
+  //       shape == DiamondShape.round && _config.shapeType == ShapeType.regular;
+  //   final newColorOptions = DiamondConfig.getColorOptions(
+  //     caratTo: resetCts,
+  //     isRound: isRound,
+  //     shapeType: _config.shapeType,
+  //   );
+  //   final newClarityOptions = DiamondConfig.getClarityOptions(
+  //     caratTo: resetCts,
+  //     isRound: isRound,
+  //     shapeType: _config.shapeType,
+  //   );
+
+  //   final currentColor =
+  //       _config.colorOptions[_config.colorIndex.clamp(
+  //         0,
+  //         _config.colorOptions.length - 1,
+  //       )];
+  //   final currentClarity =
+  //       _config.clarityOptions[_config.clarityIndex.clamp(
+  //         0,
+  //         _config.clarityOptions.length - 1,
+  //       )];
+
+  //   _updateConfig(
+  //     _config.copyWith(
+  //       shape: shape,
+  //       caratIndex: resetCaratIndex,
+  //       colorIndex: newColorOptions.contains(currentColor)
+  //           ? newColorOptions.indexOf(currentColor)
+  //           : 0,
+  //       clarityIndex: newClarityOptions.contains(currentClarity)
+  //           ? newClarityOptions.indexOf(currentClarity)
+  //           : 0,
+  //     ),
+  //   );
+  // }
+
   void _onShapeChanged(DiamondShape shape) {
-    const resetCaratIndex = 4; // 0.18
-    const resetCts = 0.18;
+    final newConfig = _config.copyWith(shape: shape, caratIndex: 4);
 
-    final isRound =
-        shape == DiamondShape.round && _config.shapeType == ShapeType.regular;
-    final newColorOptions = DiamondConfig.getColorOptions(
-      caratTo: resetCts,
-      isRound: isRound,
-      shapeType: _config.shapeType,
-    );
-    final newClarityOptions = DiamondConfig.getClarityOptions(
-      caratTo: resetCts,
-      isRound: isRound,
-      shapeType: _config.shapeType,
-    );
+    final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
 
-    final currentColor =
-        _config.colorOptions[_config.colorIndex.clamp(
-          0,
-          _config.colorOptions.length - 1,
-        )];
-    final currentClarity =
-        _config.clarityOptions[_config.clarityIndex.clamp(
-          0,
-          _config.clarityOptions.length - 1,
-        )];
-
-    _updateConfig(
-      _config.copyWith(
-        shape: shape,
-        caratIndex: resetCaratIndex,
-        colorIndex: newColorOptions.contains(currentColor)
-            ? newColorOptions.indexOf(currentColor)
-            : 0,
-        clarityIndex: newClarityOptions.contains(currentClarity)
-            ? newClarityOptions.indexOf(currentClarity)
-            : 0,
-      ),
-    );
+    _updateConfig(normalized);
   }
 
   void _onYellowShapeChanged(String yellowShape) {
@@ -137,88 +155,107 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   // -------------------------------------------------------------------------
   // Carat change
   // -------------------------------------------------------------------------
+  // void _onCaratChanged(String value) {
+  //   final i = caratSteps.indexOf(value);
+  //   if (i < 0) return;
+  //   final newCts = double.parse(value);
+  //   final isRound =
+  //       _config.shape == DiamondShape.round &&
+  //       _config.shapeType == ShapeType.regular;
+
+  //   final newColorOptions = DiamondConfig.getColorOptions(
+  //     caratTo: newCts,
+  //     isRound: isRound,
+  //     shapeType: _config.shapeType,
+  //   );
+  //   final newClarityOptions = DiamondConfig.getClarityOptions(
+  //     caratTo: newCts,
+  //     isRound: isRound,
+  //     shapeType: _config.shapeType,
+  //   );
+
+  //   final currentColor =
+  //       _config.colorOptions[_config.colorIndex.clamp(
+  //         0,
+  //         _config.colorOptions.length - 1,
+  //       )];
+  //   final currentClarity =
+  //       _config.clarityOptions[_config.clarityIndex.clamp(
+  //         0,
+  //         _config.clarityOptions.length - 1,
+  //       )];
+
+  //   _updateConfig(
+  //     _config.copyWith(
+  //       caratIndex: i,
+  //       colorIndex: newColorOptions.contains(currentColor)
+  //           ? newColorOptions.indexOf(currentColor)
+  //           : 0,
+  //       clarityIndex: newClarityOptions.contains(currentClarity)
+  //           ? newClarityOptions.indexOf(currentClarity)
+  //           : 0,
+  //     ),
+  //   );
+  // }
+
   void _onCaratChanged(String value) {
     final i = caratSteps.indexOf(value);
     if (i < 0) return;
-    final newCts = double.parse(value);
-    final isRound =
-        _config.shape == DiamondShape.round &&
-        _config.shapeType == ShapeType.regular;
 
-    final newColorOptions = DiamondConfig.getColorOptions(
-      caratTo: newCts,
-      isRound: isRound,
-      shapeType: _config.shapeType,
-    );
-    final newClarityOptions = DiamondConfig.getClarityOptions(
-      caratTo: newCts,
-      isRound: isRound,
-      shapeType: _config.shapeType,
-    );
+    final newConfig = _config.copyWith(caratIndex: i);
 
-    final currentColor =
-        _config.colorOptions[_config.colorIndex.clamp(
-          0,
-          _config.colorOptions.length - 1,
-        )];
-    final currentClarity =
-        _config.clarityOptions[_config.clarityIndex.clamp(
-          0,
-          _config.clarityOptions.length - 1,
-        )];
+    final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
 
-    _updateConfig(
-      _config.copyWith(
-        caratIndex: i,
-        colorIndex: newColorOptions.contains(currentColor)
-            ? newColorOptions.indexOf(currentColor)
-            : 0,
-        clarityIndex: newClarityOptions.contains(currentClarity)
-            ? newClarityOptions.indexOf(currentClarity)
-            : 0,
-      ),
-    );
+    _updateConfig(normalized);
   }
 
   // -------------------------------------------------------------------------
   // Color change
   // -------------------------------------------------------------------------
-  void _onColorChanged(int newColorIndex) {
-    final colorList = _config.colorOptions;
-    final selectedColor =
-        colorList[newColorIndex.clamp(0, colorList.length - 1)];
+  // void _onColorChanged(int newColorIndex) {
+  //   final colorList = _config.colorOptions;
+  //   final selectedColor =
+  //       colorList[newColorIndex.clamp(0, colorList.length - 1)];
 
-    ShapeType newShapeType;
-    if (selectedColor == 'Yellow Vivid') {
-      newShapeType = ShapeType.vdf;
-    } else if (selectedColor == 'Yellow Intense') {
-      newShapeType = ShapeType.iny;
-    } else {
-      newShapeType = ShapeType.regular;
-    }
+  //   ShapeType newShapeType;
+  //   if (selectedColor == 'Yellow Vivid') {
+  //     newShapeType = ShapeType.vdf;
+  //   } else if (selectedColor == 'Yellow Intense') {
+  //     newShapeType = ShapeType.iny;
+  //   } else {
+  //     newShapeType = ShapeType.regular;
+  //   }
 
-    final newClarityOptions = DiamondConfig.getClarityOptions(
-      caratTo: _config.caratDouble,
-      isRound:
-          _config.shape == DiamondShape.round &&
-          newShapeType == ShapeType.regular,
-      shapeType: newShapeType,
-    );
-    final currentClarity =
-        _config.clarityOptions[_config.clarityIndex.clamp(
-          0,
-          _config.clarityOptions.length - 1,
-        )];
+  //   final newClarityOptions = DiamondConfig.getClarityOptions(
+  //     caratTo: _config.caratDouble,
+  //     isRound:
+  //         _config.shape == DiamondShape.round &&
+  //         newShapeType == ShapeType.regular,
+  //     shapeType: newShapeType,
+  //   );
+  //   final currentClarity =
+  //       _config.clarityOptions[_config.clarityIndex.clamp(
+  //         0,
+  //         _config.clarityOptions.length - 1,
+  //       )];
 
-    _updateConfig(
-      _config.copyWith(
-        shapeType: newShapeType,
-        colorIndex: newColorIndex.clamp(0, colorList.length - 1),
-        clarityIndex: newClarityOptions.contains(currentClarity)
-            ? newClarityOptions.indexOf(currentClarity)
-            : 0,
-      ),
-    );
+  //   _updateConfig(
+  //     _config.copyWith(
+  //       shapeType: newShapeType,
+  //       colorIndex: newColorIndex.clamp(0, colorList.length - 1),
+  //       clarityIndex: newClarityOptions.contains(currentClarity)
+  //           ? newClarityOptions.indexOf(currentClarity)
+  //           : 0,
+  //     ),
+  //   );
+  // }
+
+  void _onColorChanged(int index) {
+    final newConfig = _config.copyWith(colorIndex: index);
+
+    final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
+
+    _updateConfig(normalized);
   }
 
   // -------------------------------------------------------------------------
@@ -278,8 +315,9 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
             ),
             PriceFooter(
               config: _config,
-              price: _price,
-              carats: _config.caratDouble,
+              //price: _price,
+              //carats: _config.caratDouble,
+              totalPrice: _totalPrice,
               isLoading: _loadingPrice,
               onCompare: _showPriceChart,
             ),

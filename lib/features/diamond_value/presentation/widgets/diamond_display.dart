@@ -58,6 +58,8 @@ class _DiamondCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('Check selected Data : ${config}');
+
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       transitionBuilder: (child, anim) => FadeTransition(

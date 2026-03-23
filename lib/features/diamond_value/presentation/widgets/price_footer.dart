@@ -4,8 +4,9 @@ import '../../data/diamond_config.dart';
 
 class PriceFooter extends StatelessWidget {
   final DiamondConfig config;
-  final double? price; // null = not yet loaded
-  final double? carats;
+  //final double? price; // null = not yet loaded
+  //final double? carats;
+  final double? totalPrice;
   final bool isLoading;
   final VoidCallback onCompare;
 
@@ -13,8 +14,9 @@ class PriceFooter extends StatelessWidget {
     super.key,
     required this.config,
     required this.onCompare,
-    this.price,
-    this.carats,
+    //this.price,
+    //this.carats,
+    this.totalPrice,
     this.isLoading = false,
   });
 
@@ -34,13 +36,11 @@ class PriceFooter extends StatelessWidget {
               // Price — shimmer while loading
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
-                child: isLoading
-                    ? _PriceShimmer(key: const ValueKey('loading'))
+                child: totalPrice == null
+                    ? const _PriceShimmer(key: ValueKey('loading'))
                     : Text(
-                        price != null && carats != null
-                            ? (price! * carats!).inRupeesFormat()
-                            : '—',
-                        key: const ValueKey('price'),
+                        totalPrice!.inRupeesFormat(),
+                        key: ValueKey(totalPrice),
                         style: const TextStyle(
                           fontFamily: 'Georgia',
                           fontSize: 28,

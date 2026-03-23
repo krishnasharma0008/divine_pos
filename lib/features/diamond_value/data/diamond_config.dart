@@ -217,6 +217,15 @@ class DiamondConfig {
     }
   }
 
+  String? getDisplayColor(String? color) {
+    return switch (color) {
+      'VDY' => 'Yellow Vivid',
+      'INY' => 'Yellow Intense',
+      null => null,
+      _ => color,
+    };
+  }
+
   String get diamondCode => '$shapeCode-$caratLabel-$colorLabel-$clarityLabel';
 
   // ---------------------------------------------------------------------------
