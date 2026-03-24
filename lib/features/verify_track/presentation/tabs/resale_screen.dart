@@ -334,7 +334,7 @@ class _BuybackTabState extends State<_BuybackTab>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(0, 30, 25, 20),
+          padding: EdgeInsets.fromLTRB(25 * fem, 30 * fem, 25 * fem, 20 * fem),
           child: _BrowserTabBar(
             controller: _stc,
             tabs: const [
@@ -563,39 +563,40 @@ class _StoreViewState extends State<_StoreView> {
               ),
             ),
             SizedBox(height: 16 * fem),
-          ] else ...[
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 12 * fem,
-                vertical: 4 * fem,
-              ),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.divider),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  hint: MyText(
-                    'Select a store',
-                    style: TextStyle(
-                      fontSize: 14 * fem,
-                      color: AppColors.textLight,
-                    ),
-                  ),
-                  value: _selectedStore,
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down,
-                    color: AppColors.textMid,
-                  ),
-                  items: const [],
-                  onChanged: (v) => setState(() => _selectedStore = v),
-                ),
-              ),
-            ),
-            SizedBox(height: 16 * fem),
           ],
 
+          //else ...[
+          //   Container(
+          //     padding: EdgeInsets.symmetric(
+          //       horizontal: 12 * fem,
+          //       vertical: 4 * fem,
+          //     ),
+          //     decoration: BoxDecoration(
+          //       border: Border.all(color: AppColors.divider),
+          //       borderRadius: BorderRadius.circular(4),
+          //     ),
+          //     child: DropdownButtonHideUnderline(
+          //       child: DropdownButton<String>(
+          //         isExpanded: true,
+          //         hint: MyText(
+          //           'Select a store',
+          //           style: TextStyle(
+          //             fontSize: 14 * fem,
+          //             color: AppColors.textLight,
+          //           ),
+          //         ),
+          //         value: _selectedStore,
+          //         icon: const Icon(
+          //           Icons.keyboard_arrow_down,
+          //           color: AppColors.textMid,
+          //         ),
+          //         items: const [],
+          //         onChanged: (v) => setState(() => _selectedStore = v),
+          //       ),
+          //     ),
+          //   ),
+          //   SizedBox(height: 16 * fem),
+          // ],
           MyText(
             'Product Details',
             style: TextStyle(
