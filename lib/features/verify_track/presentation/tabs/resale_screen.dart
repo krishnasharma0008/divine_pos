@@ -1,6 +1,9 @@
 // lib/features/verify_track/presentation/tabs/resale_screen.dart
 
+import 'package:divine_pos/features/feedback_form/presentation/customer_feedback_form.dart';
 import 'package:divine_pos/shared/utils/currency_formatter.dart';
+import 'package:divine_pos/shared/utils/scale_size.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import '../../data/verify_track_model.dart';
 import '../verify_detail_shell.dart';
@@ -35,27 +38,29 @@ class _ResaleScreenState extends State<ResaleScreen>
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     return Column(
       children: [
         // ── Outer segmented tab bar ───────────────────────────────────────────
         Container(
           color: AppColors.white,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: EdgeInsets.fromLTRB(16 * fem, 12 * fem, 16 * fem, 0 * fem),
           child: Container(
-            height: 44,
+            height: 44 * fem,
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.divider),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(6 * fem),
             ),
             child: Row(
               children: [
-                _Segment(label: 'Upgrade', index: 0, controller: _tc),
-                _Segment(label: 'Buyback', index: 1, controller: _tc),
+                _Segment(label: 'Upgrade', index: 0, controller: _tc, fem: fem),
+                _Segment(label: 'Buyback', index: 1, controller: _tc, fem: fem),
                 _Segment(
                   label: 'Exchange',
                   index: 2,
                   controller: _tc,
                   isLast: true,
+                  fem: fem,
                 ),
               ],
             ),
@@ -67,9 +72,9 @@ class _ResaleScreenState extends State<ResaleScreen>
           child: TabBarView(
             controller: _tc,
             children: [
-              _UpgradeTab(product: widget.product),
-              _BuybackTab(product: widget.product),
-              _ExchangeTab(product: widget.product),
+              _UpgradeTab(product: widget.product, fem: fem),
+              _BuybackTab(product: widget.product, fem: fem),
+              _ExchangeTab(product: widget.product, fem: fem),
             ],
           ),
         ),
@@ -84,7 +89,8 @@ class _ResaleScreenState extends State<ResaleScreen>
 
 class _UpgradeTab extends StatefulWidget {
   final VerifyTrackByUid product;
-  const _UpgradeTab({required this.product});
+  final double fem;
+  const _UpgradeTab({required this.product, required this.fem});
 
   @override
   State<_UpgradeTab> createState() => _UpgradeTabState();
@@ -119,6 +125,7 @@ class _UpgradeTabState extends State<_UpgradeTab> {
             value: _amountCtrl.text.isNotEmpty
                 ? _amountCtrl.text
                 : p.upgradeMinimumPrice.toString(),
+            fem: fem,
           ),
         ],
         onCancel: () => setState(() => _showForm = false),
@@ -132,35 +139,39 @@ class _UpgradeTabState extends State<_UpgradeTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Product ID + Current Value
-          _InfoRow(label: 'Product ID:', value: p.uid),
-          const SizedBox(height: 8),
+          _InfoRow(label: 'Product ID:', value: p.uid, fem: fem),
+          SizedBox(height: 8 * fem),
           _InfoRow(
             label: 'Current Value',
             value: p.currentPrice.inRupeesFormat(),
             valueColor: AppColors.gold,
+            fem: fem,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16 * fem),
           const Divider(color: AppColors.divider),
-          const SizedBox(height: 16),
+          SizedBox(height: 16 * fem),
 
           // Input row
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 flex: 2,
-                child: Text(
+                child: MyText(
                   'Enter new product amount:',
-                  style: TextStyle(fontSize: 14, color: AppColors.textDark),
+                  style: TextStyle(
+                    fontSize: 14 * fem,
+                    color: AppColors.textDark,
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12 * fem),
               Expanded(
                 flex: 3,
                 child: TextField(
                   controller: _amountCtrl,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: 14 * fem,
                     color: AppColors.textDark,
                   ),
                   onChanged: (v) {
@@ -173,9 +184,9 @@ class _UpgradeTabState extends State<_UpgradeTab> {
                     });
                   },
                   decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12 * fem,
+                      vertical: 12 * fem,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(4),
@@ -201,58 +212,58 @@ class _UpgradeTabState extends State<_UpgradeTab> {
           // ── Validation message ─────────────────────────────────────────
           // Shows in red when amount is entered but below minimum
           if (_amountCtrl.text.isNotEmpty && !_isValidAmount) ...[
-            const SizedBox(height: 6),
+            SizedBox(height: 6 * fem),
             Align(
               alignment: Alignment.centerRight,
-              child: Text(
+              child: MyText(
                 'Minimum amount to upgrade is '
                 '${p.upgradeMinimumPrice.inRupeesFormat()}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textDark),
+                style: TextStyle(fontSize: 12 * fem, color: AppColors.textDark),
               ),
             ),
           ],
 
-          const SizedBox(height: 20),
+          SizedBox(height: 20 * fem),
 
           // Black approximate value box
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.symmetric(vertical: 16 * fem),
             decoration: const BoxDecoration(color: AppColors.textDark),
             child: Column(
               children: [
-                Text(
+                MyText(
                   _approxValue > 0 ? _approxValue.inRupeesFormat() : '₹0',
-                  style: const TextStyle(
-                    fontSize: 20,
+                  style: TextStyle(
+                    fontSize: 20 * fem,
                     fontWeight: FontWeight.w700,
                     color: AppColors.white,
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6 * fem),
+                MyText(
                   'Approximate Value Payable:',
-                  style: TextStyle(fontSize: 13, color: AppColors.white),
+                  style: TextStyle(fontSize: 13 * fem, color: AppColors.white),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24 * fem),
 
           // Buttons — PROCEED disabled until amount >= minimum
-          Row(
-            children: [
-              Expanded(child: _CancelBtn(onPressed: () {})),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ProceedBtn(
-                  onPressed: _isValidAmount
-                      ? () => setState(() => _showForm = true)
-                      : null,
-                ),
-              ),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     Expanded(child: _CancelBtn(onPressed: () {})),
+          //     const SizedBox(width: 12),
+          //     Expanded(
+          //       child: _ProceedBtn(
+          //         onPressed: _isValidAmount
+          //             ? () => setState(() => _showForm = true)
+          //             : null,
+          //       ),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );
@@ -265,7 +276,8 @@ class _UpgradeTabState extends State<_UpgradeTab> {
 
 class _BuybackTab extends StatefulWidget {
   final VerifyTrackByUid product;
-  const _BuybackTab({required this.product});
+  final double fem;
+  const _BuybackTab({required this.product, required this.fem});
 
   @override
   State<_BuybackTab> createState() => _BuybackTabState();
@@ -304,12 +316,14 @@ class _BuybackTabState extends State<_BuybackTab>
             value: _subIndex == 0
                 ? p.buybackSameStorePrice.toString()
                 : p.buybackDifferentStorePrice.toString(),
+            fem: fem,
           ),
           _FormFieldData(
             label: 'Purchase Store',
             value: p.purchaseFrom.isNotEmpty
                 ? p.purchaseFrom.toUpperCase()
                 : 'DIVINE SOLITAIRES',
+            fem: fem,
           ),
         ],
         onCancel: () => setState(() => _showForm = false),
@@ -327,6 +341,7 @@ class _BuybackTabState extends State<_BuybackTab>
               'Buyback At Purchased Store',
               'Buyback At Other Store',
             ],
+            fem: fem,
           ),
         ),
         Expanded(
@@ -369,7 +384,8 @@ class _BuybackTabState extends State<_BuybackTab>
 
 class _ExchangeTab extends StatefulWidget {
   final VerifyTrackByUid product;
-  const _ExchangeTab({required this.product});
+  final double fem;
+  const _ExchangeTab({required this.product, required this.fem});
 
   @override
   State<_ExchangeTab> createState() => _ExchangeTabState();
@@ -408,12 +424,14 @@ class _ExchangeTabState extends State<_ExchangeTab>
             value: _subIndex == 0
                 ? p.exchangeSameStorePrice.toString()
                 : p.exchangeDifferentStorePrice.toString(),
+            fem: fem,
           ),
           _FormFieldData(
             label: 'Purchase Store',
             value: p.purchaseFrom.isNotEmpty
                 ? p.purchaseFrom.toUpperCase()
                 : 'DIVINE SOLITAIRES',
+            fem: fem,
           ),
         ],
         onCancel: () => setState(() => _showForm = false),
@@ -424,13 +442,14 @@ class _ExchangeTabState extends State<_ExchangeTab>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(0, 30, 25, 20),
+          padding: EdgeInsets.fromLTRB(0, 30 * fem, 25 * fem, 20 * fem),
           child: _BrowserTabBar(
             controller: _stc,
             tabs: const [
               'Exchange At Purchased Store',
               'Exchange At Other Store',
             ],
+            fem: fem,
           ),
         ),
         Expanded(
@@ -518,32 +537,38 @@ class _StoreViewState extends State<_StoreView> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16 * fem),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!widget.showStoreDropdown) ...[
-            const Text(
+            MyText(
               'Store Name',
-              style: TextStyle(fontSize: 13, color: AppColors.textDark),
+              style: TextStyle(fontSize: 13 * fem, color: AppColors.textDark),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6 * fem),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              padding: EdgeInsets.symmetric(
+                horizontal: 12 * fem,
+                vertical: 14 * fem,
+              ),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.divider),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Text(
+              child: MyText(
                 widget.storeName,
-                style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+                style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16 * fem),
           ] else ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: 12 * fem,
+                vertical: 4 * fem,
+              ),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.divider),
                 borderRadius: BorderRadius.circular(4),
@@ -551,9 +576,12 @@ class _StoreViewState extends State<_StoreView> {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   isExpanded: true,
-                  hint: const Text(
+                  hint: MyText(
                     'Select a store',
-                    style: TextStyle(fontSize: 14, color: AppColors.textLight),
+                    style: TextStyle(
+                      fontSize: 14 * fem,
+                      color: AppColors.textLight,
+                    ),
                   ),
                   value: _selectedStore,
                   icon: const Icon(
@@ -565,22 +593,22 @@ class _StoreViewState extends State<_StoreView> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16 * fem),
           ],
 
-          const Text(
+          MyText(
             'Product Details',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 14 * fem,
               fontWeight: FontWeight.w600,
               color: AppColors.textDark,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 1 * fem),
 
           if (p.sltDetails.isNotEmpty) ...[
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12 * fem),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.divider),
                 borderRadius: BorderRadius.circular(4),
@@ -588,30 +616,30 @@ class _StoreViewState extends State<_StoreView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  MyText(
                     'Divine Solitaires:',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 14 * fem,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textDark,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8 * fem),
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
+                        child: MyText(
                           _sltSummary,
-                          style: const TextStyle(
-                            fontSize: 13,
+                          style: TextStyle(
+                            fontSize: 13 * fem,
                             color: AppColors.textMid,
                           ),
                         ),
                       ),
-                      Text(
+                      MyText(
                         p.buybackSolitairePrice.inRupeesFormat(),
-                        style: const TextStyle(
-                          fontSize: 13,
+                        style: TextStyle(
+                          fontSize: 13 * fem,
                           color: AppColors.textDark,
                         ),
                       ),
@@ -620,12 +648,12 @@ class _StoreViewState extends State<_StoreView> {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8 * fem),
           ],
 
           if (p.mountDetails1.isNotEmpty) ...[
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12 * fem),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.divider),
                 borderRadius: BorderRadius.circular(4),
@@ -633,41 +661,41 @@ class _StoreViewState extends State<_StoreView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  MyText(
                     'Divine Mount',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 14 * fem,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textDark,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8 * fem),
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
+                        child: MyText(
                           _mountSummary,
-                          style: const TextStyle(
-                            fontSize: 13,
+                          style: TextStyle(
+                            fontSize: 13 * fem,
                             color: AppColors.textMid,
                           ),
                         ),
                       ),
-                      Text(
+                      MyText(
                         p.buybackMountPrice.inRupeesFormat(),
-                        style: const TextStyle(
-                          fontSize: 13,
+                        style: TextStyle(
+                          fontSize: 13 * fem,
                           color: AppColors.textDark,
                         ),
                       ),
                     ],
                   ),
                   if (p.sdPcs > 0) ...[
-                    const SizedBox(height: 4),
-                    Text(
+                    SizedBox(height: 4 * fem),
+                    MyText(
                       _sdSummary,
-                      style: const TextStyle(
-                        fontSize: 13,
+                      style: TextStyle(
+                        fontSize: 13 * fem,
                         color: AppColors.textMid,
                       ),
                     ),
@@ -677,43 +705,46 @@ class _StoreViewState extends State<_StoreView> {
             ),
           ],
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12 * fem),
           SizedBox(
             width: double.infinity,
             height: 1,
             child: CustomPaint(painter: _DashedDividerPainter()),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12 * fem),
 
           _InfoRow(
             label: widget.labelPrimary,
             value: widget.primaryAmount.inRupeesFormat(),
             valueColor: AppColors.gold,
+            fem: fem,
           ),
 
           if (widget.processingCharge > 0) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8 * fem),
             _InfoRow(
               label: 'Admin & Processing Charge:',
               value: '-${widget.processingCharge.inRupeesFormat()}',
               valueColor: AppColors.textMid,
+              fem: fem,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8 * fem),
             _InfoRow(
               label: widget.labelFinal ?? 'Final Amount:',
               value: (widget.finalAmount ?? 0).inRupeesFormat(),
               valueColor: AppColors.gold,
+              fem: fem,
             ),
           ],
 
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(child: _CancelBtn(onPressed: () {})),
-              const SizedBox(width: 12),
-              Expanded(child: _ProceedBtn(onPressed: widget.onProceed)),
-            ],
-          ),
+          // const SizedBox(height: 24),
+          // Row(
+          //   children: [
+          //     Expanded(child: _CancelBtn(onPressed: () {})),
+          //     const SizedBox(width: 12),
+          //     Expanded(child: _ProceedBtn(onPressed: widget.onProceed)),
+          //   ],
+          // ),
         ],
       ),
     );
@@ -727,7 +758,12 @@ class _StoreViewState extends State<_StoreView> {
 class _FormFieldData {
   final String label;
   final String value;
-  const _FormFieldData({required this.label, required this.value});
+  final double fem;
+  const _FormFieldData({
+    required this.label,
+    required this.value,
+    required this.fem,
+  });
 }
 
 class _ResaleForm extends StatefulWidget {
@@ -767,73 +803,73 @@ class _ResaleFormState extends State<_ResaleForm> {
     return Stack(
       children: [
         SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16 * fem),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              MyText(
                 'Customer Information',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 16 * fem,
                   fontWeight: FontWeight.w600,
                   color: AppColors.gold,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16 * fem),
 
-              _FormLabel('Customer Name'),
+              _FormLabel('Customer Name', fem),
               _FormInput(controller: _nameCtrl),
-              const SizedBox(height: 12),
+              SizedBox(height: 12 * fem),
 
-              _FormLabel('Mobile Number'),
+              _FormLabel('Mobile Number', fem),
               _FormInput(
                 controller: _mobileCtrl,
                 keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24 * fem),
 
-              Text(
+              MyText(
                 widget.formTitle,
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: 16 * fem,
                   fontWeight: FontWeight.w600,
                   color: AppColors.gold,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16 * fem),
 
-              _FormLabel('Uid *'),
+              _FormLabel('Uid *', fem),
               _FormInput(initialValue: p.uid, readOnly: true),
-              const SizedBox(height: 12),
+              SizedBox(height: 12 * fem),
 
-              _FormLabel('Product Category'),
+              _FormLabel('Product Category', fem),
               _FormInput(initialValue: p.category, readOnly: true),
-              const SizedBox(height: 12),
+              SizedBox(height: 12 * fem),
 
               ...widget.extraFields.map(
                 (f) => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _FormLabel(f.label),
+                    _FormLabel(f.label, fem),
                     _FormInput(initialValue: f.value, readOnly: true),
                     const SizedBox(height: 12),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(child: _CancelBtn(onPressed: widget.onCancel)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _SubmitBtn(
-                      onPressed: () => setState(() => _showSuccess = true),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24 * fem),
+              // Row(
+              //   children: [
+              //     Expanded(child: _CancelBtn(onPressed: widget.onCancel)),
+              //     const SizedBox(width: 12),
+              //     Expanded(
+              //       child: _SubmitBtn(
+              //         onPressed: () => setState(() => _showSuccess = true),
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // const SizedBox(height: 24),
             ],
           ),
         ),
@@ -843,6 +879,7 @@ class _ResaleFormState extends State<_ResaleForm> {
               setState(() => _showSuccess = false);
               widget.onSubmit();
             },
+            fem: fem,
           ),
       ],
     );
@@ -855,7 +892,8 @@ class _ResaleFormState extends State<_ResaleForm> {
 
 class _SuccessDialog extends StatelessWidget {
   final VoidCallback onOkay;
-  const _SuccessDialog({required this.onOkay});
+  final double fem;
+  const _SuccessDialog({required this.onOkay, required this.fem});
 
   @override
   Widget build(BuildContext context) => Positioned.fill(
@@ -863,8 +901,8 @@ class _SuccessDialog extends StatelessWidget {
       color: AppColors.textDark.withOpacity(0.45),
       child: Center(
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          padding: const EdgeInsets.all(24),
+          margin: EdgeInsets.symmetric(horizontal: 24 * fem),
+          padding: EdgeInsets.all(24 * fem),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(12),
@@ -881,17 +919,17 @@ class _SuccessDialog extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.check_circle,
                     color: AppColors.mintDark,
-                    size: 24,
+                    size: 24 * fem,
                   ),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
+                  SizedBox(width: 10 * fem),
+                  Expanded(
+                    child: MyText(
                       'Successfully Submitted',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 16 * fem,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textDark,
                       ),
@@ -899,31 +937,31 @@ class _SuccessDialog extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: onOkay,
-                    child: const Icon(
+                    child: Icon(
                       Icons.close,
-                      size: 20,
+                      size: 20 * fem,
                       color: AppColors.textMid,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16 * fem),
               const Divider(color: AppColors.divider),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 16 * fem),
+              MyText(
                 'Our CRM team will reach out to you during working days. '
                 'Thank you for your patience.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 14 * fem,
                   color: AppColors.textMid,
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20 * fem),
               SizedBox(
-                width: 120,
-                height: 44,
+                width: 120 * fem,
+                height: 44 * fem,
                 child: ElevatedButton(
                   onPressed: onOkay,
                   style: ElevatedButton.styleFrom(
@@ -934,10 +972,10 @@ class _SuccessDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  child: const Text(
+                  child: MyText(
                     'OKAY',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 13 * fem,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
                     ),
@@ -961,12 +999,14 @@ class _Segment extends StatefulWidget {
   final int index;
   final TabController controller;
   final bool isLast;
+  final double fem;
 
   const _Segment({
     required this.label,
     required this.index,
     required this.controller,
     this.isLast = false,
+    required this.fem,
   });
 
   @override
@@ -1006,11 +1046,11 @@ class _SegmentState extends State<_Segment> {
               bottomRight: Radius.circular(widget.isLast ? 5 : 0),
             ),
           ),
-          child: Text(
+          child: MyText(
             widget.label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 12 * fem,
               fontWeight: active ? FontWeight.w700 : FontWeight.w400,
               color: active ? AppColors.textDark : AppColors.textLight,
             ),
@@ -1028,7 +1068,12 @@ class _SegmentState extends State<_Segment> {
 class _BrowserTabBar extends StatefulWidget {
   final TabController controller;
   final List<String> tabs;
-  const _BrowserTabBar({required this.controller, required this.tabs});
+  final double fem;
+  const _BrowserTabBar({
+    required this.controller,
+    required this.tabs,
+    required this.fem,
+  });
 
   @override
   State<_BrowserTabBar> createState() => _BrowserTabBarState();
@@ -1072,13 +1117,18 @@ class _BrowserTabBarState extends State<_BrowserTabBar> {
                         isLeftTab: i == 0,
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                        padding: EdgeInsets.fromLTRB(
+                          20 * fem,
+                          0 * fem,
+                          20 * fem,
+                          8 * fem,
+                        ),
                         child: Align(
                           alignment: Alignment.bottomCenter,
-                          child: Text(
+                          child: MyText(
                             widget.tabs[i],
-                            style: const TextStyle(
-                              fontSize: 12,
+                            style: TextStyle(
+                              fontSize: 12 * fem,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textDark,
                             ),
@@ -1098,13 +1148,18 @@ class _BrowserTabBarState extends State<_BrowserTabBar> {
                       isLeftTab: i == 0,
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      padding: EdgeInsets.fromLTRB(
+                        20 * fem,
+                        0 * fem,
+                        20 * fem,
+                        8 * fem,
+                      ),
                       child: Align(
                         alignment: Alignment.bottomCenter,
-                        child: Text(
+                        child: MyText(
                           widget.tabs[i],
-                          style: const TextStyle(
-                            fontSize: 12,
+                          style: TextStyle(
+                            fontSize: 12 * fem,
                             fontWeight: FontWeight.w400,
                             color: AppColors.textMid,
                           ),
@@ -1212,22 +1267,28 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  const _InfoRow({required this.label, required this.value, this.valueColor});
+  final double fem;
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
     child: Row(
       children: [
-        Text(
+        MyText(
           label,
-          style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+          style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
         ),
         const Spacer(),
-        Text(
+        MyText(
           value,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 14 * fem,
             fontWeight: FontWeight.w600,
             color: valueColor ?? AppColors.textDark,
           ),
@@ -1239,14 +1300,15 @@ class _InfoRow extends StatelessWidget {
 
 class _FormLabel extends StatelessWidget {
   final String text;
-  const _FormLabel(this.text);
+  final double fem;
+  const _FormLabel(this.text, this.fem);
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
-    child: Text(
+    child: MyText(
       text,
-      style: const TextStyle(fontSize: 13, color: AppColors.textMid),
+      style: TextStyle(fontSize: 13 * fem, color: AppColors.textMid),
     ),
   );
 }
@@ -1273,11 +1335,14 @@ class _FormInput extends StatelessWidget {
             : null),
     readOnly: readOnly,
     keyboardType: keyboardType,
-    style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+    style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
     decoration: InputDecoration(
       filled: true,
       fillColor: readOnly ? AppColors.bgGrey : AppColors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 12 * fem,
+        vertical: 14 * fem,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(4),
         borderSide: const BorderSide(color: AppColors.divider),
@@ -1294,68 +1359,69 @@ class _FormInput extends StatelessWidget {
   );
 }
 
-class _CancelBtn extends StatelessWidget {
-  final VoidCallback onPressed;
-  const _CancelBtn({required this.onPressed});
+// class _CancelBtn extends StatelessWidget {
+//   final VoidCallback onPressed;
+//   const _CancelBtn({required this.onPressed});
 
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 48,
-    child: OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.textDark,
-        side: const BorderSide(color: AppColors.divider),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      ),
-      child: const Text(
-        'CANCEL',
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
-        ),
-      ),
-    ),
-  );
-}
+//   @override
+//   Widget build(BuildContext context) => SizedBox(
+//     height: 48,
+//     child: OutlinedButton(
+//       onPressed: onPressed,
+//       style: OutlinedButton.styleFrom(
+//         foregroundColor: AppColors.textDark,
+//         side: const BorderSide(color: AppColors.divider),
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+//       ),
+//       child: const Text(
+//         'CANCEL',
+//         style: TextStyle(
+//           fontSize: 13,
+//           fontWeight: FontWeight.w700,
+//           letterSpacing: 1.2,
+//         ),
+//       ),
+//     ),
+//   );
+// }
 
-class _ProceedBtn extends StatelessWidget {
-  final VoidCallback? onPressed;
-  const _ProceedBtn({required this.onPressed});
+// class _ProceedBtn extends StatelessWidget {
+//   final VoidCallback? onPressed;
+//   const _ProceedBtn({required this.onPressed});
 
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 48,
-    child: ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: onPressed != null
-            ? AppColors.textDark
-            : AppColors.textLight,
-        foregroundColor: AppColors.white,
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      ),
-      child: const Text(
-        'PROCEED',
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
-        ),
-      ),
-    ),
-  );
-}
+//   @override
+//   Widget build(BuildContext context) => SizedBox(
+//     height: 48,
+//     child: ElevatedButton(
+//       onPressed: onPressed,
+//       style: ElevatedButton.styleFrom(
+//         backgroundColor: onPressed != null
+//             ? AppColors.textDark
+//             : AppColors.textLight,
+//         foregroundColor: AppColors.white,
+//         elevation: 0,
+//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+//       ),
+//       child: const Text(
+//         'PROCEED',
+//         style: TextStyle(
+//           fontSize: 13,
+//           fontWeight: FontWeight.w700,
+//           letterSpacing: 1.2,
+//         ),
+//       ),
+//     ),
+//   );
+// }
 
 class _SubmitBtn extends StatelessWidget {
   final VoidCallback onPressed;
-  const _SubmitBtn({required this.onPressed});
+  final double fem;
+  const _SubmitBtn({required this.onPressed, required this.fem});
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 48,
+    height: 48 * fem,
     child: ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -1364,10 +1430,10 @@ class _SubmitBtn extends StatelessWidget {
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
-      child: const Text(
+      child: MyText(
         'SUBMIT',
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 13 * fem,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,
         ),

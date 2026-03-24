@@ -1,5 +1,7 @@
 // lib/features/verify_track/presentation/tabs/insurance_screen.dart
 
+import 'package:divine_pos/shared/utils/scale_size.dart';
+import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import '../../data/verify_track_model.dart';
 import '../verify_detail_shell.dart';
@@ -29,6 +31,8 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
 
   VerifyTrackByUid get p => widget.product;
 
+  final fem = ScaleSize.aspectRatio;
+
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -48,12 +52,12 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
         // ── Step content ────────────────────────────────────────────────────
         switch (_step) {
           _InsuranceStep.landing => _buildLanding(),
-          _InsuranceStep.form => _buildForm(),
+          _InsuranceStep.form => _buildForm(fem: fem),
           _InsuranceStep.done => _buildSuccess(),
         },
 
         // ── Heads Up dialog (shown after APPLY tap) ──────────────────────────
-        if (_showHeadsUp) _buildHeadsUpDialog(),
+        if (_showHeadsUp) _buildHeadsUpDialog(fem: fem),
       ],
     );
   }
@@ -65,48 +69,57 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Dark banner
-          _buildBanner(),
+          _buildBanner(fem: fem),
 
-          const SizedBox(height: 32),
+          SizedBox(height: 32 * fem),
 
           // Feature rows
           _FeatureRow(
             icon: _InsuranceIcons.shield,
             label: 'FREE INSURANCE FOR 1 YEAR',
+            fem: fem,
           ),
           _divider(),
-          _FeatureRow(icon: _InsuranceIcons.claim, label: 'EASY CLAIM PROCESS'),
+          _FeatureRow(
+            icon: _InsuranceIcons.claim,
+            label: 'EASY CLAIM PROCESS',
+            fem: fem,
+          ),
           _divider(),
-          _FeatureRow(icon: _InsuranceIcons.terms, label: 'TERMS & CONDITIONS'),
+          _FeatureRow(
+            icon: _InsuranceIcons.terms,
+            label: 'TERMS & CONDITIONS',
+            fem: fem,
+          ),
 
-          const SizedBox(height: 40),
+          SizedBox(height: 40 * fem),
 
           // APPLY button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () => setState(() => _showHeadsUp = true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textDark,
-                  foregroundColor: AppColors.white,
-                  elevation: 0,
-                  shape: const RoundedRectangleBorder(),
-                ),
-                child: const Text(
-                  'APPLY',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 16),
+          //   child: SizedBox(
+          //     width: double.infinity,
+          //     height: 50,
+          //     child: ElevatedButton(
+          //       onPressed: () => setState(() => _showHeadsUp = true),
+          //       style: ElevatedButton.styleFrom(
+          //         backgroundColor: AppColors.textDark,
+          //         foregroundColor: AppColors.white,
+          //         elevation: 0,
+          //         shape: const RoundedRectangleBorder(),
+          //       ),
+          //       child: const Text(
+          //         'APPLY',
+          //         style: TextStyle(
+          //           fontSize: 13,
+          //           fontWeight: FontWeight.w700,
+          //           letterSpacing: 1.5,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ),
+          SizedBox(height: 32),
         ],
       ),
     );
@@ -120,67 +133,74 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
   );
 
   // ── FORM ───────────────────────────────────────────────────────────────────
-  Widget _buildForm() {
+  Widget _buildForm({required double fem}) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildBanner(),
+          _buildBanner(fem: fem),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                MyText(
                   'Personal Information',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 16 * fem,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textDark,
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20 * fem),
 
-                _FieldLabel('Name *'),
-                _InsuranceField(controller: _nameCtrl),
-                const SizedBox(height: 14),
+                _FieldLabel('Name *', fem),
+                _InsuranceField(controller: _nameCtrl, fem: fem),
+                SizedBox(height: 14 * fem),
 
-                _FieldLabel('Email *'),
+                _FieldLabel('Email *', fem),
                 _InsuranceField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
+                  fem: fem,
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14 * fem),
 
-                _FieldLabel('Mobile *'),
+                _FieldLabel('Mobile *', fem),
                 _InsuranceField(
                   controller: _mobileCtrl,
                   keyboardType: TextInputType.phone,
+                  fem: fem,
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14 * fem),
 
-                _FieldLabel('Address *'),
-                _InsuranceField(controller: _addressCtrl, maxLines: 2),
-                const SizedBox(height: 14),
+                _FieldLabel('Address *', fem),
+                _InsuranceField(
+                  controller: _addressCtrl,
+                  maxLines: 2,
+                  fem: fem,
+                ),
+                SizedBox(height: 14 * fem),
 
-                _FieldLabel('City'),
-                _InsuranceField(controller: _cityCtrl),
-                const SizedBox(height: 14),
+                _FieldLabel('City', fem),
+                _InsuranceField(controller: _cityCtrl, fem: fem),
+                SizedBox(height: 14 * fem),
 
-                _FieldLabel('Pin Code *'),
+                _FieldLabel('Pin Code *', fem),
                 _InsuranceField(
                   controller: _pinCtrl,
                   keyboardType: TextInputType.number,
+                  fem: fem,
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14 * fem),
 
-                _FieldLabel('Date of Birth'),
-                _InsuranceDateField(controller: _dobCtrl),
-                const SizedBox(height: 32),
+                _FieldLabel('Date of Birth', fem),
+                _InsuranceDateField(controller: _dobCtrl, fem: fem),
+                SizedBox(height: 32 * fem),
 
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 50 * fem,
                   child: ElevatedButton(
                     onPressed: () =>
                         setState(() => _step = _InsuranceStep.done),
@@ -190,17 +210,17 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                       elevation: 0,
                       shape: const RoundedRectangleBorder(),
                     ),
-                    child: const Text(
+                    child: MyText(
                       'SUBMIT',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 13 * fem,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24 * fem),
               ],
             ),
           ),
@@ -277,33 +297,35 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
   }
 
   // ── SHARED: dark banner with UID + shield ──────────────────────────────────
-  Widget _buildBanner() {
+  Widget _buildBanner({required double fem}) {
     return Container(
       width: double.infinity,
-      height: 180,
+      height: 180 * fem,
       color: AppColors.textDark,
       child: Stack(
         children: [
           Positioned(
-            top: 16,
-            left: 16,
-            child: Text(
+            top: 16 * fem,
+            left: 16 * fem,
+            child: MyText(
               'UID : ${p.uid}',
-              style: const TextStyle(
-                fontSize: 13,
+              style: TextStyle(
+                fontSize: 13 * fem,
                 color: AppColors.white,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          Center(child: _ShieldDiamondIcon(size: 80)),
+          Center(
+            child: _ShieldDiamondIcon(size: 80 * fem, fem: fem),
+          ),
         ],
       ),
     );
   }
 
   // ── HEADS UP DIALOG ────────────────────────────────────────────────────────
-  Widget _buildHeadsUpDialog() {
+  Widget _buildHeadsUpDialog({required double fem}) {
     return Positioned.fill(
       child: Container(
         color: Colors.black.withOpacity(0.45),
@@ -328,11 +350,11 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                 // Header
                 Row(
                   children: [
-                    const Expanded(
-                      child: Text(
+                    Expanded(
+                      child: MyText(
                         'Heads Up!',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 16 * fem,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textDark,
                         ),
@@ -340,9 +362,9 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                     ),
                     GestureDetector(
                       onTap: () => setState(() => _showHeadsUp = false),
-                      child: const Icon(
+                      child: Icon(
                         Icons.close,
-                        size: 20,
+                        size: 20 * fem,
                         color: AppColors.textMid,
                       ),
                     ),
@@ -353,9 +375,9 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                 // Message
                 RichText(
                   textAlign: TextAlign.center,
-                  text: const TextSpan(
+                  text: TextSpan(
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 14 * fem,
                       color: AppColors.textMid,
                       height: 1.6,
                     ),
@@ -372,12 +394,12 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24 * fem),
 
                 // OKAY
                 SizedBox(
-                  width: 120,
-                  height: 44,
+                  width: 120 * fem,
+                  height: 44 * fem,
                   child: ElevatedButton(
                     onPressed: () => setState(() {
                       _showHeadsUp = false;
@@ -391,10 +413,10 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    child: const Text(
+                    child: MyText(
                       'OKAY',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 13 * fem,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2,
                       ),
@@ -417,7 +439,8 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
 
 class _ShieldDiamondIcon extends StatelessWidget {
   final double size;
-  const _ShieldDiamondIcon({required this.size});
+  final double fem;
+  const _ShieldDiamondIcon({required this.size, required this.fem});
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -500,28 +523,33 @@ class _InsuranceIcons {
 class _FeatureRow extends StatelessWidget {
   final int icon;
   final String label;
-  const _FeatureRow({required this.icon, required this.label});
+  final double fem;
+  const _FeatureRow({
+    required this.icon,
+    required this.label,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16 * fem, vertical: 16 * fem),
       child: Row(
         children: [
           SizedBox(
-            width: 48,
-            height: 48,
+            width: 48 * fem,
+            height: 48 * fem,
             child: Image.asset(
               _assetForIcon(icon),
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => _FallbackIcon(icon: icon),
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
+          SizedBox(width: 16 * fem),
+          MyText(
             label,
-            style: const TextStyle(
-              fontSize: 13,
+            style: TextStyle(
+              fontSize: 13 * fem,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
               color: AppColors.gold,
@@ -565,14 +593,15 @@ class _FallbackIcon extends StatelessWidget {
 
 class _FieldLabel extends StatelessWidget {
   final String text;
-  const _FieldLabel(this.text);
+  final double fem;
+  const _FieldLabel(this.text, this.fem);
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Text(
+    padding: EdgeInsets.only(bottom: 6 * fem),
+    child: MyText(
       text,
-      style: const TextStyle(fontSize: 13, color: AppColors.textDark),
+      style: TextStyle(fontSize: 13 * fem, color: AppColors.textDark),
     ),
   );
 }
@@ -581,11 +610,13 @@ class _InsuranceField extends StatelessWidget {
   final TextEditingController controller;
   final TextInputType keyboardType;
   final int maxLines;
+  final double fem;
 
   const _InsuranceField({
     required this.controller,
     this.keyboardType = TextInputType.text,
     this.maxLines = 1,
+    required this.fem,
   });
 
   @override
@@ -593,13 +624,16 @@ class _InsuranceField extends StatelessWidget {
     controller: controller,
     keyboardType: keyboardType,
     maxLines: maxLines,
-    style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+    style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
     decoration: InputDecoration(
       filled: true,
       fillColor: AppColors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 12 * fem,
+        vertical: 14 * fem,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(4 * fem),
         borderSide: const BorderSide(color: AppColors.divider),
       ),
       enabledBorder: OutlineInputBorder(
@@ -616,26 +650,30 @@ class _InsuranceField extends StatelessWidget {
 
 class _InsuranceDateField extends StatelessWidget {
   final TextEditingController controller;
-  const _InsuranceDateField({required this.controller});
+  final double fem;
+  const _InsuranceDateField({required this.controller, required this.fem});
 
   @override
   Widget build(BuildContext context) => TextField(
     controller: controller,
     readOnly: true,
-    style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+    style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
     decoration: InputDecoration(
       hintText: 'dd-mm-yyyy',
-      hintStyle: const TextStyle(fontSize: 13, color: AppColors.textLight),
+      hintStyle: TextStyle(fontSize: 13 * fem, color: AppColors.textLight),
       filled: true,
       fillColor: AppColors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      suffixIcon: const Icon(
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 12 * fem,
+        vertical: 14 * fem,
+      ),
+      suffixIcon: Icon(
         Icons.calendar_today_outlined,
-        size: 18,
+        size: 18 * fem,
         color: AppColors.textMid,
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(4 * fem),
         borderSide: const BorderSide(color: AppColors.divider),
       ),
       enabledBorder: OutlineInputBorder(
@@ -643,7 +681,7 @@ class _InsuranceDateField extends StatelessWidget {
         borderSide: const BorderSide(color: AppColors.divider),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(4 * fem),
         borderSide: const BorderSide(color: AppColors.mintDark, width: 1.5),
       ),
     ),

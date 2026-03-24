@@ -289,32 +289,33 @@ class _UidTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     return TextField(
       controller: controller,
       enabled: enabled,
       textCapitalization: TextCapitalization.characters,
       textInputAction: TextInputAction.search,
       onSubmitted: onSubmitted,
-      style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+      style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
       decoration: InputDecoration(
         hintText: 'Enter Unique Identification Numb...',
-        hintStyle: const TextStyle(color: AppColors.textLight, fontSize: 14),
+        hintStyle: TextStyle(color: AppColors.textLight, fontSize: 14 * fem),
         filled: true,
         fillColor: AppColors.bgGrey,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 16 * fem,
+          vertical: 16 * fem,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8 * fem),
           borderSide: const BorderSide(color: AppColors.divider, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8 * fem),
           borderSide: const BorderSide(color: AppColors.mintDark, width: 2),
         ),
         disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8 * fem),
           borderSide: const BorderSide(color: AppColors.divider, width: 1.5),
         ),
       ),
@@ -380,21 +381,25 @@ class _OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fem = ScaleSize.aspectRatio;
     return Row(
       children: [
         const Expanded(child: Divider(color: AppColors.divider, thickness: 1)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: EdgeInsets.symmetric(horizontal: 14 * fem),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: EdgeInsets.symmetric(
+              horizontal: 12 * fem,
+              vertical: 4 * fem,
+            ),
             decoration: BoxDecoration(
               color: AppColors.mintLight,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text(
+            child: MyText(
               'OR',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 11 * fem,
                 fontWeight: FontWeight.w600,
                 color: AppColors.mintDark,
                 letterSpacing: 1,

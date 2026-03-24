@@ -342,6 +342,8 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
     final ids = selected.map((e) => e.id).whereType<int>().toList();
     state = const AsyncLoading();
 
+    debugPrint('data : ${engravingAndTax}');
+
     try {
       final response = await dio.post(
         ApiEndPoint.create_order,

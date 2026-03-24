@@ -1,3 +1,4 @@
+import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:http/http.dart' as http;
 import 'package:divine_pos/shared/utils/currency_formatter.dart';
 import '../../../../shared/widgets/text.dart';
@@ -25,6 +26,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
   Set<String> _availableVideos = {};
 
   VerifyTrackByUid get p => widget.product;
+
+  final fem = ScaleSize.aspectRatio;
 
   @override
   void initState() {
@@ -170,12 +173,12 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   _buildMountAccordion(),
                 ],
                 if (p.isDiamond) _buildDiamondSltSection(),
-                const SizedBox(height: 16),
+                SizedBox(height: 16 * fem),
                 if (p.isSold) _buildPurchaseSection(),
-                const SizedBox(height: 16),
+                SizedBox(height: 16 * fem),
                 _buildHairline(),
-                _buildButtons(),
-                const SizedBox(height: 24),
+                // _buildButtons(),
+                // const SizedBox(height: 24),
               ],
             ),
           ),
@@ -188,15 +191,15 @@ class _SummaryScreenState extends State<SummaryScreen> {
   // ── Carousel ───────────────────────────────────────────────────────────────
   Widget _buildCarousel() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: EdgeInsets.fromLTRB(16 * fem, 16 * fem, 16 * fem, 0 * fem),
       child: Column(
         children: [
           _buildMainImage(),
           if (_images.length > 1) ...[
-            const SizedBox(height: 16),
+            SizedBox(height: 16 * fem),
             _buildThumbnails(),
           ],
-          const SizedBox(height: 16),
+          SizedBox(height: 16 * fem),
         ],
       ),
     );
@@ -223,22 +226,25 @@ class _SummaryScreenState extends State<SummaryScreen> {
             _buildMediaWidget(src, height: _imgH, fit: BoxFit.contain),
             if (_isUidImage) _buildUidOverlay(),
             Positioned(
-              bottom: 10,
-              right: 10,
+              bottom: 10 * fem,
+              right: 10 * fem,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8 * fem,
+                  vertical: 4 * fem,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black38,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(4 * fem),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.zoom_in, size: 14, color: Colors.white),
+                    Icon(Icons.zoom_in, size: 14 * fem, color: Colors.white),
                     SizedBox(width: 4),
                     MyText(
                       'Tap to zoom',
-                      style: TextStyle(fontSize: 10, color: Colors.white),
+                      style: TextStyle(fontSize: 10 * fem, color: Colors.white),
                     ),
                   ],
                 ),
@@ -279,34 +285,34 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ),
             // ✕ Close
             Positioned(
-              top: 16,
-              right: 16,
+              top: 16 * fem,
+              right: 16 * fem,
               child: GestureDetector(
                 onTap: _closeZoom,
                 child: Container(
-                  width: 40,
-                  height: 40,
+                  width: 40 * fem,
+                  height: 40 * fem,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white.withOpacity(0.4)),
                   ),
-                  child: const Icon(Icons.close, color: Colors.white, size: 22),
+                  child: Icon(Icons.close, color: Colors.white, size: 22 * fem),
                 ),
               ),
             ),
             if (_images.length > 1) ...[
               // ‹ Prev
               Positioned(
-                left: 12,
+                left: 12 * fem,
                 top: 0,
                 bottom: 0,
                 child: Center(
                   child: GestureDetector(
                     onTap: _zoomPrev,
                     child: Container(
-                      width: 44,
-                      height: 44,
+                      width: 44 * fem,
+                      height: 44 * fem,
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
                         shape: BoxShape.circle,
@@ -314,10 +320,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
                           color: Colors.white.withOpacity(0.4),
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.chevron_left,
                         color: Colors.white,
-                        size: 28,
+                        size: 28 * fem,
                       ),
                     ),
                   ),
@@ -325,15 +331,15 @@ class _SummaryScreenState extends State<SummaryScreen> {
               ),
               // › Next
               Positioned(
-                right: 12,
+                right: 12 * fem,
                 top: 0,
                 bottom: 0,
                 child: Center(
                   child: GestureDetector(
                     onTap: _zoomNext,
                     child: Container(
-                      width: 44,
-                      height: 44,
+                      width: 44 * fem,
+                      height: 44 * fem,
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
                         shape: BoxShape.circle,
@@ -341,10 +347,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
                           color: Colors.white.withOpacity(0.4),
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.chevron_right,
                         color: Colors.white,
-                        size: 28,
+                        size: 28 * fem,
                       ),
                     ),
                   ),
@@ -352,7 +358,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               ),
               // Counter
               Positioned(
-                bottom: 20,
+                bottom: 20 * fem,
                 left: 0,
                 right: 0,
                 child: Center(
@@ -365,9 +371,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       color: Colors.black45,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
+                    child: MyText(
                       '${_zoomIndex + 1} / ${_images.length}',
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      style: TextStyle(color: Colors.white, fontSize: 13 * fem),
                     ),
                   ),
                 ),
@@ -376,8 +382,8 @@ class _SummaryScreenState extends State<SummaryScreen> {
             // UID overlay in zoom
             if (src.contains('carousel_3'))
               Positioned(
-                bottom: 140,
-                left: 200,
+                bottom: 140 * fem,
+                left: 200 * fem,
                 right: 0,
                 child: Center(child: _GirdleText(p.uid, 48)),
               ),
@@ -1185,7 +1191,7 @@ class _GirdleText extends StatelessWidget {
     );
     return Stack(
       children: [
-        Text(
+        MyText(
           text,
           style: baseStyle.copyWith(
             color: const Color(0xFF0A0A0A),
