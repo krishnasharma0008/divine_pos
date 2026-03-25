@@ -104,7 +104,7 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
-    final double itemWidth = 50 * fem;
+    final double itemWidth = 80 * fem;
     final double arrowsWidth = 76 * fem;
 
     return Container(
