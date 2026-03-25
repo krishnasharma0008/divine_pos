@@ -103,7 +103,7 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
         ),
         const SizedBox(height: 6),
         ...[
-          'Divine Solitaire Round ${item.solitaireSlab ?? ''} '
+          'Divine Solitaire ${item.solitaireShape ?? ''}  ${item.solitaireSlab ?? ''} '
               '${item.solitaireColor ?? ''} ${item.solitaireQuality ?? ''} '
               '(${item.solitairePcs ?? 0} Pcs)',
           'Divine Mount:  Metal- ${item.metalPurity ?? ''} '

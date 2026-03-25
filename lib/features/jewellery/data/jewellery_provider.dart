@@ -203,6 +203,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         );
       }
       //debugPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
+      longPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
       // ✅ Response data validation
       if (response.data == null) {
         throw Exception('Empty response from server');
@@ -272,6 +273,15 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
     } finally {
       // ✅ Always update loading state
       // isLoadingNotifier.value = false; // if you have one
+    }
+  }
+
+  void longPrint(Object? obj) {
+    const chunkSize = 800;
+    final str = obj.toString();
+    for (var i = 0; i < str.length; i += chunkSize) {
+      final end = (i + chunkSize < str.length) ? i + chunkSize : str.length;
+      debugPrint(str.substring(i, end));
     }
   }
 }

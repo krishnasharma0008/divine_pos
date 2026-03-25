@@ -32,6 +32,9 @@ final lastCustomerProvider = Provider<CustomerDetail?>((ref) {
         data: (cart) {
           if (cart.isEmpty) return null;
           final last = cart.last;
+          debugPrint(
+            'Customer Name : ${last.end_customer_name} Customer Id : ${last.end_customer_id}',
+          );
           return CustomerDetail(id: last.customerId, name: last.customerName);
         },
         orElse: () => null,

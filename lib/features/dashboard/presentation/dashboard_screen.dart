@@ -81,7 +81,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           AppBarActionConfig(
             type: AppBarAction.cart,
-            badgeCount: 0,
+            badgeCount: cartCount,
             onTap: () {
               //context.push('/cart');
               context.pushNamed(RoutePages.cart.routeName);

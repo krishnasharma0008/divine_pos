@@ -60,7 +60,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       final quantity = item.productQty ?? 1;
       double lineTotal = amount * quantity;
 
-      // ✅ Fixed: use engraving field (not cartRemarks)
       if (item.engraving?.trim().isNotEmpty ?? false) {
         lineTotal += 1000;
       }
@@ -93,6 +92,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             ref.watch(selectedCustomerProvider) ??
             ref.watch(lastCustomerProvider);
 
+        //debugPrint('Last customer Details : name=${activeCustomer?.name}');
+
         final orderProducts = items
             .where((e) => e.productCode == e.designno)
             .toList();
@@ -109,10 +110,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ Fixed header — never scrolls
+                // Fixed header — never scrolls
                 CartHeader(customerName: activeCustomer?.name ?? ''),
 
-                // ✅ Only cart items scroll
+                // Only cart items scroll
                 Expanded(
                   child: ListView(
                     padding: EdgeInsets.only(bottom: 24 * fem),
@@ -175,6 +176,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// CartHeader
+// ---------------------------------------------------------------------------
 
 class CartHeader extends StatelessWidget {
   final String customerName;
@@ -296,6 +301,10 @@ class _StepDivider extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// SearchCurrentCartRow  ✅ overflow fix applied
+// ---------------------------------------------------------------------------
+
 class SearchCurrentCartRow extends ConsumerStatefulWidget {
   final double fem;
   final String cartCustomer;
@@ -386,19 +395,23 @@ class _SearchCurrentCartRowState extends ConsumerState<SearchCurrentCartRow> {
   @override
   Widget build(BuildContext context) {
     final fem = widget.fem;
-    final suggestionsHeight = _showSuggestions && _results.isNotEmpty
-        ? _maxSuggestionsHeight
-        : 0.0;
 
     return Center(
       child: SizedBox(
         width: 560 * fem,
-        height: 70 * fem + suggestionsHeight,
-        child: Stack(
-          clipBehavior: Clip.none,
+        // ✅ No fixed height — Column grows naturally to fit field + suggestions
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildSearchField(fem),
-            _buildCurrentCartBadge(fem),
+            // Stack only holds search field + badge — no suggestions inside
+            SizedBox(
+              height: 70 * fem,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [_buildSearchField(fem), _buildCurrentCartBadge(fem)],
+              ),
+            ),
+            // ✅ Suggestions in normal flow below — zero overflow risk
             if (_showSuggestions && _results.isNotEmpty) _buildSuggestions(fem),
           ],
         ),
@@ -518,53 +531,50 @@ class _SearchCurrentCartRowState extends ConsumerState<SearchCurrentCartRow> {
   }
 
   Widget _buildSuggestions(double fem) {
-    return Positioned(
-      left: 0,
-      top: 54 * fem + 4,
-      child: Container(
-        width: 560 * fem,
-        constraints: BoxConstraints(maxHeight: _maxSuggestionsHeight * fem),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8 * fem),
-          border: Border.all(color: const Color(0xFFDDDDDD)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x1A000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ListView.separated(
-          padding: EdgeInsets.zero,
-          shrinkWrap: true,
-          itemCount: _results.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final customer = _results[index];
-            return InkWell(
-              onTap: () => _onCustomerTap(customer),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12 * fem,
-                  vertical: 10 * fem,
-                ),
-                child: Text(
-                  customer.name ?? 'Unknown',
-                  style: TextStyle(
-                    fontSize: 14 * fem,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      constraints: BoxConstraints(maxHeight: _maxSuggestionsHeight * fem),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8 * fem),
+        border: Border.all(color: const Color(0xFFDDDDDD)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListView.separated(
+        padding: EdgeInsets.zero,
+        shrinkWrap: true,
+        itemCount: _results.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final customer = _results[index];
+          return InkWell(
+            onTap: () => _onCustomerTap(customer),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 12 * fem,
+                vertical: 10 * fem,
               ),
-            );
-          },
-        ),
+              child: Text(
+                customer.name ?? 'Unknown',
+                style: TextStyle(fontSize: 14 * fem, fontFamily: 'Montserrat'),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// _Section
+// ---------------------------------------------------------------------------
 
 class _Section extends ConsumerWidget {
   final String title;
@@ -598,8 +608,6 @@ class _Section extends ConsumerWidget {
             ),
           ),
           SizedBox(height: 8 * fem),
-          // ✅ No SizedBox height wrapper — shrinkWrap + NeverScrollableScrollPhysics
-          // hands all scrolling to the outer ListView
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -632,6 +640,10 @@ class _Section extends ConsumerWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// _BottomProceedBar
+// ---------------------------------------------------------------------------
 
 class _BottomProceedBar extends ConsumerWidget {
   final List<CartDetail> orderProducts;
@@ -832,6 +844,10 @@ class _BottomProceedBar extends ConsumerWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// _EmptyCartView
+// ---------------------------------------------------------------------------
+
 class _EmptyCartView extends StatelessWidget {
   const _EmptyCartView();
 
@@ -846,7 +862,6 @@ class _EmptyCartView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Cart icon with radial glow background
             Container(
               width: 180 * fem,
               height: 180 * fem,

@@ -294,28 +294,22 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
               /// 🔢 Badge (optional)
               if (badgeCount > 0)
                 Positioned(
-                  right: 2 * fem,
-                  top: 2 * fem,
+                  right: -10 * fem, // ✅ Negative to overflow outside
+                  top: -10 * fem,
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 5 * fem,
-                      vertical: 1 * fem,
-                    ),
+                    width: 22 * fem,
+                    height: 22 * fem,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFFB2C36),
+                      color: Color(0xFFD0D0D0), // ✅ Gray like the image
                       shape: BoxShape.circle,
-                    ),
-                    constraints: BoxConstraints(
-                      minWidth: 16 * fem,
-                      minHeight: 16 * fem,
                     ),
                     child: Center(
                       child: Text(
                         '$badgeCount',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10 * fem,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                          fontSize: 11 * fem,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
