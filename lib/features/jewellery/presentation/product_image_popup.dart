@@ -13,7 +13,7 @@ void showProductImagePopup(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Product Image',
-    barrierColor: Colors.black.withOpacity(0.82),
+    barrierColor: Colors.black.withOpacity(0.2),
     transitionDuration: const Duration(milliseconds: 300),
     pageBuilder: (_, __, ___) =>
         _ProductImagePopup(imageUrl: imageUrl, heroTag: heroTag),
@@ -92,15 +92,15 @@ class _ProductImagePopupState extends State<_ProductImagePopup> {
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.65),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 50,
               spreadRadius: 10,
             ),
-            BoxShadow(
-              color: _gold.withOpacity(0.10),
-              blurRadius: 30,
-              spreadRadius: -5,
-            ),
+            // BoxShadow(
+            //   color: _gold.withValues(alpha: 0.10),
+            //   blurRadius: 30,
+            //   spreadRadius: -5,
+            // ),
           ],
         ),
         child: ClipRRect(
@@ -223,26 +223,26 @@ class _ProductImagePopupState extends State<_ProductImagePopup> {
                     // ),
                   ),
                   alignment: Alignment.center,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.pinch_rounded,
-                        size: 14,
-                        color: Colors.black.withOpacity(0.30),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Pinch to zoom  ·  Double-tap to enlarge',
-                        style: TextStyle(
-                          color: Colors.black.withOpacity(0.35),
-                          fontSize: 11,
-                          letterSpacing: 0.3,
-                          fontFamily: 'Montserrat',
-                        ),
-                      ),
-                    ],
-                  ),
+                  // child: Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   children: [
+                  //     Icon(
+                  //       Icons.pinch_rounded,
+                  //       size: 14,
+                  //       color: Colors.black.withOpacity(0.30),
+                  //     ),
+                  //     const SizedBox(width: 6),
+                  //     Text(
+                  //       'Pinch to zoom  ·  Double-tap to enlarge',
+                  //       style: TextStyle(
+                  //         color: Colors.black.withOpacity(0.35),
+                  //         fontSize: 11,
+                  //         letterSpacing: 0.3,
+                  //         fontFamily: 'Montserrat',
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                 ),
               ),
             ],
