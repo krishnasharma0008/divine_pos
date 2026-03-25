@@ -118,6 +118,14 @@ class _SummaryScreenState extends State<SummaryScreen> {
     return ((slt.currentPrice - slt.purchasePrice) / slt.purchasePrice) * 100;
   }
 
+  // Growth for collapsed solitaire view (works even when purchasePrice == 0)
+  double? get _collapsedGrowthPct {
+    if (p.sltDetails.isEmpty) return null;
+    final slt = p.sltDetails.first;
+    if (slt.purchasePrice <= 0) return 0.0;
+    return ((slt.currentPrice - slt.purchasePrice) / slt.purchasePrice) * 100;
+  }
+
   static const double _imgH = 300;
 
   void _nextImage() {
@@ -159,29 +167,58 @@ class _SummaryScreenState extends State<SummaryScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(
-          color: Colors.white,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildCarousel(),
-                _buildMeta(),
-                _buildHairline(),
-                if (p.isJewellery) ...[
-                  _buildJewellerySltAccordion(),
-                  _buildMountAccordion(),
-                ],
-                if (p.isDiamond) _buildDiamondSltSection(),
-                SizedBox(height: 16 * fem),
-                if (p.isSold) _buildPurchaseSection(),
-                SizedBox(height: 16 * fem),
-                _buildHairline(),
-                // _buildButtons(),
-                // const SizedBox(height: 24),
-              ],
+        Column(
+          children: [
+            // ── Scrollable body ──────────────────────────────────────────────
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildCarousel(),
+                      _buildMeta(),
+                      _buildHairline(),
+
+                      // "Jewellery Details:" plain-text section header
+                      if (p.isJewellery) ...[
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            16 * fem,
+                            16 * fem,
+                            16 * fem,
+                            8 * fem,
+                          ),
+                          child: MyText(
+                            'Jewellery Details:',
+                            style: TextStyle(
+                              fontSize: 16 * fem,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                        ),
+                        _buildJewellerySltAccordion(),
+                        _buildMountAccordion(),
+                      ],
+
+                      if (p.isDiamond) _buildDiamondSltSection(),
+
+                      SizedBox(height: 16 * fem),
+                      if (p.isSold) _buildPurchaseSection(),
+                      SizedBox(height: 16 * fem),
+                      _buildHairline(),
+                      SizedBox(height: 8 * fem),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
+
+            // ── Sticky bottom buttons ────────────────────────────────────────
+            //_buildButtons(),
+          ],
         ),
         if (_zoomOpen) _buildZoomOverlay(),
       ],
@@ -225,31 +262,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
           children: [
             _buildMediaWidget(src, height: _imgH, fit: BoxFit.contain),
             if (_isUidImage) _buildUidOverlay(),
-            Positioned(
-              bottom: 10 * fem,
-              right: 10 * fem,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 8 * fem,
-                  vertical: 4 * fem,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black38,
-                  borderRadius: BorderRadius.circular(4 * fem),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.zoom_in, size: 14 * fem, color: Colors.white),
-                    SizedBox(width: 4),
-                    MyText(
-                      'Tap to zoom',
-                      style: TextStyle(fontSize: 10 * fem, color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -283,7 +295,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 },
               ),
             ),
-            // ✕ Close
             Positioned(
               top: 16 * fem,
               right: 16 * fem,
@@ -302,7 +313,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
               ),
             ),
             if (_images.length > 1) ...[
-              // ‹ Prev
               Positioned(
                 left: 12 * fem,
                 top: 0,
@@ -329,7 +339,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   ),
                 ),
               ),
-              // › Next
               Positioned(
                 right: 12 * fem,
                 top: 0,
@@ -356,7 +365,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   ),
                 ),
               ),
-              // Counter
               Positioned(
                 bottom: 20 * fem,
                 left: 0,
@@ -379,13 +387,12 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 ),
               ),
             ],
-            // UID overlay in zoom
             if (src.contains('carousel_3'))
               Positioned(
                 bottom: 140 * fem,
                 left: 200 * fem,
                 right: 0,
-                child: Center(child: _GirdleText(p.uid, 48)),
+                child: Center(child: _GirdleText(p.uid, 48, fem)),
               ),
           ],
         ),
@@ -398,24 +405,24 @@ class _SummaryScreenState extends State<SummaryScreen> {
       bottom: 80,
       left: 150,
       right: 0,
-      child: Center(child: _GirdleText(p.uid, 36)),
+      child: Center(child: _GirdleText(p.uid, 36, fem)),
     );
   }
 
   // ── Thumbnails ─────────────────────────────────────────────────────────────
   Widget _buildThumbnails() {
     return SizedBox(
-      height: 64,
+      height: 64 * fem,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _images.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => SizedBox(width: 8 * fem),
         itemBuilder: (_, i) => GestureDetector(
           onTap: () => setState(() => _imgIndex = i),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            width: 64,
-            height: 64,
+            width: 64 * fem,
+            height: 64 * fem,
             decoration: BoxDecoration(
               color: AppColors.white,
               border: Border.all(
@@ -441,17 +448,21 @@ class _SummaryScreenState extends State<SummaryScreen> {
     if (src.isEmpty) return const _Placeholder();
     if (_isVideo(src)) {
       return Container(
-        height: height,
+        height: (height ?? 0) * fem,
         color: Colors.black,
-        child: const Center(
-          child: Icon(Icons.play_circle_outline, size: 64, color: Colors.white),
+        child: Center(
+          child: Icon(
+            Icons.play_circle_outline,
+            size: 64 * fem,
+            color: Colors.white,
+          ),
         ),
       );
     }
     if (_isAsset(src)) {
       return Image.asset(
         src,
-        height: height,
+        height: (height ?? 0) * fem,
         fit: fit,
         width: double.infinity,
         errorBuilder: (_, __, ___) => const _Placeholder(),
@@ -459,7 +470,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
     }
     return Image.network(
       src,
-      height: height,
+      height: (height ?? 0) * fem,
       fit: fit,
       width: double.infinity,
       loadingBuilder: (_, child, prog) => prog == null
@@ -482,16 +493,16 @@ class _SummaryScreenState extends State<SummaryScreen> {
       return Image.asset(
         src,
         fit: BoxFit.cover,
-        width: 64,
-        height: 64,
+        width: 64 * fem,
+        height: 64 * fem,
         errorBuilder: (_, __, ___) => const _Placeholder(),
       );
     }
     return Image.network(
       src,
       fit: BoxFit.cover,
-      width: 64,
-      height: 64,
+      width: 64 * fem,
+      height: 64 * fem,
       errorBuilder: (_, __, ___) => const _Placeholder(),
     );
   }
@@ -499,75 +510,78 @@ class _SummaryScreenState extends State<SummaryScreen> {
   // ── Meta ───────────────────────────────────────────────────────────────────
   Widget _buildMeta() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16 * fem),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              MyText(
                 'UID : ${p.uid}',
-                style: const TextStyle(fontSize: 14, color: AppColors.textMid),
+                style: TextStyle(fontSize: 14 * fem, color: AppColors.textMid),
               ),
-              Text(
+              MyText(
                 'Design No. : ${p.designNo}',
-                style: const TextStyle(fontSize: 14, color: AppColors.textMid),
+                style: TextStyle(fontSize: 14 * fem, color: AppColors.textMid),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8 * fem),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
               MyText(
                 p.currentPrice.inRupeesFormat(),
-                style: const TextStyle(
-                  fontSize: 28,
+                style: TextStyle(
+                  fontSize: 28 * fem,
                   fontWeight: FontWeight.w700,
                   color: AppColors.gold,
                 ),
               ),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8 * fem),
+              MyText(
                 'Excl. GST',
                 style: TextStyle(fontSize: 14, color: AppColors.textMid),
               ),
               const Spacer(),
               if (p.isDiamond && !p.isCoin)
-                const Tooltip(
+                Tooltip(
                   message: 'Premium charges may be applicable',
                   child: Icon(
                     Icons.info_outline,
-                    size: 20,
+                    size: 20 * fem,
                     color: AppColors.textDark,
                   ),
                 ),
             ],
           ),
           if (_totalCts > 3 && p.isSold) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8 * fem),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              padding: EdgeInsets.symmetric(
+                horizontal: 8 * fem,
+                vertical: 10 * fem,
+              ),
               color: AppColors.white,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  MyText(
                     'The price displayed is over a month old and may '
                     'not reflect the current value.',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 10 * fem,
                       color: AppColors.textMid,
                       height: 1.6,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4 * fem),
                   RichText(
                     text: TextSpan(
-                      style: const TextStyle(
-                        fontSize: 11,
+                      style: TextStyle(
+                        fontSize: 11 * fem,
                         color: Color(0xFF646464),
                         height: 1.5,
                       ),
@@ -576,10 +590,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
                         WidgetSpan(
                           child: GestureDetector(
                             onTap: () {},
-                            child: const Text(
+                            child: MyText(
                               'click here',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 11 * fem,
                                 color: Color(0xFF646464),
                                 decoration: TextDecoration.underline,
                               ),
@@ -598,18 +612,32 @@ class _SummaryScreenState extends State<SummaryScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 4),
-          if (p.category.isNotEmpty)
-            Text(
-              p.collection.isNotEmpty
-                  ? '${p.category} - ${p.collection}'
-                  : p.category,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textDark,
-                letterSpacing: 0.3,
-              ),
-            ),
+          SizedBox(height: 4 * fem),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (p.category.isNotEmpty)
+                MyText(
+                  p.collection.isNotEmpty
+                      ? '${p.category} - ${p.collection}'
+                      : p.category,
+                  style: TextStyle(
+                    fontSize: 13 * fem,
+                    color: AppColors.textDark,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              if (p.jewellerySize.isNotEmpty)
+                MyText(
+                  'Size : ${p.jewellerySize}',
+                  style: TextStyle(
+                    fontSize: 14 * fem,
+                    color: AppColors.textMid,
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 12),
         ],
       ),
@@ -624,7 +652,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final growth = _growthPct;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: EdgeInsets.fromLTRB(16 * fem, 12 * fem, 16 * fem, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -634,46 +662,49 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
+                      MyText(
                         'Growth: ${growth.toStringAsFixed(2)} %',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 13 * fem,
                           fontWeight: FontWeight.w500,
                           color: growth >= 0 ? Colors.green : Colors.red,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4 * fem),
                       Icon(
                         growth >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
-                        size: 16,
+                        size: 16 * fem,
                         color: growth >= 0 ? Colors.green : Colors.red,
                       ),
                     ],
                   )
                 : const SizedBox.shrink(),
+            fem: fem,
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: EdgeInsets.symmetric(vertical: 12 * fem),
             child: Column(
               children: [
                 Row(
-                  children: const [
-                    Expanded(child: _ColHeader('Shape')),
-                    Expanded(child: _ColHeader('Carat')),
-                    Expanded(child: _ColHeader('Colour')),
-                    Expanded(child: _ColHeader('Clarity')),
+                  children: [
+                    Expanded(child: _ColHeader('Shape', fem)),
+                    Expanded(child: _ColHeader('Carat', fem)),
+                    Expanded(child: _ColHeader('Colour', fem)),
+                    Expanded(child: _ColHeader('Clarity', fem)),
                   ],
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6 * fem),
                 ...p.sltDetails.map(
                   (s) => Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: EdgeInsets.only(top: 6 * fem),
                     child: Row(
                       children: [
-                        Expanded(child: _ColValue(s.shape)),
-                        Expanded(child: _ColValue(s.carat.toStringAsFixed(2))),
-                        Expanded(child: _ColValue(s.colour)),
-                        Expanded(child: _ColValue(s.clarity)),
+                        Expanded(child: _ColValue(s.shape, fem)),
+                        Expanded(
+                          child: _ColValue(s.carat.toStringAsFixed(2), fem),
+                        ),
+                        Expanded(child: _ColValue(s.colour, fem)),
+                        Expanded(child: _ColValue(s.clarity, fem)),
                       ],
                     ),
                   ),
@@ -691,114 +722,253 @@ class _SummaryScreenState extends State<SummaryScreen> {
   Widget _buildJewellerySltAccordion() {
     if (p.sltDetails.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: EdgeInsets.fromLTRB(16 * fem, 0, 16 * fem, 0),
       child: Column(
         children: [
           _BorderedHeader(
-            title: 'Divine Solitaires:',
+            title: 'Divine Solitaires :',
             trailing: Icon(
               _sltExpanded ? Icons.remove : Icons.add,
-              size: 20,
+              size: 20 * fem,
               color: AppColors.textDark,
             ),
             onTap: () => setState(() => _sltExpanded = !_sltExpanded),
+            fem: fem,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8 * fem),
           _sltExpanded
               ? _buildJewellerySltExpanded()
               : _buildJewellerySltCollapsed(),
-          const SizedBox(height: 12),
-          _buildHairline(),
+          SizedBox(height: 12 * fem),
         ],
       ),
     );
   }
 
+  /// Collapsed solitaire — matches screenshot:
+  /// "1 pcs | RND 0.25cts. F, VVS1"
+  /// Purchase Price   Current Price   Growth
+  ///      ₹0             ₹57,500       0.0%  (green)
   Widget _buildJewellerySltCollapsed() {
     final slt = p.sltDetails.first;
     final line =
         '${p.sltTotalPcs} pcs | '
         '${slt.shape} ${slt.carat}cts. ${slt.colour}, ${slt.clarity}';
+
+    final growth = _collapsedGrowthPct;
+    final growthColor = (growth != null && growth >= 0)
+        ? Colors.green
+        : Colors.red;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        // Summary line
+        MyText(
           line,
-          style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+          style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
         ),
-        const SizedBox(height: 6),
-        Text(
-          'Current Price: ${p.sltTotalCurrentPrice.inRupeesFormat()}',
-          style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+        SizedBox(height: 10 * fem),
+
+        // 3-column header: Purchase Price | Current Price | Growth
+        Row(
+          children: [
+            Expanded(
+              child: MyText(
+                'Purchase Price',
+                style: TextStyle(fontSize: 13 * fem, color: AppColors.textMid),
+              ),
+            ),
+            Expanded(
+              child: MyText(
+                'Current Price',
+                style: TextStyle(fontSize: 13 * fem, color: AppColors.textMid),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Expanded(
+              child: MyText(
+                'Growth',
+                style: TextStyle(fontSize: 13 * fem, color: AppColors.textMid),
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 6 * fem),
+
+        // 3-column values
+        Row(
+          children: [
+            // Purchase price
+            Expanded(
+              child: MyText(
+                slt.purchasePrice > 0
+                    ? slt.purchasePrice.inRupeesFormat()
+                    : '₹ 0',
+                style: TextStyle(
+                  fontSize: 14 * fem,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ),
+            // Current price
+            Expanded(
+              child: MyText(
+                slt.currentPrice.inRupeesFormat(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14 * fem,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ),
+            // Growth
+            Expanded(
+              child: MyText(
+                growth != null ? '${growth.toStringAsFixed(1)} %' : '—',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontSize: 14 * fem,
+                  fontWeight: FontWeight.w600,
+                  color: growthColor,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
   Widget _buildJewellerySltExpanded() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: const [
-            Expanded(child: _ColHeader('UID')),
-            Expanded(child: _ColHeader('Shape')),
-            Expanded(child: _ColHeader('Carat')),
-            Expanded(child: _ColHeader('Colour')),
-            Expanded(child: _ColHeader('Clarity')),
-            Expanded(
-              child: _ColHeader('Current\nPrice', align: TextAlign.right),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        const Divider(color: AppColors.divider, height: 1),
-        const SizedBox(height: 6),
-        ...p.sltDetails.map(
-          (s) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            child: Row(
-              children: [
-                Expanded(child: _ColValue(s.uid)),
-                Expanded(child: _ColValue(s.shape)),
-                Expanded(child: _ColValue(s.carat.toStringAsFixed(2))),
-                Expanded(child: _ColValue(s.colour)),
-                Expanded(child: _ColValue(s.clarity)),
-                Expanded(
-                  child: _ColValue(
-                    s.currentPrice.inRupeesFormat(),
-                    align: TextAlign.right,
-                    bold: true,
-                  ),
-                ),
-              ],
-            ),
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4 * fem),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row: UID | Solitaire | Purchase | Current | Growth
+          Table(
+            columnWidths: const {
+              0: FlexColumnWidth(1.4), // UID
+              1: FlexColumnWidth(2.2), // Solitaire
+              2: FlexColumnWidth(1.4), // Purchase
+              3: FlexColumnWidth(1.4), // Current
+              4: FlexColumnWidth(1.2), // Growth
+            },
+            children: [
+              TableRow(
+                children: [
+                  _tHeader('UID'),
+                  _tHeader('Solitaire'),
+                  _tHeader('Purchase'),
+                  _tHeader('Current'),
+                  _tHeader('Growth', align: TextAlign.right),
+                ],
+              ),
+            ],
           ),
-        ),
-      ],
+          SizedBox(height: 6 * fem),
+          const Divider(color: AppColors.divider, height: 1),
+          SizedBox(height: 6 * fem),
+          // Data rows
+          ...p.sltDetails.map((s) {
+            // Solitaire string: "RND-0.33-F-SI2"
+            final solitaire =
+                '${s.shape}-${s.carat.toStringAsFixed(2)}-${s.colour}-${s.clarity}';
+            final purchaseStr = s.purchasePrice > 0
+                ? s.purchasePrice.inRupeesFormat()
+                : '₹ 0';
+            final growth = s.purchasePrice > 0
+                ? ((s.currentPrice - s.purchasePrice) / s.purchasePrice) * 100
+                : 0.0;
+            final growthColor = growth >= 0 ? Colors.green : Colors.red;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Table(
+                columnWidths: const {
+                  0: FlexColumnWidth(1.4),
+                  1: FlexColumnWidth(2.2),
+                  2: FlexColumnWidth(1.4),
+                  3: FlexColumnWidth(1.4),
+                  4: FlexColumnWidth(1.2),
+                },
+                children: [
+                  TableRow(
+                    children: [
+                      _tCell(s.uid),
+                      _tCell(solitaire),
+                      _tCell(purchaseStr),
+                      _tCell(s.currentPrice.inRupeesFormat()),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          '${growth.toStringAsFixed(1)} %',
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: growthColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
+
+  Widget _tHeader(String text, {TextAlign align = TextAlign.left}) => Padding(
+    padding: EdgeInsets.only(bottom: 2 * fem),
+    child: MyText(
+      text,
+      textAlign: align,
+      style: TextStyle(
+        fontSize: 13 * fem,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textMid,
+      ),
+    ),
+  );
+
+  Widget _tCell(String text, {TextAlign align = TextAlign.left}) => Padding(
+    padding: EdgeInsets.only(top: 2 * fem),
+    child: MyText(
+      text,
+      textAlign: align,
+      style: TextStyle(fontSize: 13 * fem, color: AppColors.textDark),
+    ),
+  );
 
   // ── Mount accordion ────────────────────────────────────────────────────────
   Widget _buildMountAccordion() {
     if (p.mountDetails1.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: EdgeInsets.fromLTRB(16 * fem, 0, 16 * fem, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // ← ADD THIS
         children: [
           _BorderedHeader(
-            title: 'Divine Mount',
+            title: 'Divine Mount :',
             trailing: Icon(
               _mountExpanded ? Icons.remove : Icons.add,
-              size: 20,
+              size: 20 * fem,
               color: AppColors.textDark,
             ),
             onTap: () => setState(() => _mountExpanded = !_mountExpanded),
+            fem: fem,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8 * fem),
           _mountExpanded ? _buildMountExpanded() : _buildMountCollapsed(),
-          const SizedBox(height: 12),
-          _buildHairline(),
+          SizedBox(height: 12 * fem),
         ],
       ),
     );
@@ -808,140 +978,142 @@ class _SummaryScreenState extends State<SummaryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Metal line — from mountDetails1 e.g. "GOLD 18 KT WHITE"
         if (p.mountDetails1.isNotEmpty) ...[
           const SizedBox(height: 6),
-          Text(
+          MyText(
             '${p.netWt} gms | ${p.mountDetails1} ',
-            style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+            style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
           ),
         ],
-
-        // Side diamonds — from mountDetails2 or sdPcs
         if (p.mountDetails2.isNotEmpty) ...[
           const SizedBox(height: 6),
-          Text(
+          MyText(
             p.mountDetails2,
-            style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+            style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
           ),
         ] else if (p.sdPcs > 0) ...[
           const SizedBox(height: 6),
-          Text(
+          MyText(
             '${p.sdPcs} pcs ${p.sdCts} cts | ${p.sdColourClarity}',
-            style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+            style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
           ),
         ],
-
-        // Current price
         if (p.metalTotalCurrentPrice > 0) ...[
           const SizedBox(height: 6),
-          Text(
-            'Current Price :  ${p.metalTotalCurrentPrice.inRupeesFormat()}',
-            style: const TextStyle(fontSize: 14, color: AppColors.textDark),
+          MyText(
+            'Current Price',
+            style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
+          ),
+          SizedBox(height: 2 * fem),
+          MyText(
+            (p.metalTotalCurrentPrice + p.sdTotalCurrentPrice).inRupeesFormat(),
+            style: TextStyle(
+              fontSize: 14 * fem,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
           ),
         ],
       ],
     );
   }
 
-  Widget _buildMountExpanded() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Gold Details',
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textDark,
-        ),
-      ),
-      const SizedBox(height: 8),
-      // Metal — extracted from mountDetails1 after the pipe
-      _DetailRow(
-        label: 'Metal',
-        value: _extractMetal(p.mountDetails1),
-        valueColor: AppColors.gold,
-      ),
-      // ── FIX: Metal weight ─────────────────────────────────────────────────
-      // Use grossWt/netWt if API provides them, otherwise parse from
-      // mountDetails1 which contains e.g. "2.557 gms | GOLD 18 KT WHITE"
-      _DetailRow(
-        label: 'Gross | Net Weight',
-        value: (p.grossWt > 0 || p.netWt > 0)
-            ? '${p.grossWt} | ${p.netWt} gms'
-            : _extractWeight(p.mountDetails1),
-      ),
-      if (p.sdPcs > 0 || p.sdCts > 0) ...[
-        const SizedBox(height: 16),
-        const Text(
-          'Side Diamonds',
+  Widget _buildMountExpanded() => Padding(
+    padding: EdgeInsets.symmetric(vertical: 4 * fem),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        MyText(
+          'Gold Details :',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 15 * fem,
             fontWeight: FontWeight.w700,
             color: AppColors.textDark,
           ),
         ),
-        const SizedBox(height: 8),
-        _DetailRow(
-          label: 'Pcs | Carat',
-          value: '${p.sdPcs} pcs | ${p.sdCts} Cts.',
+        SizedBox(height: 12 * fem),
+        _ColonRow(
+          label: 'Metal',
+          value: _extractMetal(p.mountDetails1),
+          fem: fem,
         ),
-        if (p.sdColourClarity.isNotEmpty)
-          _DetailRow(label: 'Quality', value: p.sdColourClarity),
+        SizedBox(height: 10 * fem),
+        _ColonRow(
+          label: 'Gross | Net Weight',
+          value: (p.grossWt > 0 || p.netWt > 0)
+              ? '${p.grossWt} | ${p.netWt} gms'
+              : _extractWeight(p.mountDetails1),
+          fem: fem,
+        ),
+        if (p.sdPcs > 0 || p.sdCts > 0) ...[
+          SizedBox(height: 20 * fem),
+          MyText(
+            'Side Diamonds :',
+            style: TextStyle(
+              fontSize: 15 * fem,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
+          ),
+          SizedBox(height: 12 * fem),
+          _ColonRow(
+            label: 'Pcs | Carat',
+            value: '${p.sdPcs} Pcs | ${p.sdCts} Cts.',
+            fem: fem,
+          ),
+          if (p.sdColourClarity.isNotEmpty) ...[
+            SizedBox(height: 10 * fem),
+            _ColonRow(label: 'Quality', value: p.sdColourClarity, fem: fem),
+          ],
+        ],
+        SizedBox(height: 8 * fem),
       ],
-    ],
+    ),
   );
 
-  // Extract metal type: "2.557 gms | GOLD 18 KT WHITE" → "GOLD 18 KT WHITE"
   String _extractMetal(String s) {
     if (s.contains('|')) return s.split('|').last.trim();
     return s;
   }
 
-  // ── FIX: Extract weight from mountDetails1 when grossWt/netWt are 0 ───────
-  // "2.685 gms | GOLD 18 KT WHITE" → "2.685 gms"
-  // "2.685 | 2.557 gms | GOLD 18 KT WHITE" → "2.685 | 2.557 gms"
   String _extractWeight(String s) {
     if (!s.contains('|')) return s;
     final parts = s.split('|');
     if (parts.length >= 3) {
-      // "gross | net | metal" format
       return '${parts[0].trim()} | ${parts[1].trim()}';
     }
-    // "weight | metal" format
     return parts.first.trim();
   }
 
   // ── Purchase section (SOLD only) ───────────────────────────────────────────
   Widget _buildPurchaseSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16 * fem),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bordered box contains Purchase Amount / Premium / Discount / Total
+          // Bordered box — Purchase Information accordion
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.divider),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(6 * fem),
             ),
             child: Column(
               children: [
-                // Header
                 GestureDetector(
                   onTap: () =>
                       setState(() => _purchaseExpanded = !_purchaseExpanded),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16 * fem,
+                      vertical: 14 * fem,
                     ),
                     child: Row(
                       children: [
-                        const Text(
+                        MyText(
                           'Purchase Information -',
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 15 * fem,
                             fontWeight: FontWeight.w500,
                             color: AppColors.textDark,
                           ),
@@ -951,51 +1123,54 @@ class _SummaryScreenState extends State<SummaryScreen> {
                           _purchaseExpanded
                               ? Icons.keyboard_arrow_up
                               : Icons.keyboard_arrow_down,
-                          size: 22,
+                          size: 22 * fem,
                           color: AppColors.textDark,
                         ),
                       ],
                     ),
                   ),
                 ),
-                // Body
                 if (_purchaseExpanded && p.purchasePrice > 0) ...[
                   const Divider(color: AppColors.divider, height: 1),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    padding: EdgeInsets.fromLTRB(
+                      16 * fem,
+                      12 * fem,
+                      16 * fem,
+                      16 * fem,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Purchase Amount (two-line label)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 5),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Column(
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  MyText(
                                     'Purchase Amount:',
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 14 * fem,
                                       color: AppColors.textDark,
                                     ),
                                   ),
-                                  Text(
+                                  MyText(
                                     'Excl. GST',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 12 * fem,
                                       color: AppColors.textMid,
                                     ),
                                   ),
                                 ],
                               ),
                               const Spacer(),
-                              Text(
+                              MyText(
                                 p.purchasePrice.inRupeesFormat(),
-                                style: const TextStyle(
-                                  fontSize: 14,
+                                style: TextStyle(
+                                  fontSize: 14 * fem,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.textDark,
                                 ),
@@ -1003,24 +1178,21 @@ class _SummaryScreenState extends State<SummaryScreen> {
                             ],
                           ),
                         ),
-                        // Premium
-                        _DetailRow(label: 'Premium', value: '₹0'),
-                        // ── FIX: Discount ─────────────────────────────────────
-                        // API may return negative or positive discount value.
-                        // Use abs() so display is always positive with '-' prefix.
+                        _DetailRow(label: 'Premium', value: '₹0', fem: fem),
                         _DetailRow(
                           label: 'Discount:',
                           value: p.purchaseDiscount != 0
                               ? '-${p.purchaseDiscount.abs().inRupeesFormat()}'
                               : '₹0',
+                          fem: fem,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8 * fem),
                         const Divider(color: AppColors.divider, height: 1),
-                        const SizedBox(height: 8),
-                        // Total
+                        SizedBox(height: 8 * fem),
                         _DetailRow(
                           label: 'Total Purchase Amount:',
                           value: p.purchasePriceFinal.inRupeesFormat(),
+                          fem: fem,
                         ),
                       ],
                     ),
@@ -1030,38 +1202,46 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ),
           ),
 
-          // Jeweller's Name — outside the box
-          const SizedBox(height: 20),
-          const Text(
+          // Jeweller's Name — label + bold value on separate lines
+          SizedBox(height: 20 * fem),
+          MyText(
             "Jeweller's Name:",
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 15 * fem,
               fontWeight: FontWeight.w500,
               color: AppColors.textDark,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
+          SizedBox(height: 6 * fem),
+          MyText(
             p.purchaseFrom.isNotEmpty
                 ? p.purchaseFrom.toUpperCase()
                 : 'DIVINE SOLITAIRES',
-            style: const TextStyle(fontSize: 14, color: AppColors.textMid),
+            style: TextStyle(
+              fontSize: 15 * fem,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
           ),
 
-          // Date Of Purchase — outside the box
-          const SizedBox(height: 14),
-          const Text(
+          // Date Of Purchase — label + value on separate lines
+          SizedBox(height: 14 * fem),
+          MyText(
             'Date Of Purchase:',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 15 * fem,
               fontWeight: FontWeight.w500,
               color: AppColors.textDark,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
+          SizedBox(height: 6 * fem),
+          MyText(
             p.purchaseDate.isNotEmpty ? p.purchaseDate : '—',
-            style: const TextStyle(fontSize: 14, color: AppColors.textMid),
+            style: TextStyle(
+              fontSize: 15 * fem,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textDark,
+            ),
           ),
           const SizedBox(height: 8),
         ],
@@ -1069,65 +1249,67 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  // ── Buttons ────────────────────────────────────────────────────────────────
-  Widget _buildButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: p.isSold
-            ? MainAxisAlignment.spaceBetween
-            : MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: 50,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textDark,
-                  side: const BorderSide(color: AppColors.textDark),
-                  shape: const RoundedRectangleBorder(),
-                ),
-                child: const Text(
-                  'INSURE NOW',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (p.isSold) ...[
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.textDark,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    shape: const RoundedRectangleBorder(),
-                  ),
-                  child: const Text(
-                    'ADD TO PORTFOLIO',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+  // ── Sticky bottom buttons ──────────────────────────────────────────────────
+  // Widget _buildButtons() {
+  //   return Container(
+  //     color: Colors.white,
+  //     padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+  //     child: Row(
+  //       children: [
+  //         Expanded(
+  //           child: SizedBox(
+  //             height: 50,
+  //             child: OutlinedButton(
+  //               onPressed: () {},
+  //               style: OutlinedButton.styleFrom(
+  //                 foregroundColor: AppColors.textDark,
+  //                 side: const BorderSide(color: AppColors.textDark),
+  //                 shape: RoundedRectangleBorder(
+  //                   borderRadius: BorderRadius.circular(6),
+  //                 ),
+  //               ),
+  //               child: const Text(
+  //                 'INSURE NOW',
+  //                 style: TextStyle(
+  //                   fontSize: 13,
+  //                   fontWeight: FontWeight.w700,
+  //                   letterSpacing: 1.2,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         if (p.isSold) ...[
+  //           const SizedBox(width: 12),
+  //           Expanded(
+  //             child: SizedBox(
+  //               height: 50,
+  //               child: ElevatedButton(
+  //                 onPressed: () {},
+  //                 style: ElevatedButton.styleFrom(
+  //                   backgroundColor: AppColors.textDark,
+  //                   foregroundColor: AppColors.white,
+  //                   elevation: 0,
+  //                   shape: RoundedRectangleBorder(
+  //                     borderRadius: BorderRadius.circular(6),
+  //                   ),
+  //                 ),
+  //                 child: const Text(
+  //                   'ADD TO PORTFOLIO',
+  //                   style: TextStyle(
+  //                     fontSize: 13,
+  //                     fontWeight: FontWeight.w700,
+  //                     letterSpacing: 1.2,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ],
+  //     ),
+  //   );
+  // }
 }
 
 // =============================================================================
@@ -1138,15 +1320,21 @@ class _BorderedHeader extends StatelessWidget {
   final String title;
   final Widget? trailing;
   final VoidCallback? onTap;
+  final double fem;
 
-  const _BorderedHeader({required this.title, this.trailing, this.onTap});
+  const _BorderedHeader({
+    required this.title,
+    this.trailing,
+    this.onTap,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: EdgeInsets.symmetric(horizontal: 16 * fem, vertical: 14 * fem),
         decoration: BoxDecoration(
           color: const Color(0xFFF5F5F5),
           border: Border.all(color: AppColors.divider),
@@ -1154,10 +1342,10 @@ class _BorderedHeader extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(
+            MyText(
               title,
-              style: const TextStyle(
-                fontSize: 15,
+              style: TextStyle(
+                fontSize: 15 * fem,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textDark,
               ),
@@ -1178,12 +1366,13 @@ class _BorderedHeader extends StatelessWidget {
 class _GirdleText extends StatelessWidget {
   final String text;
   final double fontsize;
-  const _GirdleText(this.text, this.fontsize);
+  final double fem;
+  const _GirdleText(this.text, this.fontsize, this.fem);
 
   @override
   Widget build(BuildContext context) {
     final baseStyle = TextStyle(
-      fontSize: fontsize,
+      fontSize: fontsize * fem,
       fontWeight: FontWeight.w800,
       letterSpacing: 3.5,
       height: 1,
@@ -1211,7 +1400,7 @@ class _GirdleText extends StatelessWidget {
             colors: [Color(0xFF666666), Color(0xFF1C1C1C), Color(0xFF444444)],
             stops: [0.0, 0.5, 1.0],
           ).createShader(bounds),
-          child: Text(
+          child: MyText(
             text,
             style: baseStyle.copyWith(
               color: Colors.white,
@@ -1242,14 +1431,15 @@ class _GirdleText extends StatelessWidget {
 class _ColHeader extends StatelessWidget {
   final String text;
   final TextAlign align;
-  const _ColHeader(this.text, {this.align = TextAlign.left});
+  final double fem;
+  const _ColHeader(this.text, this.fem, {this.align = TextAlign.left});
 
   @override
-  Widget build(BuildContext context) => Text(
+  Widget build(BuildContext context) => MyText(
     text,
     textAlign: align,
-    style: const TextStyle(
-      fontSize: 13,
+    style: TextStyle(
+      fontSize: 13 * fem,
       fontWeight: FontWeight.w600,
       color: AppColors.textDark,
     ),
@@ -1260,14 +1450,20 @@ class _ColValue extends StatelessWidget {
   final String text;
   final TextAlign align;
   final bool bold;
-  const _ColValue(this.text, {this.align = TextAlign.left, this.bold = false});
+  final double fem;
+  const _ColValue(
+    this.text,
+    this.fem, {
+    this.align = TextAlign.left,
+    this.bold = false,
+  });
 
   @override
-  Widget build(BuildContext context) => Text(
+  Widget build(BuildContext context) => MyText(
     text,
     textAlign: align,
     style: TextStyle(
-      fontSize: 14,
+      fontSize: 14 * fem,
       fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
       color: AppColors.textDark,
     ),
@@ -1278,14 +1474,20 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
-  const _DetailRow({required this.label, required this.value, this.valueColor});
+  final double fem;
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    required this.fem,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),
     child: Row(
       children: [
-        Text(
+        MyText(
           label,
           style: const TextStyle(fontSize: 14, color: AppColors.textMid),
         ),
@@ -1293,13 +1495,54 @@ class _DetailRow extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 14 * fem,
             fontWeight: FontWeight.w500,
             color: valueColor ?? AppColors.textDark,
           ),
         ),
       ],
     ),
+  );
+}
+
+class _ColonRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final double fem;
+  const _ColonRow({
+    required this.label,
+    required this.value,
+    required this.fem,
+  });
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(
+        width: 140,
+        child: MyText(
+          label,
+          style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
+        ),
+      ),
+      MyText(
+        ':',
+        style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
+      ),
+      SizedBox(width: 12 * fem),
+      Expanded(
+        child: MyText(
+          value,
+          textAlign: TextAlign.right,
+          style: TextStyle(
+            fontSize: 14 * fem,
+            fontWeight: FontWeight.w500,
+            color: AppColors.gold,
+          ),
+        ),
+      ),
+    ],
   );
 }
 

@@ -442,7 +442,7 @@ class _ExchangeTabState extends State<_ExchangeTab>
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(0, 30 * fem, 25 * fem, 20 * fem),
+          padding: EdgeInsets.fromLTRB(25 * fem, 30 * fem, 25 * fem, 20 * fem),
           child: _BrowserTabBar(
             controller: _stc,
             tabs: const [
@@ -534,6 +534,8 @@ class _StoreViewState extends State<_StoreView> {
   String get _sdSummary =>
       '${p.sdPcs} pcs ${p.sdCts} cts | ${p.sdColourClarity}';
 
+  bool get _hasMount => p.netWt > 0;
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -611,6 +613,7 @@ class _StoreViewState extends State<_StoreView> {
             Container(
               padding: EdgeInsets.all(12 * fem),
               decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
                 border: Border.all(color: AppColors.divider),
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -652,10 +655,11 @@ class _StoreViewState extends State<_StoreView> {
             SizedBox(height: 8 * fem),
           ],
 
-          if (p.mountDetails1.isNotEmpty) ...[
+          if (_hasMount) ...[
             Container(
               padding: EdgeInsets.all(12 * fem),
               decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
                 border: Border.all(color: AppColors.divider),
                 borderRadius: BorderRadius.circular(4),
               ),

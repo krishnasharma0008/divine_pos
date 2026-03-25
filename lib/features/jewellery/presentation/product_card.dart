@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../shared/utils/scale_size.dart';
 import '../../../shared/widgets/text.dart';
+import 'product_image_popup.dart'; // ← new popup
 
 class ProductCard extends StatefulWidget {
   final String image;
@@ -43,6 +44,16 @@ class _ProductCardState extends State<ProductCard> {
       defaultTargetPlatform == TargetPlatform.windows ||
       defaultTargetPlatform == TargetPlatform.macOS ||
       defaultTargetPlatform == TargetPlatform.linux;
+
+  // ── Opens the professional image popup ──────────────────────────────────
+  void _openImagePopup() {
+    if (widget.image.isEmpty) return;
+    showProductImagePopup(
+      context,
+      imageUrl: widget.image,
+      heroTag: 'product_img_${widget.image.hashCode}',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,8 +101,7 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  // ---------------- NORMAL CARD ----------------
-
+  // ── NORMAL CARD ────────────────────────────────────────────────────────────
   Widget _buildNormal(BuildContext context, double r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,18 +121,12 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  // ---------------- WIDE CARD ----------------
-
+  // ── WIDE CARD ──────────────────────────────────────────────────────────────
   Widget _buildWide(BuildContext context, double r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _imageStack(r),
-        // SizedBox(height: 10 * r),
-        // Padding(
-        //   padding: EdgeInsets.symmetric(horizontal: 16 * r),
-        //   child: _description(r),
-        // ),
         SizedBox(height: 8 * r),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -137,41 +141,45 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  // ---------------- IMAGE STACK ----------------
-
+  // ── IMAGE STACK ────────────────────────────────────────────────────────────
   Widget _imageStack(double r) {
     final bool isNetwork = widget.image.startsWith('http');
 
     return Stack(
       children: [
-        SizedBox(
-          height: 287 * r,
-          width: double.infinity,
-          //color: Colors.amber,
-          child: Center(
-            child: isNetwork
-                ? Image.network(
-                    widget.image,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) return child;
-                      return SizedBox(
-                        width: 120 * r,
-                        height: 120 * r,
-                        child: const Center(child: CircularProgressIndicator()),
-                      );
-                    },
-                    errorBuilder: (_, __, ___) => _noImageAsset(r),
-                  )
-                : Image.asset(
-                    widget.image,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => _noImageAsset(r),
-                  ),
+        // ── Tappable image area ──────────────────────────────────────────
+        GestureDetector(
+          onTap: _openImagePopup,
+          child: SizedBox(
+            height: 287 * r,
+            width: double.infinity,
+            child: Center(
+              child: isNetwork
+                  ? Image.network(
+                      widget.image,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return SizedBox(
+                          width: 120 * r,
+                          height: 120 * r,
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      },
+                      errorBuilder: (_, __, ___) => _noImageAsset(r),
+                    )
+                  : Image.asset(
+                      widget.image,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => _noImageAsset(r),
+                    ),
+            ),
           ),
         ),
 
-        // TAG
+        // ── TAG ─────────────────────────────────────────────────────────
         if (widget.tagText.isNotEmpty)
           Positioned(
             left: 14 * r,
@@ -186,7 +194,7 @@ class _ProductCardState extends State<ProductCard> {
             ),
           ),
 
-        // HEART
+        // ── HEART ───────────────────────────────────────────────────────
         Positioned(
           right: 14 * r,
           top: 14 * r,
@@ -199,12 +207,36 @@ class _ProductCardState extends State<ProductCard> {
             ),
           ),
         ),
+
+        // ── ZOOM HINT ────────────────────────────────────────────────────
+        // Small "expand" icon so the user knows the image is tappable.
+        // Positioned(
+        //   left: 14 * r,
+        //   bottom: 10 * r,
+        //   child: IgnorePointer(
+        //     child: AnimatedOpacity(
+        //       opacity: _isHovered ? 0.85 : 0.40,
+        //       duration: const Duration(milliseconds: 180),
+        //       child: Container(
+        //         padding: EdgeInsets.all(5 * r),
+        //         decoration: BoxDecoration(
+        //           color: Colors.black54,
+        //           borderRadius: BorderRadius.circular(8 * r),
+        //         ),
+        //         child: Icon(
+        //           Icons.zoom_in_rounded,
+        //           size: 16 * r,
+        //           color: Colors.white,
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }
 
-  // ---------------- SOLD OUT ----------------
-
+  // ── SOLD OUT OVERLAY ───────────────────────────────────────────────────────
   Widget _soldOutOverlay(double r) {
     return Positioned.fill(
       child: Container(
@@ -226,8 +258,7 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  // ---------------- HELPERS ----------------
-
+  // ── HELPERS ────────────────────────────────────────────────────────────────
   Widget _noImageAsset(double r) {
     return Image.asset(
       'assets/jewellery/No_Image_Available.jpg',

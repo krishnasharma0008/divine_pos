@@ -1,7 +1,7 @@
 import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:flutter/material.dart';
 
-class ClaritySlider extends StatelessWidget {
+class ClaritySlider extends StatefulWidget {
   final List<String> values;
   final int index;
   final ValueChanged<int> onChanged;
@@ -13,12 +13,93 @@ class ClaritySlider extends StatelessWidget {
     required this.onChanged,
   });
 
+  @override
+  State<ClaritySlider> createState() => _ClaritySliderState();
+}
+
+class _ClaritySliderState extends State<ClaritySlider> {
+  late int _selectedIndex;
+  final ScrollController _scrollController = ScrollController();
+
   static const Color _tickActive = Color(0xFF1A9E8F);
   static const Color _tickInactive = Color(0xFFD9D9D9);
   static const Color _trackBorder = Color(0xFFBEE4DD);
   static const Color _thumbColor = Color(0xFFA9E7DF);
 
-  int get _currentIndex => index.clamp(0, values.length - 1);
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.index.clamp(
+      0,
+      widget.values.isEmpty ? 0 : widget.values.length - 1,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant ClaritySlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.index != widget.index || oldWidget.values != widget.values) {
+      setState(() {
+        _selectedIndex = widget.index.clamp(
+          0,
+          widget.values.isEmpty ? 0 : widget.values.length - 1,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollLeft() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      (_scrollController.offset - 150).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _scrollRight() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      (_scrollController.offset + 150).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _selectIndex(int index, double itemWidth) {
+    if (index < 0 || index >= widget.values.length) return;
+    setState(() => _selectedIndex = index);
+    widget.onChanged(index);
+    _autoScrollToIndex(index, itemWidth);
+  }
+
+  void _autoScrollToIndex(int index, double itemWidth) {
+    if (!_scrollController.hasClients) return;
+    final targetCenter = index * itemWidth + itemWidth / 2;
+    final viewportW = _scrollController.position.viewportDimension;
+    final newOffset = (targetCenter - viewportW / 2).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+
+    _scrollController.animateTo(
+      newOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,66 +117,11 @@ class ClaritySlider extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final totalWidth = constraints.maxWidth;
-          final contentWidth = values.length * itemWidth;
+          final contentWidth = widget.values.length * itemWidth;
           final showArrows = contentWidth > totalWidth;
           final sliderWidth = showArrows
               ? totalWidth - arrowsWidth
               : totalWidth;
-          final needsScroll = contentWidth > sliderWidth;
-
-          final scrollController = ScrollController();
-
-          void scrollLeft() {
-            if (!scrollController.hasClients) return;
-            scrollController.animateTo(
-              (scrollController.offset - 150).clamp(
-                0.0,
-                scrollController.position.maxScrollExtent,
-              ),
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-
-          void scrollRight() {
-            if (!scrollController.hasClients) return;
-            scrollController.animateTo(
-              (scrollController.offset + 150).clamp(
-                0.0,
-                scrollController.position.maxScrollExtent,
-              ),
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-            );
-          }
-
-          void selectIndex(int i) {
-            onChanged(i);
-            if (!needsScroll || !scrollController.hasClients) return;
-            final offset = i * itemWidth;
-            final viewportW = scrollController.position.viewportDimension;
-            final currentOff = scrollController.offset;
-
-            if (offset < currentOff) {
-              scrollController.animateTo(
-                (offset - itemWidth).clamp(
-                  0.0,
-                  scrollController.position.maxScrollExtent,
-                ),
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-              );
-            } else if (offset > currentOff + viewportW - itemWidth) {
-              scrollController.animateTo(
-                (offset - viewportW + itemWidth * 2).clamp(
-                  0.0,
-                  scrollController.position.maxScrollExtent,
-                ),
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-              );
-            }
-          }
 
           return Row(
             children: [
@@ -103,25 +129,23 @@ class ClaritySlider extends StatelessWidget {
                 _ArrowButton(
                   icon: Icons.chevron_left,
                   fem: fem,
-                  onTap: scrollLeft,
+                  onTap: _scrollLeft,
                 ),
                 SizedBox(width: 8 * fem),
               ],
               Expanded(
                 child: SingleChildScrollView(
-                  controller: scrollController,
+                  controller: _scrollController,
                   scrollDirection: Axis.horizontal,
-                  physics: needsScroll
-                      ? null
+                  physics: contentWidth > sliderWidth
+                      ? const BouncingScrollPhysics()
                       : const NeverScrollableScrollPhysics(),
                   child: SizedBox(
-                    width: needsScroll ? contentWidth : sliderWidth,
+                    width: contentWidth,
                     child: _buildItems(
                       fem: fem,
-                      needsScroll: needsScroll,
                       itemWidth: itemWidth,
-                      trackWidth: needsScroll ? contentWidth : sliderWidth,
-                      onSelect: selectIndex,
+                      contentWidth: contentWidth,
                     ),
                   ),
                 ),
@@ -131,7 +155,7 @@ class ClaritySlider extends StatelessWidget {
                 _ArrowButton(
                   icon: Icons.chevron_right,
                   fem: fem,
-                  onTap: scrollRight,
+                  onTap: _scrollRight,
                 ),
               ],
             ],
@@ -143,95 +167,78 @@ class ClaritySlider extends StatelessWidget {
 
   Widget _buildItems({
     required double fem,
-    required bool needsScroll,
     required double itemWidth,
-    required double trackWidth,
-    required ValueChanged<int> onSelect,
+    required double contentWidth,
   }) {
     final double thumbW = 10 * fem;
     final double thumbH = 15 * fem;
-
-    // Shared cell width for labels, ticks, and thumb alignment.
-    final int count = values.isEmpty ? 1 : values.length;
-    final double cellWidth = needsScroll
-        ? itemWidth
-        : (trackWidth / count.toDouble());
-
-    // Thumb center under selected label.
     final double thumbLeft =
-        _currentIndex * cellWidth + (cellWidth - thumbW) / 2;
+        _selectedIndex * itemWidth + (itemWidth - thumbW) / 2;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // LABELS (tappable)
-        Row(
-          children: List.generate(values.length, (i) {
-            final isSelected = i == _currentIndex;
-            final label = GestureDetector(
-              onTap: () => onSelect(i),
-              behavior: HitTestBehavior.opaque,
-              child: Text(
-                values[i],
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11 * fem,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? _tickActive : _tickInactive,
-                ),
-              ),
-            );
-            return needsScroll
-                ? SizedBox(width: cellWidth, child: label)
-                : Expanded(child: label);
-          }),
-        ),
-
-        SizedBox(height: 10 * fem),
-
-        // TICKS (tappable)
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: thumbW / 2),
-          child: Row(
-            children: List.generate(values.length, (i) {
-              final isSelected = i == _currentIndex;
-              final tick = GestureDetector(
-                onTap: () => onSelect(i),
-                behavior: HitTestBehavior.opaque,
-                child: Center(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                    width: isSelected ? 4 * fem : 3 * fem,
-                    height: isSelected
-                        ? 14 * fem
-                        : (i % 3 == 0 ? 11 * fem : 7 * fem),
-                    decoration: BoxDecoration(
-                      color: isSelected ? _tickActive : _tickInactive,
-                      borderRadius: BorderRadius.circular(1.5 * fem),
-                    ),
+    return SizedBox(
+      width: contentWidth,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: List.generate(widget.values.length, (i) {
+              final isSelected = i == _selectedIndex;
+              return SizedBox(
+                width: itemWidth,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _selectIndex(i, itemWidth),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // LABEL
+                      Center(
+                        child: Text(
+                          widget.values[i],
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.visible,
+                          style: TextStyle(
+                            fontSize: 11 * fem,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected ? _tickActive : _tickInactive,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10 * fem),
+                      // TICK
+                      Center(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOut,
+                          width: isSelected ? 4 * fem : 3 * fem,
+                          height: isSelected
+                              ? 14 * fem
+                              : (i % 3 == 0 ? 11 * fem : 7 * fem),
+                          decoration: BoxDecoration(
+                            color: isSelected ? _tickActive : _tickInactive,
+                            borderRadius: BorderRadius.circular(1.5 * fem),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
-              return needsScroll
-                  ? SizedBox(width: cellWidth, child: tick)
-                  : Expanded(child: tick);
             }),
           ),
-        ),
 
-        SizedBox(height: 10 * fem),
+          SizedBox(height: 10 * fem),
 
-        // TRACK + DIAMOND THUMB (aligned under label)
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: thumbW / 2),
-          child: SizedBox(
+          // TRACK + DIAMOND THUMB
+          SizedBox(
             height: thumbH,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // Track bar
                 Align(
                   alignment: Alignment.center,
                   child: Container(
@@ -243,22 +250,20 @@ class ClaritySlider extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // Hit areas for each segment
+                // Optional: big tap areas along track
                 Row(
-                  children: List.generate(values.length, (i) {
-                    final hit = GestureDetector(
-                      onTap: () => onSelect(i),
-                      behavior: HitTestBehavior.opaque,
-                      child: const SizedBox.expand(),
+                  children: List.generate(widget.values.length, (i) {
+                    return SizedBox(
+                      width: itemWidth,
+                      height: thumbH,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _selectIndex(i, itemWidth),
+                        child: const SizedBox.expand(),
+                      ),
                     );
-                    return needsScroll
-                        ? SizedBox(width: cellWidth, height: thumbH, child: hit)
-                        : Expanded(child: hit);
                   }),
                 ),
-
-                // Diamond thumb
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 180),
                   curve: Curves.easeOut,
@@ -280,15 +285,13 @@ class ClaritySlider extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
 // Diamond thumb painter
-// ---------------------------------------------------------------------------
 class _DiamondPainter extends CustomPainter {
   final Color color;
   const _DiamondPainter({required this.color});
@@ -315,9 +318,7 @@ class _DiamondPainter extends CustomPainter {
   bool shouldRepaint(_DiamondPainter old) => old.color != color;
 }
 
-// ---------------------------------------------------------------------------
-// Reusable arrow button
-// ---------------------------------------------------------------------------
+// Arrow button
 class _ArrowButton extends StatelessWidget {
   final IconData icon;
   final double fem;
