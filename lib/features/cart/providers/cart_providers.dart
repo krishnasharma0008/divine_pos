@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:divine_pos/constants/tax_constants.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,10 +34,15 @@ final lastCustomerProvider = Provider<CustomerDetail?>((ref) {
         data: (cart) {
           if (cart.isEmpty) return null;
           final last = cart.last;
-          debugPrint(
-            'Customer Name : ${last.end_customer_name} Customer Id : ${last.end_customer_id}',
+          //debugPrint();
+          // debugPrint(
+          //   'Customer Name : ${last.end_customer_name} Customer Id : ${last.end_customer_id}',
+          // );
+          //return CustomerDetail(id: last.customerId, name: last.customerName); // old
+          return CustomerDetail(
+            id: last.end_customer_id,
+            name: last.end_customer_name,
           );
-          return CustomerDetail(id: last.customerId, name: last.customerName);
         },
         orElse: () => null,
       );
@@ -50,7 +57,7 @@ final filteredCartProvider = Provider<List<CartDetail>>((ref) {
     data: (cart) {
       final customerId = selected?.id ?? last?.id;
       if (customerId == null) return [];
-      return cart.where((e) => e.customerId == customerId).toList();
+      return cart.where((e) => e.end_customer_id == customerId).toList();
     },
     orElse: () => [],
   );
@@ -84,11 +91,14 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   // ==================== API CALLS ====================
 
   Future<List<CartDetail>> _fetchCart(String user) async {
+    //debugPrint('Current User : $user');
     try {
       final response = await dio.post(
         ApiEndPoint.cart_list,
         data: {'username': user},
       );
+
+      //longPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
 
       if (response.statusCode == 200) {
         final res = response.data;
@@ -457,4 +467,13 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
 
   List<CartDetail> getItemsForCustomer(int customerId) =>
       _cartData.where((e) => e.customerId == customerId).toList();
+
+  void longPrint(Object? obj) {
+    const chunkSize = 800;
+    final str = obj.toString();
+    for (var i = 0; i < str.length; i += chunkSize) {
+      final end = (i + chunkSize < str.length) ? i + chunkSize : str.length;
+      debugPrint(str.substring(i, end));
+    }
+  }
 }

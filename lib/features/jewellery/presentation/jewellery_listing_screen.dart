@@ -6,6 +6,7 @@ import 'package:divine_pos/shared/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:collection/collection.dart';
 
 import '../../../shared/app_bar.dart';
 import '../../../shared/routes/app_drawer.dart';
@@ -45,6 +46,7 @@ class JewelleryListingScreen extends ConsumerStatefulWidget {
 class _JewelleryListingScreenState
     extends ConsumerState<JewelleryListingScreen> {
   final _scrollController = ScrollController();
+  String pjcode = '';
   //bool _routeApplied = false;
 
   @override
@@ -71,13 +73,19 @@ class _JewelleryListingScreenState
     /// 🔹 Fetch store list once
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = ref.read(authProvider);
-      final pjcode = auth.user?.pjcode;
+      //final pjcode =  auth.user?.pjcode;//'OT025'; //
+      final raw = auth.user?.pjcode ?? '';
+      //pjcode = raw.split(',').first.trim(); //'OT025'; //
+      setState(() {
+        pjcode = raw.split(',').first.trim();
+      });
 
-      if (pjcode != null) {
+      if (pjcode.isNotEmpty) {
         //ref.read(storeProvider.notifier).getPJStore(pjcode: pjcode);
         final storeNotifier = ref.read(storeProvider.notifier);
 
         storeNotifier.getPJStore(pjcode: pjcode);
+        //storeNotifier.getPJStore(pjcode: 'OT025');
         storeNotifier.getFilters(); // ✅ ADD THIS
       }
     });
@@ -120,15 +128,27 @@ class _JewelleryListingScreenState
         .selectedCategory // 👈 line 133
         .any((c) => c.trim().toLowerCase() == 'solitaires');
 
-    final Selectedbranch = storeState.selectedStore?.nickName ?? '';
-    final customerid = storeState.selectedStore?.customerID;
-    final customername = storeState.selectedStore?.name;
-    final customercode = storeState.selectedStore?.code;
+    // / find store where code == pjcode
+    final matchedStore = storeState.stores.firstWhereOrNull(
+      (store) => store.code == pjcode,
+    );
+
+    // find store where code != pjcode
+    final branchStores = storeState.stores
+        .where((store) => store.code != pjcode)
+        .toList();
+
+    final selectedBranch = storeState.selectedStore?.nickName ?? '';
+    final customerid = matchedStore?.customerID;
+    final customername = matchedStore?.name;
+    final customercode = matchedStore?.code;
+
+    debugPrint('matched Store : $matchedStore');
 
     debugPrint('customerid : ${customerid}');
     debugPrint('customercode : ${customercode}');
     debugPrint('customername : ${customername}');
-    debugPrint('Selectedbranch : ${Selectedbranch}');
+    debugPrint('Selectedbranch : ${selectedBranch}');
 
     // ────────────────────────────────────────────────────
 
@@ -172,8 +192,9 @@ class _JewelleryListingScreenState
               children: [
                 /// 🔹 Top controls
                 TopButtonsRow(
-                  branchStores: storeState.stores,
-                  isSolitaire: isSolitaire ? true : false,
+                  branchStores: branchStores,
+                  //isSolitaire: isSolitaire ? true : false,
+                  isSolitaire: isSolitaire,
                   onBranchSelected: (store) {
                     ref.read(storeProvider.notifier).selectStore(store);
                     filterNotifier.setProductsAtOtherBranch(store.code);
@@ -285,7 +306,7 @@ class _JewelleryListingScreenState
                                           customerid: customerid ?? 0,
                                           customercode: customercode ?? '',
                                           customername: customername ?? '',
-                                          Selectedbranch: Selectedbranch,
+                                          Selectedbranch: selectedBranch,
                                         );
                                       },
                                     )
@@ -479,7 +500,7 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
                         // ),
                         // const SizedBox(height: 2),
                         MyText(
-                          grandTotal!.inRupeesFormat(),
+                          grandTotal.inRupeesFormat(),
                           style: TextStyle(
                             color: Color(0xFF333333),
                             fontSize: 18 * widget.fem,

@@ -103,13 +103,13 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
         ),
         const SizedBox(height: 6),
         ...[
-          'Divine Solitaire ${item.solitaireShape ?? ''}  ${item.solitaireSlab ?? ''} '
+          'Divine Solitaire ${item.solitaireShape ?? ''}  ${(item.solitaireSlab ?? '')} '
               '${item.solitaireColor ?? ''} ${item.solitaireQuality ?? ''} '
               '(${item.solitairePcs ?? 0} Pcs)',
           'Divine Mount:  Metal- ${item.metalPurity ?? ''} '
               '${item.metalColor ?? ''} ${item.metalWeight ?? 0}gms',
           'Side Diamonds Qty ${item.sideStonePcs ?? 0} / '
-              '${item.sideStoneCts ?? 0}ct. ${item.sideStoneColor ?? ''} ${item.sideStoneQuality ?? ''}',
+              '${(item.sideStoneCts ?? 0).toStringAsFixed(2)}ct. ${item.sideStoneColor ?? ''} ${item.sideStoneQuality ?? ''}',
           'Size: ${item.sizeFrom ?? ''}',
         ].map(
           (text) => MyText(

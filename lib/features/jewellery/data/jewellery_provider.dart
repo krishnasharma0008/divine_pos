@@ -85,7 +85,9 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       final filter = ref.read(filterProvider);
 
       final authRepo = ref.read(authProvider);
-      final pjcode = authRepo.user?.pjcode;
+      // ✅
+      final raw = authRepo.user?.pjcode ?? '';
+      final pjcode = raw.split(',').first.trim(); //'OT025'; //
 
       String? layingWith;
       //debugPrint("Top Button row: $filter.isInStore");
@@ -203,7 +205,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         );
       }
       //debugPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
-      longPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
+      //longPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
       // ✅ Response data validation
       if (response.data == null) {
         throw Exception('Empty response from server');
