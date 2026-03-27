@@ -97,6 +97,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     final baseSize = current.baseSize ?? base.baseSize;
     final baseCarat = current.baseCarat ?? base.baseCarat;
     final ringSize = current.ringSize ?? baseSize?.toStringAsFixed(0);
+    final currentSize = double.tryParse(ringSize ?? '') ?? (baseSize ?? 0);
 
     // 2) DEFAULT SOLITAIRE SHAPE
     final shapeCode = JewelleryCalculationService.getDefaultSolitaireShapeCode(
@@ -106,19 +107,37 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
 
     final getShape = JewelleryCalculationService.mapShapeCodeToName(shapeCode);
 
-    // 3) METAL WEIGHTS
-    final goldWeight = JewelleryCalculationService.getWeight(
+    // // 3) METAL WEIGHTS
+    // final goldWeight = JewelleryCalculationService.getWeight(
+    //   detail.variants,
+    //   detail.bom,
+    //   'GOLD',
+    //   'METAL',
+    // );
+    // final platinumWeight = JewelleryCalculationService.getWeight(
+    //   detail.variants,
+    //   detail.bom,
+    //   'PLATINUM',
+    //   'METAL',
+    // );
+
+    // 3) BASE METAL WEIGHTS (from BOM, for base size)
+    final baseGoldWeight = JewelleryCalculationService.getWeight(
       detail.variants,
       detail.bom,
       'GOLD',
       'METAL',
     );
-    final platinumWeight = JewelleryCalculationService.getWeight(
+    final basePlatinumWeight = JewelleryCalculationService.getWeight(
       detail.variants,
       detail.bom,
       'PLATINUM',
       'METAL',
     );
+
+    // 3a) size‑factor for metal (3% per size diff)
+    double goldWeight = baseGoldWeight;
+    double platinumWeight = basePlatinumWeight;
 
     // 4) METAL AMOUNT
     final activeMetalColor =
@@ -304,6 +323,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
                   );
                 },
             userMinCt: minCt, // JS: parseFloat(carat[0])
+            userMaxCt: maxCt, //JS: parseFloat(carat[1])
             userColorFrom: selectedColorFrom,
             userColorTo: selectedColorTo,
             userClarityFrom: selectedClarityFrom,
@@ -326,16 +346,28 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     }
 
     // 11) DIVINE MOUNT ADJUSTMENT
+    // if (detail.productSizeFrom != '-' && baseSize != null) {
+    //   final currentSize = double.tryParse(ringSize ?? '') ?? baseSize;
+    //   final factor = JewelleryCalculationService.calculateDivineMountAdjustment(
+    //     carat: caratFromStr.trim(),
+    //     size: currentSize,
+    //     baseRingSize: baseSize,
+    //     qty: current.selectedQty,
+    //   );
+    //   solFrom *= factor;
+    //   solTo *= factor;
+    // }
+
     if (detail.productSizeFrom != '-' && baseSize != null) {
-      final currentSize = double.tryParse(ringSize ?? '') ?? baseSize;
       final factor = JewelleryCalculationService.calculateDivineMountAdjustment(
         carat: caratFromStr.trim(),
         size: currentSize,
         baseRingSize: baseSize,
         qty: current.selectedQty,
       );
-      solFrom *= factor;
-      solTo *= factor;
+
+      goldWeight *= factor;
+      platinumWeight *= factor;
     }
 
     // 12) FINAL AMOUNTS

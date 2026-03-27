@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import '../../../shared/routes/route_pages.dart';
@@ -145,10 +146,10 @@ class _RightCardState extends ConsumerState<_RightCard> {
     final mobile = _phoneController.text.trim();
 
     if (mobile.isEmpty) {
-      setState(() => _mobileError = "Mobile number cannot be blank");
+      setState(() => _mobileError = "Username cannot be blank");
       return;
     } else if (!RegExp(r'^\d{10}$').hasMatch(mobile)) {
-      setState(() => _mobileError = "Enter a valid 10 digit mobile number");
+      setState(() => _mobileError = "Enter a valid alphanumeric value");
       return;
     }
     setState(() => _mobileError = null);
@@ -226,7 +227,7 @@ class _RightCardState extends ConsumerState<_RightCard> {
                 child: SizedBox(
                   width: fem * 420,
                   child: MyText(
-                    "Enter your mobile number to access your account",
+                    "Enter your username to access your account",
                     style: TextStyle(
                       fontSize: fem * 16,
                       fontWeight: FontWeight.w400,
@@ -240,7 +241,7 @@ class _RightCardState extends ConsumerState<_RightCard> {
                 child: SizedBox(
                   width: fem * 420,
                   child: MyText(
-                    "Mobile Number",
+                    "Username",
                     style: TextStyle(
                       fontSize: fem * 14,
                       fontWeight: FontWeight.w500,
@@ -256,7 +257,11 @@ class _RightCardState extends ConsumerState<_RightCard> {
                   width: fem * 420,
                   child: TextField(
                     controller: _phoneController,
-                    keyboardType: TextInputType.phone,
+                    keyboardType: TextInputType.text,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                      LengthLimitingTextInputFormatter(20),
+                    ],
                     style: TextStyle(
                       fontFamily: MyThemes.inputFontFamily,
                       fontSize: fem * 14,
@@ -275,7 +280,8 @@ class _RightCardState extends ConsumerState<_RightCard> {
                         borderSide: BorderSide.none,
                       ),
                       errorText: _mobileError,
-                      hintText: "Enter 10 digit mobile number",
+                      //hintText: "Enter 10 digit mobile number",
+                      hintText: "Enter Username.",
                       hintStyle: TextStyle(
                         fontFamily: MyThemes.inputFontFamily,
                         fontSize: fem * 12,

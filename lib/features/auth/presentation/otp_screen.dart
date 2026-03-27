@@ -1,6 +1,7 @@
 // ✅ REQUIRED FOR TIMER
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../shared/themes.dart';
 import '../../../shared/utils/scale_size.dart';
 import '../../../shared/widgets/text.dart';
@@ -142,23 +143,6 @@ class _RightCardState extends ConsumerState<_RightCard> {
     //_startTimer();
   }
 
-  // void _startTimer() {
-  //   _timer?.cancel();
-  //   resendTimer.value = 30;
-
-  //   _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-  //     if (!mounted) {
-  //       timer.cancel();
-  //       return;
-  //     }
-  //     if (resendTimer.value > 0) {
-  //       resendTimer.value--;
-  //     } else {
-  //       timer.cancel();
-  //     }
-  //   });
-  // }
-
   void _verifyOtp() {
     final otp = otpController.text.trim();
     //print(otp);
@@ -173,10 +157,8 @@ class _RightCardState extends ConsumerState<_RightCard> {
       return;
     }
 
-    //if (!mounted) return;
     setState(() => _otpError = null);
 
-    //final sent =
     ref
         .read(loginRepoProvider.notifier)
         .login(username: widget.phoneNumber, password: widget.phoneNumber)
@@ -186,12 +168,6 @@ class _RightCardState extends ConsumerState<_RightCard> {
             setState(() => _otpError = state.errorMessage);
           }
         });
-
-    // if (!mounted) return; // widget might have been popped while waiting
-
-    // if (sent) {
-    //   context.go('/dashboard');
-    // }
   }
 
   @override
@@ -277,7 +253,11 @@ class _RightCardState extends ConsumerState<_RightCard> {
                   width: fem * 420,
                   child: TextField(
                     controller: otpController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.text,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                      LengthLimitingTextInputFormatter(20),
+                    ],
                     style: TextStyle(
                       fontFamily: MyThemes.inputFontFamily,
                       fontSize: fem * 14,
@@ -379,45 +359,6 @@ class _RightCardState extends ConsumerState<_RightCard> {
                 ),
               ),
 
-              // if (apiError != null)
-              //   Padding(
-              //     padding: const EdgeInsets.only(top: 8),
-              //     child: Text(
-              //       apiError.replaceFirst("Exception: ", ""),
-              //       style: const TextStyle(color: Colors.red),
-              //     ),
-              //   ),
-
-              //const SizedBox(height: 38),
-
-              /// ✅ SMOOTH RESEND OTP (NO FLICKER)
-              // Align(
-              //   alignment: Alignment.centerRight,
-              //   child: ValueListenableBuilder<int>(
-              //     valueListenable: resendTimer,
-              //     builder: (_, value, __) {
-              //       return GestureDetector(
-              //         onTap: value == 0 ? _startTimer : null,
-              //         child: Text(
-              //           value == 0 ? "Resend OTP" : "Resend OTP in $value sec",
-              //           style: TextStyle(
-              //             fontFamily: 'Montserrat',
-              //             fontSize: 12,
-              //             color: value == 0
-              //                 ? const Color(0xFF063A38)
-              //                 : Colors.grey[700],
-              //             fontWeight: value == 0
-              //                 ? FontWeight.w700
-              //                 : FontWeight.w400,
-              //             decoration: value == 0
-              //                 ? TextDecoration.underline
-              //                 : TextDecoration.none,
-              //           ),
-              //         ),
-              //       );
-              //     },
-              //   ),
-              // ),
               SizedBox(height: fem * 120),
             ],
           ),
