@@ -52,7 +52,7 @@ class _JewelleryCustomiseScreenState
     Future.microtask(() {
       ref
           .read(jewelleryCalcProvider.notifier)
-          .loadDetail('DMF8670'); //(widget.productCode); //DMF8796
+          .loadDetail(widget.productCode); //DMF8796 //('DMF8670'); //
     });
   }
 
