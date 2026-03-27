@@ -1,3 +1,4 @@
+import 'package:divine_pos/features/auth/data/auth_notifier.dart';
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/features/cart/providers/cart_providers.dart';
 import 'package:divine_pos/shared/routes/route_pages.dart';
@@ -200,6 +201,7 @@ class _JewelleryCustomiseScreenState
             detail.productCategory == 'COIN' ||
             detail.productSubCategory == 'Solitaire Coin' ||
             detail.productSubCategory == 'Locket';
+        final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -209,7 +211,7 @@ class _JewelleryCustomiseScreenState
             actions: [
               AppBarActionConfig(
                 type: AppBarAction.cart,
-                badgeCount: 0,
+                badgeCount: cartCount,
                 onTap: () => context.pushNamed(RoutePages.cart.routeName),
               ),
             ],

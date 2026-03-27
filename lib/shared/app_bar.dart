@@ -207,19 +207,19 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
 
               /// 🔴 Red Dot Badge
-              if (badgeCount > 0)
-                Positioned(
-                  right: 4 * fem,
-                  top: 4 * fem,
-                  child: Container(
-                    width: 8 * fem,
-                    height: 8 * fem,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFB2C36),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
+              // if (badgeCount > 0)
+              //   Positioned(
+              //     right: 4 * fem,
+              //     top: 4 * fem,
+              //     child: Container(
+              //       width: 8 * fem,
+              //       height: 8 * fem,
+              //       decoration: const BoxDecoration(
+              //         color: Color(0xFFFB2C36),
+              //         shape: BoxShape.circle,
+              //       ),
+              //     ),
+              //   ),
             ],
           ),
         ),
