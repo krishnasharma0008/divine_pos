@@ -24,100 +24,230 @@ class RangeSelector extends StatefulWidget {
   State<RangeSelector> createState() => _RangeSelectorState();
 }
 
+enum _DragThumb { start, end }
+
 class _RangeSelectorState extends State<RangeSelector> {
-  late RangeValues _range;
+  late int _startIndex;
+  late int _endIndex;
 
-  final Color tickColor = const Color(0xFFBEE4DD);
-  final Color activeTrackColor = const Color(0xFFCFF4EE);
+  final ScrollController _scrollController = ScrollController();
+  _DragThumb? _draggingThumb;
+  double? _dragStartDx;
 
-  int get _startIndex => _range.start.round();
-  int get _endIndex => _range.end.round();
+  static const Color _tickActive = Color(0xFFBEE4DD);
+  static const Color _tickInactive = Color(0xFFD9D9D9);
+  static const Color _activeTrackColor = Color(0xFFCFF4EE);
+  static const Color _thumbColor = Color(0xFFA9E7DF);
+  static const Color _trackBorderColor = Color(0xFFBEE4DD);
 
   @override
   void initState() {
     super.initState();
-    // _range = RangeValues(
-    //   widget.initialStartIndex.toDouble(),
-    //   widget.initialEndIndex.toDouble(),
-    // );
-    _range = RangeValues(
-      widget.initialStartIndex.clamp(0, widget.values.length - 1).toDouble(),
-      widget.initialEndIndex.clamp(0, widget.values.length - 1).toDouble(),
-    );
+    _syncIndexes();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.values.isEmpty) return;
+      _autoScrollToIndex((_startIndex + _endIndex) ~/ 2, _itemWidth);
+    });
   }
 
-  // ✅ THIS MUST BE HERE
   @override
   void didUpdateWidget(covariant RangeSelector oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.initialStartIndex != widget.initialStartIndex ||
-        oldWidget.initialEndIndex != widget.initialEndIndex) {
-      setState(() {
-        _range = RangeValues(
-          widget.initialStartIndex.toDouble(),
-          widget.initialEndIndex.toDouble(),
-        );
+        oldWidget.initialEndIndex != widget.initialEndIndex ||
+        oldWidget.values != widget.values) {
+      _syncIndexes();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || widget.values.isEmpty) return;
+        _autoScrollToIndex((_startIndex + _endIndex) ~/ 2, _itemWidth);
       });
     }
   }
 
+  double get _fem => ScaleSize.aspectRatio;
+  double get _itemWidth => 80 * _fem;
+
+  void _syncIndexes() {
+    final maxIndex = widget.values.isEmpty ? 0 : widget.values.length - 1;
+
+    _startIndex = widget.initialStartIndex.clamp(0, maxIndex);
+    _endIndex = widget.initialEndIndex.clamp(0, maxIndex);
+
+    if (_startIndex > _endIndex) {
+      final temp = _startIndex;
+      _startIndex = _endIndex;
+      _endIndex = temp;
+    }
+  }
+
+  String _displayText(String value) {
+    return widget.valueToChipText?.call(value) ?? value;
+  }
+
+  void _emitRangeChanged() {
+    if (widget.values.isEmpty) return;
+    widget.onRangeChanged(widget.values[_startIndex], widget.values[_endIndex]);
+  }
+
+  double _centerX(int index, double itemWidth) {
+    return index * itemWidth + itemWidth / 2;
+  }
+
+  int _indexFromLocalDx(double dx, double itemWidth) {
+    if (widget.values.isEmpty) return 0;
+    final raw = (dx / itemWidth).round();
+    return raw.clamp(0, widget.values.length - 1);
+  }
+
+  void _handleDragStart(double localDx, double itemWidth) {
+    _dragStartDx = localDx;
+
+    if (_startIndex == _endIndex) {
+      _draggingThumb = null;
+      return;
+    }
+
+    final startCenter = _centerX(_startIndex, itemWidth);
+    final endCenter = _centerX(_endIndex, itemWidth);
+
+    final distanceToStart = (localDx - startCenter).abs();
+    final distanceToEnd = (localDx - endCenter).abs();
+
+    _draggingThumb = distanceToStart <= distanceToEnd
+        ? _DragThumb.start
+        : _DragThumb.end;
+  }
+
+  void _resolveThumbWhenOverlapped(double localDx) {
+    if (_startIndex != _endIndex) return;
+    if (_draggingThumb != null) return;
+    if (_dragStartDx == null) return;
+
+    final delta = localDx - _dragStartDx!;
+
+    if (delta < 0) {
+      _draggingThumb = _DragThumb.start;
+    } else if (delta > 0) {
+      _draggingThumb = _DragThumb.end;
+    }
+  }
+
+  void _handleDragUpdate(double localDx, double itemWidth) {
+    if (widget.values.isEmpty) return;
+
+    _resolveThumbWhenOverlapped(localDx);
+    if (_draggingThumb == null) return;
+
+    final index = _indexFromLocalDx(localDx, itemWidth);
+
+    if (_draggingThumb == _DragThumb.start) {
+      final nextStart = index.clamp(0, _endIndex);
+      if (nextStart == _startIndex) return;
+
+      setState(() {
+        _startIndex = nextStart;
+      });
+    } else {
+      final nextEnd = index.clamp(_startIndex, widget.values.length - 1);
+      if (nextEnd == _endIndex) return;
+
+      setState(() {
+        _endIndex = nextEnd;
+      });
+    }
+
+    _emitRangeChanged();
+  }
+
+  void _handleDragEnd(double itemWidth) {
+    if (_draggingThumb == _DragThumb.start) {
+      _autoScrollToIndex(_startIndex, itemWidth);
+    } else if (_draggingThumb == _DragThumb.end) {
+      _autoScrollToIndex(_endIndex, itemWidth);
+    } else if (_startIndex == _endIndex) {
+      _autoScrollToIndex(_startIndex, itemWidth);
+    }
+
+    _draggingThumb = null;
+    _dragStartDx = null;
+  }
+
+  void _autoScrollToIndex(int index, double itemWidth) {
+    if (!_scrollController.hasClients) return;
+
+    final targetCenter = _centerX(index, itemWidth);
+    final viewportWidth = _scrollController.position.viewportDimension;
+
+    final newOffset = (targetCenter - viewportWidth / 2).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+
+    _scrollController.animateTo(
+      newOffset,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _scrollLeft() {
+    if (!_scrollController.hasClients) return;
+
+    _scrollController.animateTo(
+      (_scrollController.offset - 150).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _scrollRight() {
+    if (!_scrollController.hasClients) return;
+
+    _scrollController.animateTo(
+      (_scrollController.offset + 150).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      ),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final fem = ScaleSize.aspectRatio;
-    final String startValue = widget.values[_startIndex];
-    final String endValue = widget.values[_endIndex];
-    final chipFormatter = widget.valueToChipText ?? (String v) => v;
+    final fem = _fem;
+    final itemWidth = _itemWidth;
+    final arrowsWidth = 76 * fem;
 
-    /// 🎯 EXACT thumb radius used by slider
-    final double thumbRadius = (10 * fem) / 2;
+    final String startValue = widget.values.isEmpty
+        ? ''
+        : widget.values[_startIndex];
+    final String endValue = widget.values.isEmpty
+        ? ''
+        : widget.values[_endIndex];
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8 * fem, vertical: 10 * fem),
       decoration: BoxDecoration(
         color: Colors.white,
-        //border: Border.all(color: const Color(0xFFDDE9E5), width: 1.5),
         border: Border.all(color: Colors.transparent, width: 1.5),
         borderRadius: BorderRadius.circular(16 * fem),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Label
-          // Padding(
-          //   padding: EdgeInsets.only(left: 8 * fem),
-          //   child: MyText(
-          //     widget.label,
-
-          //     // style: TextStyle(
-          //     //   color: const Color(0xFF303030),
-          //     //   fontSize: 14 * fem,
-          //     //   fontWeight: FontWeight.w400,
-          //     // ),
-          //     style: TextStyle(
-          //       color: Color(0xFF303030),
-          //       fontSize: 14 * fem,
-          //       fontFamily: 'Rushter Glory',
-          //       fontWeight: FontWeight.w400,
-          //     ),
-          //   ),
-          // ),
-
-          // SizedBox(height: 8 * fem),
-
-          // /// Chips
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.end,
-          //   children: [
-          //     _buildValueChip(chipFormatter(startValue), fem),
-          //     SizedBox(width: 6 * fem),
-          //     const Text('-'),
-          //     SizedBox(width: 6 * fem),
-          //     _buildValueChip(chipFormatter(endValue), fem),
-          //   ],
-          // ),
-
-          /// HEADER
           Row(
             children: [
               MyText(
@@ -125,138 +255,209 @@ class _RangeSelectorState extends State<RangeSelector> {
                 style: TextStyle(
                   fontSize: 14 * fem,
                   fontFamily: 'Rushter Glory',
+                  fontWeight: FontWeight.w400,
                 ),
               ),
               const Spacer(),
-
-              /// VALUE CHIP
-              _buildValueChip(chipFormatter(startValue), fem),
+              _buildValueChip(_displayText(startValue), fem),
               SizedBox(width: 6 * fem),
               const Text('-'),
               SizedBox(width: 6 * fem),
-              _buildValueChip(chipFormatter(endValue), fem),
+              _buildValueChip(_displayText(endValue), fem),
             ],
           ),
-
           SizedBox(height: 18 * fem),
+          if (widget.values.isNotEmpty)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final totalWidth = constraints.maxWidth;
+                final contentWidth = widget.values.length * itemWidth;
+                final showArrows = contentWidth > totalWidth;
+                final sliderWidth = showArrows
+                    ? totalWidth - arrowsWidth
+                    : totalWidth;
 
-          /// LABELS — PERFECTLY MATCH SLIDER DOTS
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: thumbRadius),
-            child: Row(
-              children: List.generate(
-                widget.values.length,
-                (index) => Expanded(
-                  child: Text(
-                    widget.values[index],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11 * fem,
-                      fontWeight: FontWeight.w500,
-                      color: (index >= _startIndex && index <= _endIndex)
-                          ? Colors.black
-                          : const Color(0xFFD9D9D9),
+                return Row(
+                  children: [
+                    if (showArrows) ...[
+                      _ArrowButton(
+                        icon: Icons.chevron_left,
+                        fem: fem,
+                        onTap: _scrollLeft,
+                      ),
+                      SizedBox(width: 8 * fem),
+                    ],
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        scrollDirection: Axis.horizontal,
+                        physics: contentWidth > sliderWidth
+                            ? const BouncingScrollPhysics()
+                            : const NeverScrollableScrollPhysics(),
+                        child: SizedBox(
+                          width: contentWidth,
+                          child: _buildStrip(
+                            fem: fem,
+                            itemWidth: itemWidth,
+                            contentWidth: contentWidth,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
+                    if (showArrows) ...[
+                      SizedBox(width: 8 * fem),
+                      _ArrowButton(
+                        icon: Icons.chevron_right,
+                        fem: fem,
+                        onTap: _scrollRight,
+                      ),
+                    ],
+                  ],
+                );
+              },
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStrip({
+    required double fem,
+    required double itemWidth,
+    required double contentWidth,
+  }) {
+    final double thumbW = 10 * fem;
+    final double thumbH = 15 * fem;
+
+    final double startCenter = _centerX(_startIndex, itemWidth);
+    final double endCenter = _centerX(_endIndex, itemWidth);
+
+    final double startLeft = startCenter - thumbW / 2;
+    final double endLeft = endCenter - thumbW / 2;
+
+    final double activeLeft = startCenter;
+    final double activeRight = endCenter;
+    final double activeWidth = (activeRight - activeLeft).abs();
+
+    return SizedBox(
+      width: contentWidth,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: List.generate(widget.values.length, (index) {
+              final bool isInRange = index >= _startIndex && index <= _endIndex;
+              final bool isEdge = index == _startIndex || index == _endIndex;
+
+              return SizedBox(
+                width: itemWidth,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(
+                      child: Text(
+                        widget.values[index],
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.visible,
+                        style: TextStyle(
+                          fontSize: 11 * fem,
+                          fontWeight: isEdge
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: isInRange ? Colors.black : _tickInactive,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10 * fem),
+                    Center(
+                      child: Container(
+                        width: isEdge ? 4 * fem : 3 * fem,
+                        height: 11 * fem,
+                        decoration: BoxDecoration(
+                          color: isInRange ? _tickActive : _tickInactive,
+                          borderRadius: BorderRadius.circular(1.5 * fem),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ),
-
           SizedBox(height: 10 * fem),
-
-          /// TICKS — MATCH LABELS & SLIDER
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: thumbRadius),
-            child: Row(
-              children: List.generate(
-                widget.values.length,
-                (index) => Expanded(
-                  child: Center(
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragStart: (details) {
+              _handleDragStart(details.localPosition.dx, itemWidth);
+            },
+            onHorizontalDragUpdate: (details) {
+              _handleDragUpdate(details.localPosition.dx, itemWidth);
+            },
+            onHorizontalDragEnd: (_) {
+              _handleDragEnd(itemWidth);
+            },
+            child: SizedBox(
+              height: thumbH,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Align(
+                    alignment: Alignment.center,
                     child: Container(
-                      width: 3 * fem,
-                      height: 11 * fem,
+                      height: 6 * fem,
                       decoration: BoxDecoration(
-                        color: (index >= _startIndex && index <= _endIndex)
-                            ? tickColor
-                            : const Color(0xFFD9D9D9),
-                        borderRadius: BorderRadius.circular(1.5 * fem),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(3 * fem),
+                        border: Border.all(color: _trackBorderColor, width: 1),
                       ),
                     ),
                   ),
-                ),
+                  Positioned(
+                    left: activeLeft,
+                    top: (thumbH - 6 * fem) / 2,
+                    child: Container(
+                      width: activeWidth == 0 ? thumbW : activeWidth,
+                      height: 6 * fem,
+                      decoration: BoxDecoration(
+                        color: _activeTrackColor,
+                        borderRadius: BorderRadius.circular(3 * fem),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: startLeft,
+                    top: 0,
+                    bottom: 0,
+                    child: IgnorePointer(
+                      child: SizedBox(
+                        width: thumbW,
+                        child: Center(
+                          child: CustomPaint(
+                            size: Size(thumbW, thumbH),
+                            painter: _DiamondPainter(color: _thumbColor),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: endLeft,
+                    top: 0,
+                    bottom: 0,
+                    child: IgnorePointer(
+                      child: SizedBox(
+                        width: thumbW,
+                        child: Center(
+                          child: CustomPaint(
+                            size: Size(thumbW, thumbH),
+                            painter: _DiamondPainter(color: _thumbColor),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-
-          SizedBox(height: 10 * fem),
-
-          /// TRACK + SLIDER — SAME GEOMETRY
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: thumbRadius),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                /// Base bar
-                Container(
-                  height: 6 * fem,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(3 * fem),
-                    border: Border.all(color: tickColor, width: 1),
-                  ),
-                ),
-
-                /// Slider
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 4 * fem,
-                    inactiveTrackColor: Colors.transparent,
-                    activeTrackColor: activeTrackColor,
-                    thumbColor: const Color(0xFFA9E7DF),
-                    overlayColor: const Color(0xFFBFE8E3).withOpacity(0.25),
-                    rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
-                    rangeThumbShape: DiamondRangeThumbShape(
-                      width: 10 * fem,
-                      height: 15 * fem,
-                    ),
-                    overlayShape: RoundSliderOverlayShape(
-                      overlayRadius: 16 * fem,
-                    ),
-                  ),
-                  child: RangeSlider(
-                    min: 0,
-                    max: (widget.values.length - 1).toDouble(),
-                    divisions: widget.values.length - 1,
-                    values: _range,
-                    // onChanged: (v) {
-                    //   setState(() {
-                    //     _range = RangeValues(
-                    //       v.start.roundToDouble(),
-                    //       v.end.roundToDouble(),
-                    //     );
-                    //   });
-                    //   widget.onRangeChanged(
-                    //     widget.values[_startIndex],
-                    //     widget.values[_endIndex],
-                    //   );
-                    // },
-                    onChanged: (v) {
-                      final start = v.start.round();
-                      final end = v.end.round();
-
-                      setState(() {
-                        _range = RangeValues(start.toDouble(), end.toDouble());
-                      });
-
-                      widget.onRangeChanged(
-                        widget.values[start],
-                        widget.values[end],
-                      );
-                    },
-                  ),
-                ),
-              ],
             ),
           ),
         ],
@@ -291,45 +492,63 @@ class _RangeSelectorState extends State<RangeSelector> {
   }
 }
 
-/// 🔷 Diamond Thumb
-class DiamondRangeThumbShape extends RangeSliderThumbShape {
-  final double width;
-  final double height;
+class _DiamondPainter extends CustomPainter {
+  final Color color;
 
-  const DiamondRangeThumbShape({this.width = 10, this.height = 15});
+  const _DiamondPainter({required this.color});
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size(width, height);
-
-  @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required SliderThemeData sliderTheme,
-    Thumb thumb = Thumb.start,
-    bool isDiscrete = false,
-    bool isEnabled = false,
-    bool isOnTop = true,
-    bool isPressed = false,
-    TextDirection textDirection = TextDirection.ltr,
-  }) {
-    final canvas = context.canvas;
-    final paint = Paint()
-      ..color = sliderTheme.thumbColor!
-      ..style = PaintingStyle.fill;
-
-    final halfW = width / 2;
-    final halfH = height / 2;
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
 
     final path = Path()
-      ..moveTo(center.dx, center.dy - halfH)
-      ..lineTo(center.dx + halfW, center.dy)
-      ..lineTo(center.dx, center.dy + halfH)
-      ..lineTo(center.dx - halfW, center.dy)
+      ..moveTo(cx, 0)
+      ..lineTo(size.width, cy)
+      ..lineTo(cx, size.height)
+      ..lineTo(0, cy)
       ..close();
 
-    canvas.drawPath(path, paint);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.fill,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_DiamondPainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+}
+
+class _ArrowButton extends StatelessWidget {
+  final IconData icon;
+  final double fem;
+  final VoidCallback onTap;
+
+  const _ArrowButton({
+    required this.icon,
+    required this.fem,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8 * fem),
+      child: Container(
+        width: 30 * fem,
+        height: 30 * fem,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFF90DCD0).withOpacity(0.2),
+          borderRadius: BorderRadius.circular(8 * fem),
+        ),
+        child: Icon(icon, size: 20 * fem, color: const Color(0xFF90DCD0)),
+      ),
+    );
   }
 }
