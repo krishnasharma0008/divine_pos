@@ -14,6 +14,7 @@ class StoreDetailState {
   final bool isLoading;
   final List<StoreDetail> stores; // list of all stores
   final StoreDetail? selectedStore; // currently selected store
+  final String? selectedBranch; // currently selected branch (store name)
   /// ✅ Filters data (categories, subCategories, collections)
   final FilterModelState filters;
   final Object? error;
@@ -23,6 +24,7 @@ class StoreDetailState {
     this.isLoading = false,
     this.stores = const [],
     this.selectedStore,
+    this.selectedBranch,
     this.filters = const FilterModelState(),
     this.error,
     this.errorMessage,
@@ -32,6 +34,7 @@ class StoreDetailState {
     bool? isLoading,
     List<StoreDetail>? stores,
     StoreDetail? selectedStore,
+    String? selectedBranch,
     FilterModelState? filters,
     Object? error,
     String? errorMessage,
@@ -41,6 +44,7 @@ class StoreDetailState {
       stores: stores ?? this.stores,
       // only override selectedStore when a non-null value is passed
       selectedStore: selectedStore ?? this.selectedStore,
+      selectedBranch: selectedBranch ?? this.selectedBranch,
       filters: filters ?? this.filters,
       error: error,
       errorMessage: errorMessage,
@@ -69,7 +73,7 @@ class StoreNotifier extends StateNotifier<StoreDetailState> {
 
       final response = await dio.post(ApiEndPoint.get_branch, data: postData);
 
-      //debugPrint('getPJStore response: ${response.data}');
+      //longPrint('getPJStore response: ${response.data}');
 
       if (response.statusCode == HttpStatus.ok) {
         final success = response.data["success"] ?? false;
@@ -86,6 +90,7 @@ class StoreNotifier extends StateNotifier<StoreDetailState> {
             isLoading: false,
             stores: stores,
             selectedStore: stores.isNotEmpty ? stores.first : null,
+            selectedBranch: null,
             error: null,
             errorMessage: null,
           );
@@ -95,6 +100,7 @@ class StoreNotifier extends StateNotifier<StoreDetailState> {
             isLoading: false,
             stores: const [],
             selectedStore: null,
+            selectedBranch: null,
             errorMessage: response.data["msg"] ?? "Store not found",
           );
           return false;
@@ -104,6 +110,7 @@ class StoreNotifier extends StateNotifier<StoreDetailState> {
           isLoading: false,
           stores: const [],
           selectedStore: null,
+          selectedBranch: null,
           errorMessage: response.data["msg"] ?? "Server error",
         );
         return false;
@@ -116,6 +123,7 @@ class StoreNotifier extends StateNotifier<StoreDetailState> {
         isLoading: false,
         stores: const [],
         selectedStore: null,
+        selectedBranch: null,
         error: e,
         errorMessage: "Store not found",
       );
@@ -204,4 +212,13 @@ String capitalizeWords(String input) {
             : '',
       )
       .join(' ');
+}
+
+void longPrint(Object? obj) {
+  const chunkSize = 800;
+  final str = obj.toString();
+  for (var i = 0; i < str.length; i += chunkSize) {
+    final end = (i + chunkSize < str.length) ? i + chunkSize : str.length;
+    debugPrint(str.substring(i, end));
+  }
 }

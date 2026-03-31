@@ -1,6 +1,7 @@
 import 'package:divine_pos/features/auth/data/auth_notifier.dart';
 import 'package:divine_pos/features/cart/data/cart_detail_model.dart';
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
+import 'package:divine_pos/features/jewellery/data/branch_provider.dart';
 import 'package:divine_pos/features/jewellery/data/listing_provider.dart';
 import 'package:divine_pos/features/solitaire_customize/data/solitaire_detail_model.dart'
     show SolitaireDetail;
@@ -50,6 +51,7 @@ class _SolitaireCustomiseScreenState
   @override
   void initState() {
     super.initState();
+
     selectedShape = widget.data?.shape ?? 'RND';
     _initIndicesFromData();
 
@@ -176,19 +178,22 @@ class _SolitaireCustomiseScreenState
       final rawPj = auth.user?.pjcode ?? '';
       final pjcode = rawPj.split(',').first.trim();
 
-      final storeNotifier = ref.read(storeProvider.notifier);
-      await storeNotifier.getPJStore(pjcode: pjcode);
-
       final storeState = ref.read(storeProvider);
+      final selectedStore = storeState.selectedStore;
 
       final matchedStore = storeState.stores.firstWhereOrNull(
         (store) => store.code == pjcode,
       );
 
-      final selectedBranch = storeState.selectedStore?.nickName ?? '';
+      final selectedBranch = selectedStore?.nickName ?? '';
       final customerid = matchedStore?.customerID;
       final customername = matchedStore?.name;
       final customercode = matchedStore?.code;
+
+      debugPrint('Selected branch: $selectedBranch');
+      debugPrint('customerid : $customerid');
+      debugPrint('customercode : $customercode');
+      debugPrint('customername : $customername');
 
       final (caratFrom, caratTo) = _extractRangeFrom(calc.caratRange);
       final (colorFrom, colorTo) = _extractRangeFrom(calc.colorRange);
@@ -216,7 +221,7 @@ class _SolitaireCustomiseScreenState
         designno: isCustomized ? '' : widget.data?.designNo ?? '',
         solitairePcs: 1,
         productQty: 1,
-        productAmtMin: calc.solitaireAmountFrom,
+        productAmtMin: isCustomized ? 0 : calc.solitaireAmountFrom,
         productAmtMax: calc.solitaireAmountTo,
         solitaireShape: SolitaireCalcNotifier.mapShapeCodeToName(
           calc?.solitaireShape ?? '',
@@ -226,7 +231,7 @@ class _SolitaireCustomiseScreenState
         solitaireQuality: '$clarityTo-$clarityFrom',
         solitairePremSize: '',
         solitairePremPct: 0,
-        solitaireAmtMin: calc.solitaireAmountFrom,
+        solitaireAmtMin: isCustomized ? 0 : calc.solitaireAmountFrom,
         solitaireAmtMax: calc.solitaireAmountTo,
         mountAmtMin: 0,
         mountAmtMax: 0,
@@ -644,9 +649,11 @@ class _SolitaireCustomiseScreenState
                             Row(
                               children: [
                                 MyText(
-                                  calc?.approxPriceFrom != null
-                                      ? calc!.approxPriceFrom!.inRupeesFormat()
-                                      : '—',
+                                  calc?.isCustomized == false
+                                      ? ''
+                                      : calc!.approxPriceFrom!.inRupeesFormat(),
+                                  // ? calc!.approxPriceFrom!.inRupeesFormat()
+                                  // : '—',
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: 20 * r,
@@ -660,7 +667,7 @@ class _SolitaireCustomiseScreenState
                                     horizontal: 5 * r,
                                   ),
                                   child: MyText(
-                                    '–',
+                                    calc?.isCustomized == false ? '' : '–',
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 20 * r,
@@ -699,7 +706,7 @@ class _SolitaireCustomiseScreenState
                             onTap: _onDefaultValueTapped,
                           ),
 
-                        SizedBox(width: 12 * r),
+                        SizedBox(width: 148 * r),
 
                         // Continue button
                         InkWell(
@@ -798,41 +805,37 @@ class _DefaultValueButton extends StatelessWidget {
       child: Opacity(
         opacity: isLoading ? 0.5 : 1.0,
         child: Container(
-          height: 52 * r,
-          padding: EdgeInsets.symmetric(horizontal: 14 * r, vertical: 6 * r),
+          width: 190 * r, // same as Continue button
+          height: 52 * r, // same as Continue button
+          padding: EdgeInsets.symmetric(horizontal: 20 * r, vertical: 6 * r),
           decoration: ShapeDecoration(
-            color: Colors.white,
+            gradient: const LinearGradient(
+              begin: Alignment(0.0, 0.5),
+              end: Alignment(0.96, 1.12),
+              colors: [Color(0xFFBEE4DD), Color(0xA5D1B193)],
+            ),
             shape: RoundedRectangleBorder(
-              side: const BorderSide(width: 1.5, color: Color(0xFF6C5022)),
+              side: const BorderSide(width: 1, color: Color(0xFFACA584)),
               borderRadius: const BorderRadius.all(Radius.circular(20)),
             ),
             shadows: const [
               BoxShadow(
-                color: Color(0x3C000000),
+                color: Color(0x7C000000),
                 blurRadius: 4,
-                offset: Offset(1, 2),
+                offset: Offset(2, 2),
               ),
             ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.restart_alt_rounded,
+          child: Center(
+            child: MyText(
+              'Reset Price',
+              style: TextStyle(
                 color: const Color(0xFF6C5022),
-                size: 18 * r,
+                fontSize: 18 * r, // same font size as Continue
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w500,
               ),
-              SizedBox(width: 6 * r),
-              MyText(
-                'Default Value',
-                style: TextStyle(
-                  color: const Color(0xFF6C5022),
-                  fontSize: 13 * r,
-                  fontFamily: 'Montserrat',
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

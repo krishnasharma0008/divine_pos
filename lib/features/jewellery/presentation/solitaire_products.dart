@@ -2,6 +2,7 @@ import 'package:divine_pos/shared/utils/currency_formatter.dart';
 import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 
 // ── Data model passed to the customisation screen ────────────────────────────
 class DiamondRowData {
@@ -92,12 +93,24 @@ class DiamondsRow extends StatelessWidget {
           // ── Cart button ──────────────────────────────────────────────────
           _ActionCell(
             fem: fem,
-            icon: Icons.shopping_cart_outlined,
+            icon: SvgPicture.asset(
+              'assets/icons/cart.svg',
+              width: 44 * fem,
+              height: 46 * fem,
+            ),
             onTap: onCart,
           ),
-          SizedBox(width: 28 * fem),
+          SizedBox(width: 8 * fem),
           // ── Customise button ─────────────────────────────────────────────
-          _ActionCell(fem: fem, icon: Icons.tune_rounded, onTap: onCustomise),
+          _ActionCell(
+            fem: fem,
+            icon: SvgPicture.asset(
+              'assets/icons/tryon.svg',
+              width: 44 * fem,
+              height: 46 * fem,
+            ),
+            onTap: onCustomise,
+          ),
         ],
       ),
     );
@@ -110,10 +123,10 @@ class DiamondsRow extends StatelessWidget {
 
 class _ActionCell extends StatelessWidget {
   final double fem;
-  final IconData icon;
+  final Widget icon;
   final VoidCallback onTap;
 
-  static const double _iconSize = 32;
+  static const double _iconSize = 50;
 
   const _ActionCell({
     required this.fem,
@@ -129,10 +142,10 @@ class _ActionCell extends StatelessWidget {
         width: _iconSize * fem,
         height: _iconSize * fem,
         decoration: BoxDecoration(
-          color: const Color(0xFFBEE4DD),
+          //color: const Color(0xFFBEE4DD),
           borderRadius: BorderRadius.circular(8 * fem),
         ),
-        child: Icon(icon, size: 18 * fem, color: Colors.white),
+        child: icon,
       ),
     );
   }
@@ -266,7 +279,7 @@ class _QtyCell extends StatelessWidget {
 class SolitaireHeader extends StatelessWidget {
   const SolitaireHeader({super.key});
 
-  static const double _actionCellWidth = 32;
+  static const double _actionCellWidth = 50;
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +303,7 @@ class SolitaireHeader extends StatelessWidget {
           const _HeaderCell(label: 'Amount'),
           // Matches the two _ActionCell widths + gap between them in the row
           SizedBox(width: _actionCellWidth * fem),
-          SizedBox(width: 28 * fem),
+          SizedBox(width: 8 * fem),
           SizedBox(width: _actionCellWidth * fem),
         ],
       ),

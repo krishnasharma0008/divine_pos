@@ -1,5 +1,6 @@
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/features/jewellery/data/add_to_cart_notifier.dart';
+import 'package:divine_pos/features/jewellery/data/branch_provider.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/widget/continue_cart_popup.dart';
 import 'package:divine_pos/features/solitaire_customize/data/solitaire_detail_model.dart';
 import 'package:divine_pos/shared/routes/route_pages.dart';
@@ -144,12 +145,10 @@ class _JewelleryListingScreenState
     final customername = matchedStore?.name;
     final customercode = matchedStore?.code;
 
-    // debugPrint('matched Store : $matchedStore');
-
-    // debugPrint('customerid : ${customerid}');
-    // debugPrint('customercode : ${customercode}');
-    // debugPrint('customername : ${customername}');
-    // debugPrint('Selectedbranch : ${selectedBranch}');
+    debugPrint('Selected branch: $selectedBranch');
+    debugPrint('customerid : $customerid');
+    debugPrint('customercode : $customercode');
+    debugPrint('customername : $customername');
 
     // ────────────────────────────────────────────────────
 
@@ -745,4 +744,13 @@ class _SolitaireHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant _SolitaireHeaderDelegate oldDelegate) => false;
+}
+
+void longPrint(Object? obj) {
+  const chunkSize = 800;
+  final str = obj.toString();
+  for (var i = 0; i < str.length; i += chunkSize) {
+    final end = (i + chunkSize < str.length) ? i + chunkSize : str.length;
+    debugPrint(str.substring(i, end));
+  }
 }

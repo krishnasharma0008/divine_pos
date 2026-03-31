@@ -109,7 +109,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
 
   /// collection derived from shape type
   String get _collection {
-    final type = _selectedShapeObj?.type.toUpperCase() ?? '';
+    final type = _selectedShapeObj?.value.toUpperCase() ?? '';
     if (type == 'SOLUS') return 'SOLUS';
     return 'SOLITAIRE';
   }

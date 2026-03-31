@@ -105,8 +105,8 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         layingWith = pjcode;
       }
 
-      debugPrint("Button Type : ${filter.allDesigns}");
-      debugPrint("layingWith : $layingWith");
+      // debugPrint("Button Type : ${filter.allDesigns}");
+      // debugPrint("layingWith : $layingWith");
 
       String? gender;
 
