@@ -378,7 +378,7 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
       customerCode: customercode,
       customerName: customername,
       customerBranch: branch,
-      productType: 'jewellery',
+      productType: 'solitaire',
       orderType: 'RCO',
       productCategory: detail.productCategory,
       productSubCategory: detail.productSubCategory,
@@ -388,11 +388,12 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
           .toUtc()
           .toIso8601String(),
       oldVarient: detail.oldVariant,
-      productCode: detail.itemNumber,
+      productCode:
+          detail.itemNumber, //4XGR9 view in listing page for product in store
       designno: detail.designno, // designno, // design no
       solitairePcs: totalSolPcs,
       productQty: 1,
-      productAmtMin: detail.productPrice?.toDouble(),
+      productAmtMin: 0, //detail.productPrice?.toDouble(),
       productAmtMax: detail.productPrice?.toDouble(),
       solitaireShape: JewelleryCalculationService.mapShapeCodeToName(shapeCode),
       solitaireSlab: '$caratFrom-$caratTo',

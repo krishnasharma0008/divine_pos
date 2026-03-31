@@ -17,6 +17,7 @@ class Jewellery {
   final String? color; // new
   final String? clarity; // new
   final String? imageUrl;
+  final String? laying_with; // new
 
   const Jewellery({
     required this.itemId,
@@ -36,6 +37,7 @@ class Jewellery {
     this.color, // new
     this.clarity, // new
     this.imageUrl,
+    this.laying_with, // new
   });
 
   // 🔹 यही जोड़ना है
@@ -57,6 +59,7 @@ class Jewellery {
     String? color,
     String? clarity,
     String? imageUrl,
+    String? laying_with,
   }) {
     return Jewellery(
       itemId: itemId ?? this.itemId,
@@ -76,6 +79,7 @@ class Jewellery {
       color: color ?? this.color,
       clarity: clarity ?? this.clarity,
       imageUrl: imageUrl ?? this.imageUrl,
+      laying_with: laying_with ?? this.laying_with,
     );
   }
 
@@ -125,6 +129,7 @@ class Jewellery {
       color: json['color']?.toString() ?? '',
       clarity: json['clarity']?.toString() ?? '',
       imageUrl: cleanUrl(json['image_url']),
+      laying_with: json['laying_with']?.toString() ?? '',
     );
   }
 
@@ -146,5 +151,6 @@ class Jewellery {
     'color': color,
     'clarity': clarity,
     'image_url': imageUrl,
+    'laying_with': laying_with,
   };
 }

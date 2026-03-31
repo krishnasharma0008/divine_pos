@@ -1,6 +1,7 @@
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/features/jewellery/data/add_to_cart_notifier.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/widget/continue_cart_popup.dart';
+import 'package:divine_pos/features/solitaire_customize/data/solitaire_detail_model.dart';
 import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:divine_pos/shared/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
@@ -143,12 +144,12 @@ class _JewelleryListingScreenState
     final customername = matchedStore?.name;
     final customercode = matchedStore?.code;
 
-    debugPrint('matched Store : $matchedStore');
+    // debugPrint('matched Store : $matchedStore');
 
-    debugPrint('customerid : ${customerid}');
-    debugPrint('customercode : ${customercode}');
-    debugPrint('customername : ${customername}');
-    debugPrint('Selectedbranch : ${selectedBranch}');
+    // debugPrint('customerid : ${customerid}');
+    // debugPrint('customercode : ${customercode}');
+    // debugPrint('customername : ${customername}');
+    // debugPrint('Selectedbranch : ${selectedBranch}');
 
     // ────────────────────────────────────────────────────
 
@@ -166,11 +167,11 @@ class _JewelleryListingScreenState
         showLogo: false,
         actions: [
           AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
-          AppBarActionConfig(
-            type: AppBarAction.notification,
-            badgeCount: 0,
-            onTap: () => context.push('/notifications'),
-          ),
+          // AppBarActionConfig(
+          //   type: AppBarAction.notification,
+          //   badgeCount: 0,
+          //   onTap: () => context.push('/notifications'),
+          // ),
           AppBarActionConfig(
             type: AppBarAction.profile,
             onTap: () => context.pushNamed(
@@ -208,6 +209,8 @@ class _JewelleryListingScreenState
                   onTabSelected: (tab) {
                     if (tab == 0) {
                       filterNotifier.setProductsInStore();
+                    } else if (tab == 1) {
+                      filterNotifier.setAllStore();
                     } else if (tab == 2) {
                       filterNotifier.setAllDesigns();
                     }
@@ -277,16 +280,30 @@ class _JewelleryListingScreenState
                                             )
                                             .toList();
                                         if (solitaireItems.isEmpty) {
-                                          return const Center(
-                                            child: MyText(
-                                              'No solitaire results found, please try a different filter.',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w500,
+                                          return Center(
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                context.pushNamed(
+                                                  RoutePages
+                                                      .solitairecustomize
+                                                      .routeName,
+                                                  extra: null,
+                                                );
+                                              },
+                                              child: const MyText(
+                                                'No loose solitaire at store. Please click here to customize.',
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w500,
+                                                  decoration:
+                                                      TextDecoration.underline,
+                                                  color: Color(0xFF6C5022),
+                                                ),
                                               ),
                                             ),
                                           );
                                         }
+
                                         // debugPrint(
                                         //   'customerid : ${customerid}',
                                         // );
@@ -450,6 +467,85 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
                         onDec: () => setState(() {
                           if (_pcs[index] > 0) _pcs[index]--;
                         }),
+                        onCart: () async {
+                          final customer = await showDialog<CustomerDetail>(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (_) =>
+                                ContinueCartPopup(parentContext: context),
+                          );
+                          if (customer == null) return;
+
+                          final selectedRows = <Jewellery>[];
+                          final item = widget.items[index];
+                          selectedRows.add(item);
+
+                          await ref
+                              .read(addToCartProvider.notifier)
+                              .createCartFromRows(
+                                rows: selectedRows,
+                                customerOrder: customer,
+                                customerid: widget.customerid,
+                                customercode: widget.customercode,
+                                customername: widget.customername,
+                                branch: widget.Selectedbranch,
+                              );
+
+                          if (!context.mounted) return;
+
+                          // ✅ Read the inner AddToCartState from AsyncValue
+                          final result = ref.read(addToCartProvider).value;
+
+                          if (result?.isSuccess == true) {
+                            // ✅ Reset so next add starts fresh
+                            ref.read(addToCartProvider.notifier).reset();
+                            context.pushNamed(RoutePages.cart.routeName);
+                          } else if (result?.isError == true) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  result?.errorMessage ??
+                                      'Failed to add to cart',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        onCustomise: () {
+                          final j = widget.items[index];
+                          final detail = SolitaireDetail(
+                            itemId: j.itemId ?? 0,
+                            itemNumber: j.itemNumber ?? '',
+                            designNo: j.designno ?? '',
+                            oldVariant: j.oldVariant ?? '',
+                            productCategory: j.productCategory ?? '',
+                            solitaireSlab: j.solitaireSlab ?? '',
+                            weight: (j.weight ?? 0).toDouble(),
+                            pcs: 1,
+                            isNew: j.isNew ?? false,
+                            classify: j.classify,
+                            description: j.description,
+                            price: (j.price ?? 0).toDouble(),
+                            layingWith: j.laying_with ?? '',
+                            shape: j.shape ?? '',
+                            color: j.color ?? '',
+                            clarity: j.clarity ?? '',
+                            imageUrl: j.imageUrl ?? '',
+                          );
+                          context.pushNamed(
+                            RoutePages.solitairecustomize.routeName,
+                            extra: detail,
+                          );
+                        },
+                        // onCustomise: () {
+                        //   context.pushNamed(
+                        //     RoutePages.solitairecustomize.routeName,
+                        //     queryParameters: {
+                        //       'productCode': j.itemNumber ?? '',
+                        //       'layingwith': j.laying_with,
+                        //     },
+                        //   );
+                        // },
                       );
                     }, childCount: widget.items.length),
                   ),
@@ -459,162 +555,162 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
           ),
 
           // ── Bottom bar — Figma: mint bg, rounded top corners ─────────────
-          Builder(
-            builder: (context) {
-              // Calculate grand total across all items
-              double grandTotal = 0;
-              for (int i = 0; i < widget.items.length; i++) {
-                grandTotal +=
-                    (widget.items[i].price ?? 0).toDouble() *
-                    _pcs[i] *
-                    (widget.items[i].weight ?? 0).toDouble();
-              }
+          // Builder(
+          //   builder: (context) {
+          //     // Calculate grand total across all items
+          //     double grandTotal = 0;
+          //     for (int i = 0; i < widget.items.length; i++) {
+          //       grandTotal +=
+          //           (widget.items[i].price ?? 0).toDouble() *
+          //           _pcs[i] *
+          //           (widget.items[i].weight ?? 0).toDouble();
+          //     }
 
-              return Container(
-                height: 82 * widget.fem,
-                padding: EdgeInsets.symmetric(horizontal: 24 * widget.fem),
-                decoration: ShapeDecoration(
-                  color: Color(0xFFBEE4DD),
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(width: 1, color: Color(0xFF90DCD0)),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(25 * widget.fem),
-                      topRight: Radius.circular(25 * widget.fem),
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // ── Total label + amount ─────────────────────────────
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // const Text(
-                        //   'Total Amount',
-                        //   style: TextStyle(
-                        //     color: Color(0xFF888888),
-                        //     fontSize: 13,
-                        //     fontFamily: 'Arial',
-                        //     fontWeight: FontWeight.w400,
-                        //   ),
-                        // ),
-                        // const SizedBox(height: 2),
-                        MyText(
-                          grandTotal.inRupeesFormat(),
-                          style: TextStyle(
-                            color: Color(0xFF333333),
-                            fontSize: 18 * widget.fem,
-                            fontFamily: 'Arial',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+          //     return Container(
+          //       height: 82 * widget.fem,
+          //       padding: EdgeInsets.symmetric(horizontal: 24 * widget.fem),
+          //       decoration: ShapeDecoration(
+          //         color: Color(0xFFBEE4DD),
+          //         shape: RoundedRectangleBorder(
+          //           side: BorderSide(width: 1, color: Color(0xFF90DCD0)),
+          //           borderRadius: BorderRadius.only(
+          //             topLeft: Radius.circular(25 * widget.fem),
+          //             topRight: Radius.circular(25 * widget.fem),
+          //           ),
+          //         ),
+          //       ),
+          //       child: Row(
+          //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //         children: [
+          //           // ── Total label + amount ─────────────────────────────
+          //           Column(
+          //             mainAxisAlignment: MainAxisAlignment.center,
+          //             crossAxisAlignment: CrossAxisAlignment.start,
+          //             children: [
+          //               // const Text(
+          //               //   'Total Amount',
+          //               //   style: TextStyle(
+          //               //     color: Color(0xFF888888),
+          //               //     fontSize: 13,
+          //               //     fontFamily: 'Arial',
+          //               //     fontWeight: FontWeight.w400,
+          //               //   ),
+          //               // ),
+          //               // const SizedBox(height: 2),
+          //               MyText(
+          //                 grandTotal.inRupeesFormat(),
+          //                 style: TextStyle(
+          //                   color: Color(0xFF333333),
+          //                   fontSize: 18 * widget.fem,
+          //                   fontFamily: 'Arial',
+          //                   fontWeight: FontWeight.w600,
+          //                 ),
+          //               ),
+          //             ],
+          //           ),
 
-                    // ── Place Order button ───────────────────────────────
-                    InkWell(
-                      onTap: () async {
-                        final customer = await showDialog<CustomerDetail>(
-                          context: context,
-                          barrierDismissible: true,
-                          builder: (_) =>
-                              ContinueCartPopup(parentContext: context),
-                        );
-                        if (customer == null) return;
+          //           // ── Place Order button ───────────────────────────────
+          //           InkWell(
+          //             onTap: () async {
+          //               final customer = await showDialog<CustomerDetail>(
+          //                 context: context,
+          //                 barrierDismissible: true,
+          //                 builder: (_) =>
+          //                     ContinueCartPopup(parentContext: context),
+          //               );
+          //               if (customer == null) return;
 
-                        final selectedRows = <Jewellery>[];
-                        for (var i = 0; i < widget.items.length; i++) {
-                          final qty = _pcs[i];
-                          if (qty > 0) {
-                            final updated = widget.items[i].copyWith(pcs: qty);
-                            selectedRows.add(updated);
-                          }
-                        }
+          //               final selectedRows = <Jewellery>[];
+          //               for (var i = 0; i < widget.items.length; i++) {
+          //                 final qty = _pcs[i];
+          //                 if (qty > 0) {
+          //                   final updated = widget.items[i].copyWith(pcs: qty);
+          //                   selectedRows.add(updated);
+          //                 }
+          //               }
 
-                        if (selectedRows.isEmpty) {
-                          debugPrint('No items with qty > 0');
-                          return;
-                        }
-                        await ref
-                            .read(addToCartProvider.notifier)
-                            .createCartFromRows(
-                              rows: selectedRows,
-                              customerOrder: customer,
-                              customerid: widget.customerid,
-                              customercode: widget.customercode,
-                              customername: widget.customername,
-                              branch: widget.Selectedbranch,
-                            );
+          //               if (selectedRows.isEmpty) {
+          //                 debugPrint('No items with qty > 0');
+          //                 return;
+          //               }
+          //               await ref
+          //                   .read(addToCartProvider.notifier)
+          //                   .createCartFromRows(
+          //                     rows: selectedRows,
+          //                     customerOrder: customer,
+          //                     customerid: widget.customerid,
+          //                     customercode: widget.customercode,
+          //                     customername: widget.customername,
+          //                     branch: widget.Selectedbranch,
+          //                   );
 
-                        if (!context.mounted) return;
+          //               if (!context.mounted) return;
 
-                        // ✅ Read the inner AddToCartState from AsyncValue
-                        final result = ref.read(addToCartProvider).value;
+          //               // ✅ Read the inner AddToCartState from AsyncValue
+          //               final result = ref.read(addToCartProvider).value;
 
-                        if (result?.isSuccess == true) {
-                          // ✅ Reset so next add starts fresh
-                          ref.read(addToCartProvider.notifier).reset();
-                          context.pushNamed(RoutePages.cart.routeName);
-                        } else if (result?.isError == true) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                result?.errorMessage ?? 'Failed to add to cart',
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(20 * widget.fem),
-                      child: Container(
-                        width: 258 * widget.fem,
-                        height: 52 * widget.fem,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 30 * widget.fem,
-                          vertical: 6 * widget.fem,
-                        ),
-                        decoration: ShapeDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment(0.0, 0.5),
-                            end: Alignment(0.96, 1.12),
-                            colors: [Color(0xFFBEE4DD), Color(0xA5D1B193)],
-                          ),
-                          shape: RoundedRectangleBorder(
-                            side: const BorderSide(
-                              width: 1,
-                              color: Color(0xFFACA584),
-                            ),
-                            borderRadius: BorderRadius.all(Radius.circular(20)),
-                          ),
-                          shadows: [
-                            BoxShadow(
-                              color: Color(0x7C000000),
-                              blurRadius: 4 * widget.fem,
-                              offset: Offset(2, 2),
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: MyText(
-                            'Continue',
-                            style: TextStyle(
-                              color: const Color(0xFF6C5022),
-                              fontSize: 20 * widget.fem,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+          //               if (result?.isSuccess == true) {
+          //                 // ✅ Reset so next add starts fresh
+          //                 ref.read(addToCartProvider.notifier).reset();
+          //                 context.pushNamed(RoutePages.cart.routeName);
+          //               } else if (result?.isError == true) {
+          //                 ScaffoldMessenger.of(context).showSnackBar(
+          //                   SnackBar(
+          //                     content: Text(
+          //                       result?.errorMessage ?? 'Failed to add to cart',
+          //                     ),
+          //                   ),
+          //                 );
+          //               }
+          //             },
+          //             borderRadius: BorderRadius.circular(20 * widget.fem),
+          //             child: Container(
+          //               width: 258 * widget.fem,
+          //               height: 52 * widget.fem,
+          //               padding: EdgeInsets.symmetric(
+          //                 horizontal: 30 * widget.fem,
+          //                 vertical: 6 * widget.fem,
+          //               ),
+          //               decoration: ShapeDecoration(
+          //                 gradient: const LinearGradient(
+          //                   begin: Alignment(0.0, 0.5),
+          //                   end: Alignment(0.96, 1.12),
+          //                   colors: [Color(0xFFBEE4DD), Color(0xA5D1B193)],
+          //                 ),
+          //                 shape: RoundedRectangleBorder(
+          //                   side: const BorderSide(
+          //                     width: 1,
+          //                     color: Color(0xFFACA584),
+          //                   ),
+          //                   borderRadius: BorderRadius.all(Radius.circular(20)),
+          //                 ),
+          //                 shadows: [
+          //                   BoxShadow(
+          //                     color: Color(0x7C000000),
+          //                     blurRadius: 4 * widget.fem,
+          //                     offset: Offset(2, 2),
+          //                     spreadRadius: 0,
+          //                   ),
+          //                 ],
+          //               ),
+          //               child: Center(
+          //                 child: MyText(
+          //                   'Continue',
+          //                   style: TextStyle(
+          //                     color: const Color(0xFF6C5022),
+          //                     fontSize: 20 * widget.fem,
+          //                     fontFamily: 'Montserrat',
+          //                     fontWeight: FontWeight.w500,
+          //                   ),
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     );
+          //   },
+          // ),
         ],
       ),
     );

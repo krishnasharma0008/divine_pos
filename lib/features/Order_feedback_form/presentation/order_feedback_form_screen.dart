@@ -110,13 +110,13 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
 
   // ── Step 1 validation ─────────────────────────────────────────────────────
   bool get _step1Valid =>
-      _experienceRating > 0 &&
-      _selectedSource != null &&
-      _customerType != null &&
-      _occasion != null &&
+      // _experienceRating > 0 &&
+      // _selectedSource != null &&
+      // _customerType != null &&
+      // _occasion != null &&
       _nameController.text.trim().isNotEmpty &&
-      _mobileController.text.trim().isNotEmpty &&
-      _emailController.text.trim().isNotEmpty;
+      _mobileController.text.trim().isNotEmpty;
+  // && _emailController.text.trim().isNotEmpty;
 
   void _handleNext() {
     setState(() => _step1Submitted = true);
@@ -261,7 +261,7 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
                 onRatingUpdate: (rating) =>
                     setState(() => _experienceRating = rating),
               ),
-              if (ratingError) _errorText('Please select a rating'),
+              //if (ratingError) _errorText('Please select a rating'),
             ],
           ),
         ),
@@ -303,8 +303,8 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
                   );
                 }).toList(),
               ),
-              if (sourceError)
-                _errorText('Please select how you heard about us'),
+              // if (sourceError)
+              //   _errorText('Please select how you heard about us'),
             ],
           ),
         ),
@@ -336,8 +336,8 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
                 onChanged: (v) => setState(() => _customerType = v!),
                 fem: fem,
               ),
-              if (_step1Submitted && _customerType == null)
-                _errorText('Please select an option'),
+              // if (_step1Submitted && _customerType == null)
+              //   _errorText('Please select an option'),
             ],
           ),
         ),
@@ -381,8 +381,8 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
                 fem: fem,
                 onChanged: (v) => setState(() => _occasion = v!),
               ),
-              if (_step1Submitted && _occasion == null)
-                _errorText('Please select an occasion'),
+              // if (_step1Submitted && _occasion == null)
+              //   _errorText('Please select an occasion'),
             ],
           ),
         ),
@@ -454,16 +454,17 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
                 hint: 'Enter your email id',
                 fem: fem,
                 keyboardType: TextInputType.emailAddress,
-                errorText: _fieldError(
-                  _emailController.text,
-                  'Please enter email',
-                ),
+                // errorText: _fieldError(
+                //   _emailController.text,
+                //   'Please enter email',
+                // ),
                 onChanged: (_) => setState(() {}),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty)
-                    return 'Please enter email';
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim()))
+                  final value = v?.trim() ?? '';
+                  //if (value.isEmpty) return null; // optional
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                     return 'Enter valid email';
+                  }
                   return null;
                 },
               ),
@@ -1007,7 +1008,8 @@ void _showSuccessDialog(BuildContext context, double fem) {
                 SizedBox(height: 32 * fem),
                 Center(
                   child: submitButton(fem, () {
-                    context.pushNamed(RoutePages.dashboard.routeName);
+                    //context.pushNamed(RoutePages.dashboard.routeName);
+                    GoRouter.of(context).go(RoutePages.dashboard.routeName);
                   }, label: 'OK'),
                 ),
                 SizedBox(height: 32 * fem),

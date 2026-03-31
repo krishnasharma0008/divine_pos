@@ -20,6 +20,7 @@ class FilterNotifier extends Notifier<FilterState> {
       selectedMetalPurity: {'18KT'},
       selectedMetalColor: {}, // {'Yellow'},
       selectedOccasions: {},
+      itemno: null,
       // selectedColors: {},
       // selectedClarities: {},
     );
@@ -33,6 +34,7 @@ class FilterNotifier extends Notifier<FilterState> {
       //productBranch: null,
       productBranch: const Nullable(null), // clear
       allDesigns: false,
+      allStore: 1, // Set the allStore field to indicate this selection
     );
   }
 
@@ -42,6 +44,7 @@ class FilterNotifier extends Notifier<FilterState> {
       //productBranch: branchCode,
       productBranch: Nullable(branchCode), // ✅ SET
       allDesigns: false,
+      allStore: 1,
     );
   }
 
@@ -51,6 +54,16 @@ class FilterNotifier extends Notifier<FilterState> {
       //productBranch: null,
       productBranch: const Nullable(null), // ✅ now REALLY null
       allDesigns: true,
+    );
+  }
+
+  void setAllStore() {
+    state = state.copyWith(
+      isInStore: true,
+      //productBranch: null,
+      productBranch: const Nullable(null), // clear
+      allDesigns: false,
+      allStore: 0, // Set the allStore field to indicate this selection
     );
   }
 
@@ -216,6 +229,10 @@ class FilterNotifier extends Notifier<FilterState> {
     state = state.copyWith(selectedSubCategory: {value});
   }
 
+  void setItemno(String? itemno) {
+    state = state.copyWith(itemno: Nullable(itemno)); // designno
+  }
+
   // ───────────────── Reset ─────────────────
   void resetFilters() {
     state = state.copyWith(
@@ -233,6 +250,8 @@ class FilterNotifier extends Notifier<FilterState> {
       selectedMetalPurity: {'18KT'},
       selectedMetalColor: {}, // {'Yellow'},
       selectedOccasions: {},
+      itemno: const Nullable(null),
+
       // selectedColors: {},
       // selectedClarities: {},
       // Top buttons remain untouched
@@ -260,6 +279,7 @@ class FilterNotifier extends Notifier<FilterState> {
       // optional: clear sort / top buttons if you want
       sortBy: null,
       // isInStore, productBranch, allDesigns can stay as-is or also reset
+      itemno: const Nullable(null), //
     );
   }
 }

@@ -104,6 +104,7 @@ class FilterTagsSection extends ConsumerWidget {
         selectedFilters: tags,
         onClearAll: () {
           notifier.resetFilters(); // Reset filter state
+          notifier.setItemno(null); // Clear itemno when resetting filters
           // You can also trigger top buttons reset here if needed.
         },
         onRemoveTag: (tag) {

@@ -107,7 +107,8 @@ class _ProductCardState extends State<ProductCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _imageStack(r),
-        SizedBox(height: 8 * r),
+        //SizedBox(height: 8 * r),
+        _description(r), // 👈 description below price
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -116,7 +117,8 @@ class _ProductCardState extends State<ProductCard> {
               _actionsRow(mainAxisAlignment: MainAxisAlignment.end, r: r),
           ],
         ),
-        SizedBox(height: 8 * r),
+
+        //SizedBox(height: 6 * r),
       ],
     );
   }
@@ -127,7 +129,8 @@ class _ProductCardState extends State<ProductCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _imageStack(r),
-        SizedBox(height: 8 * r),
+        //SizedBox(height: 8 * r),
+        _description(r), // 👈 description below price
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -136,7 +139,8 @@ class _ProductCardState extends State<ProductCard> {
               _actionsRow(mainAxisAlignment: MainAxisAlignment.end, r: r),
           ],
         ),
-        SizedBox(height: 8 * r),
+
+        //SizedBox(height: 8 * r),
       ],
     );
   }
@@ -145,13 +149,15 @@ class _ProductCardState extends State<ProductCard> {
   Widget _imageStack(double r) {
     final bool isNetwork = widget.image.startsWith('http');
 
+    //debugPrint('ProductCard img: "${widget.image}"');
+
     return Stack(
       children: [
         // ── Tappable image area ──────────────────────────────────────────
         GestureDetector(
           onTap: _openImagePopup,
           child: SizedBox(
-            height: 287 * r,
+            height: 280 * r,
             width: double.infinity,
             child: Center(
               child: isNetwork
@@ -269,16 +275,16 @@ class _ProductCardState extends State<ProductCard> {
   }
 
   Widget _description(double r) => Padding(
-    padding: EdgeInsets.symmetric(horizontal: 9 * r),
+    padding: EdgeInsets.symmetric(horizontal: 12 * r),
     child: SizedBox(
-      height: 36 * r,
+      //height: 36 * r,
       child: MyText(
         widget.description,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 13 * r,
-          fontWeight: FontWeight.w300,
+          fontSize: 16 * r,
+          fontWeight: FontWeight.w500,
           height: 1.54,
         ),
       ),

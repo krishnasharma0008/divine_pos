@@ -12,7 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../presentation/widgets/shape_selector.dart';
 import '../presentation/widgets/diamond_display.dart';
-import '../presentation/widgets/carat_range_selector.dart';
 import '../presentation/widgets/color_slider.dart';
 import '../presentation/widgets/clarity_slider.dart';
 import '../presentation/widgets/price_footer.dart';
@@ -42,21 +41,27 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   final _ruleEngine = DiamondRuleEngine();
   double? _totalPrice;
 
+  late final TextEditingController _caratController;
+  String? _caratError;
+
   @override
   void initState() {
     super.initState();
-    // Fetch initial price after first frame
+    _caratController = TextEditingController(
+      text: _config.caratDouble.toStringAsFixed(2),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetchPrice(_config));
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _caratController.dispose();
     super.dispose();
   }
 
   // -------------------------------------------------------------------------
-  // fetchPrice — debounced 400ms so rapid slider moves don't spam the API
+  // fetchPrice — debounced 400ms so rapid changes don't spam the API
   // -------------------------------------------------------------------------
   void _fetchPrice(DiamondConfig config) {
     _debounce?.cancel();
@@ -74,14 +79,12 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
               quality: config.clarityLabel,
             );
         if (mounted) {
-          //setState(() => _price = price);
           setState(() {
             _price = price;
             _totalPrice = price * config.caratDouble;
           });
         }
       } catch (e) {
-        // Keep previous price on error; optionally show snackbar
         debugPrint('fetchPrice error: $e');
       } finally {
         if (mounted) setState(() => _loadingPrice = false);
@@ -100,12 +103,9 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   // -------------------------------------------------------------------------
   // Shape change
   // -------------------------------------------------------------------------
-
   void _onShapeChanged(DiamondShape shape) {
     final newConfig = _config.copyWith(shape: shape, caratIndex: 4);
-
     final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
-
     _updateConfig(normalized);
   }
 
@@ -114,29 +114,43 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // Carat change
+  // Carat change — text field, accepts 0.10 to 10.00
   // -------------------------------------------------------------------------
+  void _onCaratChanged(String raw) {
+    final value = double.tryParse(raw);
 
-  void _onCaratChanged(String value) {
-    final i = caratSteps.indexOf(value);
-    if (i < 0) return;
+    if (value == null || value < 0.10 || value > 10.0) {
+      setState(() {
+        _caratError = 'Enter a value between 0.10 and 10.00';
+      });
+      return;
+    }
 
-    final newConfig = _config.copyWith(caratIndex: i);
+    setState(() => _caratError = null);
 
+    // Snap to the nearest caratSteps index
+    int closest = 0;
+    double minDiff = double.infinity;
+    for (int i = 0; i < caratSteps.length; i++) {
+      final stepVal = double.tryParse(caratSteps[i]) ?? 0;
+      final diff = (stepVal - value).abs();
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = i;
+      }
+    }
+
+    final newConfig = _config.copyWith(caratIndex: closest);
     final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
-
     _updateConfig(normalized);
   }
 
   // -------------------------------------------------------------------------
   // Color change
   // -------------------------------------------------------------------------
-
   void _onColorChanged(int index) {
     final newConfig = _config.copyWith(colorIndex: index);
-
     final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
-
     _updateConfig(normalized);
   }
 
@@ -167,8 +181,7 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
     final fem = ScaleSize.aspectRatio;
 
     return Scaffold(
-      //backgroundColor: const Color(0xFFF7F5F2),
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
       body: SafeArea(
         child: Column(
@@ -205,8 +218,6 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
             ),
             PriceFooter(
               config: _config,
-              //price: _price,
-              //carats: _config.caratDouble,
               totalPrice: _totalPrice,
               isLoading: _loadingPrice,
               onCompare: _showPriceChart,
@@ -238,7 +249,7 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
           style: TextStyle(
             color: const Color(0xFF303030),
             fontSize: 15,
-            fontFamily: 'Montserrat',
+            //fontFamily: 'Montserrat',
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -262,10 +273,56 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
         _ControlCard(
           label: 'Carat',
           fem: fem,
-          child: CaratSelector(
-            label: '',
-            values: caratSteps,
-            initialIndex: _config.caratIndex,
+          child: TextField(
+            controller: _caratController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              fontSize: 14 * fem,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF2A2A2A),
+            ),
+            decoration: InputDecoration(
+              hintText: '0.10 – 10.00',
+              hintStyle: TextStyle(
+                color: const Color(0xFFAAAAAA),
+                fontSize: 14 * fem,
+                fontFamily: 'Montserrat',
+              ),
+              suffixText: 'ct',
+              suffixStyle: TextStyle(
+                color: const Color(0xFF2A2A2A),
+                fontFamily: 'Montserrat',
+                fontWeight: FontWeight.w600,
+                fontSize: 14 * fem,
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12 * fem,
+                vertical: 10 * fem,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: _caratError != null
+                      ? Colors.red
+                      : const Color(0xFFE4E4E0),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: _caratError != null
+                      ? Colors.red
+                      : const Color(0xFF2A2A2A),
+                  width: 1.5,
+                ),
+              ),
+              errorText: _caratError,
+              errorStyle: TextStyle(
+                fontSize: 11 * fem,
+                fontFamily: 'Montserrat',
+              ),
+            ),
             onChanged: _onCaratChanged,
           ),
         ),
@@ -301,6 +358,7 @@ class _ControlCard extends StatelessWidget {
   final String label;
   final Widget child;
   final double fem;
+
   const _ControlCard({
     required this.label,
     required this.child,
@@ -326,7 +384,7 @@ class _ControlCard extends StatelessWidget {
               fontFamily: 'Georgia',
               fontSize: 16 * fem,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF2A2A2A),
+              color: const Color(0xFF2A2A2A),
             ),
           ),
           const SizedBox(height: 10),

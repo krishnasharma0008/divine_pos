@@ -171,6 +171,9 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
         ? Clarityoption.indexOf(filter.clarityEndLabel!)
         : clarityDefaultEnd;
 
+    final TextEditingController uidController = TextEditingController();
+    final FocusNode uidFocusNode = FocusNode();
+
     return Container(
       width: fem * 310,
       padding: EdgeInsets.symmetric(horizontal: fem * 4, vertical: fem * 4),
@@ -209,6 +212,105 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  //-----------------------------------------------------
+                  // SEarch By Item Number
+                  //-----------------------------------------------------
+                  if (!isSolitaire) ...[
+                    // ───── UID SEARCH ─────
+
+                    // SEARCH BOX LIKE IMAGE
+                    Padding(
+                      padding: EdgeInsets.only(top: 8 * fem, bottom: 12 * fem),
+                      child: Container(
+                        height: 44 * fem,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8 * fem),
+                          border: Border.all(
+                            color: const Color(0xFF90DCD0),
+                          ), // outline color
+                        ),
+                        child: Row(
+                          children: [
+                            // text input with icon
+                            Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 12 * fem),
+                                child: TextField(
+                                  controller: uidController,
+                                  focusNode: uidFocusNode,
+                                  style: TextStyle(
+                                    fontSize: 16 * fem, // ← input text size
+                                  ),
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    border: InputBorder.none,
+                                    hintText: 'Search Design no.',
+                                    hintStyle: TextStyle(
+                                      fontSize: 16 * fem,
+                                      color: Colors
+                                          .grey, // ← change this to any Color
+                                    ),
+                                  ),
+                                  textInputAction: TextInputAction.search,
+                                  onEditingComplete: () {
+                                    final value = uidController.text.trim();
+                                    if (value.isEmpty) return;
+                                    debugPrint('Search Design No. : $value');
+                                    // notifier.searchByUid(value);
+                                    uidFocusNode.unfocus();
+                                    notifier.setItemno(value);
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            // vertical divider between field and button
+                            Container(width: 1, color: const Color(0xFF90DCD0)),
+
+                            // right "Search" button part
+                            InkWell(
+                              onTap: () {
+                                final value = uidController.text.trim();
+                                if (value.isEmpty) return;
+                                debugPrint('Search UID: $value');
+                                // notifier.searchByUid(value);
+                                uidFocusNode.unfocus();
+                              },
+                              child: Container(
+                                width: 90 * fem,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: Color(
+                                    0xFF90DCD0,
+                                  ), // your teal / kMint alternative
+                                  borderRadius: BorderRadius.horizontal(
+                                    right: Radius.circular(8 * fem),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.search,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                                // child: MyText(
+                                //   'Search',
+                                //   style: TextStyle(
+                                //     color: Colors.white,
+                                //     fontWeight: FontWeight.w500,
+                                //   ),
+                                //),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  Divider(
+                    height: 1,
+                    color: Colors.black.withValues(alpha: 0.08),
+                  ),
+
                   //------------------------------------------------------
                   // PRICE RANGE
                   //------------------------------------------------------

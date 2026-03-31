@@ -1,6 +1,7 @@
 import 'package:divine_pos/features/auth/data/auth_notifier.dart';
 import 'package:divine_pos/features/jewellery/data/add_to_cart_notifier.dart';
 import 'package:divine_pos/features/jewellery/data/filter_provider.dart';
+import 'package:collection/collection.dart';
 import 'package:divine_pos/features/jewellery/data/listing_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,17 +39,23 @@ class ProductGrid extends ConsumerWidget {
   }) async {
     //final branch = ref.read(filterProvider).productBranch ?? '';
     final auth = ref.read(authProvider);
-    final pjcode = auth.user?.pjcode ?? '';
+
+    final raw = auth.user?.pjcode ?? '';
+    final pjcode = raw.split(',').first.trim();
     final storeState = ref.read(storeProvider);
 
     String branch = '';
     int customerid = 0;
     String customername = '';
     String customercode = '';
+    // / find store where code == pjcode
+    final matchedStore = storeState.stores.firstWhereOrNull(
+      (store) => store.code == pjcode,
+    );
     if (storeState.selectedStore?.nickName != null) {
-      customerid = storeState.selectedStore!.customerID;
-      customercode = storeState.selectedStore?.code ?? '';
-      customername = storeState.selectedStore?.name ?? '';
+      customerid = matchedStore?.customerID ?? 0;
+      customercode = matchedStore?.code ?? '';
+      customername = matchedStore?.name ?? '';
       branch = storeState.selectedStore!.nickName;
     }
 
@@ -214,8 +221,8 @@ class ProductGrid extends ConsumerWidget {
     return ProductCard(
       isWide: isWide,
       image: item.imageUrl ?? '',
-      //description: item.itemNumber ?? '', //item.description ?? '',
-      description: item.description ?? '',
+      description: item.itemNumber ?? '', //item.description ?? '',
+      //description: item.description ?? '',
       price: item.price ?? 0,
       tagText: tagText,
       tagColor: getTagColor(tagText),

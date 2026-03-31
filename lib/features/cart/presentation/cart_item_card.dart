@@ -7,6 +7,13 @@ import '../../../shared/utils/scale_size.dart';
 import '../data/cart_detail_model.dart';
 import '../providers/cart_providers.dart';
 
+class DiamondShape {
+  final String value;
+  final String assetPath;
+
+  const DiamondShape({required this.value, required this.assetPath});
+}
+
 class CartItemCard extends ConsumerStatefulWidget {
   final CartDetail item;
   final VoidCallback? onDelete;
@@ -54,17 +61,49 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     super.dispose();
   }
 
+  static const allShapes = <DiamondShape>[
+    DiamondShape(value: 'Round', assetPath: 'assets/diamond_value/round.png'),
+    DiamondShape(
+      value: 'Princess',
+      assetPath: 'assets/diamond_value/princess.png',
+    ),
+    DiamondShape(value: 'Pear', assetPath: 'assets/diamond_value/pear.png'),
+    DiamondShape(value: 'Oval', assetPath: 'assets/diamond_value/oval.png'),
+    DiamondShape(
+      value: 'Radiant',
+      assetPath: 'assets/diamond_value/radiant.png',
+    ),
+    DiamondShape(
+      value: 'Cushion',
+      assetPath: 'assets/diamond_value/cushion.png',
+    ),
+    DiamondShape(value: 'Heart', assetPath: 'assets/diamond_value/heart.png'),
+  ];
+
+  String? getShapeAsset(String? shape) {
+    if (shape == null) return null;
+
+    final match = allShapes.firstWhere(
+      (s) => s.value.toLowerCase() == shape.toLowerCase(),
+      orElse: () => const DiamondShape(value: '', assetPath: ''),
+    );
+
+    return match.assetPath.isEmpty ? null : match.assetPath;
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
   Widget _buildImage(String? url) {
+    final isNetwork = url != null && url.startsWith('http');
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: SizedBox(
         width: 180,
         height: 180,
-        child: url != null && url.isNotEmpty
+        child: isNetwork
             ? Image.network(
-                url,
+                url!,
                 fit: BoxFit.cover,
                 loadingBuilder: (_, child, progress) => progress == null
                     ? child
@@ -80,8 +119,14 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
                 ),
               )
             : Image.asset(
-                'assets/jewellery/No_Image_Available.jpg',
+                (url != null && url.isNotEmpty)
+                    ? url
+                    : 'assets/jewellery/No_Image_Available.jpg',
                 fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  'assets/jewellery/No_Image_Available.jpg',
+                  fit: BoxFit.cover,
+                ),
               ),
       ),
     );
@@ -91,8 +136,9 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        //if (item.productType != 'solitaire') ...[
         MyText(
-          '${item.productSubCategory ?? ''} - ${item.productCode ?? ''}',
+          '${item.productSubCategory ?? ''} ${item.productSubCategory ?? ' - '} ${item.productCode ?? ''}',
           style: TextStyle(
             color: const Color(0xFF0A0A0A),
             fontSize: 18 * fem,
@@ -101,19 +147,23 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
             height: 1.56,
           ),
         ),
+        //],
         const SizedBox(height: 6),
         ...[
           'Divine Solitaire ${item.solitaireShape ?? ''}  ${(item.solitaireSlab ?? '')} '
               '${item.solitaireColor ?? ''} ${item.solitaireQuality ?? ''} '
               '(${item.solitairePcs ?? 0} Pcs)',
-          'Divine Mount:  Metal- ${item.metalPurity ?? ''} '
-              '${item.metalColor ?? ''} ${item.metalWeight ?? 0}gms',
-          'Side Diamonds Qty ${item.sideStonePcs ?? 0} / '
-              '${(item.sideStoneCts ?? 0).toStringAsFixed(2)}ct. ${item.sideStoneColor ?? ''} ${item.sideStoneQuality ?? ''}',
-          'Size: ${item.sizeFrom ?? ''}',
+          if ((item.productType ?? '').toLowerCase() != 'solitaire')
+            {
+              'Divine Mount:  Metal- ${item.metalPurity ?? ''} '
+                  '${item.metalColor ?? ''} ${item.metalWeight ?? 0}gms',
+              'Side Diamonds Qty ${item.sideStonePcs ?? 0} / '
+                  '${(item.sideStoneCts ?? 0).toStringAsFixed(2)}ct. ${item.sideStoneColor ?? ''} ${item.sideStoneQuality ?? ''}',
+              'Size: ${item.sizeFrom ?? ''}',
+            },
         ].map(
           (text) => MyText(
-            text,
+            text.toString(),
             style: TextStyle(
               color: const Color(0xFF354152),
               fontSize: 14 * fem,
@@ -124,7 +174,7 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
           ),
         ),
         SizedBox(height: 14 * fem),
-        _buildQtyControl(item, notifier, fem),
+        //_buildQtyControl(item, notifier, fem),
       ],
     );
   }
@@ -184,11 +234,15 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     );
   }
 
-  Widget _buildPrice(CartDetail item, double fem) {
+  // ── Price: hidden when both min and max are 0 ────────────────────────────────
+  Widget? _buildPrice(CartDetail item, double fem) {
     final min = item.productAmtMin ?? 0;
     final max = item.productAmtMax ?? 0;
+
+    if (min == 0 && max == 0) return null;
+
     return MyText(
-      '${min.inRupeesFormat()} - ${max.inRupeesFormat()}',
+      '${min == 0 ? '' : min.inRupeesFormat()} ${min == 0 ? '' : '-'} ${max == 0 ? '' : max.inRupeesFormat()}',
       style: TextStyle(
         color: const Color(0xFF0A0A0A),
         fontSize: 24 * fem,
@@ -323,6 +377,8 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
       ),
     );
 
+    final priceWidget = _buildPrice(currentItem, fem);
+
     return Container(
       margin: EdgeInsets.fromLTRB(24 * fem, 0, 24 * fem, 0),
       decoration: BoxDecoration(
@@ -339,7 +395,11 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _buildImage(currentItem.imageUrl),
+                (currentItem.productType ?? '').toLowerCase() == 'solitaire'
+                    ? _buildImage(getShapeAsset(currentItem.solitaireShape))
+                    : _buildImage(currentItem.imageUrl),
+
+                //_buildImage(currentItem.imageUrl),
                 SizedBox(width: 24 * fem),
                 Expanded(
                   child: Column(
@@ -350,25 +410,39 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
                     ],
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [_buildPrice(currentItem, fem)],
-                ),
+                if (priceWidget != null)
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [priceWidget],
+                  ),
               ],
             ),
           ),
+
+          // ── Circular close button — top-right of card ──────────────────────
           Positioned(
-            top: 24 * fem,
-            right: 43 * fem,
-            child: IconButton(
-              icon: const Icon(Icons.close),
-              iconSize: 20 * fem,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              color: const Color(0xFF99A1AF),
-              onPressed: widget.onDelete,
+            top: 12 * fem,
+            right: 12 * fem,
+            child: GestureDetector(
+              onTap: widget.onDelete,
+              child: Container(
+                width: 28 * fem,
+                height: 28 * fem,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.close,
+                    size: 14 * fem,
+                    color: const Color(0xFF99A1AF),
+                  ),
+                ),
+              ),
             ),
           ),
         ],

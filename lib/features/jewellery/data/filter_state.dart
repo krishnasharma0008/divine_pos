@@ -5,25 +5,26 @@ class FilterState {
   final RangeValues? selectedPriceRange;
   final Set<String> selectedCategory;
   final Set<String> selectedSubCategory;
+
   final String? colorStartLabel;
   final String? colorEndLabel;
   final String? clarityStartLabel;
   final String? clarityEndLabel;
   final String? caratStartLabel;
   final String? caratEndLabel;
+
   final Set<String> selectedShape;
   final Set<String> selectedMetalPurity;
   final Set<String> selectedMetalColor;
   final Set<String> selectedOccasions;
-  // final Set<String> ColorStartLabel;
-  // final Set<String> ColorEndLabel;
-  // final Set<String> ClaritieStartLabel;
-  // final Set<String> ClaritieEndLabel;
 
+  // Top button filters
   final bool isInStore;
   final String? productBranch;
   final bool allDesigns;
   final String? sortBy;
+  final String? itemno;
+  final int allStore;
 
   const FilterState({
     required this.selectedGender,
@@ -40,21 +41,16 @@ class FilterState {
     required this.selectedMetalPurity,
     required this.selectedMetalColor,
     required this.selectedOccasions,
-    // required this.selectedColors,
-    // required this.selectedClarities,
-
-    // top button filters
-    this.isInStore = true, // ✅ default in-store
-    this.productBranch, // null = no branch filter
+    this.isInStore = true,
+    this.productBranch,
     this.allDesigns = false,
     this.sortBy,
+    this.itemno,
+    this.allStore = 0,
   });
-
-  get selectedClarity => null;
 
   FilterState copyWith({
     Set<String>? selectedGender,
-    //RangeValues? selectedPriceRange,
     Nullable<RangeValues>? selectedPriceRange,
     Set<String>? selectedCategory,
     Set<String>? selectedSubCategory,
@@ -68,64 +64,50 @@ class FilterState {
     Set<String>? selectedMetalPurity,
     Set<String>? selectedMetalColor,
     Set<String>? selectedOccasions,
-    Set<String>? selectedColors,
-    Set<String>? selectedClarities,
-    //top button filters
     bool? isInStore,
-    //String? productBranch,
-    Nullable<String>? productBranch, // 🔥 IMPORTANT
+    Nullable<String>? productBranch,
     bool? allDesigns,
     String? sortBy,
+    Nullable<String>? itemno,
+    int? allStore,
   }) {
     return FilterState(
       selectedGender: selectedGender ?? this.selectedGender,
-      //selectedPriceRange: selectedPriceRange ?? this.selectedPriceRange,
       selectedPriceRange: selectedPriceRange != null
           ? selectedPriceRange.value
           : this.selectedPriceRange,
-
       selectedCategory: selectedCategory ?? this.selectedCategory,
       selectedSubCategory: selectedSubCategory ?? this.selectedSubCategory,
-
       colorStartLabel: colorStartLabel != null
           ? colorStartLabel.value
           : this.colorStartLabel,
       colorEndLabel: colorEndLabel != null
           ? colorEndLabel.value
           : this.colorEndLabel,
-      //colorStartLabel: colorStartLabel ?? this.colorStartLabel,
-      //colorEndLabel: colorEndLabel ?? this.colorEndLabel,
       clarityStartLabel: clarityStartLabel != null
           ? clarityStartLabel.value
           : this.clarityStartLabel,
       clarityEndLabel: clarityEndLabel != null
           ? clarityEndLabel.value
           : this.clarityEndLabel,
-      // clarityStartLabel: clarityStartLabel ?? this.clarityStartLabel,
-      // clarityEndLabel: clarityEndLabel ?? this.clarityEndLabel,
-      //caratStartLabel: caratStartLabel ?? this.caratStartLabel,
       caratStartLabel: caratStartLabel != null
           ? caratStartLabel.value
           : this.caratStartLabel,
       caratEndLabel: caratEndLabel != null
           ? caratEndLabel.value
           : this.caratEndLabel,
-      //caratEndLabel: caratEndLabel ?? this.caratEndLabel,
       selectedShape: selectedShape ?? this.selectedShape,
       selectedMetalPurity: selectedMetalPurity ?? this.selectedMetalPurity,
       selectedMetalColor: selectedMetalColor ?? this.selectedMetalColor,
       selectedOccasions: selectedOccasions ?? this.selectedOccasions,
-      // selectedColors: selectedColors ?? this.selectedColors,
-      // selectedClarities: selectedClarities ?? this.selectedClarities,
-
-      //top button filters
       isInStore: isInStore ?? this.isInStore,
-      //productBranch: productBranch ?? this.productBranch, // ✅ fixed
       productBranch: productBranch != null
           ? productBranch.value
           : this.productBranch,
       allDesigns: allDesigns ?? this.allDesigns,
       sortBy: sortBy ?? this.sortBy,
+      itemno: itemno != null ? itemno.value : this.itemno,
+      allStore: allStore ?? this.allStore,
     );
   }
 }

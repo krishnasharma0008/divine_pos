@@ -59,6 +59,16 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
 
                 SizedBox(width: 14),
 
+                // ── NEW: All Store button ──────────────────────────────────
+                _PillButton(
+                  title: 'All Store',
+                  selected: _selectedTab == 1,
+                  width: 130 * fem,
+                  onTap: () => _selectTab(1),
+                ),
+
+                SizedBox(width: 14),
+
                 UltraDropdown<StoreDetail>(
                   width: 420 * fem,
                   height: 50 * fem,
@@ -77,16 +87,6 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
 
                 SizedBox(width: 14),
 
-                // if (!widget.isSolitaire) ...[
-                //   _PillButton(
-                //     title: 'All Designs',
-                //     selected: _selectedTab == 2,
-                //     width: 155 * fem,
-                //     onTap: () => _selectTab(2),
-                //   ),
-                //   //SizedBox(width: 251),
-                //   Spacer(),
-                // ],
                 if (!widget.isSolitaire)
                   _PillButton(
                     title: 'All Designs',
@@ -122,7 +122,6 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
   void _selectTab(int index) {
     setState(() {
       _selectedTab = index;
-      //_selectedBranch = null;
     });
     widget.onTabSelected?.call(index);
   }

@@ -6,6 +6,7 @@ import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart
 import 'package:divine_pos/features/diamond_value/presentation/diamond_value_screen.dart';
 import 'package:divine_pos/features/feedback_form/presentation/feedback_form_screen.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/jewellery_customize_screen.dart';
+import 'package:divine_pos/features/solitaire_customize/data/solitaire_detail_model.dart';
 import 'package:divine_pos/features/verify_track/presentation/verify_detail_shell.dart';
 import 'package:divine_pos/features/verify_track/presentation/verifyandtrack_screen.dart';
 import 'package:flutter/widgets.dart';
@@ -19,6 +20,7 @@ import '../../features/home/presentation/loading_screen.dart';
 //import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart'; // import your OTP screen
 import '../../features/jewellery/presentation/jewellery_listing_screen.dart';
+import '../../features/solitaire_customize/presentation/solitaire_customize_screen.dart';
 import '../../features/Order_feedback_form/presentation/order_feedback_form_screen.dart';
 import '../../features/cart/presentation/cart_screen.dart';
 import '../../shared/utils/enums.dart';
@@ -126,7 +128,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return JewelleryCustomiseScreen(productCode: productCode);
         },
       ),
+      GoRoute(
+        path: RoutePages.solitairecustomize.routePath,
+        name: RoutePages.solitairecustomize.routeName,
+        builder: (context, state) {
+          final data = state.extra as SolitaireDetail?;
+          return SolitaireCustomiseScreen(data: data);
+        },
+      ),
+      // GoRoute(
+      //   path: RoutePages.solitairecustomize.routePath,
+      //   name: RoutePages.solitairecustomize.routeName,
+      //   builder: (context, state) {
+      //     final productCode = state.uri.queryParameters['productCode'] ?? '';
+      //     final layingwith = state.uri.queryParameters['layingwith'];
 
+      //     return SolitaireCustomiseScreen(
+      //       productCode: productCode,
+      //       layingwith: layingwith,
+      //     );
+      //   },
+      // ),
       // GoRoute(
       //   path: RoutePages.jewelleryjourney.routePath,
       //   name: RoutePages.jewelleryjourney.routeName,

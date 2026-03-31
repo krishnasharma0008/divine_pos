@@ -24,17 +24,20 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
   }
 
   /// Fetch jewellery detail using productCode
-  Future<void> fetchJewelleryDetail(String productCode) async {
+  Future<void> fetchJewelleryDetail(
+    String productCode, {
+    String? lyingwith,
+  }) async {
     state = const AsyncLoading();
 
     state = await AsyncValue.guard(() async {
       final dio = ref.read(httpClientProvider);
 
-      //debugPrint('Product : $productCode');
+      debugPrint('Product : $productCode');
 
-      // debugPrint(
-      //   '🌐 URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_Prodct}',
-      // );
+      debugPrint(
+        '🌐 URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_Prodct}',
+      );
 
       final response = await dio
           .post(
@@ -47,7 +50,9 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
                 throw TimeoutException('Request timed out after 15s'),
           );
 
-      debugPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
+      longPrint(
+        "📦 Jewellery Detail Fetched Data: ${jsonEncode(response.data)}",
+      );
 
       if (response.statusCode != HttpStatus.ok) {
         throw HttpException(
@@ -183,5 +188,14 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
     final price = body['price'];
     if (price is num) return price.toDouble();
     throw Exception('Invalid price response: $body');
+  }
+
+  void longPrint(Object? obj) {
+    const chunkSize = 800;
+    final str = obj.toString();
+    for (var i = 0; i < str.length; i += chunkSize) {
+      final end = (i + chunkSize < str.length) ? i + chunkSize : str.length;
+      debugPrint(str.substring(i, end));
+    }
   }
 }

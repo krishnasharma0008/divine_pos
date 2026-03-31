@@ -104,11 +104,11 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
         showLogo: true,
         actions: [
           AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
-          AppBarActionConfig(
-            type: AppBarAction.notification,
-            badgeCount: ref.watch(authProvider).user?.cartCount ?? 0,
-            onTap: () {},
-          ),
+          // AppBarActionConfig(
+          //   type: AppBarAction.notification,
+          //   badgeCount: ref.watch(authProvider).user?.cartCount ?? 0,
+          //   onTap: () {},
+          // ),
           AppBarActionConfig(
             type: AppBarAction.profile,
             onTap: () => context.push('/profile'),

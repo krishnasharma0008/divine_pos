@@ -12,17 +12,15 @@ class DiamondDisplay extends StatelessWidget {
     final fem = ScaleSize.aspectRatio;
     return Column(
       children: [
-        // Diamond circle with real image
         _DiamondCircle(config: config),
         const SizedBox(height: 14),
 
-        // Diamond code
-        Text(
+        MyText(
           config.diamondCode,
           style: TextStyle(
             color: Colors.black,
             fontSize: 20 * fem,
-            fontFamily: 'Montserrat',
+            //fontFamily: 'Montserrat',
             fontWeight: FontWeight.w500,
             height: 1.35,
             letterSpacing: 0.40,
@@ -30,7 +28,6 @@ class DiamondDisplay extends StatelessWidget {
         ),
         SizedBox(height: 14 * fem),
 
-        // Hearts & Arrows (only for Round white diamond)
         if (config.isRound) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -46,20 +43,23 @@ class DiamondDisplay extends StatelessWidget {
             style: TextStyle(
               color: Colors.black,
               fontSize: 12 * fem,
-              fontFamily: 'Montserrat',
+              //fontFamily: 'Montserrat',
               fontWeight: FontWeight.w300,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14 * fem),
         ] else
-          const SizedBox(height: 14),
+          SizedBox(height: 14 * fem),
 
-        // Features grid
-        _FeaturesGrid(),
+        const _FeaturesGrid(),
       ],
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Diamond circle
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _DiamondCircle extends StatelessWidget {
   final DiamondConfig config;
@@ -67,7 +67,6 @@ class _DiamondCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('Shape: ${config.shapeAsset}');
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       child: Container(
@@ -81,31 +80,20 @@ class _DiamondCircle extends StatelessWidget {
             side: BorderSide(width: 1, color: Color(0xFFCECECE)),
           ),
         ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            /// Ring (only if exists)
-            // if (config.ringAsset != null)
-            // Image.asset(
-            //   'assets/diamond_value/grayring.png',
-            //   width: 180 * ScaleSize.aspectRatio,
-            //   fit: BoxFit.contain,
-            //   filterQuality: FilterQuality.high,
-            // ),
-
-            /// Diamond always shows
-            Image.asset(
-              config.shapeAsset,
-              width: 82 * ScaleSize.aspectRatio,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.high,
-            ),
-          ],
+        child: Image.asset(
+          config.shapeAsset,
+          width: 82 * ScaleSize.aspectRatio,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
         ),
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hearts & Arrows
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _HeartsArrowsIcon extends StatelessWidget {
   final bool isHearts;
@@ -114,17 +102,12 @@ class _HeartsArrowsIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
-
     return Column(
       children: [
         Container(
           width: 44 * fem,
           height: 44 * fem,
           padding: EdgeInsets.all(6 * fem),
-          // decoration: BoxDecoration(
-          //   shape: BoxShape.circle,
-          //   border: Border.all(color: const Color(0xFFE88888), width: 1.5),
-          // ),
           child: Image.asset(
             isHearts
                 ? 'assets/vtdia/circle-heart.png'
@@ -139,7 +122,7 @@ class _HeartsArrowsIcon extends StatelessWidget {
           style: TextStyle(
             color: Colors.black,
             fontSize: 12 * fem,
-            fontFamily: 'Montserrat',
+            //fontFamily: 'Montserrat',
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -148,19 +131,29 @@ class _HeartsArrowsIcon extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Features Grid — Option C: Clean white card, mint header, bordered cells
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _FeaturesGrid extends StatelessWidget {
   const _FeaturesGrid();
 
-  final List<String> features = const [
-    'Excellent cut',
-    'None\nfluorescence',
-    'Excellent polish',
-    'No overtone',
-    'Excellent symmetry',
-    'faceted girdle',
-    'Ultimate light\nperformance',
-    'Pointed cullet\nMany more..',
+  static const _features = [
+    (icon: Icons.cut_outlined, label: 'Excellent Cut'),
+    (icon: Icons.flare_outlined, label: 'No Fluorescence'),
+    (icon: Icons.lens_blur, label: 'Excellent Polish'),
+    (icon: Icons.palette_outlined, label: 'No Overtone'),
+    (icon: Icons.hub_outlined, label: 'Excellent Symmetry'),
+    (icon: Icons.hexagon_outlined, label: 'Faceted Girdle'),
+    (icon: Icons.wb_sunny_outlined, label: 'Ultimate Light Perf.'),
+    (icon: Icons.more_horiz_rounded, label: 'Pointed Cullet & More'),
   ];
+
+  // Mint palette
+  static const _mintBg = Color(0xFFF0F9F7);
+  static const _mintBorder = Color(0xFFC5E8E1);
+  static const _mintText = Color(0xFF0F6E56);
+  static const _cellBorder = Color(0xFFEAF3F1);
 
   @override
   Widget build(BuildContext context) {
@@ -168,91 +161,156 @@ class _FeaturesGrid extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      height: 103 * fem,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment(0.01, 1.04),
-          end: Alignment(0.97, 0.0),
-          colors: [Color(0xFF6FA198), Color(0xFF8AC0B6)],
-        ),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _mintBorder, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: _mintText.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
-        itemCount: features.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          childAspectRatio: 2.8,
-        ),
-        itemBuilder: (context, index) {
-          final row = index ~/ 4;
-          final col = index % 4;
-
-          return Container(
-            padding: EdgeInsets.symmetric(horizontal: 10 * fem),
-            decoration: BoxDecoration(
-              border: Border(
-                right: col == 3
-                    ? BorderSide.none
-                    : BorderSide(
-                        color: Colors.white.withOpacity(0.35),
-                        width: 1,
-                      ),
-                bottom: row == 1
-                    ? BorderSide.none
-                    : BorderSide(
-                        color: Colors.white.withOpacity(0.35),
-                        width: 1,
-                      ),
-              ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // ── Mint header ──────────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            color: _mintBg,
+            padding: EdgeInsets.symmetric(
+              horizontal: 14 * fem,
+              vertical: 10 * fem,
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                /// Tick badge
-                Container(
-                  width: 18 * fem,
-                  height: 18 * fem,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/vtdia/Star 2.png',
-                        width: 18 * fem,
-                        height: 18 * fem,
-                        fit: BoxFit.contain,
-                      ),
-                      Image.asset(
-                        'assets/vtdia/green-rick.png',
-                        width: 9 * fem,
-                        height: 9 * fem,
-                        fit: BoxFit.contain,
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(width: 8 * fem),
-
-                /// Feature text
-                Expanded(
-                  child: Text(
-                    features[index],
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11 * fem,
-                      fontFamily: 'Montserrat',
-                      fontWeight: FontWeight.w400,
-                      height: 1.2,
-                    ),
+                Icon(Icons.diamond_outlined, color: _mintText, size: 18 * fem),
+                SizedBox(width: 6 * fem),
+                MyText(
+                  'Divine Quality Assurance',
+                  style: TextStyle(
+                    //fontFamily: 'Montserrat',
+                    fontSize: 14 * fem,
+                    fontWeight: FontWeight.w700,
+                    color: _mintText,
+                    letterSpacing: 0.6,
                   ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+
+          // ── Accent line below header ──────────────────────────────────────
+          Container(height: 1, color: _mintBorder),
+
+          // ── Rows: 2 cells per row ─────────────────────────────────────────
+          ...List.generate((_features.length / 2).ceil(), (row) {
+            final leftIndex = row * 2;
+            final rightIndex = leftIndex + 1;
+            final isLastRow = rightIndex >= _features.length;
+
+            return Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: isLastRow
+                      ? BorderSide.none
+                      : BorderSide(color: _cellBorder, width: 1),
+                ),
+              ),
+              child: IntrinsicHeight(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _FeatureCell(
+                        icon: _features[leftIndex].icon,
+                        label: _features[leftIndex].label,
+                        rightBorder: true,
+                        fem: fem,
+                      ),
+                    ),
+                    if (rightIndex < _features.length)
+                      Expanded(
+                        child: _FeatureCell(
+                          icon: _features[rightIndex].icon,
+                          label: _features[rightIndex].label,
+                          rightBorder: false,
+                          fem: fem,
+                        ),
+                      )
+                    else
+                      const Expanded(child: SizedBox()),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Single feature cell
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _FeatureCell extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool rightBorder;
+  final double fem;
+
+  const _FeatureCell({
+    required this.icon,
+    required this.label,
+    required this.rightBorder,
+    required this.fem,
+  });
+
+  static const _tickBg = Color(0xFFE1F5EE);
+  static const _tickIcon = Color(0xFF1D9E75);
+  static const _labelColor = Color(0xFF2A2A2A);
+  static const _cellBorder = Color(0xFFEAF3F1);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10 * fem, vertical: 9 * fem),
+      decoration: rightBorder
+          ? BoxDecoration(
+              border: Border(right: BorderSide(color: _cellBorder, width: 1)),
+            )
+          : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Rounded tick badge
+          // Container(
+          //   width: 22 * fem,
+          //   height: 22 * fem,
+          //   decoration: BoxDecoration(
+          //     color: _tickBg,
+          //     borderRadius: BorderRadius.circular(6),
+          //   ),
+          //   child: Icon(Icons.check_rounded, color: _tickIcon, size: 13 * fem),
+          // ),
+          SizedBox(width: 8 * fem),
+          // Feature label
+          Expanded(
+            child: MyText(
+              label,
+              style: TextStyle(
+                //fontFamily: 'Montserrat',
+                fontSize: 14 * fem,
+                fontWeight: FontWeight.w500,
+                color: _labelColor,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

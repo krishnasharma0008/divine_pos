@@ -383,6 +383,7 @@ class _SearchCurrentCartRowState extends ConsumerState<SearchCurrentCartRow> {
   }
 
   void _onCustomerTap(CustomerDetail customer) {
+    FocusScope.of(context).unfocus();
     ref.read(selectedCustomerProvider.notifier).setCustomer(customer);
 
     _controller.clear();
@@ -405,7 +406,7 @@ class _SearchCurrentCartRowState extends ConsumerState<SearchCurrentCartRow> {
           children: [
             // Stack only holds search field + badge — no suggestions inside
             SizedBox(
-              height: 70 * fem,
+              height: 54 * fem,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [_buildSearchField(fem), _buildCurrentCartBadge(fem)],

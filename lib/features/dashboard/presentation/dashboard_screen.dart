@@ -65,13 +65,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               debugPrint('Search tapped');
             },
           ),
-          AppBarActionConfig(
-            type: AppBarAction.notification,
-            badgeCount: cartCount,
-            onTap: () {
-              //context.push('/notifications');
-            },
-          ),
+          // AppBarActionConfig(
+          //   type: AppBarAction.notification,
+          //   badgeCount: cartCount,
+          //   onTap: () {
+          //     //context.push('/notifications');
+          //   },
+          // ),
           AppBarActionConfig(
             type: AppBarAction.profile,
             onTap: () {

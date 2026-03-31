@@ -92,15 +92,20 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       String? layingWith;
       //debugPrint("Top Button row: $filter.isInStore");
       if (filter.isInStore) {
+        //debugPrint("In Store selected");
         layingWith = pjcode;
       } else if (filter.productBranch != null) {
+        //debugPrint("Other Branch selected: ${filter.productBranch}");
         layingWith = filter.productBranch;
       } else if (filter.allDesigns) {
+        //debugPrint("All Designs selected");
         layingWith = null;
       } else {
+        //debugPrint("Default selected");
         layingWith = pjcode;
       }
 
+      debugPrint("Button Type : ${filter.allDesigns}");
       debugPrint("layingWith : $layingWith");
 
       String? gender;
@@ -136,7 +141,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       //debugPrint("Selected gender: $gender");
       //debugPrint(filter.selectedGender.join(","));
       final postData = {
-        "item_number": null,
+        "item_number": filter.itemno,
         "product_category": filter.selectedCategory.isEmpty
             ? null
             : filter.selectedCategory.join(",").toLowerCase(),
@@ -181,9 +186,10 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         "color_to": filter.colorEndLabel,
         "clarity_from": filter.clarityStartLabel,
         "clarity_to": filter.clarityEndLabel,
+        'only_own': filter.allStore, // new field for "All Store" selection
       };
 
-      // debugPrint("🔄 Fetching jewellery - Page: $_page");
+      //debugPrint("🔄 Fetching jewellery - Page: $_page");
       //debugPrint("📦 Post Data: ${jsonEncode(postData)}");
 
       // debugPrint(
@@ -204,8 +210,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
           'HTTP ${response.statusCode}: ${response.statusMessage}',
         );
       }
-      //debugPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
-      //longPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
+      //longPrint("📦 Fetched Listing screen Data: ${jsonEncode(response.data)}");
       // ✅ Response data validation
       if (response.data == null) {
         throw Exception('Empty response from server');

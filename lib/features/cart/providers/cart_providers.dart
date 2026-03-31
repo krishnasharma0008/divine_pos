@@ -98,7 +98,7 @@ class CartNotifier extends AsyncNotifier<List<CartDetail>> {
         data: {'username': user},
       );
 
-      //longPrint("📦 Fetched Data: ${jsonEncode(response.data)}");
+      longPrint("📦 Fetched Cart Data: ${jsonEncode(response.data)}");
 
       if (response.statusCode == 200) {
         final res = response.data;

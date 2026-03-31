@@ -107,8 +107,8 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
   // indices
   int _priceStartIndex = 1;
   int _priceEndIndex = 4;
-  int _caratStartIndex = 0;
-  int _caratEndIndex = 10;
+  int _caratStartIndex = 4;
+  int _caratEndIndex = 5;
   int _colorStartIndex = 2;
   int _colorEndIndex = 4;
   int _clarityStartIndex = 1;

@@ -139,16 +139,15 @@ class SideDrawer extends ConsumerWidget {
                           items: categories,
                         ),
 
-                        sectionCard(
-                          fem: fem,
-                          context: context,
-                          routePage: RoutePages.jewellerylisting,
-                          iconPath: 'assets/icons/menu_vt.svg',
-                          title: 'Collection',
-                          items: Collection,
-                          isSubcategory: true,
-                        ),
-
+                        // sectionCard(
+                        //   fem: fem,
+                        //   context: context,
+                        //   routePage: RoutePages.jewellerylisting,
+                        //   iconPath: 'assets/icons/menu_vt.svg',
+                        //   title: 'Collection',
+                        //   items: Collection,
+                        //   isSubcategory: true,
+                        // ),
                         _nav(
                           ref,
                           context: context,
