@@ -273,7 +273,7 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                                 final value = uidController.text.trim();
                                 if (value.isEmpty) return;
                                 debugPrint('Search UID: $value');
-                                // notifier.searchByUid(value);
+                                notifier.setItemno(value);
                                 uidFocusNode.unfocus();
                               },
                               child: Container(

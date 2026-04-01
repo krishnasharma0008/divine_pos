@@ -174,26 +174,26 @@ class _SolitaireCustomiseScreenState
         return;
       }
 
-      final auth = ref.read(authProvider);
-      final rawPj = auth.user?.pjcode ?? '';
-      final pjcode = rawPj.split(',').first.trim();
+      // final auth = ref.read(authProvider);
+      // final rawPj = auth.user?.pjcode ?? '';
+      // final pjcode = rawPj.split(',').first.trim();
 
-      final storeState = ref.read(storeProvider);
-      final selectedStore = storeState.selectedStore;
+      // final storeState = ref.read(storeProvider);
+      // final selectedStore = storeState.selectedStore;
 
-      final matchedStore = storeState.stores.firstWhereOrNull(
-        (store) => store.code == pjcode,
-      );
+      // final matchedStore = storeState.stores.firstWhereOrNull(
+      //   (store) => store.code == pjcode,
+      // );
 
-      final selectedBranch = selectedStore?.nickName ?? '';
-      final customerid = matchedStore?.customerID;
-      final customername = matchedStore?.name;
-      final customercode = matchedStore?.code;
+      // final selectedBranch = selectedStore?.nickName ?? '';
+      // final customerid = matchedStore?.customerID;
+      // final customername = matchedStore?.name;
+      // final customercode = matchedStore?.code;
 
-      debugPrint('Selected branch: $selectedBranch');
-      debugPrint('customerid : $customerid');
-      debugPrint('customercode : $customercode');
-      debugPrint('customername : $customername');
+      // debugPrint('Selected branch: $selectedBranch');
+      // debugPrint('customerid : $customerid');
+      // debugPrint('customercode : $customercode');
+      // debugPrint('customername : $customername');
 
       final (caratFrom, caratTo) = _extractRangeFrom(calc.caratRange);
       final (colorFrom, colorTo) = _extractRangeFrom(calc.colorRange);
@@ -203,10 +203,12 @@ class _SolitaireCustomiseScreenState
 
       final cartItem = CartDetail(
         orderFor: 'Customer',
-        customerId: customerid,
-        customerCode: customercode,
-        customerName: customername,
-        customerBranch: selectedBranch,
+        customerId: isCustomized ? null : widget.data?.lying_with_id ?? 0,
+        customerCode: isCustomized ? '' : widget.data?.laying_with ?? '',
+        customerName: isCustomized ? '' : widget.data?.lying_with_name ?? '',
+        customerBranch: isCustomized
+            ? ''
+            : widget.data?.lying_with_nickname ?? '',
         productType: 'solitaire',
         orderType: 'RCO',
         collection: "",

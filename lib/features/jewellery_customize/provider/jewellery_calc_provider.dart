@@ -1,8 +1,5 @@
-import 'package:divine_pos/features/auth/data/auth_notifier.dart';
 import 'package:divine_pos/features/cart/data/cart_detail_model.dart';
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
-import 'package:divine_pos/features/jewellery/data/filter_provider.dart';
-import 'package:divine_pos/features/jewellery/data/listing_provider.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,7 +19,6 @@ final jewelleryCalcProvider =
 class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
   @override
   Future<JewelleryCalcState> build() async {
-    // start with empty state
     return const JewelleryCalcState();
   }
 
@@ -86,7 +82,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
         );
   }
 
-  /// Main pricing calculation, ported from screen
+  /// Main pricing calculation
   Future<void> _recalculatePrice() async {
     final current = state.value;
     if (current == null || current.detail == null) return;
@@ -96,6 +92,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     final base = JewelleryCalculationService.getBaseSizeCarat(detail);
     final baseSize = current.baseSize ?? base.baseSize;
     final baseCarat = current.baseCarat ?? base.baseCarat;
+    final caratFromStr = baseCarat ?? '0.10';
     final ringSize = current.ringSize ?? baseSize?.toStringAsFixed(0);
     final currentSize = double.tryParse(ringSize ?? '') ?? (baseSize ?? 0);
 
@@ -104,22 +101,93 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       variants: detail.variants,
       bom: detail.bom,
     );
-
     final getShape = JewelleryCalculationService.mapShapeCodeToName(shapeCode);
 
-    // // 3) METAL WEIGHTS
-    // final goldWeight = JewelleryCalculationService.getWeight(
-    //   detail.variants,
-    //   detail.bom,
-    //   'GOLD',
-    //   'METAL',
-    // );
-    // final platinumWeight = JewelleryCalculationService.getWeight(
-    //   detail.variants,
-    //   detail.bom,
-    //   'PLATINUM',
-    //   'METAL',
-    // );
+    // ─────────────────────────────────────────────────────────────
+    // 2a) DERIVE INITIAL SOLITAIRE DEFAULTS FROM BOM
+    // ─────────────────────────────────────────────────────────────
+    String? bomDefaultCaratRange;
+    String? bomDefaultColorRange;
+    String? bomDefaultClarityRange;
+
+    final activeVariant = detail.variants.firstWhere(
+      (v) => v.isBaseVariant == true,
+      orElse: () => detail.variants.first,
+    );
+    final activeVariantId = activeVariant.variantId;
+
+    final bomList = detail.bom
+        .where(
+          (b) =>
+              b.variantId == activeVariantId &&
+              (b.itemGroup ?? '').trim().toUpperCase() == 'SOLITAIRE' &&
+              (b.itemType ?? '').trim().toUpperCase() == 'STONE',
+        )
+        .toList();
+
+    if (bomList.isNotEmpty) {
+      final caratRangeParts = <String>[];
+      final colorRangeParts = <String>[];
+      final clarityRangeParts = <String>[];
+
+      for (final row in bomList) {
+        // bomVariantName: SOL-RND-0.10-0.13[-color-clarity]
+        final parts = row.bomVariantName
+            .split('-')
+            .map((e) => e.trim())
+            .toList();
+
+        if (parts.length < 4) continue;
+
+        final caratFrom = parts[2]; // '0.10'
+        final caratTo = parts[3]; // '0.13'
+        final caratFromVal = double.tryParse(caratFrom) ?? 0.0;
+        final caratToVal = double.tryParse(caratTo) ?? 0.0;
+
+        caratRangeParts.add('$caratFrom-$caratTo');
+
+        // Color/clarity — from BOM name if present, else carat fallback
+        final bomColor = parts.length >= 5 ? parts[4] : '';
+        final bomClarity = parts.length >= 6 ? parts[5] : '';
+
+        if (bomColor.isNotEmpty && bomClarity.isNotEmpty) {
+          colorRangeParts.add(bomColor);
+          clarityRangeParts.add(bomClarity);
+        } else if (caratFromVal >= 0.10 && caratToVal <= 0.17) {
+          colorRangeParts.add('EF');
+          clarityRangeParts.add('VVS');
+        } else if (caratFromVal >= 0.18 && caratToVal <= 2.99) {
+          colorRangeParts.add('E');
+          clarityRangeParts.add('VVS1');
+        }
+
+        debugPrint(
+          'BOM row → shape=${parts.length > 1 ? parts[1] : '?'} '
+          'carat=$caratFrom-$caratTo '
+          'color=${colorRangeParts.last} '
+          'clarity=${clarityRangeParts.last}',
+        );
+      }
+
+      if (caratRangeParts.isNotEmpty) {
+        // Single row  → '0.10-0.13 ct'
+        // Multi rows  → '0.10-0.13, 0.80-0.89 ct'  (matches multiCaratLabel format)
+        bomDefaultCaratRange = '${caratRangeParts.join(', ')} ct';
+      }
+
+      if (colorRangeParts.isNotEmpty) {
+        // Single → 'EF - EF'
+        // Multi  → 'EF - EF, E - E'
+        bomDefaultColorRange = colorRangeParts.map((c) => '$c - $c').join(', ');
+      }
+
+      if (clarityRangeParts.isNotEmpty) {
+        bomDefaultClarityRange = clarityRangeParts
+            .map((c) => '$c - $c')
+            .join(', ');
+      }
+    }
+    //--------------------------------
 
     // 3) BASE METAL WEIGHTS (from BOM, for base size)
     final baseGoldWeight = JewelleryCalculationService.getWeight(
@@ -135,16 +203,33 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       'METAL',
     );
 
-    // 3a) size‑factor for metal (3% per size diff)
+    // 3a) DIVINE MOUNT ADJUSTMENT — apply size factor BEFORE the API call ✅
     double goldWeight = baseGoldWeight;
     double platinumWeight = basePlatinumWeight;
 
-    // 4) METAL AMOUNT
+    if (detail.productSizeFrom != '-' && baseSize != null) {
+      final factor = JewelleryCalculationService.calculateDivineMountAdjustment(
+        carat: caratFromStr.trim(),
+        size: currentSize,
+        baseRingSize: baseSize,
+        qty: current.selectedQty,
+      );
+      goldWeight = baseGoldWeight * factor;
+      platinumWeight = basePlatinumWeight * factor;
+
+      debugPrint(
+        'Size adjustment: baseSize=$baseSize, currentSize=$currentSize, '
+        'factor=$factor, goldWeight=$baseGoldWeight→$goldWeight',
+      );
+    }
+
+    // 4) METAL AMOUNT — receives adjusted weights ✅
     final activeMetalColor =
         current.selectedMetalColor ?? detail.metalColor.split(',').first.trim();
     final activeMetalPurity =
         current.selectedMetalPurity ??
         detail.metalPurity.split(',').first.trim();
+
     debugPrint(
       'Active metal color: $activeMetalColor, purity: $activeMetalPurity',
     );
@@ -165,9 +250,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       detail.bom,
     );
 
-    final perGram = (netMetalWeight ?? 0) > 0
-        ? metal / (netMetalWeight ?? 1)
-        : 0.0;
+    final perGram = netMetalWeight > 0 ? metal / netMetalWeight : 0.0;
 
     // 5) SIDE DIAMOND
     final totalSidePcs = JewelleryCalculationService.getPcs(
@@ -198,13 +281,13 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     final sideDiamond =
         await JewelleryCalculationService.calculateSideDiamondPrice(
           price: sideprice,
-          totalSideCts: (totalSideWeight.toDouble() ?? 0.0),
+          totalSideCts: totalSideWeight,
           qty: current.selectedQty,
         );
 
-    // 6) SOLITAIRE SELECTION (use filter range when present)
-    final caratFromStr = baseCarat ?? '0.10';
+    debugPrint('Side diamond amount: $sideDiamond');
 
+    // 6) SOLITAIRE SELECTION (use filter range when present)
     double parseCt(String s) => double.tryParse(s.trim()) ?? 0.10;
 
     double getMinCt() {
@@ -249,13 +332,13 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
 
     // 7) TOTAL SOLITAIRE PCS
     final totalSolitairePcs = JewelleryCalculationService.getPcs(
-      detail.variants ?? [],
-      detail.bom ?? [],
+      detail.variants,
+      detail.bom,
       'SOLITAIRE',
       'STONE',
     );
 
-    // 8) BASIC SOLITAIRE RATE (single-size के लिए)
+    // 8) BASIC SOLITAIRE RATE (single-size)
     final double rateFromPerCtRaw = await _fetchPrice(
       itemGroup: 'SOLITAIRE',
       slab: minCt.toStringAsFixed(2),
@@ -265,8 +348,10 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     );
 
     debugPrint(
-      'Fetching price for SOLITAIRE with slab: $minCt, shape: $shapeCode, color: $selectedColorFrom, quality: $selectedClarityFrom => $rateFromPerCtRaw',
+      'Fetching price for SOLITAIRE with slab: $minCt, shape: $shapeCode, '
+      'color: $selectedColorFrom, quality: $selectedClarityFrom => $rateFromPerCtRaw',
     );
+
     final double rateToPerCtRaw = await _fetchPrice(
       itemGroup: 'SOLITAIRE',
       slab: maxCt.toStringAsFixed(2),
@@ -276,21 +361,18 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     );
 
     debugPrint(
-      'Fetching price for SOLITAIRE with slab: $maxCt, shape: $shapeCode, color: $selectedColorTo, quality: $selectedClarityTo => $rateToPerCtRaw',
+      'Fetching price for SOLITAIRE with slab: $maxCt, shape: $shapeCode, '
+      'color: $selectedColorTo, quality: $selectedClarityTo => $rateToPerCtRaw',
     );
 
-    // 9) PREMIUM
-    //final double premiumPct = 0.00; // currently 0, can be made dynamic later
+    // 9) PREMIUM (currently 0, can be made dynamic later)
+    final double rateFromWithPremium = rateFromPerCtRaw;
+    final double rateToWithPremium = rateToPerCtRaw;
 
-    final double rateFromWithPremium =
-        rateFromPerCtRaw; // + rateFromPerCtRaw * (premiumPct / 100);
-    final double rateToWithPremium =
-        rateToPerCtRaw; // + rateToPerCtRaw * (premiumPct / 100);
-
-    // 10) MULTI‑SIZE OR SINGLE‑SIZE SOLITAIRE
+    // 10) MULTI-SIZE OR SINGLE-SIZE SOLITAIRE
     final int rowCount = JewelleryCalculationService.getSolitaireRowCount(
-      detail.variants ?? [],
-      detail.bom ?? [],
+      detail.variants,
+      detail.bom,
     );
 
     double solFrom = 0;
@@ -298,14 +380,14 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     String? multiShapeLabel;
     String? multiCaratLabel;
     String? multipcsLabel;
+    String? multiColorLabel;
+    String? multiClarityLabel;
 
     if (rowCount > 1) {
-      // MULTI‑SIZE: JS वाले BOM loop जैसा
       final result =
           await JewelleryCalculationService.calculateSolitaireAmountRangeLocal(
             detail: detail,
             qty: current.selectedQty,
-            //premiumPct: premiumPct,
             fetchPrice:
                 ({
                   required String itemGroup,
@@ -322,8 +404,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
                     quality: quality,
                   );
                 },
-            userMinCt: minCt, // JS: parseFloat(carat[0])
-            userMaxCt: maxCt, //JS: parseFloat(carat[1])
+            userMinCt: minCt,
+            userMaxCt: maxCt,
             userColorFrom: selectedColorFrom,
             userColorTo: selectedColorTo,
             userClarityFrom: selectedClarityFrom,
@@ -331,54 +413,33 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
           );
       solFrom = result.solFrom;
       solTo = result.solTo;
-      multiShapeLabel = result.shapeLabel; // "Oval, Pear"
-      multiCaratLabel = result.caratLabel; // "0.80-0.89, 0.23-0.29"
+      multiShapeLabel = result.shapeLabel;
+      multiCaratLabel = result.caratLabel;
       multipcsLabel = result.pcsLabel;
-      debugPrint("Multi Pcs : ${multipcsLabel}");
+      multiColorLabel = result.colourLabel;
+      multiClarityLabel = result.clarityLabel;
+      // debugPrint('Multi Shape : $multiShapeLabel');
+      // debugPrint('Multi Carat : $multiCaratLabel');
+      // debugPrint('Multi Pcs : $multipcsLabel');
+      // debugPrint('Multi Color : $multiColorLabel');
+      // debugPrint('Multi Clarity : $multiClarityLabel');
     } else {
-      // SINGLE‑SIZE (तुम्हारा पुराना logic ही)
-      final pcs = (totalSolitairePcs ?? 0);
-      final minAmountPerCt = rateFromWithPremium;
-      final maxAmountPerCt = rateToWithPremium;
-
-      solFrom = minAmountPerCt * minCt * pcs * current.selectedQty;
-      solTo = maxAmountPerCt * maxCt * pcs * current.selectedQty;
+      final pcs = totalSolitairePcs;
+      solFrom = rateFromWithPremium * minCt * pcs * current.selectedQty;
+      solTo = rateToWithPremium * maxCt * pcs * current.selectedQty;
     }
 
-    // 11) DIVINE MOUNT ADJUSTMENT
-    // if (detail.productSizeFrom != '-' && baseSize != null) {
-    //   final currentSize = double.tryParse(ringSize ?? '') ?? baseSize;
-    //   final factor = JewelleryCalculationService.calculateDivineMountAdjustment(
-    //     carat: caratFromStr.trim(),
-    //     size: currentSize,
-    //     baseRingSize: baseSize,
-    //     qty: current.selectedQty,
-    //   );
-    //   solFrom *= factor;
-    //   solTo *= factor;
-    // }
-
-    if (detail.productSizeFrom != '-' && baseSize != null) {
-      final factor = JewelleryCalculationService.calculateDivineMountAdjustment(
-        carat: caratFromStr.trim(),
-        size: currentSize,
-        baseRingSize: baseSize,
-        qty: current.selectedQty,
-      );
-
-      goldWeight *= factor;
-      platinumWeight *= factor;
-    }
-
-    // 12) FINAL AMOUNTS
+    // 11) FINAL AMOUNTS
     final approxFrom = metal + sideDiamond + solFrom;
     final approxTo = metal + sideDiamond + solTo;
 
     final msg = JewelleryCalculationService.getMultiSolitaireMessage(
       variants: detail.variants,
       bom: detail.bom,
-      totalPcs: totalSolitairePcs ?? 0,
+      totalPcs: totalSolitairePcs,
     );
+
+    debugPrint('Row Count: $rowCount');
 
     final updated = current.copyWith(
       baseSize: baseSize,
@@ -387,31 +448,20 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       metalAmount: metal,
       netMetalWeight: netMetalWeight,
       metalprice: perGram,
-
       sideDiamondAmount: sideDiamond,
       solitaireAmountFrom: solFrom,
       solitaireAmountTo: solTo,
       approxPriceFrom: approxFrom,
       approxPriceTo: approxTo,
-
       totalSidePcs: totalSidePcs,
       totalSideWeight: totalSideWeight,
       totalSolitairePcs: totalSolitairePcs,
       solitaireMessage: msg.isEmpty ? null : msg,
-      //solitaireShape: getShape,
-      // shape/carat के लिए:
-      solitaireShape: rowCount > 1
-          ? (multiShapeLabel?.isNotEmpty == true
-                ? multiShapeLabel
-                : current.solitaireShape)
-          : getShape, // single-size वाला existing shape
-
-      caratRange: rowCount > 1
-          ? (multiCaratLabel?.isNotEmpty == true
-                ? multiCaratLabel
-                : current.caratRange)
-          : current.caratRange, // single-size में पहले जैसा
-      SolitairePcs: multipcsLabel,
+      solitaireShape: rowCount > 1 ? multiShapeLabel : getShape,
+      caratRange: rowCount > 1 ? multiCaratLabel : current.caratRange,
+      SolitairePcs: rowCount > 1 ? multipcsLabel : current.SolitairePcs,
+      colorRange: rowCount > 1 ? multiColorLabel : current.colorRange,
+      clarityRange: rowCount > 1 ? multiClarityLabel : current.clarityRange,
     );
 
     state = AsyncData(updated);
@@ -454,15 +504,16 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     }
 
     debugPrint(
-      'Gold weight: $goldWeight, price: $goldPrice, color: $goldColor, purity: ${JewelleryCalculationService.getValidPurity('gold', metalPurity)}',
+      'Gold weight: $goldWeight, price: $goldPrice, color: $goldColor, '
+      'purity: ${JewelleryCalculationService.getValidPurity('gold', metalPurity)}',
     );
+
     // PLATINUM pricing
     if (platinumWeight > 0) {
       final platinumColor = JewelleryCalculationService.getMetalColor(
         'PLATINUM',
         metalColor,
       );
-
       platinumPrice = await _fetchPrice(
         itemGroup: 'PLATINUM',
         slab: '',
@@ -479,7 +530,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
         ? platinumWeight * platinumPrice * selectedQty
         : 0;
 
-    // <= 1 gm rule
+    // <= 1 gm rule: use fixed price regardless of API rate
     if (goldWeight > 0 && goldWeight <= 1) {
       goldAmount = (detail.metalPriceLessOneGms ?? 0).toDouble();
     }
@@ -487,64 +538,12 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     return goldAmount + platinumAmount;
   }
 
-  //customer branch
-  // Future<String> _resolveCustomerBranch() async {
-  //   final auth = ref.read(authProvider);
-  //   final pjcode = auth.user?.pjcode ?? '';
-  //   final storeState = ref.read(storeProvider);
-
-  //   // reuse cached store if already fetched
-  //   if (storeState.selectedStore?.nickName != null) {
-  //     return storeState.selectedStore!.nickName;
-  //   }
-
-  //   if (pjcode.isNotEmpty) {
-  //     await ref.read(storeProvider.notifier).getPJStore(pjcode: pjcode);
-
-  //     return ref.read(storeProvider).selectedStore?.nickName ?? '';
-  //   }
-
-  //   return '';
-  // }
-
-  Future<Map<String, dynamic>> _resolveCustomerBranch() async {
-    final auth = ref.read(authProvider);
-    final pjcode = auth.user?.pjcode ?? '';
-    final storeState = ref.read(storeProvider);
-
-    final selected = storeState.selectedStore;
-
-    if (selected?.nickName != null) {
-      return {
-        'branchName': selected!.nickName,
-        'customerId': selected.customerID,
-        'customerName': selected.name,
-        'customerCode': selected.code,
-      };
-    }
-
-    if (pjcode.isNotEmpty) {
-      await ref.read(storeProvider.notifier).getPJStore(pjcode: pjcode);
-      final fresh = ref.read(storeProvider).selectedStore;
-
-      return {
-        'branchName': fresh?.nickName ?? '',
-        'customerId': fresh?.customerID,
-        'customerName': fresh?.name,
-        'customerCode': fresh?.code,
-      };
-    }
-
-    return {
-      'branchName': '',
-      'customerId': null,
-      'customerName': null,
-      'customerCode': null,
-    };
-  }
-
   Future<CartDetail?> buildCartPayload({
     required CustomerDetail Ordercustomer,
+    required String customercode,
+    required String customername,
+    required String branch,
+    required int? customerid,
   }) async {
     final s = state.value;
     if (s == null || s.detail == null) return null;
@@ -561,19 +560,15 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       if ((s.netMetalWeight ?? 0) <= 0) {
         throw Exception('Metal weight not calculated');
       }
-
       if ((s.metalAmount ?? 0) <= 0) {
         throw Exception('Metal amount not calculated');
       }
-
       if ((s.metalprice ?? 0) <= 0) {
         throw Exception('Metal price invalid');
       }
-
       if (d.currentStatus == 'Discarded') {
         throw Exception('Product Code is Discarded');
       }
-
       if (s.solitaireShape == null ||
           s.caratRange == null ||
           s.colorRange == null ||
@@ -582,19 +577,17 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       }
     }
 
-    debugPrint('Customer dETAILS: ${Ordercustomer.name}, ${Ordercustomer.id}');
-    //final branch = await _resolveCustomerBranch();
-    final branchInfo = await _resolveCustomerBranch();
+    debugPrint('Customer details: ${Ordercustomer.name}, ${Ordercustomer.id}');
 
     final dt = DateTime.now().add(const Duration(days: 15)).toUtc();
 
     // ---------- BUILD PAYLOAD ----------
     return CartDetail(
       orderFor: 'Retail Customer',
-      customerId: branchInfo['customerId'],
-      customerCode: branchInfo['customerCode'] ?? '',
-      customerName: branchInfo['customerName'] ?? '',
-      customerBranch: branchInfo['branchName'] ?? '',
+      customerId: customerid, //new customer id from DB
+      customerCode: customercode, //new customer code from DB
+      customerName: customername, //new customer name from DB
+      customerBranch: branch, //new branch from DB
       productType: 'jewellery',
       orderType: 'RCO',
 
@@ -604,12 +597,11 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       expDlvDate: dt.toIso8601String(),
 
       oldVarient: d.oldVariant,
-
       productCode: d.itemNumber,
       designno: d.designno,
 
       solitairePcs: s.totalSolitairePcs ?? 1,
-      productQty: s.selectedQty ?? 1,
+      productQty: s.selectedQty,
 
       productAmtMin: (d.productPrice == null || d.productPrice == 0)
           ? (s.approxPriceFrom ?? 0).roundToDouble()
@@ -649,9 +641,9 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       metalWeight: s.netMetalWeight ?? 0,
       metalPrice: (s.metalprice ?? 0).roundToDouble(),
 
-      mountAmtMin: (((s.metalAmount ?? 0) + (s.sideDiamondAmount ?? 0)))
+      mountAmtMin: ((s.metalAmount ?? 0) + (s.sideDiamondAmount ?? 0))
           .roundToDouble(),
-      mountAmtMax: (((s.metalAmount ?? 0) + (s.sideDiamondAmount ?? 0)))
+      mountAmtMax: ((s.metalAmount ?? 0) + (s.sideDiamondAmount ?? 0))
           .roundToDouble(),
 
       sizeFrom: s.ringSize,
@@ -668,8 +660,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       look: d.look,
       portfolioType: d.portfolioType,
       gender: d.gender,
-      end_customer_id: Ordercustomer?.id ?? 0,
-      end_customer_name: Ordercustomer?.name ?? '',
+      end_customer_id: Ordercustomer.id ?? 0,
+      end_customer_name: Ordercustomer.name ?? '',
     );
   }
 }

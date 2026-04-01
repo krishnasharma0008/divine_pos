@@ -243,6 +243,8 @@ class JewelleryCalculationService {
       String shapeLabel,
       String caratLabel,
       String pcsLabel,
+      String colourLabel,
+      String clarityLabel,
     })
   >
   calculateSolitaireAmountRangeLocal({
@@ -266,9 +268,16 @@ class JewelleryCalculationService {
   }) async {
     double amountFrom = 0;
     double amountTo = 0;
-    final shapes = <String>{}; // set for uniqueness
-    final carats = <String>{}; // set for uniqueness
-    final pcss = <String>[]; //
+    final List<String> shapes = [];
+    final List<String> carats = [];
+    final List<String> pcss = [];
+    final List<String> mcolour = [];
+    final List<String> mclarity = [];
+    // final shapes = <String>{}; // set for uniqueness
+    // final carats = <String>{}; // set for uniqueness
+    // final pcss = <String>[]; //
+    // final mcolour = <String>{}; // set for uniqueness
+    // final mclarity = <String>{}; // set for uniqueness
 
     final variants = detail.variants ?? [];
     if (variants.isEmpty)
@@ -278,6 +287,8 @@ class JewelleryCalculationService {
         shapeLabel: "",
         caratLabel: "",
         pcsLabel: "",
+        colourLabel: "",
+        clarityLabel: "",
       );
 
     final activeVariant = variants.firstWhere(
@@ -298,7 +309,8 @@ class JewelleryCalculationService {
         .toList(); // toList() so you can print it if needed
 
     //debugPrint('bomList: ${bomList.toList()}');
-
+    //int count = 0;
+    //String rawShapes = '';
     for (final row in bomList) {
       // debugPrint(
       //   'MultiSize BOM → id=${row.bomId}, variant=${row.variantId}, '
@@ -318,6 +330,9 @@ class JewelleryCalculationService {
       final shapeName = JewelleryCalculationService.mapShapeCodeToName(
         shapeCode,
       );
+      //count += 1;
+      //debugPrint('Shape code: $shapeCode | Number of rows processed: $count');
+      //rawShapes += '$shapeName,';
       shapes.add(shapeName);
       carats.add(carat);
       pcss.add(row.pcs.toString());
@@ -377,9 +392,9 @@ class JewelleryCalculationService {
         color: fromColor,
         quality: fromClarity,
       );
-      // debugPrint(
-      //   'Fetched priceFrom for shape=$shapeCode, carat=$bomCaratFrom, color=$fromColor, clarity=$fromClarity: $priceFrom',
-      // );
+      debugPrint(
+        'Fetched priceFrom for shape=$shapeCode, carat=$bomCaratFrom, color=$fromColor, clarity=$fromClarity: $priceFrom',
+      );
 
       final priceTo = await fetchPrice(
         itemGroup: 'SOLITAIRE',
@@ -388,9 +403,11 @@ class JewelleryCalculationService {
         color: toColor,
         quality: toClarity,
       );
-      // debugPrint(
-      //   'Fetched priceTo for shape=$shapeCode, carat=$bomCaratTo, color=$toColor, clarity=$toClarity: $priceTo',
-      // );
+      debugPrint(
+        'Fetched priceTo for shape=$shapeCode, carat=$bomCaratTo, color=$toColor, clarity=$toClarity: $priceTo',
+      );
+      mcolour.add('$fromColor-$toColor');
+      mclarity.add('$toClarity-$fromClarity');
 
       amountFrom += priceFrom * bomCaratFrom * qty * pcs;
       // debugPrint(
@@ -402,11 +419,19 @@ class JewelleryCalculationService {
       // );
       // debugPrint('Amount From : $amountFrom');
       // debugPrint('Amount To : $amountTo');
-    }
 
+      //
+    }
+    //
+    // if (rawShapes.endsWith(',')) {
+    //   rawShapes = rawShapes.substring(0, rawShapes.length - 1);
+    // }
+    // debugPrint('Raw Shape : $rawShapes');
     final shapeLabel = shapes.join(', ');
     final caratLabel = carats.join(', ');
     final pcsLabel = pcss.join(', ');
+    final colorLabel = mcolour.join(', ');
+    final clarityLabel = mclarity.join(', ');
     // debugPrint('Shape : ${shapeLabel}');
     // debugPrint('Carats range : ${caratLabel}');
     // debugPrint('Amount From : $amountFrom');
@@ -418,6 +443,8 @@ class JewelleryCalculationService {
       shapeLabel: shapeLabel,
       caratLabel: caratLabel,
       pcsLabel: pcsLabel,
+      colourLabel: mcolour.join(', '),
+      clarityLabel: mclarity.join(', '),
     );
   }
 

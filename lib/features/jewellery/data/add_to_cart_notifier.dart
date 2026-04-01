@@ -457,10 +457,10 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
   Future<void> createCartFromRows({
     required List<Jewellery> rows,
     required CustomerDetail? customerOrder,
-    required int customerid,
-    required String customercode,
-    required String customername,
-    required String branch,
+    // required int customerid,
+    // required String customercode,
+    // required String customername,
+    // required String branch,
   }) async {
     state = const AsyncData(AddToCartState(status: AddToCartStatus.loading));
 
@@ -478,10 +478,10 @@ class AddToCartNotifier extends AsyncNotifier<AddToCartState> {
 
         return CartDetail(
           orderFor: 'Customer',
-          customerId: customerid, // co?.id ?? 0,
-          customerCode: customercode,
-          customerName: customername,
-          customerBranch: branch,
+          customerId: row.lying_with_id, // customerid, // co?.id ?? 0,
+          customerCode: row.layingWith, // customercode,
+          customerName: row.lying_with_name, // customername,
+          customerBranch: row.lying_with_nickname, // branch,
           productType: 'Solitaire',
           orderType: 'RCO',
           collection: '',

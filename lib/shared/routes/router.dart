@@ -120,12 +120,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
+      // GoRoute(
+      //   path: RoutePages.jewellerycustomize.routePath,
+      //   name: RoutePages.jewellerycustomize.routeName,
+      //   builder: (context, state) {
+      //     final productCode = state.extra as String? ?? '';
+      //     return JewelleryCustomiseScreen(productCode: productCode);
+      //   },
+      // ),
       GoRoute(
         path: RoutePages.jewellerycustomize.routePath,
         name: RoutePages.jewellerycustomize.routeName,
         builder: (context, state) {
-          final productCode = state.extra as String? ?? '';
-          return JewelleryCustomiseScreen(productCode: productCode);
+          final data = state.extra as Map<String, dynamic>?;
+
+          return JewelleryCustomiseScreen(
+            customercode: data?['customercode'] as String? ?? '',
+            customername: data?['customername'] as String? ?? '',
+            branch: data?['branch'] as String? ?? '',
+            customerid: data?['customerid'] as int? ?? 0,
+            //designno: data?['designno'] as String? ?? '',
+            productCode: data?['productCode'] as String? ?? '',
+          );
         },
       ),
       GoRoute(

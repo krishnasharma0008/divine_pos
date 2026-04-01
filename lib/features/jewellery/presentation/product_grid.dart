@@ -35,36 +35,40 @@ class ProductGrid extends ConsumerWidget {
     WidgetRef ref, {
     required CustomerDetail customer,
     required String productCode,
+    required String customercode, //new
+    required String customername, //new
+    required String branch, //new
+    required int customerid, //new
     //required String designno,
   }) async {
     //final branch = ref.read(filterProvider).productBranch ?? '';
-    final auth = ref.read(authProvider);
+    //final auth = ref.read(authProvider);
 
-    final raw = auth.user?.pjcode ?? '';
-    final pjcode = raw.split(',').first.trim();
-    final storeState = ref.read(storeProvider);
+    // final raw = auth.user?.pjcode ?? '';
+    // final pjcode = raw.split(',').first.trim();
+    // final storeState = ref.read(storeProvider);
 
-    String branch = '';
-    int customerid = 0;
-    String customername = '';
-    String customercode = '';
-    // / find store where code == pjcode
-    final matchedStore = storeState.stores.firstWhereOrNull(
-      (store) => store.code == pjcode,
-    );
-    if (storeState.selectedStore?.nickName != null) {
-      customerid = matchedStore?.customerID ?? 0;
-      customercode = matchedStore?.code ?? '';
-      customername = matchedStore?.name ?? '';
-      branch = storeState.selectedStore!.nickName;
-    }
+    // String branch = '';
+    // int customerid = 0;
+    // String customername = '';
+    // String customercode = '';
+    // // / find store where code == pjcode
+    // final matchedStore = storeState.stores.firstWhereOrNull(
+    //   (store) => store.code == pjcode,
+    // );
+    // if (storeState.selectedStore?.nickName != null) {
+    //   customerid = matchedStore?.customerID ?? 0;
+    //   customercode = matchedStore?.code ?? '';
+    //   customername = matchedStore?.name ?? '';
+    //   branch = storeState.selectedStore!.nickName;
+    // }
 
-    if (branch.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a store to add to cart')),
-      );
-      return;
-    }
+    // if (branch.isEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(content: Text('Select a store to add to cart')),
+    //   );
+    //   return;
+    // }
 
     // ✅ No (productCode) family key — plain provider
     await ref
@@ -241,6 +245,10 @@ class ProductGrid extends ConsumerWidget {
           ref,
           customer: customer,
           productCode: item.itemNumber ?? '',
+          customercode: item.layingWith ?? '', //new customer code from DB
+          customername: item.lying_with_name ?? '', //new customer name from DB
+          branch: item.lying_with_nickname ?? '', //new branch from DB
+          customerid: item.lying_with_id ?? 0, //new customer id from DB
           //designno: item.designno ?? '',
         );
       },
@@ -254,7 +262,14 @@ class ProductGrid extends ConsumerWidget {
         // );
         context.pushNamed(
           RoutePages.jewellerycustomize.routeName,
-          extra: item.designno,
+          extra: {
+            'customercode': item.layingWith ?? '',
+            'customername': item.lying_with_name ?? '',
+            'branch': item.lying_with_nickname ?? '',
+            'customerid': item.lying_with_id ?? 0,
+            //'designno': item.designno ?? '',
+            'productCode': item.itemNumber ?? '',
+          },
         );
       },
       onHaertTap: () => debugPrint("❤️ ${item.itemNumber}"),

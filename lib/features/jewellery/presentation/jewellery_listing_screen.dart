@@ -131,24 +131,24 @@ class _JewelleryListingScreenState
         .any((c) => c.trim().toLowerCase() == 'solitaires');
 
     // / find store where code == pjcode
-    final matchedStore = storeState.stores.firstWhereOrNull(
-      (store) => store.code == pjcode,
-    );
+    // final matchedStore = storeState.stores.firstWhereOrNull(
+    //   (store) => store.code == pjcode,
+    // );
 
     // find store where code != pjcode
     final branchStores = storeState.stores
         .where((store) => store.code != pjcode)
         .toList();
 
-    final selectedBranch = storeState.selectedStore?.nickName ?? '';
-    final customerid = matchedStore?.customerID;
-    final customername = matchedStore?.name;
-    final customercode = matchedStore?.code;
+    // final selectedBranch = storeState.selectedStore?.nickName ?? '';
+    // final customerid = matchedStore?.customerID;
+    // final customername = matchedStore?.name;
+    // final customercode = matchedStore?.code;
 
-    debugPrint('Selected branch: $selectedBranch');
-    debugPrint('customerid : $customerid');
-    debugPrint('customercode : $customercode');
-    debugPrint('customername : $customername');
+    // debugPrint('Selected branch: $selectedBranch');
+    // debugPrint('customerid : $customerid');
+    // debugPrint('customercode : $customercode');
+    // debugPrint('customername : $customername');
 
     // ────────────────────────────────────────────────────
 
@@ -197,9 +197,19 @@ class _JewelleryListingScreenState
                   branchStores: branchStores,
                   //isSolitaire: isSolitaire ? true : false,
                   isSolitaire: isSolitaire,
+                  // onBranchSelected: (store) {
+                  //   ref.read(storeProvider.notifier).selectStore(store);
+                  //   filterNotifier.setProductsAtOtherBranch(store.code);
+                  // },
                   onBranchSelected: (store) {
-                    ref.read(storeProvider.notifier).selectStore(store);
-                    filterNotifier.setProductsAtOtherBranch(store.code);
+                    if (store == null) {
+                      filterNotifier.setAllStore();
+                    } else {
+                      ref.read(storeProvider.notifier).selectStore(store);
+                      filterNotifier.setProductsAtOtherBranch(store.code);
+                    }
+
+                    //jewelleryNotifier.resetAndFetch();
                   },
                   onSortSelected: (sort) {
                     filterNotifier.setSort(sort);
@@ -208,9 +218,11 @@ class _JewelleryListingScreenState
                   onTabSelected: (tab) {
                     if (tab == 0) {
                       filterNotifier.setProductsInStore();
-                    } else if (tab == 1) {
-                      filterNotifier.setAllStore();
-                    } else if (tab == 2) {
+                    }
+                    // else if (tab == 1) {
+                    //   filterNotifier.setAllStore();
+                    // }
+                    else if (tab == 1) {
                       filterNotifier.setAllDesigns();
                     }
                     //jewelleryNotifier.resetAndFetch();
@@ -321,10 +333,6 @@ class _JewelleryListingScreenState
                                           fem: fem,
                                           items:
                                               solitaireItems, // ← वही DB data
-                                          customerid: customerid ?? 0,
-                                          customercode: customercode ?? '',
-                                          customername: customername ?? '',
-                                          Selectedbranch: selectedBranch,
                                         );
                                       },
                                     )
@@ -393,19 +401,19 @@ class _SolitaireListView extends ConsumerStatefulWidget {
   final ScrollController scrollController;
   final double fem;
   final List<Jewellery> items;
-  final int customerid;
-  final String customercode;
-  final String customername;
-  final String Selectedbranch;
+  // final int customerid;
+  // final String customercode;
+  // final String customername;
+  // final String Selectedbranch;
 
   const _SolitaireListView({
     required this.scrollController,
     required this.fem,
     required this.items,
-    required this.customerid,
-    required this.customercode,
-    required this.customername,
-    required this.Selectedbranch,
+    // required this.customerid,
+    // required this.customercode,
+    // required this.customername,
+    // required this.Selectedbranch,
   });
 
   @override
@@ -484,10 +492,10 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
                               .createCartFromRows(
                                 rows: selectedRows,
                                 customerOrder: customer,
-                                customerid: widget.customerid,
-                                customercode: widget.customercode,
-                                customername: widget.customername,
-                                branch: widget.Selectedbranch,
+                                // customerid: widget.customerid,
+                                // customercode: widget.customercode,
+                                // customername: widget.customername,
+                                // branch: widget.Selectedbranch,
                               );
 
                           if (!context.mounted) return;

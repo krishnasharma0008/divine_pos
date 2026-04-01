@@ -35,9 +35,9 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
 
       debugPrint('Product : $productCode');
 
-      debugPrint(
-        '🌐 URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_Prodct}',
-      );
+      // debugPrint(
+      //   '🌐PDP URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_Prodct}',
+      // );
 
       final response = await dio
           .post(

@@ -381,143 +381,113 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                             // Shape dropdown (single-size mode)
                             if (!widget.isMultiSize) ...[
                               // Expanded(
-                              //   flex: 1,
-                              //   child: Column(
-                              //     crossAxisAlignment: CrossAxisAlignment.start,
-                              //     children: [
-                              //       Text(
-                              //         'Shape',
-                              //         style: TextStyle(
-                              //           fontSize: 14 * fem,
-                              //           fontWeight: FontWeight.w500,
-                              //         ),
-                              //       ),
-                              //       const SizedBox(height: 8),
-                              //       DropdownButtonFormField<String>(
-                              //         value: _selectedShape.isEmpty
-                              //             ? null
-                              //             : _selectedShape,
-                              //         items:
-                              //             (widget.collection.toUpperCase() ==
-                              //                         'SOLUS'
-                              //                     ? solusShapes
-                              //                     : solitaireShapes)
-                              //                 .map(
-                              //                   (s) => DropdownMenuItem(
-                              //                     value: s,
-                              //                     child: Text(s),
-                              //                   ),
-                              //                 )
-                              //                 .toList(),
-                              //         onChanged: (v) {
-                              //           setState(() {
-                              //             _selectedShape = v ?? '';
-                              //           });
-                              //         },
-                              //         decoration: const InputDecoration(
-                              //           border: OutlineInputBorder(),
-                              //           isDense: true,
-                              //         ),
-                              //       ),
-                              //     ],
+                              //   flex: 2,
+                              //   child: CaratRangeSelector(
+                              //     // key: ValueKey(
+                              //     //   'carat_${_caratStartIndex}_$_caratEndIndex',
+                              //     // ),
+                              //     label: 'Carat',
+                              //     values: caratSteps,
+                              //     initialStartIndex: _caratStartIndex,
+                              //     initialEndIndex: _caratEndIndex,
+                              //     onRangeChanged: (start, end) {
+                              //       setState(() {
+                              //         caratRangeText = '$start - $end';
+                              //         _caratStartIndex = caratSteps.indexOf(
+                              //           start,
+                              //         );
+                              //         _caratEndIndex = caratSteps.indexOf(end);
+                              //       });
+                              //     },
                               //   ),
                               // ),
-                              // const SizedBox(width: 16),
+                              // ✅ AFTER
                               Expanded(
                                 flex: 2,
                                 child: CaratRangeSelector(
-                                  // key: ValueKey(
-                                  //   'carat_${_caratStartIndex}_$_caratEndIndex',
-                                  // ),
                                   label: 'Carat',
                                   values: caratSteps,
                                   initialStartIndex: _caratStartIndex,
                                   initialEndIndex: _caratEndIndex,
                                   onRangeChanged: (start, end) {
+                                    final newStartIndex = caratSteps.indexOf(
+                                      start,
+                                    );
+                                    final newEndIndex = caratSteps.indexOf(end);
+
+                                    // only reset color/clarity if the slab actually changed
+                                    final slabChanged =
+                                        newStartIndex != _caratStartIndex ||
+                                        newEndIndex != _caratEndIndex;
+
                                     setState(() {
                                       caratRangeText = '$start - $end';
-                                      _caratStartIndex = caratSteps.indexOf(
-                                        start,
-                                      );
-                                      _caratEndIndex = caratSteps.indexOf(end);
+                                      _caratStartIndex = newStartIndex;
+                                      _caratEndIndex = newEndIndex;
+
+                                      if (slabChanged) {
+                                        _colorStartIndex = 0;
+                                        _colorEndIndex = 0;
+                                        _clarityStartIndex = 0;
+                                        _clarityEndIndex = 0;
+                                      }
                                     });
                                   },
                                 ),
                               ),
                             ] else ...[
                               // Multi-size dropdown
-                              // Expanded(
-                              //   flex: 1,
-                              //   child: Column(
-                              //     crossAxisAlignment: CrossAxisAlignment.start,
-                              //     children: [
-                              //       Text(
-                              //         'Multi Size',
-                              //         style: TextStyle(
-                              //           fontSize: 14 * fem,
-                              //           fontWeight: FontWeight.w500,
-                              //         ),
-                              //       ),
-                              //       const SizedBox(height: 8),
-                              //       DropdownButtonFormField<String>(
-                              //         value: _selectedVariantId,
-                              //         items: (widget.detail.variants ?? [])
-                              //             .where(
-                              //               (v) => (v.variantName ?? '')
-                              //                   .isNotEmpty,
-                              //             )
-                              //             .map(
-                              //               (v) => DropdownMenuItem(
-                              //                 value: '${v.variantId}',
-                              //                 child: Text(v.variantName!),
-                              //               ),
-                              //             )
-                              //             .toList(),
-                              //         onChanged: _onMultiSizeChanged,
-                              //         decoration: const InputDecoration(
-                              //           border: OutlineInputBorder(),
-                              //           isDense: true,
-                              //         ),
-                              //       ),
-                              //     ],
-                              //   ),
-                              // ),
-                              // Text(
-                              //   _caratStartIndex < caratSteps.length &&
-                              //           _caratEndIndex < caratSteps.length
-                              //       ? 'Shape: ${_selectedShape.isEmpty ? 'N/A' : _selectedShape}, Carat: ${caratSteps[_caratStartIndex]} - ${caratSteps[_caratEndIndex]}'
-                              //       : 'Shape: ${_selectedShape.isEmpty ? 'N/A' : _selectedShape}, Carat: N/A',
-
-                              //   style: TextStyle(
-                              //     fontSize: 14 * fem,
-                              //     fontWeight: FontWeight.w500,
-                              //   ),
-                              // ),
-                              // Text(
-                              //   _multiCaratSteps.toString(),
-                              //   style: TextStyle(
-                              //     fontSize: 14 * fem,
-                              //     fontWeight: FontWeight.w500,
-                              //   ),
-                              // ),
                               const SizedBox(width: 16),
+                              // Expanded(
+                              //   flex: 2,
+                              //   child: CaratRangeSelector(
+                              //     // key: ValueKey(
+                              //     //   'carat_${_caratStartIndex}_$_caratEndIndex',
+                              //     // ),
+                              //     label: 'Carat',
+                              //     values: caratSteps,
+                              //     initialStartIndex: _caratStartIndex,
+                              //     initialEndIndex: _caratEndIndex,
+                              //     onRangeChanged: (start, end) {
+                              //       setState(() {
+                              //         caratRangeText = '$start - $end';
+                              //         _caratStartIndex = caratSteps.indexOf(
+                              //           start,
+                              //         );
+                              //         _caratEndIndex = caratSteps.indexOf(end);
+                              //       });
+                              //     },
+                              //   ),
+                              // ),
+                              // ✅ AFTER
                               Expanded(
                                 flex: 2,
                                 child: CaratRangeSelector(
-                                  // key: ValueKey(
-                                  //   'carat_${_caratStartIndex}_$_caratEndIndex',
-                                  // ),
                                   label: 'Carat',
                                   values: caratSteps,
                                   initialStartIndex: _caratStartIndex,
                                   initialEndIndex: _caratEndIndex,
                                   onRangeChanged: (start, end) {
+                                    final newStartIndex = caratSteps.indexOf(
+                                      start,
+                                    );
+                                    final newEndIndex = caratSteps.indexOf(end);
+
+                                    final slabChanged =
+                                        newStartIndex != _caratStartIndex ||
+                                        newEndIndex != _caratEndIndex;
+
                                     setState(() {
                                       caratRangeText = '$start - $end';
-                                      _caratStartIndex = caratSteps.indexOf(
-                                        start,
-                                      );
-                                      _caratEndIndex = caratSteps.indexOf(end);
+                                      _caratStartIndex = newStartIndex;
+                                      _caratEndIndex = newEndIndex;
+
+                                      if (slabChanged) {
+                                        _colorStartIndex = 0;
+                                        _colorEndIndex = 0;
+                                        _clarityStartIndex = 0;
+                                        _clarityEndIndex = 0;
+                                      }
                                     });
                                   },
                                 ),

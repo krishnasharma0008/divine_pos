@@ -1,11 +1,14 @@
-//import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/jewellery_detail_model.dart';
+// //import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import '../data/jewellery_detail_model.dart';
 
-import 'jewellery_notifier.dart';
+// import 'jewellery_notifier.dart';
 
-final jewelleryDetailProvider =
-    AsyncNotifierProvider.autoDispose<
-      JewelleryDetailNotifier,
-      JewelleryDetail?
-    >(JewelleryDetailNotifier.new);
+// final jewelleryDetailProvider =
+//     AsyncNotifierProvider.autoDispose<
+//       JewelleryDetailNotifier,
+//       JewelleryDetail?
+//     >(JewelleryDetailNotifier.new);
+
+// ✅ jewellery_detail_provider.dart should just re-export
+export 'jewellery_notifier.dart' show jewelleryDetailProvider;

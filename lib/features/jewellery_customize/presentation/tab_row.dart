@@ -338,43 +338,52 @@ class ProductDetailsTab extends StatelessWidget {
   }
 
   Widget _buildSolitaireLine(double r) {
-    final shapes = _splitComma(Shape); // ["Oval", "Pear"]
-    final carats = _splitComma(caratRange); // ["0.80-0.89", "0.23-0.29"]
-    final pcsList = _splitComma(soltpcs); // ["1", "1"] या ["3"]
+    // debugPrint('Building solitaire line with:');
+    // debugPrint('Shape: $Shape');
+    // debugPrint('Carat Range: $caratRange');
+    // debugPrint('Color Range: $colorRange');
+    // debugPrint('Clarity Range: $clarityRange');
+    // debugPrint('Solitaire Pcs: $soltpcs');
 
-    final color = () {
-      final parts = (colorRange ?? '').split('-').map((e) => e.trim()).toList();
-      if (parts.length < 2) return colorRange ?? 'F-G';
-      return '${parts.last}-${parts.first}';
-    }();
+    final shapes = _splitComma(Shape); // e.g. ["Round", "Round"]
+    final carats = _splitComma(caratRange); // ["0.10-0.13", "0.18-0.22"]
+    final colors = _splitComma(colorRange); // ["IJ-EF", "D-D"]
+    final clarities = _splitComma(clarityRange); // ["SI-VVS", "IF-IF"]
+    final pcsList = _splitComma(soltpcs); // ["2", "1"]
 
-    final clarity = () {
-      final parts = (clarityRange ?? '')
-          .split('-')
-          .map((e) => e.trim())
-          .toList();
-      if (parts.length < 2) return clarityRange ?? 'VVS1-VS1';
-      return '${parts.last}-${parts.first}';
-    }();
-
-    // अगर कुछ भी नहीं मिला तो पुराना single line fallback
+    // Fallback: old single line when we can't split
     if (shapes.isEmpty || carats.isEmpty) {
       final pcs = soltpcs ?? '1';
       return MyText(
-        '$Shape ${caratRange ?? ''} $color $clarity ( $pcs Pcs )',
+        '$Shape ${caratRange ?? ''} ${colorRange ?? ''} ${clarityRange ?? ''} ( $pcs Pcs )',
         style: TextStyle(fontSize: 12 * r),
       );
     }
 
-    final itemCount = shapes.length < carats.length
-        ? shapes.length
-        : carats.length;
+    final itemCount = [
+      shapes.length,
+      carats.length,
+      colors.isEmpty ? shapes.length : colors.length,
+      clarities.isEmpty ? shapes.length : clarities.length,
+      pcsList.isEmpty ? shapes.length : pcsList.length,
+    ].reduce((a, b) => a < b ? a : b);
+
+    // debugPrint('itemCount: $itemCount');
+    // debugPrint('shapes: $shapes');
+    // debugPrint('carats: $carats');
+    // debugPrint('colors: $colors');
+    // debugPrint('clarities: $clarities');
+    // debugPrint('pcsList: $pcsList');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(itemCount, (i) {
         final shape = shapes[i];
         final carat = carats[i];
+        final color = i < colors.length ? colors[i] : (colorRange ?? 'F-G');
+        final clarity = i < clarities.length
+            ? clarities[i]
+            : (clarityRange ?? 'VVS1-VS1');
         final pcsStr = i < pcsList.length ? pcsList[i] : (soltpcs ?? '1');
 
         return MyText(

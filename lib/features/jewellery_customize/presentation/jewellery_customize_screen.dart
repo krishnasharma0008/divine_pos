@@ -20,8 +20,20 @@ import 'package:divine_pos/shared/utils/currency_formatter.dart';
 
 class JewelleryCustomiseScreen extends ConsumerStatefulWidget {
   final String productCode;
+  final String customercode;
+  final String customername;
+  final String branch;
+  final int customerid;
 
-  const JewelleryCustomiseScreen({super.key, required this.productCode});
+  //const JewelleryCustomiseScreen({super.key, required this.productCode});
+  const JewelleryCustomiseScreen({
+    super.key,
+    required this.productCode,
+    required this.customercode,
+    required this.customername,
+    required this.branch,
+    required this.customerid,
+  });
 
   @override
   ConsumerState<JewelleryCustomiseScreen> createState() =>
@@ -53,7 +65,9 @@ class _JewelleryCustomiseScreenState
     Future.microtask(() {
       ref
           .read(jewelleryCalcProvider.notifier)
-          .loadDetail(widget.productCode); //DMF8796 //('DMF8670'); //
+          .loadDetail(
+            widget.productCode,
+          ); //(widget.productCode); //DMF8796 //('DMF8670'); //
     });
   }
 
@@ -90,12 +104,23 @@ class _JewelleryCustomiseScreenState
     BuildContext context,
     WidgetRef ref, {
     required CustomerDetail customer,
+    //required String productCode,
+    required String customercode, //new
+    required String customername, //new
+    required String branch, //new
+    required int? customerid, //new
   }) async {
     try {
       final notifier = ref.read(jewelleryCalcProvider.notifier);
 
       //print('Step 1: building cart payload');
-      final cartItem = await notifier.buildCartPayload(Ordercustomer: customer);
+      final cartItem = await notifier.buildCartPayload(
+        Ordercustomer: customer,
+        customercode: customercode,
+        customername: customername,
+        branch: branch,
+        customerid: customerid,
+      );
       //print('Step 2: cartItem = ${cartItem?.toJson()}');
 
       if (cartItem == null) {
@@ -654,7 +679,19 @@ class _JewelleryCustomiseScreenState
 
                             if (customer == null) return;
 
-                            _onAddToCart(context, ref, customer: customer);
+                            _onAddToCart(
+                              context,
+                              ref,
+                              customer:
+                                  customer, // retail customer details for cart creation
+                              customerid:
+                                  widget.customerid, //new customer id from DB
+                              customercode: widget
+                                  .customercode, //new customer code from DB
+                              customername: widget
+                                  .customername, //new customer name from DB
+                              branch: widget.branch, //new branch from DB
+                            );
 
                             //call here cart create and set data
                             //final customerId = customer.id;

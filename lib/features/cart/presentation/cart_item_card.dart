@@ -2,6 +2,7 @@ import 'package:divine_pos/shared/utils/currency_formatter.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../shared/utils/scale_size.dart';
 import '../data/cart_detail_model.dart';
@@ -161,6 +162,7 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
                   '${(item.sideStoneCts ?? 0).toStringAsFixed(2)}ct. ${item.sideStoneColor ?? ''} ${item.sideStoneQuality ?? ''}',
               'Size: ${item.sizeFrom ?? ''}',
             },
+          'Expected Delivery Date: ${item.expDlvDate != null && item.expDlvDate!.isNotEmpty ? DateFormat('dd-MM-yyyy').format(DateTime.parse(item.expDlvDate!)) : 'N/A'}',
         ].map(
           (text) => MyText(
             text.toString(),

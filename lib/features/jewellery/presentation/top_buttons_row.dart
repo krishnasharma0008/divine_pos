@@ -11,7 +11,8 @@ const Color kMint = Color(0xFF90DCD0);
 class TopButtonsRow extends ConsumerStatefulWidget {
   final ValueChanged<int>? onTabSelected;
   final ValueChanged<String>? onSortSelected;
-  final ValueChanged<StoreDetail>? onBranchSelected;
+  //final ValueChanged<StoreDetail>? onBranchSelected;
+  final ValueChanged<StoreDetail?>? onBranchSelected;
   final List<StoreDetail>? branchStores;
   final bool isSolitaire;
 
@@ -60,28 +61,64 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
                 SizedBox(width: 14),
 
                 // ── NEW: All Store button ──────────────────────────────────
-                _PillButton(
-                  title: 'All Store',
-                  selected: _selectedTab == 1,
-                  width: 130 * fem,
-                  onTap: () => _selectTab(1),
-                ),
+                // _PillButton(
+                //   title: 'All Store',
+                //   selected: _selectedTab == 1,
+                //   width: 130 * fem,
+                //   onTap: () => _selectTab(1),
+                // ),
 
-                SizedBox(width: 14),
+                // SizedBox(width: 14),
 
-                UltraDropdown<StoreDetail>(
+                // UltraDropdown<StoreDetail>(
+                //   width: 420 * fem,
+                //   height: 50 * fem,
+                //   items: widget.branchStores,
+                //   selectedItem: _selectedBranch,
+                //   placeholder: 'Products At Other Branches',
+                //   itemBuilder: _branchLabel,
+                //   displayBuilder: (item) => item == null
+                //       ? 'Products At Other Branches'
+                //       : _branchLabel(item),
+                //   onSelected: (store) {
+                //     setState(() => _selectedBranch = store);
+                //     widget.onBranchSelected?.call(store);
+                //   },
+                // ),
+                UltraDropdown<Object>(
                   width: 420 * fem,
                   height: 50 * fem,
-                  items: widget.branchStores,
-                  selectedItem: _selectedBranch,
+                  items: [
+                    'ALL', // All Store
+                    ...?widget.branchStores, // real branches
+                  ],
+                  selectedItem: _selectedBranch ?? 'ALL',
                   placeholder: 'Products At Other Branches',
-                  itemBuilder: _branchLabel,
-                  displayBuilder: (item) => item == null
-                      ? 'Products At Other Branches'
-                      : _branchLabel(item),
-                  onSelected: (store) {
-                    setState(() => _selectedBranch = store);
-                    widget.onBranchSelected?.call(store);
+                  itemBuilder: (item) {
+                    if (item is String && item == 'ALL') return 'All Store';
+                    final store = item as StoreDetail;
+                    return _branchLabel(store);
+                  },
+                  displayBuilder: (item) {
+                    if (item == null || (item is String && item == 'ALL')) {
+                      return 'Products At Other Branches';
+                    }
+                    final store = item as StoreDetail;
+                    return _branchLabel(store);
+                  },
+                  onSelected: (item) {
+                    if (item is String && item == 'ALL') {
+                      setState(() {
+                        _selectedBranch = null;
+                      });
+                      widget.onBranchSelected?.call(null); // All Store
+                    } else {
+                      final store = item as StoreDetail;
+                      setState(() {
+                        _selectedBranch = store;
+                      });
+                      widget.onBranchSelected?.call(store);
+                    }
                   },
                 ),
 
@@ -90,9 +127,9 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
                 if (!widget.isSolitaire)
                   _PillButton(
                     title: 'All Designs',
-                    selected: _selectedTab == 2,
+                    selected: _selectedTab == 1,
                     width: 155 * fem,
-                    onTap: () => _selectTab(2),
+                    onTap: () => _selectTab(1),
                   )
                 else
                   SizedBox(width: 155 * fem),

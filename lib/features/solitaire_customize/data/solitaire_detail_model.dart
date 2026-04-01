@@ -16,6 +16,10 @@ class SolitaireDetail {
   final String color;
   final String clarity;
   final String imageUrl;
+  final String? laying_with; // new customer code
+  final int lying_with_id; // new customer id
+  final String? lying_with_name; // new customer name
+  final String? lying_with_nickname; //new customer branch
 
   SolitaireDetail({
     required this.itemId,
@@ -35,6 +39,10 @@ class SolitaireDetail {
     required this.color,
     required this.clarity,
     required this.imageUrl,
+    this.laying_with, // new customer code
+    this.lying_with_id = 0, // new customer id
+    this.lying_with_name, // new customer name
+    this.lying_with_nickname, // new customer branch
   });
 
   factory SolitaireDetail.fromJson(Map<String, dynamic> json) {
@@ -56,6 +64,10 @@ class SolitaireDetail {
       color: json['color'] ?? '',
       clarity: json['clarity'] ?? '',
       imageUrl: json['image_url'] ?? '',
+      laying_with: json['laying_with'], // new customer code
+      lying_with_id: json['lying_with_id'] ?? 0, // new customer id
+      lying_with_name: json['lying_with_name'], // new customer name
+      lying_with_nickname: json['lying_with_nickname'], // new customer branch
     );
   }
 
@@ -78,6 +90,10 @@ class SolitaireDetail {
       "color": color,
       "clarity": clarity,
       "image_url": imageUrl,
+      "laying_with": laying_with, // new customer code
+      "lying_with_id": lying_with_id, // new customer id
+      "lying_with_name": lying_with_name, // new customer name
+      "lying_with_nickname": lying_with_nickname, // new customer branch
     };
   }
 }

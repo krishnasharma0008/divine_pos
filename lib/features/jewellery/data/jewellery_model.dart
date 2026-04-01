@@ -17,7 +17,10 @@ class Jewellery {
   final String? color; // new
   final String? clarity; // new
   final String? imageUrl;
-  final String? laying_with; // new
+  final String? laying_with; // new customer code
+  final int lying_with_id; // new customer id
+  final String? lying_with_name; // new customer name
+  final String? lying_with_nickname; //new customer branch
 
   const Jewellery({
     required this.itemId,
@@ -38,6 +41,9 @@ class Jewellery {
     this.clarity, // new
     this.imageUrl,
     this.laying_with, // new
+    required this.lying_with_id, // new
+    this.lying_with_name, // new
+    this.lying_with_nickname, // new
   });
 
   // 🔹 यही जोड़ना है
@@ -60,6 +66,9 @@ class Jewellery {
     String? clarity,
     String? imageUrl,
     String? laying_with,
+    int? lying_with_id,
+    String? lying_with_name,
+    String? lying_with_nickname,
   }) {
     return Jewellery(
       itemId: itemId ?? this.itemId,
@@ -80,6 +89,9 @@ class Jewellery {
       clarity: clarity ?? this.clarity,
       imageUrl: imageUrl ?? this.imageUrl,
       laying_with: laying_with ?? this.laying_with,
+      lying_with_id: lying_with_id ?? this.lying_with_id,
+      lying_with_name: lying_with_name ?? this.lying_with_name,
+      lying_with_nickname: lying_with_nickname ?? this.lying_with_nickname,
     );
   }
 
@@ -130,6 +142,11 @@ class Jewellery {
       clarity: json['clarity']?.toString() ?? '',
       imageUrl: cleanUrl(json['image_url']),
       laying_with: json['laying_with']?.toString() ?? '',
+      lying_with_id: json['lying_with_id'] is int
+          ? json['lying_with_id']
+          : int.tryParse(json['lying_with_id']?.toString() ?? '') ?? 0,
+      lying_with_name: json['lying_with_name']?.toString() ?? '',
+      lying_with_nickname: json['lying_with_nickname']?.toString() ?? '',
     );
   }
 
@@ -152,5 +169,8 @@ class Jewellery {
     'clarity': clarity,
     'image_url': imageUrl,
     'laying_with': laying_with,
+    'lying_with_id': lying_with_id,
+    'lying_with_name': lying_with_name,
+    'lying_with_nickname': lying_with_nickname,
   };
 }
