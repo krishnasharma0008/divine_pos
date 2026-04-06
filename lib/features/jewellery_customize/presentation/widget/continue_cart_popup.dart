@@ -58,7 +58,7 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
           CompositedTransformFollower(
             link: _fieldLink,
             showWhenUnlinked: false,
-            offset: Offset(0, 54 * r),
+            offset: Offset(0, 64 * r),
             child: Align(
               alignment: Alignment.topLeft,
               child: Material(

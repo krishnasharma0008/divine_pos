@@ -1,7 +1,13 @@
 import 'jewellery_detail_model.dart';
 
 class JewelleryCalcState {
+  // Display detail fetched by productcode. Used for images, name, price etc.
   final JewelleryDetail? detail;
+
+  // Calculation detail fetched by designno. Has full Variants/BOM.
+  // All pricing calculations use this when available, falling back to detail.
+  final JewelleryDetail? calcDetail;
+
   final double? metalprice;
   final double? metalAmount;
   final double? sideDiamondAmount;
@@ -10,17 +16,24 @@ class JewelleryCalcState {
   final double? approxPriceFrom;
   final double? approxPriceTo;
   final double? netMetalWeight;
+
   final int? totalSidePcs;
   final double? totalSideWeight;
   final int? totalSolitairePcs;
   final String? SolitairePcs;
+
   final double? baseSize;
   final String? baseCarat;
+
+  final int? sizeFrom;
+  final int? sizeTo;
+
   final String? ringSize;
   final String? selectedMetalColor;
   final String? selectedMetalPurity;
   final String? selectedSideDiamondQuality;
   final int selectedQty;
+
   final String? priceRange;
   final String? caratRange;
   final String? colorRange;
@@ -28,8 +41,26 @@ class JewelleryCalcState {
   final String? solitaireMessage;
   final String? solitaireShape;
 
+  // Initial values for reset + customisation detection
+  final String? initialCaratRange;
+  final String? initialColorRange;
+  final String? initialClarityRange;
+  final String? initialRingSize;
+  final String? initialMetalColor;
+  final String? initialMetalPurity;
+  final String? initialSideDiamondQuality;
+
+  final int
+  initialSizeFrom; // Default to 1 if not provided, as it's a common minimum ring size
+  final int
+  initialSizeTo; // Default to 30 if not provided, as it's a common maximum ring size
+
+  final bool istoreproduct;
+  final String? laying_with;
+
   const JewelleryCalcState({
     this.detail,
+    this.calcDetail,
     this.metalprice,
     this.metalAmount,
     this.sideDiamondAmount,
@@ -44,21 +75,35 @@ class JewelleryCalcState {
     this.SolitairePcs,
     this.baseSize,
     this.baseCarat,
+    this.sizeFrom,
+    this.sizeTo,
     this.ringSize,
     this.selectedMetalColor,
     this.selectedMetalPurity,
     this.selectedSideDiamondQuality,
+    this.selectedQty = 1,
     this.priceRange,
     this.caratRange,
     this.colorRange,
     this.clarityRange,
-    this.selectedQty = 1,
     this.solitaireMessage,
     this.solitaireShape,
+    this.initialCaratRange,
+    this.initialColorRange,
+    this.initialClarityRange,
+    this.initialRingSize,
+    this.initialMetalColor,
+    this.initialMetalPurity,
+    this.initialSideDiamondQuality,
+    this.initialSizeFrom = 1, // Default values for ring size range
+    this.initialSizeTo = 30, // Default values for ring size range
+    this.istoreproduct = false,
+    this.laying_with,
   });
 
   JewelleryCalcState copyWith({
     JewelleryDetail? detail,
+    JewelleryDetail? calcDetail,
     double? metalprice,
     double? metalAmount,
     double? sideDiamondAmount,
@@ -73,6 +118,8 @@ class JewelleryCalcState {
     String? SolitairePcs,
     double? baseSize,
     String? baseCarat,
+    int? sizeFrom,
+    int? sizeTo,
     String? ringSize,
     String? selectedMetalColor,
     String? selectedMetalPurity,
@@ -84,9 +131,22 @@ class JewelleryCalcState {
     String? clarityRange,
     String? solitaireMessage,
     String? solitaireShape,
+    String? initialCaratRange,
+    String? initialColorRange,
+    String? initialClarityRange,
+    String? initialRingSize,
+    String? initialMetalColor,
+    String? initialMetalPurity,
+    String? initialSideDiamondQuality,
+    int? initialSizeFrom,
+    int? initialSizeTo,
+
+    bool? istoreproduct,
+    String? laying_with,
   }) {
     return JewelleryCalcState(
       detail: detail ?? this.detail,
+      calcDetail: calcDetail ?? this.calcDetail,
       metalprice: metalprice ?? this.metalprice,
       metalAmount: metalAmount ?? this.metalAmount,
       sideDiamondAmount: sideDiamondAmount ?? this.sideDiamondAmount,
@@ -101,6 +161,8 @@ class JewelleryCalcState {
       SolitairePcs: SolitairePcs ?? this.SolitairePcs,
       baseSize: baseSize ?? this.baseSize,
       baseCarat: baseCarat ?? this.baseCarat,
+      sizeFrom: sizeFrom ?? this.sizeFrom,
+      sizeTo: sizeTo ?? this.sizeTo,
       ringSize: ringSize ?? this.ringSize,
       selectedMetalColor: selectedMetalColor ?? this.selectedMetalColor,
       selectedMetalPurity: selectedMetalPurity ?? this.selectedMetalPurity,
@@ -113,6 +175,34 @@ class JewelleryCalcState {
       clarityRange: clarityRange ?? this.clarityRange,
       solitaireMessage: solitaireMessage ?? this.solitaireMessage,
       solitaireShape: solitaireShape ?? this.solitaireShape,
+      initialCaratRange: initialCaratRange ?? this.initialCaratRange,
+      initialColorRange: initialColorRange ?? this.initialColorRange,
+      initialClarityRange: initialClarityRange ?? this.initialClarityRange,
+      initialRingSize: initialRingSize ?? this.initialRingSize,
+      initialMetalColor: initialMetalColor ?? this.initialMetalColor,
+      initialMetalPurity: initialMetalPurity ?? this.initialMetalPurity,
+      initialSideDiamondQuality:
+          initialSideDiamondQuality ?? this.initialSideDiamondQuality,
+      initialSizeFrom: initialSizeFrom ?? this.initialSizeFrom,
+      initialSizeTo: initialSizeTo ?? this.initialSizeTo,
+      istoreproduct: istoreproduct ?? this.istoreproduct,
+      laying_with: laying_with ?? this.laying_with,
     );
+  }
+
+  bool get isCustomised {
+    if (initialCaratRange == null ||
+        initialColorRange == null ||
+        initialClarityRange == null) {
+      return false;
+    }
+
+    return caratRange != initialCaratRange ||
+        colorRange != initialColorRange ||
+        clarityRange != initialClarityRange ||
+        ringSize != initialRingSize ||
+        selectedMetalColor != initialMetalColor ||
+        selectedMetalPurity != initialMetalPurity ||
+        selectedSideDiamondQuality != initialSideDiamondQuality;
   }
 }

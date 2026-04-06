@@ -92,16 +92,26 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
                     'ALL', // All Store
                     ...?widget.branchStores, // real branches
                   ],
-                  selectedItem: _selectedBranch ?? 'ALL',
+                  selectedItem: _selectedBranch, // ?? 'ALL',
                   placeholder: 'Products At Other Branches',
                   itemBuilder: (item) {
                     if (item is String && item == 'ALL') return 'All Store';
                     final store = item as StoreDetail;
                     return _branchLabel(store);
                   },
+                  // displayBuilder: (item) {
+                  //   if (item == null || (item is String && item == 'ALL')) {
+                  //     return 'Products At Other Branches';
+                  //   }
+                  //   final store = item as StoreDetail;
+                  //   return _branchLabel(store);
+                  // },
                   displayBuilder: (item) {
-                    if (item == null || (item is String && item == 'ALL')) {
+                    if (item == null) {
                       return 'Products At Other Branches';
+                    }
+                    if (item is String && item == 'ALL') {
+                      return 'All Store';
                     }
                     final store = item as StoreDetail;
                     return _branchLabel(store);

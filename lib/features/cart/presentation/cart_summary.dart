@@ -2,6 +2,7 @@ import 'package:divine_pos/constants/tax_constants.dart';
 import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
+import '../../../shared/utils/currency_formatter.dart';
 import '../data/cart_detail_model.dart';
 
 class CartSummaryPanel extends StatelessWidget {
@@ -99,10 +100,26 @@ class CartSummaryPanel extends StatelessWidget {
                                   itemNumber: '${i + 1}',
                                   productName:
                                       '${orderProducts[i].productCategory ?? ''} - ${orderProducts[i].productCode ?? ''}',
-                                  priceRange: _formatPriceRange(
-                                    orderProducts[i].productAmtMin,
-                                    orderProducts[i].productAmtMax,
-                                  ),
+                                  priceRange:
+                                      orderProducts[i].productAmtMin == null &&
+                                          orderProducts[i].productAmtMax == null
+                                      ? '-'
+                                      : orderProducts[i].productAmtMin !=
+                                                null &&
+                                            orderProducts[i].productAmtMax !=
+                                                null &&
+                                            orderProducts[i].productAmtMin ==
+                                                orderProducts[i].productAmtMax
+                                      ? orderProducts[i].productAmtMin!
+                                            .inRupeesFormat()
+                                      : orderProducts[i].productAmtMin !=
+                                                null &&
+                                            orderProducts[i].productAmtMax !=
+                                                null
+                                      ? '${orderProducts[i].productAmtMin!.inRupeesFormat()} - ${orderProducts[i].productAmtMax!.inRupeesFormat()}'
+                                      : orderProducts[i].productAmtMax != null
+                                      ? 'Up to ${orderProducts[i].productAmtMax!.inRupeesFormat()}'
+                                      : 'From ${orderProducts[i].productAmtMin!.inRupeesFormat()}',
                                   description:
                                       'Divine Solitaire: ${orderProducts[i].solitaireShape ?? ''} '
                                       '${orderProducts[i].solitaireSlab ?? ''} '
@@ -126,10 +143,30 @@ class CartSummaryPanel extends StatelessWidget {
                                   itemNumber: '${i + 1}',
                                   productName:
                                       '${readyProducts[i].productCategory ?? ''} - ${readyProducts[i].productCode ?? ''}',
-                                  priceRange: _formatPriceRange(
-                                    readyProducts[i].productAmtMin,
-                                    readyProducts[i].productAmtMax,
-                                  ),
+                                  // priceRange: _formatPriceRange(
+                                  //   readyProducts[i].productAmtMin,
+                                  //   readyProducts[i].productAmtMax,
+                                  // ),
+                                  priceRange:
+                                      readyProducts[i].productAmtMin == null &&
+                                          readyProducts[i].productAmtMax == null
+                                      ? '-'
+                                      : readyProducts[i].productAmtMin !=
+                                                null &&
+                                            readyProducts[i].productAmtMax !=
+                                                null &&
+                                            readyProducts[i].productAmtMin ==
+                                                readyProducts[i].productAmtMax
+                                      ? readyProducts[i].productAmtMin!
+                                            .inRupeesFormat()
+                                      : readyProducts[i].productAmtMin !=
+                                                null &&
+                                            readyProducts[i].productAmtMax !=
+                                                null
+                                      ? '${readyProducts[i].productAmtMin!.inRupeesFormat()} - ${readyProducts[i].productAmtMax!.inRupeesFormat()}'
+                                      : readyProducts[i].productAmtMax != null
+                                      ? 'Up to ${readyProducts[i].productAmtMax!.inRupeesFormat()}'
+                                      : 'From ${readyProducts[i].productAmtMin!.inRupeesFormat()}',
                                   description:
                                       'Divine Solitaire: ${readyProducts[i].solitaireShape ?? ''} '
                                       '${readyProducts[i].solitaireSlab ?? ''} '
@@ -184,18 +221,6 @@ class CartSummaryPanel extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatPriceRange(double? min, double? max) {
-    if (min == null && max == null) return '-';
-    if (min != null && max != null && min == max) {
-      return '₹${min.toStringAsFixed(0)}';
-    }
-    if (min != null && max != null) {
-      return '₹${min.toStringAsFixed(0)} - ₹${max.toStringAsFixed(0)}';
-    }
-    if (max != null) return 'Up to ₹${max.toStringAsFixed(0)}';
-    return 'From ₹${min!.toStringAsFixed(0)}';
   }
 
   Widget _buildHeader(double fem, BuildContext context) {
@@ -398,7 +423,7 @@ class CartSummaryPanel extends StatelessWidget {
     required double grandTotal,
     required double fem,
   }) {
-    String fmt(num v) => '₹${v.toStringAsFixed(0)}';
+    // String fmt(num v) => '₹${v.toStringAsFixed(0)}';
 
     return Container(
       padding: EdgeInsets.all(32 * fem),
@@ -408,18 +433,18 @@ class CartSummaryPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildPriceRow('Subtotal', fmt(subtotal)),
+          _buildPriceRow('Subtotal', subtotal!.inRupeesFormat()),
           SizedBox(height: 16 * fem),
           _buildPriceRow(
             'Engraving Cost',
             //fmt(TaxConstants.engravingCostPerItem),
-            fmt(engravingCost),
+            engravingCost!.inRupeesFormat(),
           ),
           SizedBox(height: 16),
           _buildPriceRowWithBadge(
             'Engraving GST',
             '${TaxConstants.engravingGstPercent.toStringAsFixed(0)}%', // Use constant
-            fmt(engravingGst),
+            engravingGst!.inRupeesFormat(),
             // '${engravingGstPercent.toStringAsFixed(0)}%',
             // fmt(engravingGst),
           ),
@@ -427,7 +452,7 @@ class CartSummaryPanel extends StatelessWidget {
           _buildPriceRowWithBadge(
             'GST',
             '${TaxConstants.gstPercent.toStringAsFixed(0)}%', // Use constant
-            fmt(gst),
+            gst!.inRupeesFormat(),
             // '${gstPercent.toStringAsFixed(0)}%',
             // fmt(gst),
           ),
@@ -450,7 +475,7 @@ class CartSummaryPanel extends StatelessWidget {
                   ),
                 ),
                 MyText(
-                  fmt(grandTotal),
+                  grandTotal!.inRupeesFormat(),
                   style: TextStyle(
                     fontSize: 20 * fem,
                     fontWeight: FontWeight.w500,

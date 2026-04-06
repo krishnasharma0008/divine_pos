@@ -41,28 +41,6 @@ class ProductGrid extends ConsumerWidget {
     required int customerid, //new
     //required String designno,
   }) async {
-    //final branch = ref.read(filterProvider).productBranch ?? '';
-    //final auth = ref.read(authProvider);
-
-    // final raw = auth.user?.pjcode ?? '';
-    // final pjcode = raw.split(',').first.trim();
-    // final storeState = ref.read(storeProvider);
-
-    // String branch = '';
-    // int customerid = 0;
-    // String customername = '';
-    // String customercode = '';
-    // // / find store where code == pjcode
-    // final matchedStore = storeState.stores.firstWhereOrNull(
-    //   (store) => store.code == pjcode,
-    // );
-    // if (storeState.selectedStore?.nickName != null) {
-    //   customerid = matchedStore?.customerID ?? 0;
-    //   customercode = matchedStore?.code ?? '';
-    //   customername = matchedStore?.name ?? '';
-    //   branch = storeState.selectedStore!.nickName;
-    // }
-
     // if (branch.isEmpty) {
     //   ScaffoldMessenger.of(context).showSnackBar(
     //     const SnackBar(content: Text('Select a store to add to cart')),
@@ -260,15 +238,18 @@ class ProductGrid extends ConsumerWidget {
         //   RoutePages.jewellerycustomize.routeName,
         //   queryParameters: {'code': item.itemNumber ?? ''},
         // );
+
+        //final branch = ref.read(filterProvider).productBranch ?? '';
+
         context.pushNamed(
           RoutePages.jewellerycustomize.routeName,
           extra: {
-            'customercode': item.layingWith ?? '',
-            'customername': item.lying_with_name ?? '',
-            'branch': item.lying_with_nickname ?? '',
-            'customerid': item.lying_with_id ?? 0,
+            'customercode': item.layingWith,
+            'customername': item.lying_with_name,
+            'branch': item.lying_with_nickname,
+            'customerid': item.lying_with_id,
             //'designno': item.designno ?? '',
-            'productCode': item.itemNumber ?? '',
+            'productCode': item.itemNumber,
           },
         );
       },

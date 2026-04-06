@@ -33,16 +33,21 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
     state = await AsyncValue.guard(() async {
       final dio = ref.read(httpClientProvider);
 
-      debugPrint('Product : $productCode');
+      //debugPrint('Product : $productCode');
 
       // debugPrint(
       //   '🌐PDP URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_Prodct}',
       // );
-
+      //getproduct
       final response = await dio
           .post(
             ApiEndPoint.get_jewellery_Prodct,
-            data: {'product_code': productCode},
+            data: {
+              'product_code': productCode,
+              //lyingwith!.isNotEmpty ? 'laying_with' : '': lyingwith,
+              if (lyingwith != null && lyingwith.trim().isNotEmpty)
+                'laying_with': lyingwith.trim(),
+            },
           )
           .timeout(
             const Duration(seconds: 15),
@@ -51,7 +56,7 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
           );
 
       longPrint(
-        "📦 Jewellery Detail Fetched Data: ${jsonEncode(response.data)}",
+        "📦 Jewellery Detail 1 time Fetched Data: ${jsonEncode(response.data)}",
       );
 
       if (response.statusCode != HttpStatus.ok) {
@@ -111,6 +116,51 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
 
     final data = body['data'];
 
+    if (data == null) {
+      throw Exception('Jewellery detail not found');
+    }
+
+    return JewelleryDetail.fromJson(data);
+  }
+
+  /// Fetch full jewellery detail using designno.
+  /// Used as a background call to get complete Variants + BOM data for
+  /// pricing calculations when the product_code fetch returns Variants: null.
+  /// Does NOT update provider state — caller stores the result themselves.
+  Future<JewelleryDetail?> fetchByDesignno(String designno) async {
+    if (designno.isEmpty) return null;
+
+    final dio = ref.read(httpClientProvider);
+
+    //debugPrint('🔍 Fetching by designno to customise store data : $designno');
+
+    final response = await dio
+        .post(
+          ApiEndPoint.get_jewellery_Prodct,
+          data: {'product_code': designno},
+        )
+        .timeout(
+          const Duration(seconds: 15),
+          onTimeout: () =>
+              throw TimeoutException('Request timed out after 15s'),
+        );
+
+    longPrint(
+      "📦 Jewellery Detail Second time Fetched Data: ${jsonEncode(response.data)}",
+    );
+
+    if (response.statusCode != HttpStatus.ok) {
+      throw HttpException(
+        'HTTP ${response.statusCode}: ${response.statusMessage}',
+      );
+    }
+
+    final body = response.data;
+    if (body == null || body['success'] != true) {
+      throw Exception('Invalid response from server');
+    }
+
+    final data = body['data'];
     if (data == null) {
       throw Exception('Jewellery detail not found');
     }

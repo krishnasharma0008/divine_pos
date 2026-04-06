@@ -1,6 +1,7 @@
 import 'package:divine_pos/features/auth/data/auth_notifier.dart';
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/features/cart/providers/cart_providers.dart';
+import 'package:divine_pos/features/jewellery/data/listing_provider.dart';
 import 'package:divine_pos/shared/routes/route_pages.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
@@ -9,14 +10,15 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/app_bar.dart';
 import '../../../shared/utils/enums.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'image_preview_with_thumbnails.dart'; //gallery
-import 'tab_row.dart'; //tab panel
+import 'image_preview_with_thumbnails.dart';
+import 'tab_row.dart';
 import 'customize_solitaire.dart';
 import '../presentation/widget/continue_cart_popup.dart';
 import '../provider/jewellery_detail_provider.dart';
 import '../provider/jewellery_calc_provider.dart';
-import '../services/jewellery_calculation_service.dart'; // for message
+import '../services/jewellery_calculation_service.dart';
 import 'package:divine_pos/shared/utils/currency_formatter.dart';
+import 'package:collection/collection.dart';
 
 class JewelleryCustomiseScreen extends ConsumerStatefulWidget {
   final String productCode;
@@ -25,7 +27,6 @@ class JewelleryCustomiseScreen extends ConsumerStatefulWidget {
   final String branch;
   final int customerid;
 
-  //const JewelleryCustomiseScreen({super.key, required this.productCode});
   const JewelleryCustomiseScreen({
     super.key,
     required this.productCode,
@@ -58,107 +59,126 @@ class _JewelleryCustomiseScreenState
 
   bool _showMsg = false;
 
+  String pjcode = '';
+  String loginBranch = '';
+  int? loginCustomerId = null;
+  String loginCustomerName = '';
+  String loginCustomerCode = '';
+
+  int deliveryday = 0;
+
   @override
   void initState() {
     super.initState();
-    // load detail + initial calc
+
     Future.microtask(() {
+      debugPrint(
+        'Loading jewellery detail for '
+        'productCode=${widget.productCode}, '
+        'customercode=${widget.customercode}',
+      );
       ref
           .read(jewelleryCalcProvider.notifier)
-          .loadDetail(
-            widget.productCode,
-          ); //(widget.productCode); //DMF8796 //('DMF8670'); //
+          .loadDetail(widget.productCode, widget.customercode);
     });
+
+    final auth = ref.read(authProvider);
+    final raw = auth.user?.pjcode ?? '';
+    pjcode = raw.split(',').first.trim();
+
+    // ref.read (not ref.watch) — this is inside an async method, not build()
+    final storeState = ref.read(storeProvider);
+
+    final matchedStore = storeState.stores.firstWhereOrNull(
+      (store) => store.code == pjcode,
+    );
+
+    loginBranch = storeState.selectedStore?.nickName ?? '';
+    loginCustomerId = matchedStore?.customerID ?? null;
+    loginCustomerName = matchedStore?.name ?? '';
+    loginCustomerCode = matchedStore?.code ?? '';
   }
 
-  // void _onAddToCart(
-  //   BuildContext context,
-  //   WidgetRef ref, {
-  //   required CustomerDetail customer,
-  // }) async {
-  //   try {
-  //     final notifier = ref.read(jewelleryCalcProvider.notifier);
+  // ------------------------------------------------------------------------
+  // DELIVERY DAYS
+  // ------------------------------------------------------------------------
 
-  //     final cartItem = await notifier.buildCartPayload(customer: customer);
+  // Add this getter in _JewelleryCustomiseScreenState class
+  String get _deliveryLabel {
+    final calc = ref.watch(jewelleryCalcProvider).value;
+    final isCustomised = calc?.isCustomised ?? false;
 
-  //     if (cartItem == null) return;
+    // Case 1: No customer
+    if (widget.customercode.isEmpty) {
+      return 'delivery 15 days';
+    }
 
-  //     await ref.read(cartNotifierProvider.notifier).createCart(cartItem);
-  //     print('context.mounted: ${context.mounted}');
-  //     if (context.mounted) {
-  //       print('navigating to cart');
-  //       context.pushNamed(RoutePages.cart.routeName);
-  //     }
-  //   } catch (e) {
-  //     final message = e is Exception
-  //         ? e.toString().replaceFirst('Exception: ', '')
-  //         : 'Something went wrong';
+    // Case 2: Customised
+    if (isCustomised) {
+      return 'delivery 15 days';
+    }
 
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text(message)));
-  //   }
-  // }
+    // Case 3: Same store
+    if (widget.customercode == loginCustomerCode) {
+      return 'Instant delivery - Available';
+    }
+
+    // Case 4: Different store
+    return ' delivery 3 days';
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ADD TO CART
+  // ─────────────────────────────────────────────────────────────────────────
 
   void _onAddToCart(
     BuildContext context,
     WidgetRef ref, {
     required CustomerDetail customer,
-    //required String productCode,
-    required String customercode, //new
-    required String customername, //new
-    required String branch, //new
-    required int? customerid, //new
+    required String customercode,
+    required String customername,
+    required String branch,
+    required int? customerid,
+    bool isCustomised = false,
   }) async {
     try {
       final notifier = ref.read(jewelleryCalcProvider.notifier);
 
-      //print('Step 1: building cart payload');
       final cartItem = await notifier.buildCartPayload(
-        Ordercustomer: customer,
-        customercode: customercode,
-        customername: customername,
-        branch: branch,
-        customerid: customerid,
+        orderCustomer: customer,
+        customerCode: isCustomised ? loginCustomerCode : customercode,
+        customerName: isCustomised ? loginCustomerName : customername,
+        branch: isCustomised ? loginBranch : branch,
+        customerId: isCustomised ? loginCustomerId : customerid,
       );
-      //print('Step 2: cartItem = ${cartItem?.toJson()}');
 
-      if (cartItem == null) {
-        //print('Step 3: cartItem is NULL — returning early');
-        return;
-      }
+      if (cartItem == null) return;
 
-      //print('Step 4: calling createCart');
       await ref.read(cartNotifierProvider.notifier).createCart(cartItem);
-      //print('Step 5: createCart done, mounted = ${context.mounted}');
 
-      if (!context.mounted) {
-        //print('Step 6: context NOT mounted — cannot navigate');
-        return;
-      }
-
-      //print('Step 7: attempting navigation');
+      if (!context.mounted) return;
       context.pushNamed(RoutePages.cart.routeName);
-      //print('Step 8: pushNamed called successfully');
-    } catch (e, st) {
-      //print('ERROR: $e');
-      //print('STACKTRACE: $st');
+    } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(content: MyText(e.toString())));
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final r = ScaleSize.aspectRatio;
 
-    // detail async (for images, meta)
     final detailAsync = ref.watch(jewelleryDetailProvider);
-    // calc async (for all pricing + selection state)
     final calcAsync = ref.watch(jewelleryCalcProvider);
     final calc = calcAsync.value;
+
+    final isCalculating = detailAsync.isLoading || calcAsync.isLoading;
 
     return detailAsync.when(
       loading: () =>
@@ -178,12 +198,15 @@ class _JewelleryCustomiseScreenState
           );
         }
 
-        // IMAGE LOGIC
-        final allImages = detail.images ?? [];
+        //debugPrint('check which fetch data :${detail.variants.length}');
+
+        final newdata = calc.calcDetail; // when
+        //debugPrint('check which fetch data :${newdata?.productSizeFrom}');
+
+        // ── Image display ───────────────────────────────────────────────────
+        final allImages = detail.images;
         final defaultMetalColor = detail.metalColor.split(',').first.trim();
         final defaultMetalPurity = detail.metalPurity.split(',').first.trim();
-
-        //productPrice = detail.productPrice!;
 
         debugPrint(
           'Default metal color: $defaultMetalColor, purity: $defaultMetalPurity',
@@ -199,8 +222,7 @@ class _JewelleryCustomiseScreenState
             )
             .toList();
 
-        // MULTI‑SOLITAIRE MESSAGE
-
+        // ── Multi-solitaire message ─────────────────────────────────────────
         final msg =
             calc.solitaireMessage ??
             JewelleryCalculationService.getMultiSolitaireMessage(
@@ -212,20 +234,22 @@ class _JewelleryCustomiseScreenState
         if (msg.isNotEmpty && !_showMsg) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            setState(() {
-              _showMsg = true;
-            });
-
+            setState(() => _showMsg = true);
             ScaffoldMessenger.of(context)
               ..clearSnackBars()
               ..showSnackBar(SnackBar(content: Text(msg)));
           });
         }
 
+        // isMultiSize derived from data, not from the UI snackbar flag
+        final isMultiSize =
+            calc.solitaireMessage != null && calc.solitaireMessage!.isNotEmpty;
+
         final hidePriceBreakup =
             detail.productCategory == 'COIN' ||
             detail.productSubCategory == 'Solitaire Coin' ||
             detail.productSubCategory == 'Locket';
+
         final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
 
         return Scaffold(
@@ -248,7 +272,6 @@ class _JewelleryCustomiseScreenState
               decoration: const BoxDecoration(color: Colors.white),
               child: Column(
                 children: [
-                  /// SCROLLABLE MIDDLE
                   Expanded(
                     child: SingleChildScrollView(
                       child: Padding(
@@ -256,7 +279,7 @@ class _JewelleryCustomiseScreenState
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            /// LEFT — 65%
+                            /// LEFT — 65% — Images
                             Expanded(
                               flex: 6,
                               child: ImagePreviewWithThumbnails(
@@ -271,7 +294,7 @@ class _JewelleryCustomiseScreenState
 
                             SizedBox(width: 16 * r),
 
-                            /// RIGHT — 35%
+                            /// RIGHT — 35% — Details + Customise
                             Expanded(
                               flex: 4,
                               child: Column(
@@ -289,10 +312,13 @@ class _JewelleryCustomiseScreenState
                                     ),
                                   ),
                                   SizedBox(height: 18 * r),
-                                  DeliveryBadge(r: r),
+                                  DeliveryBadge(
+                                    r: r,
+                                    deliveryLabel: _deliveryLabel,
+                                  ),
                                   SizedBox(height: 23 * r),
 
-                                  /// DETAILS (READ FROM calc)
+                                  /// Details panel
                                   DetailsScreen(
                                     r: r,
                                     shape: calc.solitaireShape,
@@ -300,7 +326,6 @@ class _JewelleryCustomiseScreenState
                                     caratRange: calc.caratRange,
                                     colorRange: calc.colorRange,
                                     clarityRange: calc.clarityRange,
-                                    //soltpcs: calc.totalSolitairePcs ?? 0,
                                     soltpcs: calc.SolitairePcs,
                                     ringSize: calc.ringSize,
                                     totalMetalWeight:
@@ -322,6 +347,7 @@ class _JewelleryCustomiseScreenState
                                     hidePriceBreakup: hidePriceBreakup,
                                   ),
 
+                                  /// Customise button
                                   Padding(
                                     padding: EdgeInsets.only(right: 34 * r),
                                     child: SizedBox(
@@ -336,27 +362,27 @@ class _JewelleryCustomiseScreenState
                                           onTap: () async {
                                             final metalColors = detail
                                                 .metalColor
-                                                .split(
-                                                  ',',
-                                                ); // split हमेशा List देगा
+                                                .split(',');
                                             final metalPurities = detail
                                                 .metalPurity
                                                 .split(',');
 
+                                            debugPrint(
+                                              'sizeFrom: ${calc.sizeFrom}, '
+                                              'sizeTo: ${calc.sizeTo}, '
+                                              'ringSize: ${calc.ringSize}',
+                                            );
+
                                             final result = await showCustomizeDrawer(
                                               context: context,
-                                              detail: detail,
+                                              //detail: detail,
+                                              detail: newdata ?? detail,
                                               totalSidePcs:
                                                   calc.totalSidePcs ?? 0,
                                               totalSideWeight:
                                                   calc.totalSideWeight ?? 0.0,
-
-                                              // 🔹 JS की तरह: collection + multi-size flag
-                                              collection: detail
-                                                  .collection, // e.g. 'SOLITAIRE' / 'SOLUS'
-                                              isMultiSize:
-                                                  _showMsg, // bool field तुम model में रख रहे हो
-                                              //shape: calc.solitaireShape, // e.g. 'Round'
+                                              collection: detail.collection,
+                                              isMultiSize: isMultiSize,
                                               initialValues: {
                                                 if (priceStartIndex != null &&
                                                     priceEndIndex != null)
@@ -386,14 +412,9 @@ class _JewelleryCustomiseScreenState
                                                         clarityStartIndex,
                                                     'endIndex': clarityEndIndex,
                                                   },
-
-                                                // 🔹 extra: shape + ringSize + metal selections
-                                                'shape': calc
-                                                    .solitaireShape, // e.g. 'Round'
-                                                'ringSizeFrom':
-                                                    detail.productSizeFrom,
-                                                'ringSizeTo':
-                                                    detail.productSizeTo,
+                                                'shape': calc.solitaireShape,
+                                                'ringSizeFrom': calc.sizeFrom,
+                                                'ringSizeTo': calc.sizeTo,
                                                 if (calc.ringSize != null)
                                                   'ringSize': calc.ringSize,
                                                 'metalColor':
@@ -417,7 +438,6 @@ class _JewelleryCustomiseScreenState
                                               return;
                                             }
 
-                                            // indices local state में रखो
                                             setState(() {
                                               priceStartIndex =
                                                   result.price?.startIndex;
@@ -437,7 +457,6 @@ class _JewelleryCustomiseScreenState
                                                   result.clarity?.endIndex;
                                             });
 
-                                            // provider को filter दो (ये पहले से है)
                                             ref
                                                 .read(
                                                   jewelleryCalcProvider
@@ -460,98 +479,92 @@ class _JewelleryCustomiseScreenState
                                               ),
                                             );
                                           },
-                                          child:
-                                              detail.productPrice == null ||
-                                                  detail.productPrice == 0
-                                              ? Stack(
-                                                  children: [
-                                                    /// Outer border
-                                                    Positioned.fill(
-                                                      child: Container(
-                                                        decoration: ShapeDecoration(
-                                                          shape: RoundedRectangleBorder(
-                                                            side:
-                                                                const BorderSide(
-                                                                  width: 1,
-                                                                  color: Color(
-                                                                    0xFF6C5022,
-                                                                  ),
-                                                                ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  20,
-                                                                ),
-                                                          ),
+                                          child: Stack(
+                                            children: [
+                                              /// Outer border
+                                              Positioned.fill(
+                                                child: Container(
+                                                  decoration: ShapeDecoration(
+                                                    shape: RoundedRectangleBorder(
+                                                      side: const BorderSide(
+                                                        width: 1,
+                                                        color: Color(
+                                                          0xFF6C5022,
                                                         ),
                                                       ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            20,
+                                                          ),
                                                     ),
+                                                  ),
+                                                ),
+                                              ),
 
-                                                    /// Main button
-                                                    Positioned(
-                                                      left: 4 * r,
-                                                      top: 4 * r,
-                                                      bottom: 4 * r,
-                                                      right: 84 * r,
-                                                      child: Container(
-                                                        alignment:
-                                                            Alignment.center,
-                                                        decoration: ShapeDecoration(
-                                                          color: const Color(
-                                                            0xFFCBC4AE,
-                                                          ),
-                                                          shape: RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  15 * r,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                        child: MyText(
-                                                          'Start customizing',
-                                                          style: TextStyle(
-                                                            color: const Color(
-                                                              0xFF6C5022,
-                                                            ),
-                                                            fontSize: 14 * r,
-                                                            fontFamily:
-                                                                'Montserrat',
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                          ),
-                                                        ),
-                                                      ),
+                                              /// Label
+                                              Positioned(
+                                                left: 4 * r,
+                                                top: 4 * r,
+                                                bottom: 4 * r,
+                                                right: 84 * r,
+                                                child: Container(
+                                                  alignment: Alignment.center,
+                                                  decoration: ShapeDecoration(
+                                                    color: const Color(
+                                                      0xFFCBC4AE,
                                                     ),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            15 * r,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  child: MyText(
+                                                    calc.isCustomised
+                                                        ? 'Edit Customization'
+                                                        : 'Start customizing',
+                                                    style: TextStyle(
+                                                      color: const Color(
+                                                        0xFF6C5022,
+                                                      ),
+                                                      fontSize: 14 * r,
+                                                      fontFamily: 'Montserrat',
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
 
-                                                    /// Arrow image button
-                                                    Positioned(
-                                                      top: 4 * r,
-                                                      bottom: 4 * r,
-                                                      right: 4 * r,
-                                                      width: 72 * r,
-                                                      child: Container(
-                                                        alignment:
-                                                            Alignment.center,
-                                                        decoration: ShapeDecoration(
-                                                          color: const Color(
-                                                            0xFF6C5022,
-                                                          ),
-                                                          shape: RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  15 * r,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                        child: Image.asset(
-                                                          'assets/jewellery_pdp/cus-ticon.png',
-                                                          width: 18 * r,
-                                                          height: 18 * r,
-                                                        ),
-                                                      ),
+                                              /// Arrow icon
+                                              Positioned(
+                                                top: 4 * r,
+                                                bottom: 4 * r,
+                                                right: 4 * r,
+                                                width: 72 * r,
+                                                child: Container(
+                                                  alignment: Alignment.center,
+                                                  decoration: ShapeDecoration(
+                                                    color: const Color(
+                                                      0xFF6C5022,
                                                     ),
-                                                  ],
-                                                )
-                                              : SizedBox.shrink(),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            15 * r,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  child: Image.asset(
+                                                    'assets/jewellery_pdp/cus-ticon.png',
+                                                    width: 18 * r,
+                                                    height: 18 * r,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -574,7 +587,7 @@ class _JewelleryCustomiseScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                /// MAIN BOTTOM BAR
+                /// Main bottom bar
                 ClipRRect(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(25 * r),
@@ -583,9 +596,9 @@ class _JewelleryCustomiseScreenState
                   child: Container(
                     height: 82 * r,
                     padding: EdgeInsets.symmetric(horizontal: 40 * r),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFBEE4DD),
-                      border: const Border(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFBEE4DD),
+                      border: Border(
                         top: BorderSide(color: Color(0xFF90DCD0), width: 1),
                       ),
                     ),
@@ -593,7 +606,7 @@ class _JewelleryCustomiseScreenState
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        /// PRICE TEXT
+                        /// Approx price display
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -613,13 +626,11 @@ class _JewelleryCustomiseScreenState
                             Row(
                               children: [
                                 MyText(
-                                  detail.productPrice == null ||
-                                          detail.productPrice == 0
-                                      ? calc.approxPriceFrom != null
-                                            ? calc.approxPriceFrom!
-                                                  .inRupeesFormat()
-                                            : '--'
-                                      : detail.productPrice!.inRupeesFormat(),
+                                  isCalculating
+                                      ? '--'
+                                      : calc.approxPriceFrom
+                                                ?.inRupeesFormat() ??
+                                            '--',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.black,
@@ -633,25 +644,20 @@ class _JewelleryCustomiseScreenState
                                 const SizedBox(width: 6),
                                 MyText(
                                   '-',
-                                  textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: 30 * r,
                                     fontFamily: 'Montserrat',
                                     fontWeight: FontWeight.w500,
                                     height: 0.90 * r,
-                                    letterSpacing: 0.60 * r,
                                   ),
                                 ),
-                                SizedBox(width: 6),
+                                const SizedBox(width: 6),
                                 Text(
-                                  detail.productPrice == null ||
-                                          detail.productPrice == 0
-                                      ? calc.approxPriceTo != null
-                                            ? calc.approxPriceTo!
-                                                  .inRupeesFormat()
-                                            : '--'
-                                      : detail.productPrice!.inRupeesFormat(),
+                                  isCalculating
+                                      ? '--'
+                                      : calc.approxPriceTo?.inRupeesFormat() ??
+                                            '--',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.black,
@@ -667,7 +673,62 @@ class _JewelleryCustomiseScreenState
                           ],
                         ),
 
-                        /// CONTINUE BUTTON
+                        SizedBox(width: 50 * r),
+
+                        /// Reset price button
+                        InkWell(
+                          onTap: () async {
+                            await ref
+                                .read(jewelleryCalcProvider.notifier)
+                                .resetPriceToInitial();
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 258 * r,
+                            height: 52 * r,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 30 * r,
+                              vertical: 6 * r,
+                            ),
+                            decoration: ShapeDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment(0.0, 0.5),
+                                end: Alignment(0.96, 1.12),
+                                colors: [Color(0xFFBEE4DD), Color(0xA5D1B193)],
+                              ),
+                              shape: RoundedRectangleBorder(
+                                side: const BorderSide(
+                                  width: 1,
+                                  color: Color(0xFFACA584),
+                                ),
+                                borderRadius: const BorderRadius.all(
+                                  Radius.circular(20),
+                                ),
+                              ),
+                              shadows: const [
+                                BoxShadow(
+                                  color: Color(0x7C000000),
+                                  blurRadius: 4,
+                                  offset: Offset(2, 2),
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: MyText(
+                                'Reset Price',
+                                style: TextStyle(
+                                  color: const Color(0xFF6C5022),
+                                  fontSize: 20 * r,
+                                  fontFamily: 'Montserrat',
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        /// Continue / add to cart button
                         InkWell(
                           onTap: () async {
                             final customer = await showDialog<CustomerDetail>(
@@ -682,22 +743,17 @@ class _JewelleryCustomiseScreenState
                             _onAddToCart(
                               context,
                               ref,
-                              customer:
-                                  customer, // retail customer details for cart creation
-                              customerid:
-                                  widget.customerid, //new customer id from DB
-                              customercode: widget
-                                  .customercode, //new customer code from DB
-                              customername: widget
-                                  .customername, //new customer name from DB
-                              branch: widget.branch, //new branch from DB
+                              customer: customer,
+                              customerid: widget.customerid,
+                              customercode: widget.customercode,
+                              customername: widget.customername,
+                              branch: widget.branch,
+                              isCustomised: calc.isCustomised,
                             );
 
-                            //call here cart create and set data
-                            //final customerId = customer.id;
-
                             debugPrint(
-                              'Selected customer: ${customer.name} (${customer.id} phone : (${customer.contactNo})',
+                              'Selected customer: ${customer.name} '
+                              '(${customer.id}, ${customer.contactNo})',
                             );
                           },
                           borderRadius: BorderRadius.circular(20),
@@ -719,7 +775,7 @@ class _JewelleryCustomiseScreenState
                                   width: 1,
                                   color: Color(0xFFACA584),
                                 ),
-                                borderRadius: BorderRadius.all(
+                                borderRadius: const BorderRadius.all(
                                   Radius.circular(20),
                                 ),
                               ),
@@ -750,7 +806,6 @@ class _JewelleryCustomiseScreenState
                   ),
                 ),
 
-                /// WHITE GAP BELOW BOTTOM BAR
                 Container(
                   height: 4,
                   width: double.infinity,
@@ -769,14 +824,24 @@ class _JewelleryCustomiseScreenState
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DELIVERY BADGE
+// ─────────────────────────────────────────────────────────────────────────────
+
 class DeliveryBadge extends StatelessWidget {
   final double r;
-  const DeliveryBadge({super.key, required this.r});
+  final String deliveryLabel;
+
+  const DeliveryBadge({
+    super.key,
+    required this.r,
+    required this.deliveryLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 271 * r,
+      width: 400 * r,
       height: 36 * r,
       decoration: BoxDecoration(
         color: const Color(0xFFBEE4DD),
@@ -785,7 +850,6 @@ class DeliveryBadge extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Left text
           Expanded(
             child: Center(
               child: MyText(
@@ -801,17 +865,15 @@ class DeliveryBadge extends StatelessWidget {
               ),
             ),
           ),
-          // White separator
           Container(
             width: 1,
             margin: EdgeInsets.symmetric(vertical: 6 * r),
             color: Colors.white,
           ),
-          // Right text
           Expanded(
             child: Center(
               child: MyText(
-                'Est delivery 15 days',
+                deliveryLabel,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,

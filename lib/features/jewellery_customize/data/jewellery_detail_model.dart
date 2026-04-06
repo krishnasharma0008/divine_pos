@@ -45,6 +45,11 @@ class JewelleryDetail {
   final double? metalPriceLessOneGms;
   final double? productPrice;
 
+  final String? laying_with; // new customer code
+  final int? lying_with_id; // new customer id
+  final String? lying_with_name; // new customer name
+  final String? lying_with_nickname; //new customer branch
+
   final List<String> ctsSizeSlab;
   final List<ProductImage> images;
   final List<Variant> variants;
@@ -82,6 +87,12 @@ class JewelleryDetail {
     required this.variantApprovedDate,
     required this.metalPriceLessOneGms,
     required this.productPrice,
+
+    required this.laying_with,
+    required this.lying_with_id,
+    required this.lying_with_name,
+    required this.lying_with_nickname,
+
     required this.ctsSizeSlab,
     required this.images,
     required this.variants,
@@ -152,6 +163,11 @@ class JewelleryDetail {
 
       // productPrice:
       //     (json['Product_price'] as num?)?.toDouble(),
+      laying_with: json['laying_with'] ?? '',
+      lying_with_id: json['lying_with_id'] ?? 0,
+      lying_with_name: json['lying_with_name'] ?? '',
+      lying_with_nickname: json['lying_with_nickname'] ?? '',
+
       ctsSizeSlab: (json['Cts_size_slab'] as List<dynamic>? ?? [])
           .map((e) => e.toString())
           .toList(),

@@ -89,7 +89,7 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
           CompositedTransformFollower(
             link: _layerLink,
             showWhenUnlinked: false,
-            offset: const Offset(0, 40),
+            offset: const Offset(0, 30),
             child: Material(
               color: Colors.transparent,
               child: FadeTransition(

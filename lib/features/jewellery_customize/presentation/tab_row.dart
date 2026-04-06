@@ -423,6 +423,12 @@ class PriceBreakupTab extends StatelessWidget {
     final grandFrom = (approxPriceFrom ?? 0);
     final grandTo = (approxPriceTo ?? 0);
 
+    final solFrom = solitaireAmountFrom ?? 0;
+    final solTo = solitaireAmountTo ?? 0;
+    final metal = metalAmount ?? 0;
+    final sideDiamond = sideDiamondAmount ?? 0;
+    final mountTotal = metal + sideDiamond;
+
     return legendCard(
       r: r,
       title: 'Divine Solitaires',
@@ -432,19 +438,17 @@ class PriceBreakupTab extends StatelessWidget {
           _priceRow(
             r,
             'Solitaire Value',
-            '${solitaireAmountFrom!.inRupeesFormat()}  - ${solitaireAmountTo!.inRupeesFormat()}',
+            '${solFrom.inRupeesFormat()}  -  ${solTo.inRupeesFormat()}',
           ),
           SizedBox(height: 16 * r),
           _sectionHeader(r, 'Divine Mount'),
           SizedBox(height: 16 * r),
           _priceRow(
             r,
-            (sideDiamondAmount ?? 0) > 0 ? 'Metal + Side Diamonds' : 'Metal',
-            //'${metalAmount!.inRupeesFormat()} - ${sideDiamondAmount!.inRupeesFormat()}',
-            (sideDiamondAmount ?? 0) > 0
-                //? '${metalAmount!.inRupeesFormat()} - ${sideDiamondAmount!.inRupeesFormat()}'
-                ? '${(metalAmount! + sideDiamondAmount!).inRupeesFormat()} - ${(metalAmount! + sideDiamondAmount!).inRupeesFormat()}'
-                : metalAmount!.inRupeesFormat(),
+            sideDiamond > 0 ? 'Metal + Side Diamonds' : 'Metal',
+            sideDiamond > 0
+                ? '${mountTotal.inRupeesFormat()} - ${mountTotal.inRupeesFormat()}'
+                : metal.inRupeesFormat(),
           ),
           Divider(height: 32 * r),
           _priceRow(

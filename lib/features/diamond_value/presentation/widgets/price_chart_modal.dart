@@ -30,7 +30,7 @@ class _MonthPrice {
     this.currencyCode = 'INR',
   });
 
-  String get label => DateFormat('MMM yy').format(month);
+  String get label => DateFormat('d MMM yy').format(month);
 }
 
 // ---------------------------------------------------------------------------
@@ -51,30 +51,51 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
   bool _loadingMonth = false;
   String? _error;
 
+  // ── Dropdown selections ──────────────────────────────────────────────────
+  int? _selYear;
+  int? _selMonth;
+  int? _selDay;
+
   double get fem => ScaleSize.aspectRatio;
 
-  Future<void> _pickAndFetch() async {
-    final now = DateTime.now();
+  // ── Dropdown data helpers ────────────────────────────────────────────────
 
-    final selected = await _showMonthYearPicker(
-      initialYear: now.year,
-      minYear: 2012,
-      maxYear: now.year,
-      currentMonth: now.month,
-    );
+  final DateTime _now = DateTime.now();
 
-    if (selected == null || !mounted) return;
+  List<int> get _years =>
+      List.generate(_now.year - 2012 + 1, (i) => 2012 + i).reversed.toList();
 
-    final selectedMonth = selected;
+  List<int> get _months {
+    if (_selYear == null) return [];
+    final maxMonth = _selYear == _now.year ? _now.month : 12;
+    return List.generate(maxMonth, (i) => i + 1);
+  }
+
+  List<int> get _days {
+    if (_selYear == null || _selMonth == null) return [];
+    final daysInMonth = DateUtils.getDaysInMonth(_selYear!, _selMonth!);
+    final maxDay = (_selYear == _now.year && _selMonth == _now.month)
+        ? _now.day
+        : daysInMonth;
+    return List.generate(maxDay, (i) => i + 1);
+  }
+
+  // ── Fetch ────────────────────────────────────────────────────────────────
+
+  Future<void> _fetchPrice() async {
+    if (_selYear == null || _selMonth == null || _selDay == null) return;
+
+    final selectedDate = DateTime(_selYear!, _selMonth!, _selDay!);
 
     if (_entries.any(
       (e) =>
-          e.month.year == selectedMonth.year &&
-          e.month.month == selectedMonth.month,
+          e.month.year == selectedDate.year &&
+          e.month.month == selectedDate.month &&
+          e.month.day == selectedDate.day,
     )) {
       setState(
         () => _error =
-            '${DateFormat('MMMM yyyy').format(selectedMonth)} is already added. Please select a different month.',
+            '${DateFormat('d MMMM yyyy').format(selectedDate)} is already added. Please select a different date.',
       );
       return;
     }
@@ -92,15 +113,16 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
             colour: widget.config.colorLabel,
             clarity: widget.config.clarityLabel,
             cts: widget.config.caratDouble,
-            month: selectedMonth.month,
-            year: selectedMonth.year,
+            day: _selDay!,
+            month: _selMonth!,
+            year: _selYear!,
           );
 
       if (!mounted) return;
       setState(() {
         _entries.add(
           _MonthPrice(
-            selectedMonth,
+            selectedDate,
             result.checkDate,
             result.pastPrice,
             result.difference,
@@ -113,6 +135,11 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
           ),
         );
         _entries.sort((a, b) => a.month.compareTo(b.month));
+
+        // Reset dropdowns after successful add
+        _selYear = null;
+        _selMonth = null;
+        _selDay = null;
       });
     } catch (e, st) {
       debugPrint('❌ comparePastPrices error => $e');
@@ -125,164 +152,16 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
 
   void _removeEntry(int idx) => setState(() => _entries.removeAt(idx));
 
-  Future<DateTime?> _showMonthYearPicker({
-    required int initialYear,
-    required int minYear,
-    required int maxYear,
-    required int currentMonth,
-  }) async {
-    final now = DateTime.now();
-    int selectedYear = initialYear;
+  // ── Build ────────────────────────────────────────────────────────────────
 
-    return await showDialog<DateTime>(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16 * fem),
-        ),
-        child: StatefulBuilder(
-          builder: (ctx, setModal) {
-            final months = [
-              'Jan',
-              'Feb',
-              'Mar',
-              'Apr',
-              'May',
-              'Jun',
-              'Jul',
-              'Aug',
-              'Sep',
-              'Oct',
-              'Nov',
-              'Dec',
-            ];
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                20 * fem,
-                16 * fem,
-                20 * fem,
-                28 * fem,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 36 * fem,
-                    height: 4 * fem,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDDDDDD),
-                      borderRadius: BorderRadius.circular(2 * fem),
-                    ),
-                  ),
-                  SizedBox(height: 16 * fem),
-                  MyText(
-                    'Select Month',
-                    style: TextStyle(
-                      fontSize: 15 * fem,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2A2A2A),
-                    ),
-                  ),
-                  SizedBox(height: 16 * fem),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        onPressed: selectedYear > minYear
-                            ? () => setModal(() => selectedYear--)
-                            : null,
-                        icon: const Icon(Icons.chevron_left),
-                        color: const Color(0xFF5AB5A8),
-                      ),
-                      SizedBox(
-                        width: 80,
-                        child: MyText(
-                          '$selectedYear',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18 * fem,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF2A2A2A),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: selectedYear < maxYear
-                            ? () => setModal(() => selectedYear++)
-                            : null,
-                        icon: const Icon(Icons.chevron_right),
-                        color: const Color(0xFF5AB5A8),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12 * fem),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          childAspectRatio: 2.2,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                        ),
-                    itemCount: 12,
-                    itemBuilder: (_, i) {
-                      final mNum = i + 1;
-                      final isFuture =
-                          selectedYear == now.year && mNum > now.month;
-                      return GestureDetector(
-                        onTap: isFuture
-                            ? null
-                            : () => Navigator.pop(
-                                ctx,
-                                DateTime(selectedYear, mNum),
-                              ),
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: isFuture
-                                ? const Color(0xFFF0F0F0)
-                                : const Color(0xFFE8F7F5),
-                            borderRadius: BorderRadius.circular(8 * fem),
-                          ),
-                          child: MyText(
-                            months[i],
-                            style: TextStyle(
-                              fontSize: 13 * fem,
-                              fontWeight: FontWeight.w500,
-                              color: isFuture
-                                  ? const Color(0xFFBBBBBB)
-                                  : const Color(0xFF2A2A2A),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // Build
-  // -------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      // ✅ CHANGE 1: Reduced inset padding so the dialog is wider
       insetPadding: EdgeInsets.all(16 * fem),
       child: Container(
-        // ✅ CHANGE 2: Increased max width (620 → 780) and max height (600 → 720)
         width: 780 * fem,
-        constraints: BoxConstraints(maxHeight: 720 * fem),
+        constraints: BoxConstraints(maxHeight: 760 * fem),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16 * fem),
@@ -301,7 +180,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
           children: [
             _buildHeader(),
             SizedBox(height: 16 * fem),
-
             if (_entries.isEmpty) _buildEmptyState() else _buildChart(),
             if (_entries.isNotEmpty) ...[
               SizedBox(height: 12 * fem),
@@ -315,12 +193,14 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
               ),
             ],
             SizedBox(height: 16 * fem),
-            _buildAddButton(),
+            _buildDateDropdowns(),
           ],
         ),
       ),
     );
   }
+
+  // ── Header ───────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
     return Row(
@@ -361,9 +241,10 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
     );
   }
 
+  // ── Empty state ──────────────────────────────────────────────────────────
+
   Widget _buildEmptyState() {
     return Container(
-      // ✅ CHANGE 3: Taller empty state to match new chart height
       height: 260,
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FA),
@@ -381,7 +262,7 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
             ),
             SizedBox(height: 10 * fem),
             MyText(
-              'Tap "Add Month" to compare past prices',
+              'Select a date below to compare past prices',
               style: TextStyle(fontSize: 12 * fem, color: Colors.grey[400]),
             ),
           ],
@@ -390,25 +271,32 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
     );
   }
 
+  // ── Chart ────────────────────────────────────────────────────────────────
+
   Widget _buildChart() {
     final cts = widget.config.caratDouble;
     final allPoints = List<_MonthPrice>.from(_entries)
       ..sort((a, b) => a.month.compareTo(b.month));
 
     return SizedBox(
-      // ✅ CHANGE 4: Increased chart height (200 → 280)
       height: 280 * fem,
       child: CustomPaint(
         painter: _ChartPainter(
           points: allPoints,
           cts: cts,
           fem: fem,
-          todayMonth: DateTime(DateTime.now().year, DateTime.now().month),
+          todayMonth: DateTime(
+            DateTime.now().year,
+            DateTime.now().month,
+            DateTime.now().day,
+          ),
         ),
         child: Container(),
       ),
     );
   }
+
+  // ── Legend ───────────────────────────────────────────────────────────────
 
   Widget _buildLegend() {
     return SingleChildScrollView(
@@ -423,7 +311,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
             final totalPrice = entry.price * widget.config.caratDouble;
 
             return Container(
-              // ✅ CHANGE 5: Fixed margin (was fem * fem — typo)
               margin: EdgeInsets.only(right: 8 * fem),
               padding: EdgeInsets.all(10 * fem),
               decoration: BoxDecoration(
@@ -448,7 +335,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                         ),
                         child: Icon(
                           Icons.close,
-                          // ✅ CHANGE 6: Slightly smaller close icon
                           size: 10 * fem,
                           color: Color(0xFF9E9E9E),
                         ),
@@ -463,7 +349,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                         padding: EdgeInsets.only(right: 8 * fem, top: 2 * fem),
                         child: Icon(
                           Icons.show_chart,
-                          // ✅ CHANGE 7: Reduced chart icon size (20 → 16)
                           size: 16 * fem,
                           color: _pointColor(idx),
                         ),
@@ -471,9 +356,8 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ✅ CHANGE 8: Reduced all card font sizes (12 → 10)
                           MyText(
-                            'Date: ${DateFormat('MMM, yyyy').format(entry.checkDate)}',
+                            'Date: ${DateFormat('d MMM, yyyy').format(entry.checkDate)}',
                             style: TextStyle(
                               fontSize: 10 * fem,
                               fontWeight: FontWeight.w400,
@@ -515,7 +399,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                                 isNeg
                                     ? Icons.arrow_downward
                                     : Icons.arrow_upward,
-                                // ✅ CHANGE 9: Smaller arrow icon (13 → 11)
                                 size: 11 * fem,
                                 color: isNeg
                                     ? const Color(0xFFEF4444)
@@ -536,43 +419,206 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
     );
   }
 
-  Widget _buildAddButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: _loadingMonth ? null : _pickAndFetch,
-        icon: _loadingMonth
-            ? SizedBox(
-                width: 14 * fem,
-                height: 14 * fem,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5 * fem,
-                  color: Color(0xFF5AB5A8),
-                ),
-              )
-            : Icon(Icons.add, size: 16 * fem, color: Color(0xFF5AB5A8)),
-        label: MyText(
-          _loadingMonth ? 'Fetching…' : 'Add Month',
-          style: TextStyle(
-            fontSize: 13 * fem,
-            color: Color(0xFF5AB5A8),
-            fontFamily: 'Georgia',
+  // ── Date dropdowns row ───────────────────────────────────────────────────
+
+  Widget _buildDateDropdowns() {
+    final canAdd =
+        !_loadingMonth &&
+        _selYear != null &&
+        _selMonth != null &&
+        _selDay != null;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Year
+        Expanded(
+          child: _buildDropdown<int>(
+            label: 'Year',
+            value: _selYear,
+            items: _years,
+            itemLabel: (y) => '$y',
+            enabled: true,
+            onChanged: (y) => setState(() {
+              _selYear = y;
+              _selMonth = null;
+              _selDay = null;
+              _error = null;
+            }),
           ),
         ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Color(0xFFBEE4DD), width: 1.5 * fem),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10 * fem),
+        SizedBox(width: 8 * fem),
+
+        // Month
+        Expanded(
+          child: _buildDropdown<int>(
+            label: 'Month',
+            value: _selMonth,
+            items: _months,
+            itemLabel: (m) => DateFormat('MMMM').format(DateTime(2000, m)),
+            enabled: _selYear != null,
+            onChanged: (m) => setState(() {
+              _selMonth = m;
+              _selDay = null;
+              _error = null;
+            }),
           ),
-          padding: EdgeInsets.symmetric(vertical: 12 * fem),
         ),
-      ),
+        SizedBox(width: 8 * fem),
+
+        // Day
+        Expanded(
+          child: _buildDropdown<int>(
+            label: 'Date',
+            value: _selDay,
+            items: _days,
+            itemLabel: (d) => '$d',
+            enabled: _selYear != null && _selMonth != null,
+            onChanged: (d) => setState(() {
+              _selDay = d;
+              _error = null;
+            }),
+          ),
+        ),
+        SizedBox(width: 10 * fem),
+
+        // Add button — bottom-aligned via CrossAxisAlignment.end on the Row
+        // Compare Price button — bottom-aligned via CrossAxisAlignment.end on the Row
+        SizedBox(
+          height: 38 * fem,
+          child: OutlinedButton.icon(
+            onPressed: canAdd ? _fetchPrice : null,
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 14 * fem),
+              side: BorderSide(
+                color: canAdd
+                    ? const Color(0xFF5AB5A8)
+                    : const Color(0xFFDDDDDD),
+                width: 1.5 * fem,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10 * fem),
+              ),
+              backgroundColor: canAdd
+                  ? const Color(0xFFE8F7F5)
+                  : const Color(0xFFF5F5F5),
+            ),
+            icon: _loadingMonth
+                ? SizedBox(
+                    width: 14 * fem,
+                    height: 14 * fem,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5 * fem,
+                      color: Color(0xFF5AB5A8),
+                    ),
+                  )
+                : Icon(
+                    Icons.compare_arrows_rounded,
+                    size: 16 * fem,
+                    color: canAdd
+                        ? const Color(0xFF5AB5A8)
+                        : const Color(0xFFBBBBBB),
+                  ),
+            label: MyText(
+              _loadingMonth ? 'Fetching…' : 'Compare Past Price',
+              style: TextStyle(
+                fontSize: 12 * fem,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'Georgia',
+                color: canAdd
+                    ? const Color(0xFF5AB5A8)
+                    : const Color(0xFFBBBBBB),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  // -------------------------------------------------------------------------
-  // Helpers
-  // -------------------------------------------------------------------------
+  Widget _buildDropdown<T>({
+    required String label,
+    required T? value,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required bool enabled,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        MyText(
+          label,
+          style: TextStyle(
+            fontSize: 10 * fem,
+            fontWeight: FontWeight.w500,
+            color: enabled ? const Color(0xFF6B6B6B) : const Color(0xFFBBBBBB),
+          ),
+        ),
+        SizedBox(height: 4 * fem),
+        Container(
+          height: 38 * fem,
+          padding: EdgeInsets.symmetric(horizontal: 10 * fem),
+          decoration: BoxDecoration(
+            color: enabled ? Colors.white : const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(8 * fem),
+            border: Border.all(
+              color: enabled
+                  ? const Color(0xFFBEE4DD)
+                  : const Color(0xFFEEEEEE),
+              width: 1.2 * fem,
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              value: value,
+              isExpanded: true,
+              hint: MyText(
+                'Select',
+                style: TextStyle(
+                  fontSize: 12 * fem,
+                  color: const Color(0xFFBBBBBB),
+                ),
+              ),
+              icon: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 16 * fem,
+                color: enabled
+                    ? const Color(0xFF5AB5A8)
+                    : const Color(0xFFCCCCCC),
+              ),
+              style: TextStyle(
+                fontSize: 12 * fem,
+                color: const Color(0xFF2A2A2A),
+                fontFamily: 'Georgia',
+              ),
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(10 * fem),
+              onChanged: enabled ? onChanged : null,
+              items: items
+                  .map(
+                    (item) => DropdownMenuItem<T>(
+                      value: item,
+                      child: MyText(
+                        itemLabel(item),
+                        style: TextStyle(
+                          fontSize: 12 * fem,
+                          color: const Color(0xFF2A2A2A),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
   Color _pointColor(int idx) {
     const palette = [
       Color(0xFF5AB5A8),
@@ -624,7 +670,6 @@ class _ChartPainter extends CustomPainter {
       return;
     }
 
-    // ✅ CHANGE 10: Wider left pad for bigger Y-axis labels (56 → 68)
     final leftPad = 68.0 * fem;
     final rightPad = 16.0 * fem;
     final topPad = 32.0 * fem;
@@ -657,7 +702,6 @@ class _ChartPainter extends CustomPainter {
       );
     }
 
-    // ✅ CHANGE 11: Larger Y-axis label font (9 → 11)
     final labelStyle = TextStyle(fontSize: 11 * fem, color: Color(0xFFAAAAAA));
     for (int i = 0; i <= 4; i++) {
       final price = minP + (maxP - minP) * i / 4;
@@ -693,7 +737,7 @@ class _ChartPainter extends CustomPainter {
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
     );
 
-    // Line — ✅ CHANGE 12: Thicker line stroke (2 → 2.5)
+    // Line
     final linePath = Path()..moveTo(offsets.first.dx, offsets.first.dy);
     for (int i = 1; i < offsets.length; i++) {
       _addCurve(linePath, offsets[i - 1], offsets[i]);
@@ -707,7 +751,7 @@ class _ChartPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // X axis labels + dots
+    // X-axis labels + dots
     const palette = [
       Color(0xFF5AB5A8),
       Color(0xFFC8AC7D),
@@ -721,12 +765,12 @@ class _ChartPainter extends CustomPainter {
       final off = offsets[i];
       final isToday =
           pt.month.year == todayMonth.year &&
-          pt.month.month == todayMonth.month;
+          pt.month.month == todayMonth.month &&
+          pt.month.day == todayMonth.day;
       final color = isToday
           ? const Color(0xFF2A2A2A)
           : palette[i % palette.length];
 
-      // ✅ CHANGE 13: Larger dots (5 → 7)
       canvas.drawCircle(off, 7 * fem, Paint()..color = Colors.white);
       canvas.drawCircle(
         off,
@@ -739,7 +783,6 @@ class _ChartPainter extends CustomPainter {
 
       _drawTooltip(canvas, off, _shortPrice(pt.price * cts), color);
 
-      // ✅ CHANGE 14: Larger X-axis label font (9 → 11)
       final label = isToday ? 'Today' : pt.label;
       final tp = TextPainter(
         text: TextSpan(
@@ -758,7 +801,6 @@ class _ChartPainter extends CustomPainter {
   }
 
   void _drawTooltip(Canvas canvas, Offset pos, String text, Color color) {
-    // ✅ CHANGE 15: Larger tooltip (height 20 → 24, font 9 → 11)
     const tipH = 24.0;
     const padH = 10.0;
     const rr = 5.0;

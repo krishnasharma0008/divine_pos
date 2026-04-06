@@ -5,57 +5,85 @@ import '../data/variant_model.dart';
 import '../data/bom_model.dart';
 
 class JewelleryCalculationService {
-  /// -----------------------------
-  /// PCS / WEIGHT HELPERS
-  /// -----------------------------
+  // ─────────────────────────────────────────────────────────────────────────
+  // PCS / WEIGHT HELPERS
+  // ─────────────────────────────────────────────────────────────────────────
 
+  /// Returns total pcs for [itemGroup] + [itemType] from the base variant.
+  /// When [variants] is empty the BOM rows have no Variant_id, so all matching
+  /// rows are summed directly (variantless path).
   static int getPcs(
     List<Variant> variants,
     List<Bom> bom,
     String itemGroup,
     String itemType,
   ) {
-    return variants
-        .where((v) => v.isBaseVariant == 1 || v.isBaseVariant == true)
-        .fold<int>(0, (acc, variant) {
-          final matchingBom = bom.where(
+    if (variants.isEmpty) {
+      return bom
+          .where(
             (b) =>
-                b.variantId == variant.variantId &&
-                (b.itemGroup ?? '').toUpperCase() == itemGroup.toUpperCase() &&
-                (b.itemType ?? '').toUpperCase() == itemType.toUpperCase(),
-          );
-          return acc + matchingBom.fold<int>(0, (s, b) => s + b.pcs);
-        });
+                b.itemGroup.toUpperCase() == itemGroup.toUpperCase() &&
+                b.itemType.toUpperCase() == itemType.toUpperCase(),
+          )
+          .fold<int>(0, (acc, b) => acc + b.pcs);
+    }
+
+    return variants.where((v) => v.isBaseVariant).fold<int>(0, (acc, variant) {
+      final matching = bom.where(
+        (b) =>
+            b.variantId == variant.variantId &&
+            b.itemGroup.toUpperCase() == itemGroup.toUpperCase() &&
+            b.itemType.toUpperCase() == itemType.toUpperCase(),
+      );
+      return acc + matching.fold<int>(0, (s, b) => s + b.pcs);
+    });
   }
 
+  /// Returns total weight for [itemGroup] + [itemType] from the base variant.
   static double getWeight(
     List<Variant> variants,
     List<Bom> bom,
     String itemGroup,
     String itemType,
   ) {
-    return variants
-        .where((v) => v.isBaseVariant == 1 || v.isBaseVariant == true)
-        .fold<double>(0, (acc, variant) {
-          final matchingBom = bom.where(
+    if (variants.isEmpty) {
+      return bom
+          .where(
             (b) =>
-                b.variantId == variant.variantId &&
-                (b.itemGroup ?? '').toUpperCase() == itemGroup.toUpperCase() &&
-                (b.itemType ?? '').toUpperCase() == itemType.toUpperCase(),
-          );
-          return acc + matchingBom.fold<double>(0, (s, b) => s + b.weight);
-        });
+                b.itemGroup.toUpperCase() == itemGroup.toUpperCase() &&
+                b.itemType.toUpperCase() == itemType.toUpperCase(),
+          )
+          .fold<double>(0, (acc, b) => acc + b.weight);
+    }
+
+    return variants.where((v) => v.isBaseVariant).fold<double>(0, (
+      acc,
+      variant,
+    ) {
+      final matching = bom.where(
+        (b) =>
+            b.variantId == variant.variantId &&
+            b.itemGroup.toUpperCase() == itemGroup.toUpperCase() &&
+            b.itemType.toUpperCase() == itemType.toUpperCase(),
+      );
+      return acc + matching.fold<double>(0, (s, b) => s + b.weight);
+    });
   }
 
+  /// Gold + Platinum combined weight.
   static double getNetMetalWeight(List<Variant> variants, List<Bom> bom) {
     return getWeight(variants, bom, 'GOLD', 'METAL') +
         getWeight(variants, bom, 'PLATINUM', 'METAL');
   }
 
-  /// -----------------------------
-  /// BASE SIZE / CARAT
-  /// -----------------------------
+  // ─────────────────────────────────────────────────────────────────────────
+  // BASE SIZE / CARAT
+  // ─────────────────────────────────────────────────────────────────────────
 
+  /// Extracts the base ring size and solitaire slab from [detail].
+  ///
+  /// - No variants: size from productSizeFrom, carat from first SOLITAIRE BOM.
+  /// - With variants: size + slab from the base variant.
   static ({double? baseSize, String? baseCarat}) getBaseSizeCarat(
     JewelleryDetail detail,
   ) {
@@ -63,9 +91,24 @@ class JewelleryCalculationService {
       return (baseSize: null, baseCarat: null);
     }
 
-    final baseVariants = detail.variants
-        .where((v) => v.isBaseVariant == 1 || v.isBaseVariant == true)
-        .toList();
+    if (detail.variants.isEmpty) {
+      final baseSize = double.tryParse(detail.productSizeFrom);
+      final bomCarat = detail.bom
+          .where(
+            (b) =>
+                b.itemGroup.toUpperCase() == 'SOLITAIRE' &&
+                b.itemType.toUpperCase() == 'STONE',
+          )
+          .map((b) {
+            final parts = b.bomVariantName.split('-');
+            return parts.length >= 4 ? '${parts[2]}-${parts[3]}' : null;
+          })
+          .whereType<String>()
+          .firstOrNull;
+      return (baseSize: baseSize, baseCarat: bomCarat);
+    }
+
+    final baseVariants = detail.variants.where((v) => v.isBaseVariant).toList();
 
     final baseSize = baseVariants
         .map((v) => double.tryParse(v.size))
@@ -82,26 +125,36 @@ class JewelleryCalculationService {
     return (baseSize: baseSize, baseCarat: baseCarat);
   }
 
-  /// -----------------------------
-  /// DEFAULT SOLITAIRE SHAPE
-  /// -----------------------------
+  // ─────────────────────────────────────────────────────────────────────────
+  // DEFAULT SOLITAIRE SHAPE
+  // ─────────────────────────────────────────────────────────────────────────
 
+  /// Returns the shape code (e.g. 'RND') from the base variant's SOLITAIRE BOM.
   static String getDefaultSolitaireShapeCode({
     required List<Variant> variants,
     required List<Bom> bom,
   }) {
-    final shapeCodes = variants
-        .where((v) => v.isBaseVariant == 1 || v.isBaseVariant == true)
-        .expand((variant) {
-          return bom.where(
-            (b) =>
-                b.variantId == variant.variantId &&
-                b.itemGroup == 'SOLITAIRE' &&
-                b.itemType == 'STONE',
+    final Iterable<Bom> solitaireBom;
+
+    if (variants.isEmpty) {
+      solitaireBom = bom.where(
+        (b) => b.itemGroup == 'SOLITAIRE' && b.itemType == 'STONE',
+      );
+    } else {
+      solitaireBom = variants
+          .where((v) => v.isBaseVariant)
+          .expand(
+            (variant) => bom.where(
+              (b) =>
+                  b.variantId == variant.variantId &&
+                  b.itemGroup == 'SOLITAIRE' &&
+                  b.itemType == 'STONE',
+            ),
           );
-        })
+    }
+
+    final shapeCodes = solitaireBom
         .map((b) => b.bomVariantName)
-        .whereType<String>()
         .map((name) {
           final parts = name.split('-');
           return parts.length > 1 ? parts[1] : null;
@@ -110,11 +163,10 @@ class JewelleryCalculationService {
         .toSet()
         .toList();
 
-    // Return the raw code: RND, PRN, etc.
     return shapeCodes.isNotEmpty ? shapeCodes.first : 'RND';
   }
 
-  // Optional: pretty label for UI
+  /// Maps a shape code to its UI display name.
   static String mapShapeCodeToName(String code) {
     const shapeMap = {
       'RND': 'Round',
@@ -129,31 +181,59 @@ class JewelleryCalculationService {
     return shapeMap[code] ?? 'Round';
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // SOLITAIRE COLOR MAPPING
+  // ─────────────────────────────────────────────────────────────────────────
+
   static String getSolitaireColor(String color) {
-    if (color == "Yellow Vivid") {
-      return "VDY";
-    } else if (color == "Yellow Intense") {
-      return "INY";
-    }
+    if (color == 'Yellow Vivid') return 'VDY';
+    if (color == 'Yellow Intense') return 'INY';
     return color;
   }
 
-  /// -----------------------------
-  /// MESSAGES
-  /// -----------------------------
+  // ─────────────────────────────────────────────────────────────────────────
+  // METAL HELPERS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  static String getValidPurity(String metal, String purity) {
+    if (metal.toLowerCase() == 'gold' && purity == '950PT') return '18KT';
+    return purity;
+  }
+
+  static String getMetalColor(String metal, String color) {
+    final m = metal.trim().toLowerCase();
+    final c = color.trim().toLowerCase();
+
+    if (m == 'platinum') return 'White';
+
+    if (m == 'gold') {
+      if (c.contains('yellow')) return 'Yellow';
+      if (c.contains('rose')) return 'Rose';
+      if (c.contains('white')) return 'White';
+    }
+
+    return '';
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // MULTI-SOLITAIRE MESSAGE
+  // ─────────────────────────────────────────────────────────────────────────
 
   static int getSolitaireRowCount(List<Variant> variants, List<Bom> bom) {
-    return variants
-        .where((v) => v.isBaseVariant == 1 || v.isBaseVariant == true)
-        .fold<int>(0, (acc, variant) {
-          final matchingBom = bom.where(
-            (b) =>
-                b.variantId == variant.variantId &&
-                b.itemGroup == 'SOLITAIRE' &&
-                b.itemType == 'STONE',
-          );
-          return acc + matchingBom.length;
-        });
+    if (variants.isEmpty) {
+      return bom
+          .where((b) => b.itemGroup == 'SOLITAIRE' && b.itemType == 'STONE')
+          .length;
+    }
+    return variants.where((v) => v.isBaseVariant).fold<int>(0, (acc, variant) {
+      final matching = bom.where(
+        (b) =>
+            b.variantId == variant.variantId &&
+            b.itemGroup == 'SOLITAIRE' &&
+            b.itemType == 'STONE',
+      );
+      return acc + matching.length;
+    });
   }
 
   static String getMultiSolitaireMessage({
@@ -162,66 +242,31 @@ class JewelleryCalculationService {
     required int totalPcs,
   }) {
     final rowCount = getSolitaireRowCount(variants, bom);
-
     if (rowCount > 1) return 'This is multi size - solitaire product';
     if (totalPcs > 1) return 'This is multi - solitaire product';
     return '';
   }
 
-  /// -----------------------------
-  /// DIVINE MOUNT ADJUSTMENT
-  /// -----------------------------
-  /// Returns a multiplicative factor based on size difference.
+  // ─────────────────────────────────────────────────────────────────────────
+  // DIVINE MOUNT ADJUSTMENT
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Returns a multiplicative weight factor based on ring size difference.
+  /// 3 % per size step from the base size.
   static double calculateDivineMountAdjustment({
     required String carat,
     required double size,
     required double baseRingSize,
     required int qty,
   }) {
-    // 3% per size difference (tune if needed)
-    const adjustPercentPerSize = 3 / 100; // 3%
-
+    const adjustPercentPerSize = 3 / 100;
     final sizeDifference = size - baseRingSize;
-    final factor = 1 + (sizeDifference * adjustPercentPerSize);
-
-    return factor;
+    return 1 + (sizeDifference * adjustPercentPerSize);
   }
 
-  /// -----------------------------
-  /// METAL & SIDE DIAMOND
-  /// -----------------------------
-
-  static String getValidPurity(String metal, String purity) {
-    if (metal.toLowerCase() == 'gold' && purity == '950PT') {
-      return '18KT';
-    }
-    return purity;
-  }
-
-  static String getMetalColor(String metal, String color) {
-    final normalizedMetal = metal.trim().toLowerCase();
-    final normalizedColor = color.trim().toLowerCase();
-
-    // Platinum → always White
-    if (normalizedMetal == 'platinum') {
-      return 'White';
-    }
-
-    if (normalizedMetal == 'gold') {
-      if (normalizedColor.contains('yellow gold') ||
-          normalizedColor.contains('yellow')) {
-        return 'Yellow';
-      } else if (normalizedColor.contains('rose gold') ||
-          normalizedColor.contains('rose')) {
-        return 'Rose';
-      } else if (normalizedColor.contains('white gold') ||
-          normalizedColor.contains('white')) {
-        return 'White';
-      }
-    }
-
-    return '';
-  }
+  // ─────────────────────────────────────────────────────────────────────────
+  // SIDE DIAMOND
+  // ─────────────────────────────────────────────────────────────────────────
 
   static Future<double> calculateSideDiamondPrice({
     required double price,
@@ -231,11 +276,15 @@ class JewelleryCalculationService {
     return totalSideCts * price * qty;
   }
 
-  /// -----------------------------
-  /// SOLITAIRE AMOUNT RANGE (LOCAL)
-  /// -----------------------------
-  ///
+  // ─────────────────────────────────────────────────────────────────────────
+  // SOLITAIRE AMOUNT RANGE (multi-BOM row)
+  // ─────────────────────────────────────────────────────────────────────────
 
+  /// Calculates solitaire from/to amounts for products that have multiple
+  /// SOLITAIRE STONE BOM rows (multi-size solitaire or multi-stone products).
+  ///
+  /// The [detail] passed in should already have the correct [variants] + [bom]
+  /// for the active pricing scenario (store item detail or catalogue calcDetail).
   static Future<
     ({
       double solFrom,
@@ -250,7 +299,6 @@ class JewelleryCalculationService {
   calculateSolitaireAmountRangeLocal({
     required JewelleryDetail detail,
     required int qty,
-    //required double premiumPct,
     required Future<double> Function({
       required String itemGroup,
       String? slab,
@@ -259,12 +307,12 @@ class JewelleryCalculationService {
       String? quality,
     })
     fetchPrice,
-    required double? userMinCt, // parseFloat(carat[0])
-    required double userMaxCt, // parseFloat(carat[1])
-    required String? userColorFrom, // color[0]
-    required String? userColorTo, // color[1]
-    required String? userClarityFrom, // clarity[0]
-    required String? userClarityTo, // clarity[1]
+    required double? userMinCt,
+    required double userMaxCt,
+    required String? userColorFrom,
+    required String? userColorTo,
+    required String? userClarityFrom,
+    required String? userClarityTo,
   }) async {
     double amountFrom = 0;
     double amountTo = 0;
@@ -273,71 +321,63 @@ class JewelleryCalculationService {
     final List<String> pcss = [];
     final List<String> mcolour = [];
     final List<String> mclarity = [];
-    // final shapes = <String>{}; // set for uniqueness
-    // final carats = <String>{}; // set for uniqueness
-    // final pcss = <String>[]; //
-    // final mcolour = <String>{}; // set for uniqueness
-    // final mclarity = <String>{}; // set for uniqueness
 
-    final variants = detail.variants ?? [];
-    if (variants.isEmpty)
+    final variants = detail.variants;
+
+    // Resolve the list of SOLITAIRE STONE BOM rows.
+    final List<Bom> bomList;
+    if (variants.isEmpty) {
+      // Variantless path: all SOLITAIRE STONE rows are relevant.
+      bomList = detail.bom
+          .where(
+            (b) =>
+                b.itemGroup.trim().toUpperCase() == 'SOLITAIRE' &&
+                b.itemType.trim().toUpperCase() == 'STONE',
+          )
+          .toList();
+    } else {
+      final activeVariant = variants.firstWhere(
+        (v) => v.isBaseVariant,
+        orElse: () => variants.first,
+      );
+      bomList = detail.bom
+          .where(
+            (b) =>
+                b.variantId == activeVariant.variantId &&
+                b.itemGroup.trim().toUpperCase() == 'SOLITAIRE' &&
+                b.itemType.trim().toUpperCase() == 'STONE',
+          )
+          .toList();
+    }
+
+    if (bomList.isEmpty) {
       return (
         solFrom: 0.0,
         solTo: 0.0,
-        shapeLabel: "",
-        caratLabel: "",
-        pcsLabel: "",
-        colourLabel: "",
-        clarityLabel: "",
+        shapeLabel: '',
+        caratLabel: '',
+        pcsLabel: '',
+        colourLabel: '',
+        clarityLabel: '',
       );
+    }
 
-    final activeVariant = variants.firstWhere(
-      (v) => v.isBaseVariant == 1 || v.isBaseVariant == true,
-      orElse: () => variants.first,
-    );
-    final activeVariantId = activeVariant.variantId;
-
-    //debugPrint('Variant id : $activeVariantId');
-
-    final bomList = detail.bom
-        .where(
-          (b) =>
-              b.variantId == activeVariantId &&
-              (b.itemGroup ?? '').trim().toUpperCase() == 'SOLITAIRE' &&
-              (b.itemType ?? '').trim().toUpperCase() == 'STONE',
-        )
-        .toList(); // toList() so you can print it if needed
-
-    //debugPrint('bomList: ${bomList.toList()}');
-    //int count = 0;
-    //String rawShapes = '';
     for (final row in bomList) {
-      // debugPrint(
-      //   'MultiSize BOM → id=${row.bomId}, variant=${row.variantId}, '
-      //   'group=${row.itemGroup}, type=${row.itemType}, '
-      //   'name=${row.bomVariantName}, pcs=${row.pcs}, wt=${row.weight}',
-      // );
-      final name = row.bomVariantName ?? '';
+      final name = row.bomVariantName;
       final parts = name.trim().split('-').map((p) => p.trim()).toList();
       if (parts.length < 4) continue;
 
-      final shapeCode = parts[1]; // RND / PER / PRN / OVL ...
-      final carat = parts[2] + '-' + parts[3];
+      final shapeCode = parts[1];
+      final carat = '${parts[2]}-${parts[3]}';
       final bomCaratFrom = double.tryParse(parts[2]) ?? 0.0;
       final bomCaratTo = double.tryParse(parts[3]) ?? 0.0;
       final pcs = row.pcs.toDouble();
 
-      final shapeName = JewelleryCalculationService.mapShapeCodeToName(
-        shapeCode,
-      );
-      //count += 1;
-      //debugPrint('Shape code: $shapeCode | Number of rows processed: $count');
-      //rawShapes += '$shapeName,';
-      shapes.add(shapeName);
+      shapes.add(mapShapeCodeToName(shapeCode));
       carats.add(carat);
       pcss.add(row.pcs.toString());
 
-      // -------- JS वाले 4 rules ----------
+      // Default color / clarity bounds per shape + carat range.
       String bomColorMin = '';
       String bomColorMax = '';
       String bomClarityMin = '';
@@ -347,13 +387,11 @@ class JewelleryCalculationService {
           shapeCode == 'PER' || shapeCode == 'PRN' || shapeCode == 'OVL';
 
       if (isFancy && bomCaratFrom >= 0.10 && bomCaratTo <= 0.17) {
-        // Fancy 0.10–0.17
         bomColorMin = 'GH';
         bomColorMax = 'EF';
         bomClarityMin = 'VS';
         bomClarityMax = 'VVS';
       } else if (isFancy && bomCaratFrom >= 0.18 && bomCaratTo <= 0.22) {
-        // Fancy 0.18–0.22
         bomColorMin = 'K';
         bomColorMax = 'D';
         bomClarityMin = 'SI1';
@@ -361,20 +399,17 @@ class JewelleryCalculationService {
       } else if (shapeCode == 'RND' &&
           bomCaratFrom >= 0.10 &&
           bomCaratTo <= 0.17) {
-        // Round 0.10–0.17
         bomColorMin = 'IJ';
         bomColorMax = 'EF';
         bomClarityMin = 'SI';
         bomClarityMax = 'VVS';
       }
 
-      // -------- user selection override logic (JS जैसा) ----------
-      // JS cond: parseFloat(carat[0]) === bomCaratFrom ? user color/clarity : bom defaults
-
-      final String fromColor = JewelleryCalculationService.getSolitaireColor(
+      // User selection overrides BOM defaults when carat matches.
+      final String fromColor = getSolitaireColor(
         userMaxCt == bomCaratTo ? (userColorFrom ?? '') : bomColorMin,
       );
-      final String toColor = JewelleryCalculationService.getSolitaireColor(
+      final String toColor = getSolitaireColor(
         userMinCt == bomCaratFrom ? (userColorTo ?? '') : bomColorMax,
       );
       final String fromClarity = userMaxCt == bomCaratTo
@@ -384,16 +419,12 @@ class JewelleryCalculationService {
           ? (userClarityTo ?? '')
           : bomClarityMax;
 
-      // -------- price fetch per BOM row ----------
       final priceFrom = await fetchPrice(
         itemGroup: 'SOLITAIRE',
         slab: bomCaratFrom.toStringAsFixed(2),
         shape: shapeCode,
         color: fromColor,
         quality: fromClarity,
-      );
-      debugPrint(
-        'Fetched priceFrom for shape=$shapeCode, carat=$bomCaratFrom, color=$fromColor, clarity=$fromClarity: $priceFrom',
       );
 
       final priceTo = await fetchPrice(
@@ -403,91 +434,29 @@ class JewelleryCalculationService {
         color: toColor,
         quality: toClarity,
       );
+
       debugPrint(
-        'Fetched priceTo for shape=$shapeCode, carat=$bomCaratTo, color=$toColor, clarity=$toClarity: $priceTo',
+        'BOM row: shape=$shapeCode, carat=$bomCaratFrom-$bomCaratTo, '
+        'colorFrom=$fromColor, colorTo=$toColor, '
+        'clarityFrom=$fromClarity, clarityTo=$toClarity, '
+        'priceFrom=$priceFrom, priceTo=$priceTo',
       );
+
       mcolour.add('$fromColor-$toColor');
       mclarity.add('$toClarity-$fromClarity');
 
       amountFrom += priceFrom * bomCaratFrom * qty * pcs;
-      // debugPrint(
-      //   'BOM Row: shape=$shapeCode, caratFrom=$bomCaratFrom, ColorFrom=$userColorFrom, ClarityFrom=$userClarityFrom, pcs=$pcs, priceFrom=$priceFrom, amountFrom=${priceFrom * bomCaratFrom * qty * pcs}',
-      // );
       amountTo += priceTo * bomCaratTo * qty * pcs;
-      // debugPrint(
-      //   'BOM Row: shape=$shapeCode, caratTo=$bomCaratTo, ColorTo=$userColorTo, ClaeityTo=$userClarityTo, pcs=$pcs, priceTo=$priceTo,  amountTo=${priceTo * bomCaratTo * qty * pcs}',
-      // );
-      // debugPrint('Amount From : $amountFrom');
-      // debugPrint('Amount To : $amountTo');
-
-      //
     }
-    //
-    // if (rawShapes.endsWith(',')) {
-    //   rawShapes = rawShapes.substring(0, rawShapes.length - 1);
-    // }
-    // debugPrint('Raw Shape : $rawShapes');
-    final shapeLabel = shapes.join(', ');
-    final caratLabel = carats.join(', ');
-    final pcsLabel = pcss.join(', ');
-    final colorLabel = mcolour.join(', ');
-    final clarityLabel = mclarity.join(', ');
-    // debugPrint('Shape : ${shapeLabel}');
-    // debugPrint('Carats range : ${caratLabel}');
-    // debugPrint('Amount From : $amountFrom');
-    // debugPrint('Amount To : $amountTo');
 
     return (
       solFrom: amountFrom,
       solTo: amountTo,
-      shapeLabel: shapeLabel,
-      caratLabel: caratLabel,
-      pcsLabel: pcsLabel,
+      shapeLabel: shapes.join(', '),
+      caratLabel: carats.join(', '),
+      pcsLabel: pcss.join(', '),
       colourLabel: mcolour.join(', '),
       clarityLabel: mclarity.join(', '),
     );
   }
-
-  // static ({double solFrom, double solTo}) calculateSolitaireAmountRangeLocal({
-  //   required JewelleryDetail detail,
-  //   required int qty,
-  //   required double rateFromPerCt, // already with premium
-  //   required double rateToPerCt, // already with premium
-  // }) {
-  //   double amountFrom = 0;
-  //   double amountTo = 0;
-
-  //   final variants = detail.variants ?? [];
-  //   if (variants.isEmpty) {
-  //     return (solFrom: 0, solTo: 0);
-  //   }
-
-  //   final activeVariant = variants.firstWhere(
-  //     (v) => v.isBaseVariant == 1 || v.isBaseVariant == true,
-  //     orElse: () => variants.first,
-  //   );
-  //   final activeVariantId = activeVariant.variantId;
-
-  //   final bomList = detail.bom.where(
-  //     (b) =>
-  //         b.variantId == activeVariantId &&
-  //         (b.itemGroup ?? '').trim().toUpperCase() == 'SOLITAIRE' &&
-  //         (b.itemType ?? '').trim().toUpperCase() == 'STONE',
-  //   );
-
-  //   for (final row in bomList) {
-  //     final name = row.bomVariantName ?? '';
-  //     final parts = name.trim().split('-').map((p) => p.trim()).toList();
-  //     if (parts.length < 4) continue;
-
-  //     final bomCaratFrom = double.tryParse(parts[2]) ?? 0.0;
-  //     final bomCaratTo = double.tryParse(parts[3]) ?? 0.0;
-  //     final pcs = row.pcs.toDouble();
-
-  //     amountFrom += rateFromPerCt * bomCaratFrom * pcs * qty;
-  //     amountTo += rateToPerCt * bomCaratTo * pcs * qty;
-  //   }
-
-  //   return (solFrom: amountFrom, solTo: amountTo);
-  // }
 }

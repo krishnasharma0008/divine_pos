@@ -18,7 +18,7 @@ class Jewellery {
   final String? clarity; // new
   final String? imageUrl;
   final String? laying_with; // new customer code
-  final int lying_with_id; // new customer id
+  final int? lying_with_id; // new customer id
   final String? lying_with_name; // new customer name
   final String? lying_with_nickname; //new customer branch
 

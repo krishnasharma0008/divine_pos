@@ -81,11 +81,33 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     DiamondShape(value: 'Heart', assetPath: 'assets/diamond_value/heart.png'),
   ];
 
+  // String? getShapeAsset(String? shape) {
+  //   if (shape == null) return null;
+
+  //   final match = allShapes.firstWhere(
+  //     (s) => s.value.toLowerCase() == shape.toLowerCase(),
+  //     orElse: () => const DiamondShape(value: '', assetPath: ''),
+  //   );
+
+  //   return match.assetPath.isEmpty ? null : match.assetPath;
+  // }
+
   String? getShapeAsset(String? shape) {
     if (shape == null) return null;
 
+    final normalized = switch (shape.trim().toUpperCase()) {
+      'RND' => 'Round',
+      'PRN' => 'Princess',
+      'PER' => 'Pear',
+      'OVL' => 'Oval',
+      'RADQ' => 'Radiant',
+      'CUSQ' => 'Cushion',
+      'HRT' => 'Heart',
+      _ => shape.trim(), // whatever string comes from API, e.g. "Round"
+    };
+
     final match = allShapes.firstWhere(
-      (s) => s.value.toLowerCase() == shape.toLowerCase(),
+      (s) => s.value.toLowerCase() == normalized.toLowerCase(),
       orElse: () => const DiamondShape(value: '', assetPath: ''),
     );
 
@@ -397,9 +419,9 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                (currentItem.productType ?? '').toLowerCase() == 'solitaire'
-                    ? _buildImage(getShapeAsset(currentItem.solitaireShape))
-                    : _buildImage(currentItem.imageUrl),
+                (currentItem.productType ?? '').toLowerCase() == "jewellery"
+                    ? _buildImage(currentItem.imageUrl)
+                    : _buildImage(getShapeAsset(currentItem.solitaireShape)),
 
                 //_buildImage(currentItem.imageUrl),
                 SizedBox(width: 24 * fem),

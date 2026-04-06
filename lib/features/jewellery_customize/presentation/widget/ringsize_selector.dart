@@ -169,8 +169,15 @@ class _RingSizeSelectorState extends State<RingSizeSelector> {
                     ),
                     child: Slider(
                       min: 0,
-                      max: (widget.values.length - 1).toDouble(),
-                      divisions: widget.values.length - 1,
+                      //max: (widget.values.length - 1).toDouble(),
+                      max: widget.values.length > 1
+                          ? (widget.values.length - 1).toDouble()
+                          : 1.0,
+                      //divisions: widget.values.length - 1,
+                      divisions: (widget.values.length - 1).clamp(
+                        1,
+                        widget.values.length,
+                      ),
                       value: _value,
                       onChanged: (v) {
                         final newIndex = v.round();
