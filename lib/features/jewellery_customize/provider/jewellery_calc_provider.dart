@@ -253,6 +253,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
             .toList();
         if (parts.length < 4) continue;
 
+        final rowShapeCode = parts.length > 1 ? parts[1] : '';
         final caratFrom = parts[2];
         final caratTo = parts[3];
         final caratFromVal = double.tryParse(caratFrom) ?? 0.0;
@@ -260,19 +261,49 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
 
         caratRangeParts.add('$caratFrom-$caratTo');
 
-        final bomColor = parts.length >= 5 ? parts[4] : '';
-        final bomClarity = parts.length >= 6 ? parts[5] : '';
+        final bomColor = isStoreProduct && parts.length >= 5 ? parts[4] : '';
+        final bomClarity = isStoreProduct && parts.length >= 6 ? parts[5] : '';
 
         if (bomColor.isNotEmpty && bomClarity.isNotEmpty) {
           colorRangeParts.add(bomColor);
           clarityRangeParts.add(bomClarity);
-        } else if (caratFromVal >= 0.10 && caratToVal <= 0.17) {
-          colorRangeParts.add('EF');
-          clarityRangeParts.add('VVS');
-        } else if (caratFromVal >= 0.18 && caratToVal <= 2.99) {
-          colorRangeParts.add('E');
-          clarityRangeParts.add('VVS1');
+        } else {
+          final isFancy =
+              rowShapeCode == 'PER' ||
+              rowShapeCode == 'PRN' ||
+              rowShapeCode == 'OVL';
+          final isSolus =
+              rowShapeCode == 'RADQ' ||
+              rowShapeCode == 'CUSQ' ||
+              rowShapeCode == 'HRT';
+          if (isFancy && caratFromVal >= 0.10 && caratToVal <= 0.17) {
+            colorRangeParts.add('EF-GH');
+            clarityRangeParts.add('VVS-VS');
+          } else if (isFancy && caratFromVal >= 0.18 && caratToVal <= 0.22) {
+            colorRangeParts.add('D-H');
+            clarityRangeParts.add('IF-VS2');
+          } else if (rowShapeCode == 'RND' &&
+              caratFromVal >= 0.10 &&
+              caratToVal <= 0.17) {
+            colorRangeParts.add('EF-IJ');
+            clarityRangeParts.add('VVS-SI');
+          } else if (rowShapeCode == 'RND' &&
+              caratFromVal >= 0.18 &&
+              caratToVal <= 0.22) {
+            colorRangeParts.add('D-E');
+            clarityRangeParts.add('IF-VVS1');
+          } else if (isSolus && caratFromVal >= 0.18 && caratToVal <= 1.5) {
+            colorRangeParts.add('VDY');
+            clarityRangeParts.add('VVS-VS');
+          }
         }
+        // } else if (caratFromVal >= 0.10 && caratToVal <= 0.17) {
+        //   colorRangeParts.add('EF');
+        //   clarityRangeParts.add('VVS');
+        // } else if (caratFromVal >= 0.18 && caratToVal <= 2.99) {
+        //   colorRangeParts.add('E');
+        //   clarityRangeParts.add('VVS1');
+        // }
 
         debugPrint(
           'BOM row → shape=${parts.length > 1 ? parts[1] : '?'} '
@@ -449,8 +480,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       itemGroup: 'SOLITAIRE',
       slab: minCt.toStringAsFixed(2),
       shape: shapeCode,
-      color: JewelleryCalculationService.getSolitaireColor(selectedColorFrom),
-      quality: selectedClarityFrom,
+      color: JewelleryCalculationService.getSolitaireColor(selectedColorTo),
+      quality: selectedClarityTo,
     );
 
     debugPrint(
@@ -462,8 +493,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       itemGroup: 'SOLITAIRE',
       slab: maxCt.toStringAsFixed(2),
       shape: shapeCode,
-      color: JewelleryCalculationService.getSolitaireColor(selectedColorTo),
-      quality: selectedClarityTo,
+      color: JewelleryCalculationService.getSolitaireColor(selectedColorFrom),
+      quality: selectedClarityFrom,
     );
 
     debugPrint(
@@ -574,7 +605,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       solitaireAmountFrom: solFrom,
       solitaireAmountTo: solTo,
       approxPriceFrom: approxFrom,
-      approxPriceTo: approxTo,
+      //approxPriceTo: approxTo,
+      approxPriceTo: current.isCustomised ? approxTo : null,
 
       // Counts
       totalSidePcs: totalSidePcs,

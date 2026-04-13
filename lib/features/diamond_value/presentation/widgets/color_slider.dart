@@ -1,5 +1,6 @@
 import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/scroll_side_button.dart';
 
 class ColorSliderWidget extends StatefulWidget {
   final List<String> values;
@@ -21,6 +22,10 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
   late int _selectedIndex;
   final ScrollController _scrollController = ScrollController();
 
+  bool _showArrows = false;
+  bool _canScrollLeft = false;
+  bool _canScrollRight = false;
+
   static const Color _tickActive = Color(0xFF1A9E8F);
   static const Color _tickInactive = Color(0xFFD9D9D9);
   static const Color _trackBorder = Color(0xFFBEE4DD);
@@ -33,6 +38,13 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
       0,
       widget.values.isEmpty ? 0 : widget.values.length - 1,
     );
+
+    _scrollController.addListener(_updateScrollButtons);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkIfScrollNeeded();
+      _updateScrollButtons();
+    });
   }
 
   @override
@@ -45,37 +57,85 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
           widget.values.isEmpty ? 0 : widget.values.length - 1,
         );
       });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkIfScrollNeeded();
+        _updateScrollButtons();
+      });
     }
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_updateScrollButtons);
     _scrollController.dispose();
     super.dispose();
   }
 
+  void _checkIfScrollNeeded() {
+    if (!mounted || !_scrollController.hasClients) return;
+    final hasOverflow = _scrollController.position.maxScrollExtent > 0;
+    if (hasOverflow != _showArrows) {
+      setState(() {
+        _showArrows = hasOverflow;
+      });
+    }
+  }
+
+  void _updateScrollButtons() {
+    if (!_scrollController.hasClients) {
+      if (_showArrows || _canScrollLeft || _canScrollRight) {
+        setState(() {
+          _showArrows = false;
+          _canScrollLeft = false;
+          _canScrollRight = false;
+        });
+      }
+      return;
+    }
+
+    final position = _scrollController.position;
+    final hasOverflow = position.maxScrollExtent > 0;
+    final canLeft = position.pixels > 0;
+    final canRight = position.pixels < position.maxScrollExtent;
+
+    if (hasOverflow != _showArrows ||
+        canLeft != _canScrollLeft ||
+        canRight != _canScrollRight) {
+      setState(() {
+        _showArrows = hasOverflow;
+        _canScrollLeft = canLeft;
+        _canScrollRight = canRight;
+      });
+    }
+  }
+
   void _scrollLeft() {
     if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      (_scrollController.offset - 150).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _scrollController
+        .animateTo(
+          (_scrollController.offset - 150).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        )
+        .then((_) => _updateScrollButtons());
   }
 
   void _scrollRight() {
     if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      (_scrollController.offset + 150).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _scrollController
+        .animateTo(
+          (_scrollController.offset + 150).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        )
+        .then((_) => _updateScrollButtons());
   }
 
   void _selectIndex(int index, double itemWidth) {
@@ -94,18 +154,19 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
       _scrollController.position.maxScrollExtent,
     );
 
-    _scrollController.animateTo(
-      newOffset,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _scrollController
+        .animateTo(
+          newOffset,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        )
+        .then((_) => _updateScrollButtons());
   }
 
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
     final double itemWidth = 80 * fem;
-    final double arrowsWidth = 76 * fem;
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8 * fem, vertical: 10 * fem),
@@ -114,53 +175,60 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
         border: Border.all(color: Colors.transparent, width: 1.5),
         borderRadius: BorderRadius.circular(16 * fem),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final totalWidth = constraints.maxWidth;
-          final contentWidth = widget.values.length * itemWidth;
-          final showArrows = contentWidth > totalWidth;
-          final sliderWidth = showArrows
-              ? totalWidth - arrowsWidth
-              : totalWidth;
+      child: SizedBox(
+        height: 88 * fem,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final totalWidth = constraints.maxWidth;
+            final contentWidth = widget.values.length * itemWidth;
+            final needsScroll = contentWidth > totalWidth;
 
-          return Row(
-            children: [
-              if (showArrows) ...[
-                _ArrowButton(
-                  icon: Icons.chevron_left,
-                  fem: fem,
-                  onTap: _scrollLeft,
-                ),
-                SizedBox(width: 8 * fem),
-              ],
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  scrollDirection: Axis.horizontal,
-                  physics: contentWidth > sliderWidth
-                      ? const BouncingScrollPhysics()
-                      : const NeverScrollableScrollPhysics(),
-                  child: SizedBox(
-                    width: contentWidth,
-                    child: _buildStrip(
-                      fem: fem,
-                      itemWidth: itemWidth,
-                      contentWidth: contentWidth,
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _checkIfScrollNeeded();
+                _updateScrollButtons();
+              }
+            });
+
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    scrollDirection: Axis.horizontal,
+                    physics: needsScroll
+                        ? const BouncingScrollPhysics()
+                        : const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      left: _showArrows ? 34 * fem : 12 * fem,
+                      right: _showArrows ? 34 * fem : 12 * fem,
+                    ),
+                    child: SizedBox(
+                      width: needsScroll ? contentWidth : totalWidth,
+                      child: _buildStrip(
+                        fem: fem,
+                        itemWidth: itemWidth,
+                        contentWidth: contentWidth,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              if (showArrows) ...[
-                SizedBox(width: 8 * fem),
-                _ArrowButton(
-                  icon: Icons.chevron_right,
-                  fem: fem,
-                  onTap: _scrollRight,
-                ),
+                if (_showArrows && _canScrollLeft)
+                  ScrollSideButton(
+                    isRight: false,
+                    onTap: _scrollLeft,
+                    fem: fem,
+                  ),
+                if (_showArrows && _canScrollRight)
+                  ScrollSideButton(
+                    isRight: true,
+                    onTap: _scrollRight,
+                    fem: fem,
+                  ),
               ],
-            ],
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -180,7 +248,6 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ONE ROW OF CELLS, each cell is fully tappable (label + tick)
           Row(
             children: List.generate(widget.values.length, (index) {
               final isSelected = index == _selectedIndex;
@@ -192,13 +259,10 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // LABEL
                       Center(
                         child: Text(
                           widget.values[index],
                           textAlign: TextAlign.center,
-                          //maxLines: 1,
-                          //softWrap: false,
                           overflow: TextOverflow.visible,
                           style: TextStyle(
                             fontSize: 11 * fem,
@@ -210,7 +274,6 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
                         ),
                       ),
                       SizedBox(height: 10 * fem),
-                      // TICK
                       Center(
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
@@ -231,10 +294,7 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
               );
             }),
           ),
-
           SizedBox(height: 10 * fem),
-
-          // TRACK + DIAMOND THUMB
           SizedBox(
             height: thumbH,
             child: Stack(
@@ -251,8 +311,6 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
                     ),
                   ),
                 ),
-
-                // OPTIONAL: tap areas along track (keep simple)
                 Row(
                   children: List.generate(widget.values.length, (index) {
                     return SizedBox(
@@ -266,7 +324,6 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
                     );
                   }),
                 ),
-
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 180),
                   curve: Curves.easeOut,
@@ -294,7 +351,6 @@ class _ColorSliderWidgetState extends State<ColorSliderWidget> {
   }
 }
 
-// Diamond thumb painter
 class _DiamondPainter extends CustomPainter {
   final Color color;
   const _DiamondPainter({required this.color});
@@ -319,34 +375,4 @@ class _DiamondPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DiamondPainter old) => old.color != color;
-}
-
-// Reusable arrow button
-class _ArrowButton extends StatelessWidget {
-  final IconData icon;
-  final double fem;
-  final VoidCallback onTap;
-
-  const _ArrowButton({
-    required this.icon,
-    required this.fem,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: 30 * fem,
-        height: 30 * fem,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0xFF90DCD0).withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8 * fem),
-        ),
-        child: Icon(icon, size: 20 * fem, color: const Color(0xFF90DCD0)),
-      ),
-    );
-  }
 }

@@ -58,6 +58,9 @@ class JewelleryCalcState {
   final bool istoreproduct;
   final String? laying_with;
 
+  // final bool
+  // shouldCalculateApproxPriceTo; // Flag to determine if approxPriceTo should be calculated
+
   const JewelleryCalcState({
     this.detail,
     this.calcDetail,
@@ -99,6 +102,7 @@ class JewelleryCalcState {
     this.initialSizeTo = 30, // Default values for ring size range
     this.istoreproduct = false,
     this.laying_with,
+    //this.shouldCalculateApproxPriceTo = true, // Default to true
   });
 
   JewelleryCalcState copyWith({
@@ -143,6 +147,8 @@ class JewelleryCalcState {
 
     bool? istoreproduct,
     String? laying_with,
+    // bool?
+    // shouldCalculateApproxPriceTo, // Allow overriding the approxPriceTo calculation flag
   }) {
     return JewelleryCalcState(
       detail: detail ?? this.detail,
@@ -187,6 +193,8 @@ class JewelleryCalcState {
       initialSizeTo: initialSizeTo ?? this.initialSizeTo,
       istoreproduct: istoreproduct ?? this.istoreproduct,
       laying_with: laying_with ?? this.laying_with,
+      // shouldCalculateApproxPriceTo:
+      //     shouldCalculateApproxPriceTo ?? this.shouldCalculateApproxPriceTo,
     );
   }
 

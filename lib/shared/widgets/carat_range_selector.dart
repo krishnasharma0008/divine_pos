@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
+import '../../../../shared/widgets/scroll_side_button.dart';
 
 class CaratRangeSelector extends StatefulWidget {
   final String label;
@@ -27,7 +28,10 @@ class CaratRangeSelector extends StatefulWidget {
 class _CaratRangeSelectorState extends State<CaratRangeSelector> {
   late RangeValues _range;
   final ScrollController _scrollController = ScrollController();
+
   bool _showArrows = false;
+  bool _canScrollLeft = false;
+  bool _canScrollRight = false;
 
   final Color tickColor = const Color(0xFFBEE4DD);
   final Color activeTrackColor = const Color(0xFFCFF4EE);
@@ -43,14 +47,17 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
       widget.initialEndIndex.clamp(0, widget.values.length - 1).toDouble(),
     );
 
-    // Check if scrolling is needed after first frame
+    _scrollController.addListener(_updateScrollButtons);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkIfScrollNeeded();
+      _updateScrollButtons();
     });
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_updateScrollButtons);
     _scrollController.dispose();
     super.dispose();
   }
@@ -59,8 +66,9 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
   void didUpdateWidget(covariant CaratRangeSelector oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Only update if values list actually changed
-    if (oldWidget.values != widget.values) {
+    if (oldWidget.values != widget.values ||
+        oldWidget.initialStartIndex != widget.initialStartIndex ||
+        oldWidget.initialEndIndex != widget.initialEndIndex) {
       setState(() {
         _range = RangeValues(
           widget.initialStartIndex
@@ -70,9 +78,9 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
         );
       });
 
-      // Recheck scroll after values change
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfScrollNeeded();
+        _updateScrollButtons();
       });
     }
   }
@@ -80,7 +88,6 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
   void _checkIfScrollNeeded() {
     if (!mounted || !_scrollController.hasClients) return;
 
-    // Check if content width exceeds viewport width
     final hasOverflow = _scrollController.position.maxScrollExtent > 0;
 
     if (hasOverflow != _showArrows) {
@@ -90,28 +97,60 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
     }
   }
 
+  void _updateScrollButtons() {
+    if (!_scrollController.hasClients) {
+      if (_showArrows || _canScrollLeft || _canScrollRight) {
+        setState(() {
+          _showArrows = false;
+          _canScrollLeft = false;
+          _canScrollRight = false;
+        });
+      }
+      return;
+    }
+
+    final position = _scrollController.position;
+    final hasOverflow = position.maxScrollExtent > 0;
+    final canLeft = position.pixels > 0;
+    final canRight = position.pixels < position.maxScrollExtent;
+
+    if (hasOverflow != _showArrows ||
+        canLeft != _canScrollLeft ||
+        canRight != _canScrollRight) {
+      setState(() {
+        _showArrows = hasOverflow;
+        _canScrollLeft = canLeft;
+        _canScrollRight = canRight;
+      });
+    }
+  }
+
   void _scrollLeft() {
     if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      (_scrollController.offset - 150).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _scrollController
+        .animateTo(
+          (_scrollController.offset - 150).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        )
+        .then((_) => _updateScrollButtons());
   }
 
   void _scrollRight() {
     if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      (_scrollController.offset + 150).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _scrollController
+        .animateTo(
+          (_scrollController.offset + 150).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        )
+        .then((_) => _updateScrollButtons());
   }
 
   @override
@@ -120,8 +159,6 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
     final String startValue = widget.values[_startIndex];
     final String endValue = widget.values[_endIndex];
     final chipFormatter = widget.valueToChipText ?? (String v) => v;
-
-    /// 🎯 EXACT thumb radius used by slider
     final double thumbRadius = (10 * fem) / 2;
 
     return Container(
@@ -135,7 +172,6 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          /// HEADER
           Row(
             children: [
               MyText(
@@ -146,8 +182,6 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
                 ),
               ),
               const Spacer(),
-
-              /// VALUE CHIP
               _buildValueChip(chipFormatter(startValue), fem),
               SizedBox(width: 6 * fem),
               const Text('-'),
@@ -155,87 +189,63 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
               _buildValueChip(chipFormatter(endValue), fem),
             ],
           ),
-
           SizedBox(height: 18 * fem),
+          SizedBox(
+            height: 88 * fem,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final availableWidth = constraints.maxWidth;
+                final itemWidth = 50 * fem;
+                final calculatedWidth = widget.values.length * itemWidth;
+                final needsScroll = calculatedWidth > availableWidth;
 
-          /// SCROLLABLE SECTION WITH ARROWS
-          Row(
-            children: [
-              /// LEFT ARROW (conditional)
-              if (_showArrows) ...[
-                InkWell(
-                  onTap: _scrollLeft,
-                  child: Container(
-                    width: 30 * fem,
-                    height: 30 * fem,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF90DCD0).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8 * fem),
-                    ),
-                    child: Icon(
-                      Icons.chevron_left,
-                      size: 20 * fem,
-                      color: const Color(0xFF90DCD0),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8 * fem),
-              ],
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    _checkIfScrollNeeded();
+                    _updateScrollButtons();
+                  }
+                });
 
-              /// ENTIRE SCROLLABLE CONTENT (labels + ticks + slider)
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final availableWidth = constraints.maxWidth;
-                    final itemWidth = 50 * fem;
-                    final calculatedWidth = widget.values.length * itemWidth;
-
-                    // Use available width if content is smaller, otherwise use calculated
-                    final needsScroll = calculatedWidth > availableWidth;
-
-                    return SingleChildScrollView(
-                      controller: _scrollController,
-                      scrollDirection: Axis.horizontal,
-                      physics: needsScroll
-                          ? null
-                          : const NeverScrollableScrollPhysics(),
-                      child: SizedBox(
-                        width: needsScroll ? calculatedWidth : availableWidth,
-                        child: _buildContent(
-                          fem,
-                          thumbRadius,
-                          needsScroll,
-                          itemWidth,
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        scrollDirection: Axis.horizontal,
+                        physics: needsScroll
+                            ? const BouncingScrollPhysics()
+                            : const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.only(
+                          left: _showArrows ? 34 * fem : 12 * fem,
+                          right: _showArrows ? 34 * fem : 12 * fem,
+                        ),
+                        child: SizedBox(
+                          width: needsScroll ? calculatedWidth : availableWidth,
+                          child: _buildContent(
+                            fem,
+                            thumbRadius,
+                            needsScroll,
+                            itemWidth,
+                          ),
                         ),
                       ),
-                    );
-                  },
-                ),
-              ),
-
-              /// RIGHT ARROW (conditional)
-              if (_showArrows) ...[
-                SizedBox(width: 8 * fem),
-                InkWell(
-                  onTap: _scrollRight,
-                  child: Container(
-                    width: 30 * fem,
-                    height: 30 * fem,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF90DCD0).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8 * fem),
                     ),
-                    child: Icon(
-                      Icons.chevron_right,
-                      size: 20 * fem,
-                      color: const Color(0xFF90DCD0),
-                    ),
-                  ),
-                ),
-              ],
-            ],
+                    if (_showArrows && _canScrollLeft)
+                      ScrollSideButton(
+                        isRight: false,
+                        onTap: _scrollLeft,
+                        fem: fem,
+                      ),
+                    if (_showArrows && _canScrollRight)
+                      ScrollSideButton(
+                        isRight: true,
+                        onTap: _scrollRight,
+                        fem: fem,
+                      ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -252,7 +262,6 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        /// LABELS
         Row(
           children: List.generate(
             widget.values.length,
@@ -286,10 +295,7 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
                   ),
           ),
         ),
-
         SizedBox(height: 10 * fem),
-
-        /// TICKS
         Padding(
           padding: EdgeInsets.symmetric(horizontal: thumbRadius),
           child: Row(
@@ -312,16 +318,12 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
             ),
           ),
         ),
-
         SizedBox(height: 10 * fem),
-
-        /// TRACK + SLIDER
         Padding(
           padding: EdgeInsets.symmetric(horizontal: thumbRadius),
           child: Stack(
             alignment: Alignment.center,
             children: [
-              /// Base bar
               Container(
                 height: 6 * fem,
                 decoration: BoxDecoration(
@@ -330,8 +332,6 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
                   border: Border.all(color: tickColor, width: 1),
                 ),
               ),
-
-              /// Slider
               SliderTheme(
                 data: SliderThemeData(
                   trackHeight: 4 * fem,
@@ -366,9 +366,8 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
                       widget.values[end],
                     );
 
-                    // Auto-scroll to keep selected range visible
                     if (needsScroll) {
-                      _autoScrollToRange(start, end, fem, itemWidth);
+                      _autoScrollToRange(start, end, itemWidth);
                     }
                   },
                 ),
@@ -380,8 +379,7 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
     );
   }
 
-  /// Auto-scroll to keep the selected range visible
-  void _autoScrollToRange(int start, int end, double fem, double itemWidth) {
+  void _autoScrollToRange(int start, int end, double itemWidth) {
     if (!mounted || !_scrollController.hasClients) return;
 
     final startOffset = start * itemWidth;
@@ -389,27 +387,28 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
     final viewportWidth = _scrollController.position.viewportDimension;
     final currentOffset = _scrollController.offset;
 
-    // Check if range is outside visible area
     if (startOffset < currentOffset) {
-      // Scroll left to show start
-      _scrollController.animateTo(
-        (startOffset - itemWidth).clamp(
-          0.0,
-          _scrollController.position.maxScrollExtent,
-        ),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      _scrollController
+          .animateTo(
+            (startOffset - itemWidth).clamp(
+              0.0,
+              _scrollController.position.maxScrollExtent,
+            ),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          )
+          .then((_) => _updateScrollButtons());
     } else if (endOffset > currentOffset + viewportWidth) {
-      // Scroll right to show end
-      _scrollController.animateTo(
-        (endOffset - viewportWidth + itemWidth * 2).clamp(
-          0.0,
-          _scrollController.position.maxScrollExtent,
-        ),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      _scrollController
+          .animateTo(
+            (endOffset - viewportWidth + itemWidth * 2).clamp(
+              0.0,
+              _scrollController.position.maxScrollExtent,
+            ),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          )
+          .then((_) => _updateScrollButtons());
     }
   }
 
@@ -440,7 +439,6 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
   }
 }
 
-/// 🔷 Diamond Thumb
 class DiamondRangeThumbShape extends RangeSliderThumbShape {
   final double width;
   final double height;

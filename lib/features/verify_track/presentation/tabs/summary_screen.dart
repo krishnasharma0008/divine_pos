@@ -19,8 +19,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
   bool _sltExpanded = false;
   bool _mountExpanded = false;
   bool _purchaseExpanded = false;
-  bool _zoomOpen = false;
-  int _zoomIndex = 0;
   double _swipeStartX = 0;
 
   Set<String> _availableVideos = {};
@@ -118,7 +116,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
     return ((slt.currentPrice - slt.purchasePrice) / slt.purchasePrice) * 100;
   }
 
-  // Growth for collapsed solitaire view (works even when purchasePrice == 0)
   double? get _collapsedGrowthPct {
     if (p.sltDetails.isEmpty) return null;
     final slt = p.sltDetails.first;
@@ -142,93 +139,72 @@ class _SummaryScreenState extends State<SummaryScreen> {
     }
   }
 
-  void _openZoom(int index) => setState(() {
-    _zoomOpen = true;
-    _zoomIndex = index;
-  });
-
-  void _closeZoom() => setState(() => _zoomOpen = false);
-
-  void _zoomNext() {
-    if (_images.length > 1) {
-      setState(() => _zoomIndex = (_zoomIndex + 1) % _images.length);
-    }
-  }
-
-  void _zoomPrev() {
-    if (_images.length > 1) {
-      setState(
-        () => _zoomIndex = (_zoomIndex - 1 + _images.length) % _images.length,
-      );
-    }
+  // ── Opens white popup dialog ───────────────────────────────────────────────
+  void _openZoom(int index) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black45,
+      builder: (_) => _ImagePopupDialog(
+        images: _images,
+        initialIndex: index,
+        isVideo: _isVideo,
+        isAsset: _isAsset,
+        uid: p.uid,
+        fem: fem,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
+    return Container(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Scrollable body ──────────────────────────────────────────────
-            Expanded(
-              child: Container(
-                color: Colors.white,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildCarousel(),
-                      _buildMeta(),
-                      _buildHairline(),
+            _buildCarousel(),
+            _buildMeta(),
+            _buildHairline(),
 
-                      // "Jewellery Details:" plain-text section header
-                      if (p.isJewellery) ...[
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            16 * fem,
-                            16 * fem,
-                            16 * fem,
-                            8 * fem,
-                          ),
-                          child: MyText(
-                            'Jewellery Details:',
-                            style: TextStyle(
-                              fontSize: 16 * fem,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textDark,
-                            ),
-                          ),
-                        ),
-                        _buildJewellerySltAccordion(),
-                        _buildMountAccordion(),
-                      ],
-
-                      if (p.isDiamond) _buildDiamondSltSection(),
-
-                      SizedBox(height: 16 * fem),
-                      if (p.isSold) _buildPurchaseSection(),
-                      SizedBox(height: 16 * fem),
-                      _buildHairline(),
-                      SizedBox(height: 8 * fem),
-                    ],
+            if (p.isJewellery) ...[
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  16 * fem,
+                  16 * fem,
+                  16 * fem,
+                  8 * fem,
+                ),
+                child: MyText(
+                  'Jewellery Details:',
+                  style: TextStyle(
+                    fontSize: 16 * fem,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
                   ),
                 ),
               ),
-            ),
+              _buildJewellerySltAccordion(),
+              _buildMountAccordion(),
+            ],
 
-            // ── Sticky bottom buttons ────────────────────────────────────────
-            //_buildButtons(),
+            if (p.isDiamond) _buildDiamondSltSection(),
+
+            SizedBox(height: 16 * fem),
+            if (p.isSold) _buildPurchaseSection(),
+            SizedBox(height: 16 * fem),
+            _buildHairline(),
+            SizedBox(height: 8 * fem),
           ],
         ),
-        if (_zoomOpen) _buildZoomOverlay(),
-      ],
+      ),
     );
   }
 
   // ── Carousel ───────────────────────────────────────────────────────────────
   Widget _buildCarousel() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16 * fem, 16 * fem, 16 * fem, 0 * fem),
+      padding: EdgeInsets.fromLTRB(16 * fem, 16 * fem, 16 * fem, 0),
       child: Column(
         children: [
           _buildMainImage(),
@@ -268,144 +244,12 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  // ── Fullscreen zoom ────────────────────────────────────────────────────────
-  Widget _buildZoomOverlay() {
-    final src = _images[_zoomIndex];
-    return Positioned.fill(
-      child: Material(
-        color: Colors.black,
-        child: Stack(
-          children: [
-            Center(
-              child: _isVideo(src)
-                  ? _buildMediaWidget(src)
-                  : InteractiveViewer(
-                      minScale: 1.0,
-                      maxScale: 5.0,
-                      child: _buildMediaWidget(src),
-                    ),
-            ),
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onHorizontalDragStart: (d) => _swipeStartX = d.localPosition.dx,
-                onHorizontalDragEnd: (d) {
-                  final dx = d.localPosition.dx - _swipeStartX;
-                  if (dx.abs() >= 40) dx < 0 ? _zoomNext() : _zoomPrev();
-                },
-              ),
-            ),
-            Positioned(
-              top: 16 * fem,
-              right: 16 * fem,
-              child: GestureDetector(
-                onTap: _closeZoom,
-                child: Container(
-                  width: 40 * fem,
-                  height: 40 * fem,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.4)),
-                  ),
-                  child: Icon(Icons.close, color: Colors.white, size: 22 * fem),
-                ),
-              ),
-            ),
-            if (_images.length > 1) ...[
-              Positioned(
-                left: 12 * fem,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: GestureDetector(
-                    onTap: _zoomPrev,
-                    child: Container(
-                      width: 44 * fem,
-                      height: 44 * fem,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.4),
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.chevron_left,
-                        color: Colors.white,
-                        size: 28 * fem,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 12 * fem,
-                top: 0,
-                bottom: 0,
-                child: Center(
-                  child: GestureDetector(
-                    onTap: _zoomNext,
-                    child: Container(
-                      width: 44 * fem,
-                      height: 44 * fem,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.4),
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.chevron_right,
-                        color: Colors.white,
-                        size: 28 * fem,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 20 * fem,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black45,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: MyText(
-                      '${_zoomIndex + 1} / ${_images.length}',
-                      style: TextStyle(color: Colors.white, fontSize: 13 * fem),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-            if (src.contains('carousel_3'))
-              Positioned(
-                bottom: 140 * fem,
-                left: 200 * fem,
-                right: 0,
-                child: Center(child: _GirdleText(p.uid, 48, fem)),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildUidOverlay() {
     return Positioned(
-      bottom: 80,
-      left: 150,
+      bottom: 110 * fem,
+      left: 170 * fem,
       right: 0,
-      child: Center(child: _GirdleText(p.uid, 36, fem)),
+      child: Center(child: _GirdleText(p.uid, 40 * fem, fem)),
     );
   }
 
@@ -582,7 +426,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     text: TextSpan(
                       style: TextStyle(
                         fontSize: 11 * fem,
-                        color: Color(0xFF646464),
+                        color: const Color(0xFF646464),
                         height: 1.5,
                       ),
                       children: [
@@ -594,7 +438,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                               'click here',
                               style: TextStyle(
                                 fontSize: 11 * fem,
-                                color: Color(0xFF646464),
+                                color: const Color(0xFF646464),
                                 decoration: TextDecoration.underline,
                               ),
                             ),
@@ -613,7 +457,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ),
           ],
           SizedBox(height: 4 * fem),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -722,7 +565,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
   Widget _buildJewellerySltAccordion() {
     if (p.sltDetails.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: EdgeInsets.fromLTRB(16 * fem, 0, 16 * fem, 0),
+      padding: EdgeInsets.symmetric(vertical: 4 * fem, horizontal: 20 * fem),
       child: Column(
         children: [
           _BorderedHeader(
@@ -745,127 +588,102 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
-  /// Collapsed solitaire — matches screenshot:
-  /// "1 pcs | RND 0.25cts. F, VVS1"
-  /// Purchase Price   Current Price   Growth
-  ///      ₹0             ₹57,500       0.0%  (green)
   Widget _buildJewellerySltCollapsed() {
     final slt = p.sltDetails.first;
-    final line =
-        '${p.sltTotalPcs} pcs | '
-        '${slt.shape} ${slt.carat}cts. ${slt.colour}, ${slt.clarity}';
-
+    final line = p.solitaireDetails1;
     final growth = _collapsedGrowthPct;
     final growthColor = (growth != null && growth >= 0)
         ? Colors.green
         : Colors.red;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Summary line
-        MyText(
-          line,
-          style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
-        ),
-        SizedBox(height: 10 * fem),
-
-        // 3-column header: Purchase Price | Current Price | Growth
-        Row(
-          children: [
-            Expanded(
-              child: MyText(
-                'Purchase Price',
-                style: TextStyle(fontSize: 13 * fem, color: AppColors.textMid),
-              ),
-            ),
-            Expanded(
-              child: MyText(
-                'Current Price',
-                style: TextStyle(fontSize: 13 * fem, color: AppColors.textMid),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            Expanded(
-              child: MyText(
-                'Growth',
-                style: TextStyle(fontSize: 13 * fem, color: AppColors.textMid),
-                textAlign: TextAlign.right,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 6 * fem),
-
-        // 3-column values
-        Row(
-          children: [
-            // Purchase price
-            Expanded(
-              child: MyText(
-                slt.purchasePrice > 0
-                    ? slt.purchasePrice.inRupeesFormat()
-                    : '₹ 0',
-                style: TextStyle(
-                  fontSize: 14 * fem,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDark,
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MyText(
+            line,
+            style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
+          ),
+          SizedBox(height: 10 * fem),
+          Row(
+            children: [
+              Expanded(
+                child: MyText(
+                  'Current Price',
+                  style: TextStyle(
+                    fontSize: 13 * fem,
+                    color: AppColors.textMid,
+                  ),
                 ),
               ),
-            ),
-            // Current price
-            Expanded(
-              child: MyText(
-                slt.currentPrice.inRupeesFormat(),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14 * fem,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textDark,
+              if (p.isSold) ...[
+                Expanded(
+                  child: MyText(
+                    'Growth',
+                    style: TextStyle(
+                      fontSize: 13 * fem,
+                      color: AppColors.textMid,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          SizedBox(height: 6 * fem),
+          Row(
+            children: [
+              Expanded(
+                child: MyText(
+                  p.sltTotalCurrentPrice.inRupeesFormat(),
+                  style: TextStyle(
+                    fontSize: 14 * fem,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
                 ),
               ),
-            ),
-            // Growth
-            Expanded(
-              child: MyText(
-                growth != null ? '${growth.toStringAsFixed(1)} %' : '—',
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontSize: 14 * fem,
-                  fontWeight: FontWeight.w600,
-                  color: growthColor,
+              if (p.isSold) ...[
+                Expanded(
+                  child: MyText(
+                    growth != null ? '${growth.toStringAsFixed(1)} %' : '—',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontSize: 14 * fem,
+                      fontWeight: FontWeight.w600,
+                      color: growthColor,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ],
+              ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildJewellerySltExpanded() {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4 * fem),
+      padding: EdgeInsets.symmetric(vertical: 4 * fem, horizontal: 20 * fem),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row: UID | Solitaire | Purchase | Current | Growth
           Table(
-            columnWidths: const {
-              0: FlexColumnWidth(1.4), // UID
-              1: FlexColumnWidth(2.2), // Solitaire
-              2: FlexColumnWidth(1.4), // Purchase
-              3: FlexColumnWidth(1.4), // Current
-              4: FlexColumnWidth(1.2), // Growth
+            columnWidths: {
+              0: const FlexColumnWidth(1.4),
+              1: const FlexColumnWidth(2.4),
+              2: const FlexColumnWidth(1.5),
+              if (p.isSold) 3: const FlexColumnWidth(1.2),
             },
             children: [
               TableRow(
                 children: [
                   _tHeader('UID'),
                   _tHeader('Solitaire'),
-                  _tHeader('Purchase'),
                   _tHeader('Current'),
-                  _tHeader('Growth', align: TextAlign.right),
+                  if (p.isSold) _tHeader('Growth', align: TextAlign.right),
                 ],
               ),
             ],
@@ -873,14 +691,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
           SizedBox(height: 6 * fem),
           const Divider(color: AppColors.divider, height: 1),
           SizedBox(height: 6 * fem),
-          // Data rows
           ...p.sltDetails.map((s) {
-            // Solitaire string: "RND-0.33-F-SI2"
             final solitaire =
                 '${s.shape}-${s.carat.toStringAsFixed(2)}-${s.colour}-${s.clarity}';
-            final purchaseStr = s.purchasePrice > 0
-                ? s.purchasePrice.inRupeesFormat()
-                : '₹ 0';
             final growth = s.purchasePrice > 0
                 ? ((s.currentPrice - s.purchasePrice) / s.purchasePrice) * 100
                 : 0.0;
@@ -889,32 +702,31 @@ class _SummaryScreenState extends State<SummaryScreen> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Table(
-                columnWidths: const {
-                  0: FlexColumnWidth(1.4),
-                  1: FlexColumnWidth(2.2),
-                  2: FlexColumnWidth(1.4),
-                  3: FlexColumnWidth(1.4),
-                  4: FlexColumnWidth(1.2),
+                columnWidths: {
+                  0: const FlexColumnWidth(1.4),
+                  1: const FlexColumnWidth(2.4),
+                  2: const FlexColumnWidth(1.5),
+                  if (p.isSold) 3: const FlexColumnWidth(1.2),
                 },
                 children: [
                   TableRow(
                     children: [
                       _tCell(s.uid),
                       _tCell(solitaire),
-                      _tCell(purchaseStr),
                       _tCell(s.currentPrice.inRupeesFormat()),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          '${growth.toStringAsFixed(1)} %',
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: growthColor,
+                      if (p.isSold)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '${growth.toStringAsFixed(1)} %',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: growthColor,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ],
@@ -954,7 +766,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
     return Padding(
       padding: EdgeInsets.fromLTRB(16 * fem, 0, 16 * fem, 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // ← ADD THIS
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _BorderedHeader(
             title: 'Divine Mount :',
@@ -975,51 +787,55 @@ class _SummaryScreenState extends State<SummaryScreen> {
   }
 
   Widget _buildMountCollapsed() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (p.mountDetails1.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          MyText(
-            '${p.netWt} gms | ${p.mountDetails1} ',
-            style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
-          ),
-        ],
-        if (p.mountDetails2.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          MyText(
-            p.mountDetails2,
-            style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
-          ),
-        ] else if (p.sdPcs > 0) ...[
-          const SizedBox(height: 6),
-          MyText(
-            '${p.sdPcs} pcs ${p.sdCts} cts | ${p.sdColourClarity}',
-            style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
-          ),
-        ],
-        if (p.metalTotalCurrentPrice > 0) ...[
-          const SizedBox(height: 6),
-          MyText(
-            'Current Price',
-            style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
-          ),
-          SizedBox(height: 2 * fem),
-          MyText(
-            (p.metalTotalCurrentPrice + p.sdTotalCurrentPrice).inRupeesFormat(),
-            style: TextStyle(
-              fontSize: 14 * fem,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4 * fem, horizontal: 20 * fem),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (p.mountDetails1.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            MyText(
+              '${p.netWt} gms | ${p.mountDetails1} ',
+              style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
             ),
-          ),
+          ],
+          if (p.mountDetails2.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            MyText(
+              p.mountDetails2,
+              style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
+            ),
+          ] else if (p.sdPcs > 0) ...[
+            const SizedBox(height: 6),
+            MyText(
+              '${p.sdPcs} pcs ${p.sdCts} cts | ${p.sdColourClarity}',
+              style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
+            ),
+          ],
+          if (p.metalTotalCurrentPrice > 0) ...[
+            const SizedBox(height: 6),
+            MyText(
+              'Current Price',
+              style: TextStyle(fontSize: 14 * fem, color: AppColors.textDark),
+            ),
+            SizedBox(height: 2 * fem),
+            MyText(
+              (p.metalTotalCurrentPrice + p.sdTotalCurrentPrice)
+                  .inRupeesFormat(),
+              style: TextStyle(
+                fontSize: 14 * fem,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
   Widget _buildMountExpanded() => Padding(
-    padding: EdgeInsets.symmetric(vertical: 4 * fem),
+    padding: EdgeInsets.symmetric(vertical: 4 * fem, horizontal: 20 * fem),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1092,7 +908,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bordered box — Purchase Information accordion
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.divider),
@@ -1201,8 +1016,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
               ],
             ),
           ),
-
-          // Jeweller's Name — label + bold value on separate lines
           SizedBox(height: 20 * fem),
           MyText(
             "Jeweller's Name:",
@@ -1223,8 +1036,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
               color: AppColors.textDark,
             ),
           ),
-
-          // Date Of Purchase — label + value on separate lines
           SizedBox(height: 14 * fem),
           MyText(
             'Date Of Purchase:',
@@ -1248,68 +1059,263 @@ class _SummaryScreenState extends State<SummaryScreen> {
       ),
     );
   }
+}
 
-  // ── Sticky bottom buttons ──────────────────────────────────────────────────
-  // Widget _buildButtons() {
-  //   return Container(
-  //     color: Colors.white,
-  //     padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-  //     child: Row(
-  //       children: [
-  //         Expanded(
-  //           child: SizedBox(
-  //             height: 50,
-  //             child: OutlinedButton(
-  //               onPressed: () {},
-  //               style: OutlinedButton.styleFrom(
-  //                 foregroundColor: AppColors.textDark,
-  //                 side: const BorderSide(color: AppColors.textDark),
-  //                 shape: RoundedRectangleBorder(
-  //                   borderRadius: BorderRadius.circular(6),
-  //                 ),
-  //               ),
-  //               child: const Text(
-  //                 'INSURE NOW',
-  //                 style: TextStyle(
-  //                   fontSize: 13,
-  //                   fontWeight: FontWeight.w700,
-  //                   letterSpacing: 1.2,
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         ),
-  //         if (p.isSold) ...[
-  //           const SizedBox(width: 12),
-  //           Expanded(
-  //             child: SizedBox(
-  //               height: 50,
-  //               child: ElevatedButton(
-  //                 onPressed: () {},
-  //                 style: ElevatedButton.styleFrom(
-  //                   backgroundColor: AppColors.textDark,
-  //                   foregroundColor: AppColors.white,
-  //                   elevation: 0,
-  //                   shape: RoundedRectangleBorder(
-  //                     borderRadius: BorderRadius.circular(6),
-  //                   ),
-  //                 ),
-  //                 child: const Text(
-  //                   'ADD TO PORTFOLIO',
-  //                   style: TextStyle(
-  //                     fontSize: 13,
-  //                     fontWeight: FontWeight.w700,
-  //                     letterSpacing: 1.2,
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       ],
-  //     ),
-  //   );
-  // }
+// =============================================================================
+// IMAGE POPUP DIALOG  —  white card, close top-right, swipeable, zoomable
+// =============================================================================
+
+class _ImagePopupDialog extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+  final bool Function(String) isVideo;
+  final bool Function(String) isAsset;
+  final String uid;
+  final double fem;
+
+  const _ImagePopupDialog({
+    required this.images,
+    required this.initialIndex,
+    required this.isVideo,
+    required this.isAsset,
+    required this.uid,
+    required this.fem,
+  });
+
+  @override
+  State<_ImagePopupDialog> createState() => _ImagePopupDialogState();
+}
+
+class _ImagePopupDialogState extends State<_ImagePopupDialog> {
+  late final PageController _pageController;
+  late int _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initialIndex.clamp(0, widget.images.length - 1);
+    _pageController = PageController(initialPage: _current);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screen = MediaQuery.of(context).size;
+
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: screen.width * 0.06,
+        vertical: screen.height * 0.08,
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: screen.height * 0.65,
+        child: Stack(
+          children: [
+            // ── Swipeable image pager ────────────────────────────────────────
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: widget.images.length,
+                  onPageChanged: (i) => setState(() => _current = i),
+                  itemBuilder: (_, i) {
+                    final src = widget.images[i];
+                    final isUidSlide = src.contains('carousel_3');
+
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 48, 16, 32),
+                      child: Stack(
+                        children: [
+                          InteractiveViewer(
+                            minScale: 1,
+                            maxScale: 5,
+                            child: _buildPopupMedia(src),
+                          ),
+                          if (isUidSlide)
+                            Positioned(
+                              bottom: 80,
+                              left: 140,
+                              right: 0,
+                              child: Center(
+                                child: _GirdleText(widget.uid, 28, widget.fem),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            // ── Close button ─────────────────────────────────────────────────
+            Positioned(
+              top: 12,
+              right: 12,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.black87,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Nav arrows + dots (only when multiple images) ────────────────
+            if (widget.images.length > 1) ...[
+              Positioned(
+                left: 8,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _NavArrow(
+                    icon: Icons.chevron_left,
+                    enabled: _current > 0,
+                    onTap: () => _pageController.previousPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: _NavArrow(
+                    icon: Icons.chevron_right,
+                    enabled: _current < widget.images.length - 1,
+                    onTap: () => _pageController.nextPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 10,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(widget.images.length, (i) {
+                    final active = i == _current;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: active ? 18 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: active ? AppColors.gold : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPopupMedia(String src) {
+    if (src.isEmpty) return const _Placeholder();
+
+    if (widget.isVideo(src)) {
+      return Container(
+        color: Colors.black12,
+        child: const Center(
+          child: Icon(Icons.play_circle_outline, size: 64, color: Colors.grey),
+        ),
+      );
+    }
+
+    if (widget.isAsset(src)) {
+      return Image.asset(
+        src,
+        fit: BoxFit.contain,
+        width: double.infinity,
+        errorBuilder: (_, __, ___) => const _Placeholder(),
+      );
+    }
+
+    return Image.network(
+      src,
+      fit: BoxFit.contain,
+      width: double.infinity,
+      loadingBuilder: (_, child, prog) => prog == null
+          ? child
+          : const Center(child: CircularProgressIndicator(strokeWidth: 1.5)),
+      errorBuilder: (_, __, ___) => const _Placeholder(),
+    );
+  }
+}
+
+class _NavArrow extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _NavArrow({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: enabled ? onTap : null,
+    child: AnimatedOpacity(
+      opacity: enabled ? 1.0 : 0.25,
+      duration: const Duration(milliseconds: 150),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.grey.shade300, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 20, color: Colors.black87),
+      ),
+    ),
+  );
 }
 
 // =============================================================================
@@ -1372,53 +1378,54 @@ class _GirdleText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final baseStyle = TextStyle(
-      fontSize: fontsize * fem,
-      fontWeight: FontWeight.w800,
+      fontSize: fontsize,
+      fontWeight: FontWeight.w400,
       letterSpacing: 3.5,
       height: 1,
       color: Colors.white,
+      fontFamily: 'Calibri',
     );
     return Stack(
       children: [
         MyText(
           text,
           style: baseStyle.copyWith(
-            color: const Color(0xFF0A0A0A),
-            shadows: const [
-              Shadow(
-                offset: Offset(1, 1.5),
-                blurRadius: 1,
-                color: Color(0xBB000000),
-              ),
-            ],
+            color: const Color(0xFF211F20),
+            // shadows: const [
+            //   Shadow(
+            //     offset: Offset(1, 1.5),
+            //     blurRadius: 1,
+            //     color: Color(0xBB000000),
+            //   ),
+            // ],
           ),
         ),
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF666666), Color(0xFF1C1C1C), Color(0xFF444444)],
-            stops: [0.0, 0.5, 1.0],
-          ).createShader(bounds),
-          child: MyText(
-            text,
-            style: baseStyle.copyWith(
-              color: Colors.white,
-              shadows: const [
-                Shadow(
-                  offset: Offset(0, -1),
-                  blurRadius: 0.5,
-                  color: Color(0x66FFFFFF),
-                ),
-                Shadow(
-                  offset: Offset(0.5, 1.5),
-                  blurRadius: 1,
-                  color: Color(0xDD000000),
-                ),
-              ],
-            ),
-          ),
-        ),
+        // ShaderMask(
+        //   shaderCallback: (bounds) => const LinearGradient(
+        //     begin: Alignment.topCenter,
+        //     end: Alignment.bottomCenter,
+        //     colors: [Color(0xFF666666), Color(0xFF1C1C1C), Color(0xFF444444)],
+        //     stops: [0.0, 0.5, 1.0],
+        //   ).createShader(bounds),
+        //   child: MyText(
+        //     text,
+        //     style: baseStyle.copyWith(
+        //       color: Colors.white,
+        //       shadows: const [
+        //         Shadow(
+        //           offset: Offset(0, -1),
+        //           blurRadius: 0.5,
+        //           color: Color(0x66FFFFFF),
+        //         ),
+        //         Shadow(
+        //           offset: Offset(0.5, 1.5),
+        //           blurRadius: 1,
+        //           color: Color(0xDD000000),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

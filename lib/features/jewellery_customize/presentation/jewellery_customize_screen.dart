@@ -86,7 +86,6 @@ class _JewelleryCustomiseScreenState
     final raw = auth.user?.pjcode ?? '';
     pjcode = raw.split(',').first.trim();
 
-    // ref.read (not ref.watch) — this is inside an async method, not build()
     final storeState = ref.read(storeProvider);
 
     final matchedStore = storeState.stores.firstWhereOrNull(
@@ -103,27 +102,22 @@ class _JewelleryCustomiseScreenState
   // DELIVERY DAYS
   // ------------------------------------------------------------------------
 
-  // Add this getter in _JewelleryCustomiseScreenState class
   String get _deliveryLabel {
     final calc = ref.watch(jewelleryCalcProvider).value;
     final isCustomised = calc?.isCustomised ?? false;
 
-    // Case 1: No customer
     if (widget.customercode.isEmpty) {
       return 'delivery 15 days';
     }
 
-    // Case 2: Customised
     if (isCustomised) {
       return 'delivery 15 days';
     }
 
-    // Case 3: Same store
     if (widget.customercode == loginCustomerCode) {
       return 'Instant delivery - Available';
     }
 
-    // Case 4: Different store
     return ' delivery 3 days';
   }
 
@@ -198,12 +192,8 @@ class _JewelleryCustomiseScreenState
           );
         }
 
-        //debugPrint('check which fetch data :${detail.variants.length}');
+        final newdata = calc.calcDetail;
 
-        final newdata = calc.calcDetail; // when
-        //debugPrint('check which fetch data :${newdata?.productSizeFrom}');
-
-        // ── Image display ───────────────────────────────────────────────────
         final allImages = detail.images;
         final defaultMetalColor = detail.metalColor.split(',').first.trim();
         final defaultMetalPurity = detail.metalPurity.split(',').first.trim();
@@ -222,7 +212,6 @@ class _JewelleryCustomiseScreenState
             )
             .toList();
 
-        // ── Multi-solitaire message ─────────────────────────────────────────
         final msg =
             calc.solitaireMessage ??
             JewelleryCalculationService.getMultiSolitaireMessage(
@@ -241,7 +230,6 @@ class _JewelleryCustomiseScreenState
           });
         }
 
-        // isMultiSize derived from data, not from the UI snackbar flag
         final isMultiSize =
             calc.solitaireMessage != null && calc.solitaireMessage!.isNotEmpty;
 
@@ -251,6 +239,13 @@ class _JewelleryCustomiseScreenState
             detail.productSubCategory == 'Locket';
 
         final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
+
+        // ── Price display resolved here ─────────────────────────────────────
+        // Initial load / reset  → approxPriceFrom only
+        // After customise       → approxPriceFrom – approxPriceTo
+        final isCustomised = calc.isCustomised;
+        final priceFrom = calc.approxPriceFrom;
+        final priceTo = calc.approxPriceTo;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -279,7 +274,6 @@ class _JewelleryCustomiseScreenState
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            /// LEFT — 65% — Images
                             Expanded(
                               flex: 6,
                               child: ImagePreviewWithThumbnails(
@@ -294,7 +288,6 @@ class _JewelleryCustomiseScreenState
 
                             SizedBox(width: 16 * r),
 
-                            /// RIGHT — 35% — Details + Customise
                             Expanded(
                               flex: 4,
                               child: Column(
@@ -318,7 +311,6 @@ class _JewelleryCustomiseScreenState
                                   ),
                                   SizedBox(height: 23 * r),
 
-                                  /// Details panel
                                   DetailsScreen(
                                     r: r,
                                     shape: calc.solitaireShape,
@@ -347,7 +339,6 @@ class _JewelleryCustomiseScreenState
                                     hidePriceBreakup: hidePriceBreakup,
                                   ),
 
-                                  /// Customise button
                                   Padding(
                                     padding: EdgeInsets.only(right: 34 * r),
                                     child: SizedBox(
@@ -375,7 +366,6 @@ class _JewelleryCustomiseScreenState
 
                                             final result = await showCustomizeDrawer(
                                               context: context,
-                                              //detail: detail,
                                               detail: newdata ?? detail,
                                               totalSidePcs:
                                                   calc.totalSidePcs ?? 0,
@@ -481,7 +471,6 @@ class _JewelleryCustomiseScreenState
                                           },
                                           child: Stack(
                                             children: [
-                                              /// Outer border
                                               Positioned.fill(
                                                 child: Container(
                                                   decoration: ShapeDecoration(
@@ -501,7 +490,6 @@ class _JewelleryCustomiseScreenState
                                                 ),
                                               ),
 
-                                              /// Label
                                               Positioned(
                                                 left: 4 * r,
                                                 top: 4 * r,
@@ -537,7 +525,6 @@ class _JewelleryCustomiseScreenState
                                                 ),
                                               ),
 
-                                              /// Arrow icon
                                               Positioned(
                                                 top: 4 * r,
                                                 bottom: 4 * r,
@@ -587,7 +574,6 @@ class _JewelleryCustomiseScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                /// Main bottom bar
                 ClipRRect(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(25 * r),
@@ -607,6 +593,8 @@ class _JewelleryCustomiseScreenState
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         /// Approx price display
+                        /// Initial / reset  → approxPriceFrom only
+                        /// After customise  → approxPriceFrom – approxPriceTo
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -625,12 +613,11 @@ class _JewelleryCustomiseScreenState
                             SizedBox(width: 30 * r),
                             Row(
                               children: [
+                                // approxPriceFrom — always shown
                                 MyText(
                                   isCalculating
                                       ? '--'
-                                      : calc.approxPriceFrom
-                                                ?.inRupeesFormat() ??
-                                            '--',
+                                      : priceFrom?.inRupeesFormat() ?? '--',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.black,
@@ -641,33 +628,34 @@ class _JewelleryCustomiseScreenState
                                     letterSpacing: 0.60 * r,
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                MyText(
-                                  '-',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 30 * r,
-                                    fontFamily: 'Montserrat',
-                                    fontWeight: FontWeight.w500,
-                                    height: 0.90 * r,
+
+                                // separator + approxPriceTo — only after customise
+                                if (!isCalculating && isCustomised) ...[
+                                  const SizedBox(width: 6),
+                                  MyText(
+                                    '-',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 30 * r,
+                                      fontFamily: 'Montserrat',
+                                      fontWeight: FontWeight.w500,
+                                      height: 0.90 * r,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isCalculating
-                                      ? '--'
-                                      : calc.approxPriceTo?.inRupeesFormat() ??
-                                            '--',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 30 * r,
-                                    fontFamily: 'Montserrat',
-                                    fontWeight: FontWeight.w500,
-                                    height: 0.90 * r,
-                                    letterSpacing: 0.60 * r,
+                                  const SizedBox(width: 6),
+                                  MyText(
+                                    priceTo?.inRupeesFormat() ?? '--',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 30 * r,
+                                      fontFamily: 'Montserrat',
+                                      fontWeight: FontWeight.w500,
+                                      height: 0.90 * r,
+                                      letterSpacing: 0.60 * r,
+                                    ),
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ],

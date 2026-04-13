@@ -34,6 +34,9 @@ class _RangeSelectorState extends State<RangeSelector> {
   _DragThumb? _draggingThumb;
   double? _dragStartDx;
 
+  bool _canScrollLeft = false;
+  bool _canScrollRight = false;
+
   static const Color _tickActive = Color(0xFFBEE4DD);
   static const Color _tickInactive = Color(0xFFD9D9D9);
   static const Color _activeTrackColor = Color(0xFFCFF4EE);
@@ -44,10 +47,12 @@ class _RangeSelectorState extends State<RangeSelector> {
   void initState() {
     super.initState();
     _syncIndexes();
+    _scrollController.addListener(_updateScrollButtonVisibility);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || widget.values.isEmpty) return;
       _autoScrollToIndex((_startIndex + _endIndex) ~/ 2, _itemWidth);
+      _updateScrollButtonVisibility();
     });
   }
 
@@ -63,6 +68,7 @@ class _RangeSelectorState extends State<RangeSelector> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || widget.values.isEmpty) return;
         _autoScrollToIndex((_startIndex + _endIndex) ~/ 2, _itemWidth);
+        _updateScrollButtonVisibility();
       });
     }
   }
@@ -80,6 +86,29 @@ class _RangeSelectorState extends State<RangeSelector> {
       final temp = _startIndex;
       _startIndex = _endIndex;
       _endIndex = temp;
+    }
+  }
+
+  void _updateScrollButtonVisibility() {
+    if (!_scrollController.hasClients) {
+      if (_canScrollLeft || _canScrollRight) {
+        setState(() {
+          _canScrollLeft = false;
+          _canScrollRight = false;
+        });
+      }
+      return;
+    }
+
+    final position = _scrollController.position;
+    final canLeft = position.pixels > 0;
+    final canRight = position.pixels < position.maxScrollExtent;
+
+    if (canLeft != _canScrollLeft || canRight != _canScrollRight) {
+      setState(() {
+        _canScrollLeft = canLeft;
+        _canScrollRight = canRight;
+      });
     }
   }
 
@@ -186,41 +215,48 @@ class _RangeSelectorState extends State<RangeSelector> {
       _scrollController.position.maxScrollExtent,
     );
 
-    _scrollController.animateTo(
-      newOffset,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOut,
-    );
+    _scrollController
+        .animateTo(
+          newOffset,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+        )
+        .then((_) => _updateScrollButtonVisibility());
   }
 
   void _scrollLeft() {
     if (!_scrollController.hasClients) return;
 
-    _scrollController.animateTo(
-      (_scrollController.offset - 150).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _scrollController
+        .animateTo(
+          (_scrollController.offset - 150).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        )
+        .then((_) => _updateScrollButtonVisibility());
   }
 
   void _scrollRight() {
     if (!_scrollController.hasClients) return;
 
-    _scrollController.animateTo(
-      (_scrollController.offset + 150).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      ),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _scrollController
+        .animateTo(
+          (_scrollController.offset + 150).clamp(
+            0.0,
+            _scrollController.position.maxScrollExtent,
+          ),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        )
+        .then((_) => _updateScrollButtonVisibility());
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_updateScrollButtonVisibility);
     _scrollController.dispose();
     super.dispose();
   }
@@ -229,7 +265,6 @@ class _RangeSelectorState extends State<RangeSelector> {
   Widget build(BuildContext context) {
     final fem = _fem;
     final itemWidth = _itemWidth;
-    final arrowsWidth = 76 * fem;
 
     final String startValue = widget.values.isEmpty
         ? ''
@@ -273,46 +308,50 @@ class _RangeSelectorState extends State<RangeSelector> {
                 final totalWidth = constraints.maxWidth;
                 final contentWidth = widget.values.length * itemWidth;
                 final showArrows = contentWidth > totalWidth;
-                final sliderWidth = showArrows
-                    ? totalWidth - arrowsWidth
-                    : totalWidth;
 
-                return Row(
-                  children: [
-                    if (showArrows) ...[
-                      _ArrowButton(
-                        icon: Icons.chevron_left,
-                        fem: fem,
-                        onTap: _scrollLeft,
-                      ),
-                      SizedBox(width: 8 * fem),
-                    ],
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: _scrollController,
-                        scrollDirection: Axis.horizontal,
-                        physics: contentWidth > sliderWidth
-                            ? const BouncingScrollPhysics()
-                            : const NeverScrollableScrollPhysics(),
-                        child: SizedBox(
-                          width: contentWidth,
-                          child: _buildStrip(
-                            fem: fem,
-                            itemWidth: itemWidth,
-                            contentWidth: contentWidth,
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _updateScrollButtonVisibility();
+                });
+
+                return SizedBox(
+                  height: 88 * fem,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: SingleChildScrollView(
+                          controller: _scrollController,
+                          scrollDirection: Axis.horizontal,
+                          physics: showArrows
+                              ? const BouncingScrollPhysics()
+                              : const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.only(
+                            left: showArrows ? 34 * fem : 12 * fem,
+                            right: showArrows ? 34 * fem : 12 * fem,
+                          ),
+                          child: SizedBox(
+                            width: contentWidth,
+                            child: _buildStrip(
+                              fem: fem,
+                              itemWidth: itemWidth,
+                              contentWidth: contentWidth,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    if (showArrows) ...[
-                      SizedBox(width: 8 * fem),
-                      _ArrowButton(
-                        icon: Icons.chevron_right,
-                        fem: fem,
-                        onTap: _scrollRight,
-                      ),
+                      if (showArrows && _canScrollLeft)
+                        ScrollSideButton(
+                          isRight: false,
+                          onTap: _scrollLeft,
+                          fem: fem,
+                        ),
+                      if (showArrows && _canScrollRight)
+                        ScrollSideButton(
+                          isRight: true,
+                          onTap: _scrollRight,
+                          fem: fem,
+                        ),
                     ],
-                  ],
+                  ),
                 );
               },
             ),
@@ -523,31 +562,49 @@ class _DiamondPainter extends CustomPainter {
   }
 }
 
-class _ArrowButton extends StatelessWidget {
-  final IconData icon;
-  final double fem;
+class ScrollSideButton extends StatelessWidget {
+  final bool isRight;
   final VoidCallback onTap;
+  final double fem;
 
-  const _ArrowButton({
-    required this.icon,
-    required this.fem,
+  const ScrollSideButton({
+    super.key,
+    required this.isRight,
     required this.onTap,
+    required this.fem,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8 * fem),
-      child: Container(
-        width: 30 * fem,
-        height: 30 * fem,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0xFF90DCD0).withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8 * fem),
+    return Positioned(
+      right: isRight ? 0 : null,
+      left: isRight ? null : 0,
+      top: 8 * fem,
+      bottom: 8 * fem,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 24 * fem,
+          decoration: BoxDecoration(
+            color: const Color(0xFFAED8CF),
+            borderRadius: BorderRadius.horizontal(
+              left: isRight ? Radius.circular(12 * fem) : Radius.zero,
+              right: isRight ? Radius.zero : Radius.circular(12 * fem),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x14000000),
+                blurRadius: 6 * fem,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Icon(
+            isRight ? Icons.chevron_right : Icons.chevron_left,
+            size: 28 * fem,
+            color: const Color(0xFF3F3F3F),
+          ),
         ),
-        child: Icon(icon, size: 20 * fem, color: const Color(0xFF90DCD0)),
       ),
     );
   }
