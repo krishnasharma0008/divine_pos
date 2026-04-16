@@ -27,6 +27,9 @@ class FilterSidebar extends ConsumerStatefulWidget {
 }
 
 class _FilterSidebarState extends ConsumerState<FilterSidebar> {
+  late final TextEditingController uidController;
+  late final FocusNode uidFocusNode;
+
   // -----------------------------------------------------------
   // RANGE FILTERS
   // -----------------------------------------------------------
@@ -96,6 +99,20 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
         );
       },
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    uidController = TextEditingController();
+    uidFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    uidController.dispose();
+    uidFocusNode.dispose();
+    super.dispose();
   }
 
   // -----------------------------------------------------------
@@ -171,8 +188,8 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
         ? Clarityoption.indexOf(filter.clarityEndLabel!)
         : clarityDefaultEnd;
 
-    final TextEditingController uidController = TextEditingController();
-    final FocusNode uidFocusNode = FocusNode();
+    // final TextEditingController uidController = TextEditingController();
+    // final FocusNode uidFocusNode = FocusNode();
 
     return Container(
       width: fem * 310,

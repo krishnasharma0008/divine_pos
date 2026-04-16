@@ -1,3 +1,5 @@
+import '../../../../shared/widgets/scroll_side_button.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../../../../shared/utils/scale_size.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
@@ -36,6 +38,10 @@ class _RangeSelectorState extends State<RangeSelector> {
 
   bool _canScrollLeft = false;
   bool _canScrollRight = false;
+
+  // Tracks pointer-down position to distinguish tap vs drag on labels zone
+  double? _labelPointerDownDx;
+  static const double _tapMovementThreshold = 8.0;
 
   static const Color _tickActive = Color(0xFFBEE4DD);
   static const Color _tickInactive = Color(0xFFD9D9D9);
@@ -78,7 +84,6 @@ class _RangeSelectorState extends State<RangeSelector> {
 
   void _syncIndexes() {
     final maxIndex = widget.values.isEmpty ? 0 : widget.values.length - 1;
-
     _startIndex = widget.initialStartIndex.clamp(0, maxIndex);
     _endIndex = widget.initialEndIndex.clamp(0, maxIndex);
 
@@ -112,25 +117,52 @@ class _RangeSelectorState extends State<RangeSelector> {
     }
   }
 
-  String _displayText(String value) {
-    return widget.valueToChipText?.call(value) ?? value;
-  }
+  String _displayText(String value) =>
+      widget.valueToChipText?.call(value) ?? value;
 
   void _emitRangeChanged() {
     if (widget.values.isEmpty) return;
     widget.onRangeChanged(widget.values[_startIndex], widget.values[_endIndex]);
   }
 
-  double _centerX(int index, double itemWidth) {
-    return index * itemWidth + itemWidth / 2;
-  }
+  double _centerX(int index, double itemWidth) =>
+      index * itemWidth + itemWidth / 2;
 
   int _indexFromLocalDx(double dx, double itemWidth) {
     if (widget.values.isEmpty) return 0;
-    final raw = (dx / itemWidth).round();
-    return raw.clamp(0, widget.values.length - 1);
+    return (dx / itemWidth).round().clamp(0, widget.values.length - 1);
   }
 
+  // ── Tap logic ──────────────────────────────────────────────────────────────
+  void _onTapIndex(int index, double itemWidth) {
+    if (widget.values.isEmpty) return;
+
+    final distToStart = (index - _startIndex).abs();
+    final distToEnd = (index - _endIndex).abs();
+
+    final int newStart;
+    final int newEnd;
+
+    if (distToStart <= distToEnd) {
+      newStart = index.clamp(0, _endIndex);
+      newEnd = _endIndex;
+    } else {
+      newStart = _startIndex;
+      newEnd = index.clamp(_startIndex, widget.values.length - 1);
+    }
+
+    if (newStart == _startIndex && newEnd == _endIndex) return;
+
+    setState(() {
+      _startIndex = newStart;
+      _endIndex = newEnd;
+    });
+
+    _emitRangeChanged();
+    _autoScrollToIndex(index, itemWidth);
+  }
+
+  // ── Drag logic ─────────────────────────────────────────────────────────────
   void _handleDragStart(double localDx, double itemWidth) {
     _dragStartDx = localDx;
 
@@ -156,7 +188,6 @@ class _RangeSelectorState extends State<RangeSelector> {
     if (_dragStartDx == null) return;
 
     final delta = localDx - _dragStartDx!;
-
     if (delta < 0) {
       _draggingThumb = _DragThumb.start;
     } else if (delta > 0) {
@@ -175,17 +206,11 @@ class _RangeSelectorState extends State<RangeSelector> {
     if (_draggingThumb == _DragThumb.start) {
       final nextStart = index.clamp(0, _endIndex);
       if (nextStart == _startIndex) return;
-
-      setState(() {
-        _startIndex = nextStart;
-      });
+      setState(() => _startIndex = nextStart);
     } else {
       final nextEnd = index.clamp(_startIndex, widget.values.length - 1);
       if (nextEnd == _endIndex) return;
-
-      setState(() {
-        _endIndex = nextEnd;
-      });
+      setState(() => _endIndex = nextEnd);
     }
 
     _emitRangeChanged();
@@ -226,7 +251,6 @@ class _RangeSelectorState extends State<RangeSelector> {
 
   void _scrollLeft() {
     if (!_scrollController.hasClients) return;
-
     _scrollController
         .animateTo(
           (_scrollController.offset - 150).clamp(
@@ -241,7 +265,6 @@ class _RangeSelectorState extends State<RangeSelector> {
 
   void _scrollRight() {
     if (!_scrollController.hasClients) return;
-
     _scrollController
         .animateTo(
           (_scrollController.offset + 150).clamp(
@@ -375,71 +398,108 @@ class _RangeSelectorState extends State<RangeSelector> {
     final double endLeft = endCenter - thumbW / 2;
 
     final double activeLeft = startCenter;
-    final double activeRight = endCenter;
-    final double activeWidth = (activeRight - activeLeft).abs();
+    final double activeWidth = (endCenter - startCenter).abs();
 
     return SizedBox(
       width: contentWidth,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: List.generate(widget.values.length, (index) {
-              final bool isInRange = index >= _startIndex && index <= _endIndex;
-              final bool isEdge = index == _startIndex || index == _endIndex;
+          // ── Labels + ticks — Listener bypasses gesture arena entirely ──────
+          // onPointerDown records where the finger landed.
+          // onPointerUp fires immediately; if finger barely moved it's a tap.
+          // No arena negotiation = no delay.
+          Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: (event) {
+              _labelPointerDownDx = event.localPosition.dx;
+            },
+            onPointerUp: (event) {
+              final downDx = _labelPointerDownDx;
+              _labelPointerDownDx = null;
+              if (downDx == null) return;
 
-              return SizedBox(
-                width: itemWidth,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Center(
-                      child: Text(
-                        widget.values[index],
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.visible,
-                        style: TextStyle(
-                          fontSize: 11 * fem,
-                          fontWeight: isEdge
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          color: isInRange ? Colors.black : _tickInactive,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10 * fem),
-                    Center(
-                      child: Container(
-                        width: isEdge ? 4 * fem : 3 * fem,
-                        height: 11 * fem,
-                        decoration: BoxDecoration(
-                          color: isInRange ? _tickActive : _tickInactive,
-                          borderRadius: BorderRadius.circular(1.5 * fem),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              final moved = (event.localPosition.dx - downDx).abs();
+              if (moved > _tapMovementThreshold)
+                return; // was a scroll, not a tap
+
+              final index = _indexFromLocalDx(
+                event.localPosition.dx,
+                itemWidth,
               );
-            }),
+              _onTapIndex(index, itemWidth);
+            },
+            onPointerCancel: (_) => _labelPointerDownDx = null,
+            child: Row(
+              children: List.generate(widget.values.length, (index) {
+                final bool isInRange =
+                    index >= _startIndex && index <= _endIndex;
+                final bool isEdge = index == _startIndex || index == _endIndex;
+
+                return SizedBox(
+                  width: itemWidth,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(
+                        child: Text(
+                          widget.values[index],
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.visible,
+                          style: TextStyle(
+                            fontSize: 11 * fem,
+                            fontWeight: isEdge
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: isInRange ? Colors.black : _tickInactive,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10 * fem),
+                      Center(
+                        child: Container(
+                          width: isEdge ? 4 * fem : 3 * fem,
+                          height: 11 * fem,
+                          decoration: BoxDecoration(
+                            color: isInRange ? _tickActive : _tickInactive,
+                            borderRadius: BorderRadius.circular(1.5 * fem),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
           ),
+
           SizedBox(height: 10 * fem),
+
+          // ── Track + thumbs ─────────────────────────────────────────────────
+          // dragStartBehavior: DragStartBehavior.down  →  drag recognizer wins
+          // the arena immediately from pointer-down, so the scroll view never
+          // steals the gesture mid-drag. onTapUp still fires for quick taps.
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onHorizontalDragStart: (details) {
-              _handleDragStart(details.localPosition.dx, itemWidth);
+            dragStartBehavior: DragStartBehavior.down,
+            onTapUp: (details) {
+              final index = _indexFromLocalDx(
+                details.localPosition.dx,
+                itemWidth,
+              );
+              _onTapIndex(index, itemWidth);
             },
-            onHorizontalDragUpdate: (details) {
-              _handleDragUpdate(details.localPosition.dx, itemWidth);
-            },
-            onHorizontalDragEnd: (_) {
-              _handleDragEnd(itemWidth);
-            },
+            onHorizontalDragStart: (details) =>
+                _handleDragStart(details.localPosition.dx, itemWidth),
+            onHorizontalDragUpdate: (details) =>
+                _handleDragUpdate(details.localPosition.dx, itemWidth),
+            onHorizontalDragEnd: (_) => _handleDragEnd(itemWidth),
             child: SizedBox(
               height: thumbH,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
+                  // Track background
                   Align(
                     alignment: Alignment.center,
                     child: Container(
@@ -451,6 +511,7 @@ class _RangeSelectorState extends State<RangeSelector> {
                       ),
                     ),
                   ),
+                  // Active fill
                   Positioned(
                     left: activeLeft,
                     top: (thumbH - 6 * fem) / 2,
@@ -463,6 +524,7 @@ class _RangeSelectorState extends State<RangeSelector> {
                       ),
                     ),
                   ),
+                  // Start thumb
                   Positioned(
                     left: startLeft,
                     top: 0,
@@ -479,6 +541,7 @@ class _RangeSelectorState extends State<RangeSelector> {
                       ),
                     ),
                   ),
+                  // End thumb
                   Positioned(
                     left: endLeft,
                     top: 0,
@@ -557,55 +620,5 @@ class _DiamondPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DiamondPainter oldDelegate) {
-    return oldDelegate.color != color;
-  }
-}
-
-class ScrollSideButton extends StatelessWidget {
-  final bool isRight;
-  final VoidCallback onTap;
-  final double fem;
-
-  const ScrollSideButton({
-    super.key,
-    required this.isRight,
-    required this.onTap,
-    required this.fem,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      right: isRight ? 0 : null,
-      left: isRight ? null : 0,
-      top: 8 * fem,
-      bottom: 8 * fem,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 24 * fem,
-          decoration: BoxDecoration(
-            color: const Color(0xFFAED8CF),
-            borderRadius: BorderRadius.horizontal(
-              left: isRight ? Radius.circular(12 * fem) : Radius.zero,
-              right: isRight ? Radius.zero : Radius.circular(12 * fem),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0x14000000),
-                blurRadius: 6 * fem,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Icon(
-            isRight ? Icons.chevron_right : Icons.chevron_left,
-            size: 28 * fem,
-            color: const Color(0xFF3F3F3F),
-          ),
-        ),
-      ),
-    );
-  }
+  bool shouldRepaint(_DiamondPainter oldDelegate) => oldDelegate.color != color;
 }

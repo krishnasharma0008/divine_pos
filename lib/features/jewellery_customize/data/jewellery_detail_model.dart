@@ -43,6 +43,7 @@ class JewelleryDetail {
   final String? variantApprovedDate;
 
   final double? metalPriceLessOneGms;
+  final double? Metalpriceless05gms; //Metal_price_less_0_5gms
   final double? productPrice;
 
   final String? laying_with; // new customer code
@@ -86,6 +87,7 @@ class JewelleryDetail {
     required this.gender,
     required this.variantApprovedDate,
     required this.metalPriceLessOneGms,
+    required this.Metalpriceless05gms, //Metal_price_less_0_5gms
     required this.productPrice,
 
     required this.laying_with,
@@ -154,6 +156,9 @@ class JewelleryDetail {
       // productPrice: json['Product_price'] ?? '',
       metalPriceLessOneGms:
           double.tryParse(json['Metal_price_lessonegms']?.toString() ?? '0') ??
+          0,
+      Metalpriceless05gms:
+          double.tryParse(json['Metal_price_less_0_5gms']?.toString() ?? '0') ??
           0,
       productPrice:
           double.tryParse(json['Product_price']?.toString() ?? '0') ?? 0,

@@ -59,6 +59,11 @@ class _JewelleryCustomiseScreenState
 
   bool _showMsg = false;
 
+  /// Tracks whether the user has actively applied customization.
+  /// Drives the three UI conditions (Reset button, price-to range, button label)
+  /// independently from calc.isCustomised so they don't appear on initial load.
+  bool _hasBeenCustomised = false;
+
   String pjcode = '';
   String loginBranch = '';
   int? loginCustomerId = null;
@@ -337,6 +342,7 @@ class _JewelleryCustomiseScreenState
                                     approxPriceFrom: calc.approxPriceFrom,
                                     approxPriceTo: calc.approxPriceTo,
                                     hidePriceBreakup: hidePriceBreakup,
+                                    hasBeenCustomised: _hasBeenCustomised,
                                   ),
 
                                   Padding(
@@ -429,6 +435,7 @@ class _JewelleryCustomiseScreenState
                                             }
 
                                             setState(() {
+                                              _hasBeenCustomised = true;
                                               priceStartIndex =
                                                   result.price?.startIndex;
                                               priceEndIndex =
@@ -509,7 +516,7 @@ class _JewelleryCustomiseScreenState
                                                     ),
                                                   ),
                                                   child: MyText(
-                                                    calc.isCustomised
+                                                    _hasBeenCustomised
                                                         ? 'Edit Customization'
                                                         : 'Start customizing',
                                                     style: TextStyle(
@@ -630,7 +637,7 @@ class _JewelleryCustomiseScreenState
                                 ),
 
                                 // separator + approxPriceTo — only after customise
-                                if (!isCalculating && isCustomised) ...[
+                                if (!isCalculating && _hasBeenCustomised) ...[
                                   const SizedBox(width: 6),
                                   MyText(
                                     '-',
@@ -644,7 +651,7 @@ class _JewelleryCustomiseScreenState
                                   ),
                                   const SizedBox(width: 6),
                                   MyText(
-                                    priceTo?.inRupeesFormat() ?? '--',
+                                    priceTo?.inRupeesFormat() ?? '',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: Colors.black,
@@ -661,60 +668,66 @@ class _JewelleryCustomiseScreenState
                           ],
                         ),
 
-                        SizedBox(width: 50 * r),
+                        if (_hasBeenCustomised) ...[
+                          SizedBox(width: 50 * r),
 
-                        /// Reset price button
-                        InkWell(
-                          onTap: () async {
-                            await ref
-                                .read(jewelleryCalcProvider.notifier)
-                                .resetPriceToInitial();
-                          },
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            width: 258 * r,
-                            height: 52 * r,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 30 * r,
-                              vertical: 6 * r,
-                            ),
-                            decoration: ShapeDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment(0.0, 0.5),
-                                end: Alignment(0.96, 1.12),
-                                colors: [Color(0xFFBEE4DD), Color(0xA5D1B193)],
+                          /// Reset price button
+                          InkWell(
+                            onTap: () async {
+                              setState(() => _hasBeenCustomised = false);
+                              await ref
+                                  .read(jewelleryCalcProvider.notifier)
+                                  .resetPriceToInitial();
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              width: 258 * r,
+                              height: 52 * r,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 30 * r,
+                                vertical: 6 * r,
                               ),
-                              shape: RoundedRectangleBorder(
-                                side: const BorderSide(
-                                  width: 1,
-                                  color: Color(0xFFACA584),
+                              decoration: ShapeDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment(0.0, 0.5),
+                                  end: Alignment(0.96, 1.12),
+                                  colors: [
+                                    Color(0xFFBEE4DD),
+                                    Color(0xA5D1B193),
+                                  ],
                                 ),
-                                borderRadius: const BorderRadius.all(
-                                  Radius.circular(20),
+                                shape: RoundedRectangleBorder(
+                                  side: const BorderSide(
+                                    width: 1,
+                                    color: Color(0xFFACA584),
+                                  ),
+                                  borderRadius: const BorderRadius.all(
+                                    Radius.circular(20),
+                                  ),
                                 ),
+                                shadows: const [
+                                  BoxShadow(
+                                    color: Color(0x7C000000),
+                                    blurRadius: 4,
+                                    offset: Offset(2, 2),
+                                    spreadRadius: 0,
+                                  ),
+                                ],
                               ),
-                              shadows: const [
-                                BoxShadow(
-                                  color: Color(0x7C000000),
-                                  blurRadius: 4,
-                                  offset: Offset(2, 2),
-                                  spreadRadius: 0,
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: MyText(
-                                'Reset Price',
-                                style: TextStyle(
-                                  color: const Color(0xFF6C5022),
-                                  fontSize: 20 * r,
-                                  fontFamily: 'Montserrat',
-                                  fontWeight: FontWeight.w500,
+                              child: Center(
+                                child: MyText(
+                                  'Reset Price',
+                                  style: TextStyle(
+                                    color: const Color(0xFF6C5022),
+                                    fontSize: 20 * r,
+                                    fontFamily: 'Montserrat',
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
 
                         /// Continue / add to cart button
                         InkWell(

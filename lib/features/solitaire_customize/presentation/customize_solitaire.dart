@@ -508,22 +508,24 @@ Future<SolitaireFilter?> showCustomizeDrawer({
           ),
           Align(
             alignment: Alignment.centerRight,
-            child: SlideTransition(
-              position:
-                  Tween<Offset>(
-                    begin: const Offset(1.0, 0.0),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
+            child: SafeArea(
+              child: SlideTransition(
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
                     ),
+                child: SizedBox(
+                  width: panelWidth,
+                  child: CustomizeSolitaire(
+                    initialValues: initialValues,
+                    shape: shape,
                   ),
-              child: SizedBox(
-                width: panelWidth,
-                child: CustomizeSolitaire(
-                  initialValues: initialValues,
-                  shape: shape,
                 ),
               ),
             ),

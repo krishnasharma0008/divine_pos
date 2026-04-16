@@ -31,6 +31,8 @@ class DetailsScreen extends StatefulWidget {
 
   final bool hidePriceBreakup; // 🔹 NEW
 
+  final bool hasBeenCustomised; // new
+
   const DetailsScreen({
     super.key,
     required this.r,
@@ -55,6 +57,7 @@ class DetailsScreen extends StatefulWidget {
     required this.approxPriceFrom,
     required this.approxPriceTo,
     this.hidePriceBreakup = false, // 🔹 default
+    this.hasBeenCustomised = false, //
   });
 
   @override
@@ -123,6 +126,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   solitaireAmountTo: widget.solitaireAmountTo,
                   approxPriceFrom: widget.approxPriceFrom,
                   approxPriceTo: widget.approxPriceTo,
+                  hasBeenCustomised: widget.hasBeenCustomised,
                 ),
         ],
       ),
@@ -405,6 +409,7 @@ class PriceBreakupTab extends StatelessWidget {
   final double? solitaireAmountTo;
   final double? approxPriceFrom;
   final double? approxPriceTo;
+  final bool hasBeenCustomised;
 
   const PriceBreakupTab(
     this.r, {
@@ -416,6 +421,7 @@ class PriceBreakupTab extends StatelessWidget {
     required this.solitaireAmountTo,
     required this.approxPriceFrom,
     required this.approxPriceTo,
+    required this.hasBeenCustomised,
   });
 
   @override
@@ -429,34 +435,38 @@ class PriceBreakupTab extends StatelessWidget {
     final sideDiamond = sideDiamondAmount ?? 0;
     final mountTotal = metal + sideDiamond;
 
+    // ---- display strings ----
+    final solitaireValueText = hasBeenCustomised
+        ? '${solFrom.inRupeesFormat()} - ${solTo.inRupeesFormat()}'
+        : solFrom.inRupeesFormat();
+
+    final mountText = sideDiamond > 0
+        ? (hasBeenCustomised
+              ? '${mountTotal.inRupeesFormat()} - ${mountTotal.inRupeesFormat()}'
+              : mountTotal.inRupeesFormat())
+        : metal.inRupeesFormat();
+
+    final grandTotalText = hasBeenCustomised
+        ? '${grandFrom.inRupeesFormat()} - ${grandTo.inRupeesFormat()}'
+        : grandFrom.inRupeesFormat();
+
     return legendCard(
       r: r,
       title: 'Divine Solitaires',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _priceRow(
-            r,
-            'Solitaire Value',
-            '${solFrom.inRupeesFormat()}  -  ${solTo.inRupeesFormat()}',
-          ),
+          _priceRow(r, 'Solitaire Value', solitaireValueText),
           SizedBox(height: 16 * r),
           _sectionHeader(r, 'Divine Mount'),
           SizedBox(height: 16 * r),
           _priceRow(
             r,
             sideDiamond > 0 ? 'Metal + Side Diamonds' : 'Metal',
-            sideDiamond > 0
-                ? '${mountTotal.inRupeesFormat()} - ${mountTotal.inRupeesFormat()}'
-                : metal.inRupeesFormat(),
+            mountText,
           ),
           Divider(height: 32 * r),
-          _priceRow(
-            r,
-            'Grand Total',
-            '${grandFrom.inRupeesFormat()} - ${grandTo.inRupeesFormat()}',
-            bold: true,
-          ),
+          _priceRow(r, 'Grand Total', grandTotalText, bold: true),
         ],
       ),
     );

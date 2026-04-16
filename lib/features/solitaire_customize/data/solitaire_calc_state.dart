@@ -17,6 +17,11 @@ class SolitaireCalcState {
   final String? clarityRange;
   final String? solitaireShape;
 
+  // Initial values for reset + customisation detection
+  final String? initialCaratRange;
+  final String? initialColorRange;
+  final String? initialClarityRange;
+
   final bool isCustomized;
 
   const SolitaireCalcState({
@@ -31,6 +36,9 @@ class SolitaireCalcState {
     this.colorRange,
     this.clarityRange,
     this.solitaireShape,
+    this.initialCaratRange,
+    this.initialColorRange,
+    this.initialClarityRange,
     this.isCustomized = false,
   });
 
@@ -46,6 +54,9 @@ class SolitaireCalcState {
     String? colorRange,
     String? clarityRange,
     String? solitaireShape,
+    String? initialCaratRange,
+    String? initialColorRange,
+    String? initialClarityRange,
     bool? isCustomized,
   }) {
     return SolitaireCalcState(
@@ -60,7 +71,22 @@ class SolitaireCalcState {
       colorRange: colorRange ?? this.colorRange,
       clarityRange: clarityRange ?? this.clarityRange,
       solitaireShape: solitaireShape ?? this.solitaireShape,
+      initialCaratRange: initialCaratRange ?? this.initialCaratRange,
+      initialColorRange: initialColorRange ?? this.initialColorRange,
+      initialClarityRange: initialClarityRange ?? this.initialClarityRange,
       isCustomized: isCustomized ?? this.isCustomized,
     );
+  }
+
+  bool get isCustomised {
+    if (initialCaratRange == null ||
+        initialColorRange == null ||
+        initialClarityRange == null) {
+      return false;
+    }
+
+    return caratRange != initialCaratRange ||
+        colorRange != initialColorRange ||
+        clarityRange != initialClarityRange;
   }
 }

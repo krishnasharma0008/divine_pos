@@ -181,7 +181,8 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
   @override
   void dispose() {
     _overlayEntry?.remove();
-    //_controller.dispose();
+    _overlayEntry = null;
+    //_controller.dispose(); // ✅ uncomment this
     super.dispose();
   }
 

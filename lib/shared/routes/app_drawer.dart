@@ -1,3 +1,4 @@
+import 'package:divine_pos/features/jewellery/data/listing_provider.dart';
 import 'package:divine_pos/shared/utils/enums.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,7 @@ class SideDrawer extends ConsumerWidget {
     final drawerState = ref.watch(drawerProvider);
     final drawerNotifier = ref.read(drawerProvider.notifier);
 
+    debugPrint(drawerState.categories.toString());
     final fem = ScaleSize.aspectRatio;
 
     return Drawer(
@@ -136,7 +138,10 @@ class SideDrawer extends ConsumerWidget {
                           routePage: RoutePages.jewellerylisting,
                           iconPath: 'assets/icons/menu_vt.svg',
                           title: "Categories",
-                          items: categories,
+                          items: {
+                            for (var category in drawerState.categories)
+                              category: category,
+                          },
                         ),
 
                         // sectionCard(

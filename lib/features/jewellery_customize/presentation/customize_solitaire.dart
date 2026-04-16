@@ -861,28 +861,30 @@ Future<JewelleryFilter?> showCustomizeDrawer({
           ),
           Align(
             alignment: Alignment.centerRight,
-            child: SlideTransition(
-              position:
-                  Tween<Offset>(
-                    begin: const Offset(1.0, 0.0),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
+            child: SafeArea(
+              child: SlideTransition(
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
                     ),
+                child: SizedBox(
+                  width: panelWidth,
+                  child: CustomizeSolitaire(
+                    initialValues: initialValues,
+                    metalColors: metalColors,
+                    metalPurity: metalPurity,
+                    detail: detail,
+                    totalSidePcs: totalSidePcs,
+                    totalSideWeight: totalSideWeight,
+                    collection: collection,
+                    isMultiSize: isMultiSize,
                   ),
-              child: SizedBox(
-                width: panelWidth,
-                child: CustomizeSolitaire(
-                  initialValues: initialValues,
-                  metalColors: metalColors,
-                  metalPurity: metalPurity,
-                  detail: detail,
-                  totalSidePcs: totalSidePcs,
-                  totalSideWeight: totalSideWeight,
-                  collection: collection,
-                  isMultiSize: isMultiSize,
                 ),
               ),
             ),

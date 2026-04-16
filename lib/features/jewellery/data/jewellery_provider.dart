@@ -60,7 +60,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
   /// pagination
   Future<void> loadMore() async {
     if (!_hasMore || _isLoadingMore) return;
-
+    if (!ref.mounted) return; // ✅ add this guard
     _isLoadingMore = true;
 
     try {
@@ -107,7 +107,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
 
       // debugPrint("Button Type : ${filter.allDesigns}");
       // debugPrint("layingWith : $layingWith");
-
+      //debugPrint("Sort by : ${filter.sortBy}");
       String? gender;
 
       if (filter.selectedGender.isNotEmpty) {
@@ -187,6 +187,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         "clarity_from": filter.clarityStartLabel,
         "clarity_to": filter.clarityEndLabel,
         'only_own': filter.allStore, // new field for "All Store" selection
+        //'sortby': filter.sortBy, // include sortBy in post data
       };
 
       //debugPrint("🔄 Fetching jewellery - Page: $_page");

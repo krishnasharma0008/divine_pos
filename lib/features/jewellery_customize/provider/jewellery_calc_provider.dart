@@ -541,6 +541,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
             userColorTo: selectedColorTo,
             userClarityFrom: selectedClarityFrom,
             userClarityTo: selectedClarityTo,
+            isCustomised: current.isCustomised,
           );
 
       solFrom = result.solFrom;
@@ -664,6 +665,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       gender: base.gender,
       variantApprovedDate: base.variantApprovedDate,
       metalPriceLessOneGms: base.metalPriceLessOneGms,
+      Metalpriceless05gms: base.Metalpriceless05gms,
       productPrice: base.productPrice,
       laying_with: base.laying_with,
       lying_with_id: base.lying_with_id,
@@ -727,6 +729,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
           metalPurity,
         ),
       );
+    } else if (goldWeight > 0 && goldWeight <= 0.05) {
+      goldPrice = (detail.Metalpriceless05gms ?? 0).toDouble();
     } else if (goldWeight > 0 && goldWeight <= 1) {
       goldPrice = (detail.metalPriceLessOneGms ?? 0).toDouble();
     }
@@ -759,7 +763,9 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
         : 0;
 
     // ≤ 1 g rule: fixed price per item, still multiplied by qty
-    if (goldWeight > 0 && goldWeight <= 1) {
+    if (goldWeight > 0 && goldWeight <= 0.05) {
+      goldAmount = (detail.Metalpriceless05gms ?? 0).toDouble() * selectedQty;
+    } else if (goldWeight > 0 && goldWeight <= 1) {
       goldAmount = (detail.metalPriceLessOneGms ?? 0).toDouble() * selectedQty;
     }
 

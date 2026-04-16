@@ -54,9 +54,16 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
   sms_autofill: ^2.3.0
   flutter_rating_bar: ^4.0.1
   collection: ^1.18.0
+
+# 🔹 ICON CONFIGURATION
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icons/app_icon.jpg"
 
 flutter:
   uses-material-design: true

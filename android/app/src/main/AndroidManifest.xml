@@ -3,11 +3,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
     
     <application
-        android:label="divine_pos"
+        android:label="POS-DS"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
-        <activity
+        android:icon="@mipmap/ic_launcher"
+        android:resizeableActivity="false"
+        android:supportsRtl="true">
+        <activity            
             android:name=".MainActivity"
+            android:screenOrientation="sensorLandscape"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""

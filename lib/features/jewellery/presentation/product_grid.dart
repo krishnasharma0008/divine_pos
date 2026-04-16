@@ -232,23 +232,35 @@ class ProductGrid extends ConsumerWidget {
       },
 
       //onTryOn: () => debugPrint("Try → ${item.itemNumber}"),
+      // onTryOn: () {
+      //   //debugPrint("Try → ${item.itemNumber}");
+      //   // context.pushNamed(
+      //   //   RoutePages.jewellerycustomize.routeName,
+      //   //   queryParameters: {'code': item.itemNumber ?? ''},
+      //   // );
+
+      //   //final branch = ref.read(filterProvider).productBranch ?? '';
+
+      //   context.pushNamed(
+      //     RoutePages.jewellerycustomize.routeName,
+      //     extra: {
+      //       'customercode': item.layingWith,
+      //       'customername': item.lying_with_name,
+      //       'branch': item.lying_with_nickname,
+      //       'customerid': item.lying_with_id,
+      //       //'designno': item.designno ?? '',
+      //       'productCode': item.itemNumber,
+      //     },
+      //   );
+      // },
       onTryOn: () {
-        //debugPrint("Try → ${item.itemNumber}");
-        // context.pushNamed(
-        //   RoutePages.jewellerycustomize.routeName,
-        //   queryParameters: {'code': item.itemNumber ?? ''},
-        // );
-
-        //final branch = ref.read(filterProvider).productBranch ?? '';
-
-        context.pushNamed(
+        GoRouter.of(context).pushNamed(
           RoutePages.jewellerycustomize.routeName,
           extra: {
             'customercode': item.layingWith,
             'customername': item.lying_with_name,
             'branch': item.lying_with_nickname,
             'customerid': item.lying_with_id,
-            //'designno': item.designno ?? '',
             'productCode': item.itemNumber,
           },
         );

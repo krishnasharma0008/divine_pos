@@ -1,4 +1,4 @@
-package com.example.divine_pos
+package com.activity.divine_pos
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -139,6 +139,12 @@ class HeroAndFeaturesSection extends ConsumerWidget {
                   image: "catalouge.png",
                   routePage: RoutePages.jewellerylisting,
                 ),
+                //   ispushReplacement: true,
+                //   queryParamKey: 'refreshToken',
+                //   queryParamValue: math.Random.secure()
+                //       .nextInt(1000000)
+                //       .toString(),
+                // ),
                 SizedBox(width: 12 * ar),
                 featureCard(
                   context: context,

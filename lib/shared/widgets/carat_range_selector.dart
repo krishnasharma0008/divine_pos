@@ -46,9 +46,7 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
       widget.initialStartIndex.clamp(0, widget.values.length - 1).toDouble(),
       widget.initialEndIndex.clamp(0, widget.values.length - 1).toDouble(),
     );
-
     _scrollController.addListener(_updateScrollButtons);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkIfScrollNeeded();
       _updateScrollButtons();
@@ -65,7 +63,6 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
   @override
   void didUpdateWidget(covariant CaratRangeSelector oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (oldWidget.values != widget.values ||
         oldWidget.initialStartIndex != widget.initialStartIndex ||
         oldWidget.initialEndIndex != widget.initialEndIndex) {
@@ -77,7 +74,6 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
           widget.initialEndIndex.clamp(0, widget.values.length - 1).toDouble(),
         );
       });
-
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _checkIfScrollNeeded();
         _updateScrollButtons();
@@ -87,14 +83,8 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
 
   void _checkIfScrollNeeded() {
     if (!mounted || !_scrollController.hasClients) return;
-
     final hasOverflow = _scrollController.position.maxScrollExtent > 0;
-
-    if (hasOverflow != _showArrows) {
-      setState(() {
-        _showArrows = hasOverflow;
-      });
-    }
+    if (hasOverflow != _showArrows) setState(() => _showArrows = hasOverflow);
   }
 
   void _updateScrollButtons() {
@@ -108,12 +98,10 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
       }
       return;
     }
-
     final position = _scrollController.position;
     final hasOverflow = position.maxScrollExtent > 0;
     final canLeft = position.pixels > 0;
     final canRight = position.pixels < position.maxScrollExtent;
-
     if (hasOverflow != _showArrows ||
         canLeft != _canScrollLeft ||
         canRight != _canScrollRight) {
@@ -153,11 +141,59 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
         .then((_) => _updateScrollButtons());
   }
 
+  // ── Core tap logic ─────────────────────────────────────────────────────────
+  // Moves whichever thumb is closer to [index].
+  void _onTapIndex(int index, bool needsScroll, double itemWidth) {
+    final start = _startIndex;
+    final end = _endIndex;
+
+    final distToStart = (index - start).abs();
+    final distToEnd = (index - end).abs();
+
+    final int newStart;
+    final int newEnd;
+
+    if (distToStart <= distToEnd) {
+      newStart = index.clamp(0, end);
+      newEnd = end;
+    } else {
+      newStart = start;
+      newEnd = index.clamp(start, widget.values.length - 1);
+    }
+
+    setState(() {
+      _range = RangeValues(newStart.toDouble(), newEnd.toDouble());
+    });
+
+    widget.onRangeChanged(widget.values[newStart], widget.values[newEnd]);
+
+    if (needsScroll) _autoScrollToRange(newStart, newEnd, itemWidth);
+  }
+
+  // ── Converts raw tap dx → index ────────────────────────────────────────────
+  // The GestureDetector lives inside the scroll content so localPosition.dx
+  // is already relative to the item grid — no scroll-offset math needed.
+  void _handleTapUp({
+    required TapUpDetails details,
+    required bool needsScroll,
+    required double itemWidth,
+    required double availableWidth,
+  }) {
+    final effectiveItemWidth = needsScroll
+        ? itemWidth
+        : availableWidth / widget.values.length;
+
+    final index = (details.localPosition.dx / effectiveItemWidth).floor().clamp(
+      0,
+      widget.values.length - 1,
+    );
+
+    _onTapIndex(index, needsScroll, itemWidth);
+  }
+
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
-    final String startValue = widget.values[_startIndex];
-    final String endValue = widget.values[_endIndex];
     final chipFormatter = widget.valueToChipText ?? (String v) => v;
     final double thumbRadius = (10 * fem) / 2;
 
@@ -182,11 +218,11 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
                 ),
               ),
               const Spacer(),
-              _buildValueChip(chipFormatter(startValue), fem),
+              _buildValueChip(chipFormatter(widget.values[_startIndex]), fem),
               SizedBox(width: 6 * fem),
               const Text('-'),
               SizedBox(width: 6 * fem),
-              _buildValueChip(chipFormatter(endValue), fem),
+              _buildValueChip(chipFormatter(widget.values[_endIndex]), fem),
             ],
           ),
           SizedBox(height: 18 * fem),
@@ -226,6 +262,7 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
                             thumbRadius,
                             needsScroll,
                             itemWidth,
+                            availableWidth,
                           ),
                         ),
                       ),
@@ -257,68 +294,79 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
     double thumbRadius,
     bool needsScroll,
     double itemWidth,
+    double availableWidth,
   ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: List.generate(
-            widget.values.length,
-            (index) => needsScroll
-                ? SizedBox(
-                    width: itemWidth,
-                    child: Text(
-                      widget.values[index],
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11 * fem,
-                        fontWeight: FontWeight.w500,
-                        color: (index >= _startIndex && index <= _endIndex)
-                            ? Colors.black
-                            : const Color(0xFFD9D9D9),
-                      ),
-                    ),
-                  )
-                : Expanded(
-                    child: Text(
-                      widget.values[index],
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11 * fem,
-                        fontWeight: FontWeight.w500,
-                        color: (index >= _startIndex && index <= _endIndex)
-                            ? Colors.black
-                            : const Color(0xFFD9D9D9),
-                      ),
-                    ),
-                  ),
+        // ── Single GestureDetector covers labels + ticks ───────────────────
+        // Using onTapUp (not onTap) to get the precise finger-lift position.
+        // Lives inside the scroll content so localPosition.dx naturally
+        // accounts for scroll offset — no extra math required.
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) => _handleTapUp(
+            details: details,
+            needsScroll: needsScroll,
+            itemWidth: itemWidth,
+            availableWidth: availableWidth,
           ),
-        ),
-        SizedBox(height: 10 * fem),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: thumbRadius),
-          child: Row(
-            children: List.generate(
-              widget.values.length,
-              (index) => Expanded(
-                child: Center(
-                  child: Container(
-                    width: 3 * fem,
-                    height: (index % 3 == 0) ? 11 * fem : 7 * fem,
-                    decoration: BoxDecoration(
-                      color: (index >= _startIndex && index <= _endIndex)
-                          ? tickColor
-                          : const Color(0xFFD9D9D9),
-                      borderRadius: BorderRadius.circular(1.5 * fem),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Value labels
+              Row(
+                children: List.generate(widget.values.length, (index) {
+                  final isActive = index >= _startIndex && index <= _endIndex;
+                  final label = Text(
+                    widget.values[index],
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11 * fem,
+                      fontWeight: FontWeight.w500,
+                      color: isActive ? Colors.black : const Color(0xFFD9D9D9),
+                    ),
+                  );
+                  return needsScroll
+                      ? SizedBox(width: itemWidth, child: label)
+                      : Expanded(child: label);
+                }),
+              ),
+
+              SizedBox(height: 10 * fem),
+
+              // Tick marks
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: thumbRadius),
+                child: Row(
+                  children: List.generate(
+                    widget.values.length,
+                    (index) => Expanded(
+                      child: Center(
+                        child: Container(
+                          width: 3 * fem,
+                          height: (index % 3 == 0) ? 11 * fem : 7 * fem,
+                          decoration: BoxDecoration(
+                            color: (index >= _startIndex && index <= _endIndex)
+                                ? tickColor
+                                : const Color(0xFFD9D9D9),
+                            borderRadius: BorderRadius.circular(1.5 * fem),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
+
         SizedBox(height: 10 * fem),
+
+        // ── Range slider (drag) ────────────────────────────────────────────
         Padding(
           padding: EdgeInsets.symmetric(horizontal: thumbRadius),
           child: Stack(
@@ -356,16 +404,13 @@ class _CaratRangeSelectorState extends State<CaratRangeSelector> {
                   onChanged: (v) {
                     final start = v.start.round();
                     final end = v.end.round();
-
                     setState(() {
                       _range = RangeValues(start.toDouble(), end.toDouble());
                     });
-
                     widget.onRangeChanged(
                       widget.values[start],
                       widget.values[end],
                     );
-
                     if (needsScroll) {
                       _autoScrollToRange(start, end, itemWidth);
                     }

@@ -97,12 +97,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       //   name: RoutePages.jewellerylisting.routeName,
       //   builder: (context, state) => JewelleryListingScreen(),
       // ),
+      // GoRoute(
+      //   path: RoutePages.jewellerylisting.routePath,
+      //   name: RoutePages.jewellerylisting.routeName,
+      //   pageBuilder: (context, state) {
+      //     return CustomTransitionPage<void>(
+      //       key: UniqueKey(),
+      //       transitionsBuilder:
+      //           (context, animation, secondaryAnimation, child) {
+      //             return FadeTransition(opacity: animation, child: child);
+      //           },
+      //       child: JewelleryListingScreen(
+      //         paramKey: state.uri.queryParameters.isNotEmpty
+      //             ? JewelleryProductKey.fromValue(
+      //                 state.uri.queryParameters.keys.first,
+      //               )
+      //             : null,
+      //         paramValue: state.uri.queryParameters.isNotEmpty
+      //             ? state.uri.queryParameters.values.first
+      //             : null,
+      //       ),
+      //     );
+      //   },
+      // ),
       GoRoute(
         path: RoutePages.jewellerylisting.routePath,
         name: RoutePages.jewellerylisting.routeName,
         pageBuilder: (context, state) {
+          // Use query param token if present, otherwise generate a stable key
+          // so back-navigation reuses the same page instance
+          final token = state.uri.queryParameters['refreshToken'] ?? '';
+
           return CustomTransitionPage<void>(
-            key: UniqueKey(),
+            // Stable key: reused on back, fresh on forward navigation with new token
+            key: ValueKey('jewellery-listing-$token'),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
                   return FadeTransition(opacity: animation, child: child);
@@ -120,14 +148,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-      // GoRoute(
-      //   path: RoutePages.jewellerycustomize.routePath,
-      //   name: RoutePages.jewellerycustomize.routeName,
-      //   builder: (context, state) {
-      //     final productCode = state.extra as String? ?? '';
-      //     return JewelleryCustomiseScreen(productCode: productCode);
-      //   },
-      // ),
+
       GoRoute(
         path: RoutePages.jewellerycustomize.routePath,
         name: RoutePages.jewellerycustomize.routeName,

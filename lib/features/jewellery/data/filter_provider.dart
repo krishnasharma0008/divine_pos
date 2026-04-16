@@ -21,6 +21,7 @@ class FilterNotifier extends Notifier<FilterState> {
       selectedMetalColor: {}, // {'Yellow'},
       selectedOccasions: {},
       itemno: null,
+      initialized: false,
       // selectedColors: {},
       // selectedClarities: {},
     );
@@ -233,28 +234,28 @@ class FilterNotifier extends Notifier<FilterState> {
     state = state.copyWith(itemno: Nullable(itemno)); // designno
   }
 
+  void markInitialized() {
+    state = state.copyWith(initialized: true);
+  }
+
   // ───────────────── Reset ─────────────────
   void resetFilters() {
     state = state.copyWith(
       selectedGender: {},
-      selectedPriceRange: null, // const RangeValues(10000, 1000000),
+      selectedPriceRange: const Nullable(null), // ✅
       selectedCategory: {},
       selectedSubCategory: {},
-      colorStartLabel: null, //'D',
-      colorEndLabel: null, //'J',
-      clarityStartLabel: null, //'IF',
-      clarityEndLabel: null, //'SI2',
-      caratStartLabel: null, // '0.10',
-      caratEndLabel: null, // '2.99',
+      colorStartLabel: const Nullable(null), // ✅
+      colorEndLabel: const Nullable(null), // ✅
+      clarityStartLabel: const Nullable(null), // ✅
+      clarityEndLabel: const Nullable(null), // ✅
+      caratStartLabel: const Nullable(null), // ✅
+      caratEndLabel: const Nullable(null), // ✅
       selectedShape: {},
       selectedMetalPurity: {'18KT'},
-      selectedMetalColor: {}, // {'Yellow'},
+      selectedMetalColor: {},
       selectedOccasions: {},
       itemno: const Nullable(null),
-
-      // selectedColors: {},
-      // selectedClarities: {},
-      // Top buttons remain untouched
     );
   }
 
@@ -286,6 +287,7 @@ class FilterNotifier extends Notifier<FilterState> {
 
 // ───────────────── Provider ─────────────────
 
-final filterProvider = NotifierProvider<FilterNotifier, FilterState>(
-  FilterNotifier.new,
-);
+final filterProvider =
+    NotifierProvider.autoDispose<FilterNotifier, FilterState>(
+      FilterNotifier.new,
+    );

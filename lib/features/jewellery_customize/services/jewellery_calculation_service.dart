@@ -299,6 +299,7 @@ class JewelleryCalculationService {
   calculateSolitaireAmountRangeLocal({
     required JewelleryDetail detail,
     required int qty,
+    required bool isCustomised,
     required Future<double> Function({
       required String itemGroup,
       String? slab,
@@ -385,39 +386,99 @@ class JewelleryCalculationService {
 
       final isFancy =
           shapeCode == 'PER' || shapeCode == 'PRN' || shapeCode == 'OVL';
+      final isSolus =
+          shapeCode == 'RADQ' || shapeCode == 'CUSQ' || shapeCode == 'HRT';
 
-      if (isFancy && bomCaratFrom >= 0.10 && bomCaratTo <= 0.17) {
-        bomColorMin = 'GH';
-        bomColorMax = 'EF';
-        bomClarityMin = 'VS';
-        bomClarityMax = 'VVS';
-      } else if (isFancy && bomCaratFrom >= 0.18 && bomCaratTo <= 0.22) {
-        bomColorMin = 'K';
-        bomColorMax = 'D';
-        bomClarityMin = 'SI1';
-        bomClarityMax = 'IF';
-      } else if (shapeCode == 'RND' &&
-          bomCaratFrom >= 0.10 &&
-          bomCaratTo <= 0.17) {
-        bomColorMin = 'IJ';
-        bomColorMax = 'EF';
-        bomClarityMin = 'SI';
-        bomClarityMax = 'VVS';
+      String fromColor = '';
+      String toColor = '';
+      String fromClarity = '';
+      String toClarity = '';
+
+      if (isCustomised == false) {
+        debugPrint('Entering non-customised logic branch');
+        if (isFancy && bomCaratFrom >= 0.10 && bomCaratTo <= 0.17) {
+          bomColorMin = 'GH';
+          bomColorMax = 'EF';
+          bomClarityMin = 'VS';
+          bomClarityMax = 'VVS';
+        } else if (isFancy && bomCaratFrom >= 0.18 && bomCaratTo <= 0.22) {
+          bomColorMin = 'H';
+          bomColorMax = 'D';
+          bomClarityMin = 'VS2';
+          bomClarityMax = 'IF';
+        } else if (shapeCode == 'RND' &&
+            bomCaratFrom >= 0.10 &&
+            bomCaratTo <= 0.17) {
+          bomColorMin = 'IJ';
+          bomColorMax = 'EF';
+          bomClarityMin = 'SI';
+          bomClarityMax = 'VVS';
+        } else if (shapeCode == 'RND' &&
+            bomCaratFrom >= 0.18 &&
+            bomCaratTo <= 0.22) {
+          bomColorMin = 'E';
+          bomColorMax = 'D';
+          bomClarityMin = 'VVS1';
+          bomClarityMax = 'IF';
+        } else if (isSolus && bomCaratFrom >= 0.18 && bomCaratTo <= 1.5) {
+          bomColorMin = 'VDY';
+          bomColorMax = 'VDY';
+          bomClarityMin = 'VS';
+          bomClarityMax = 'VVS';
+        }
+
+        fromColor = getSolitaireColor(bomColorMin);
+        toColor = getSolitaireColor(bomColorMax);
+        fromClarity = bomClarityMin;
+        toClarity = bomClarityMax;
+      } else {
+        debugPrint('Entering customised logic branch');
+        if (isFancy && bomCaratFrom >= 0.10 && bomCaratTo <= 0.17) {
+          bomColorMin = 'GH';
+          bomColorMax = 'EF';
+          bomClarityMin = 'VS';
+          bomClarityMax = 'VVS';
+        } else if (isFancy && bomCaratFrom >= 0.18 && bomCaratTo <= 0.22) {
+          bomColorMin = 'K';
+          bomColorMax = 'D';
+          bomClarityMin = 'SI1';
+          bomClarityMax = 'IF';
+        } else if (shapeCode == 'RND' &&
+            bomCaratFrom >= 0.10 &&
+            bomCaratTo <= 0.17) {
+          bomColorMin = 'IJ';
+          bomColorMax = 'EF';
+          bomClarityMin = 'SI';
+          bomClarityMax = 'VVS';
+        }
+
+        fromColor = getSolitaireColor(
+          userMaxCt == bomCaratTo ? (userColorFrom ?? '') : bomColorMin,
+        );
+        toColor = getSolitaireColor(
+          userMinCt == bomCaratFrom ? (userColorTo ?? '') : bomColorMax,
+        );
+        fromClarity = userMaxCt == bomCaratTo
+            ? (userClarityFrom ?? '')
+            : bomClarityMin;
+        toClarity = userMinCt == bomCaratFrom
+            ? (userClarityTo ?? '')
+            : bomClarityMax;
       }
 
       // User selection overrides BOM defaults when carat matches.
-      final String fromColor = getSolitaireColor(
-        userMaxCt == bomCaratTo ? (userColorFrom ?? '') : bomColorMin,
-      );
-      final String toColor = getSolitaireColor(
-        userMinCt == bomCaratFrom ? (userColorTo ?? '') : bomColorMax,
-      );
-      final String fromClarity = userMaxCt == bomCaratTo
-          ? (userClarityFrom ?? '')
-          : bomClarityMin;
-      final String toClarity = userMinCt == bomCaratFrom
-          ? (userClarityTo ?? '')
-          : bomClarityMax;
+      // final String fromColor = getSolitaireColor(
+      //   userMaxCt == bomCaratTo ? (userColorFrom ?? '') : bomColorMin,
+      // );
+      // final String toColor = getSolitaireColor(
+      //   userMinCt == bomCaratFrom ? (userColorTo ?? '') : bomColorMax,
+      // );
+      // final String fromClarity = userMaxCt == bomCaratTo
+      //     ? (userClarityFrom ?? '')
+      //     : bomClarityMin;
+      // final String toClarity = userMinCt == bomCaratFrom
+      //     ? (userClarityTo ?? '')
+      //     : bomClarityMax;
 
       final priceFrom = await fetchPrice(
         itemGroup: 'SOLITAIRE',

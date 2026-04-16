@@ -25,6 +25,7 @@ class FilterState {
   final String? sortBy;
   final String? itemno;
   final int allStore;
+  final bool initialized;
 
   const FilterState({
     required this.selectedGender,
@@ -47,6 +48,7 @@ class FilterState {
     this.sortBy,
     this.itemno,
     this.allStore = 0,
+    this.initialized = false,
   });
 
   FilterState copyWith({
@@ -70,6 +72,7 @@ class FilterState {
     String? sortBy,
     Nullable<String>? itemno,
     int? allStore,
+    bool? initialized,
   }) {
     return FilterState(
       selectedGender: selectedGender ?? this.selectedGender,
@@ -108,6 +111,7 @@ class FilterState {
       sortBy: sortBy ?? this.sortBy,
       itemno: itemno != null ? itemno.value : this.itemno,
       allStore: allStore ?? this.allStore,
+      initialized: initialized ?? this.initialized,
     );
   }
 }

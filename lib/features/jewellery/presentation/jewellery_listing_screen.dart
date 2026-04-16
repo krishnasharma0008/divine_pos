@@ -1,14 +1,14 @@
 import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
 import 'package:divine_pos/features/jewellery/data/add_to_cart_notifier.dart';
-import 'package:divine_pos/features/jewellery/data/branch_provider.dart';
+//import 'package:divine_pos/features/jewellery/data/branch_provider.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/widget/continue_cart_popup.dart';
 import 'package:divine_pos/features/solitaire_customize/data/solitaire_detail_model.dart';
 import 'package:divine_pos/shared/routes/route_pages.dart';
-import 'package:divine_pos/shared/utils/currency_formatter.dart';
+//import 'package:divine_pos/shared/utils/currency_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:collection/collection.dart';
+//import 'package:collection/collection.dart';
 
 import '../../../shared/app_bar.dart';
 import '../../../shared/routes/app_drawer.dart';
@@ -56,57 +56,59 @@ class _JewelleryListingScreenState
     super.initState();
 
     Future.microtask(() {
-      ref.read(filterProvider.notifier).setProductsInStore();
-      ref.read(filterProvider.notifier).resetFilters();
+      if (!mounted) return;
 
-      final filter = ref.read(filterProvider.notifier);
+      final filterNotifier = ref.read(filterProvider.notifier);
+
+      filterNotifier.setProductsInStore();
+      filterNotifier.resetFilters();
 
       if (widget.paramKey != null && widget.paramValue != null) {
         if (widget.paramKey == JewelleryProductKey.category) {
-          filter.setCategory(widget.paramValue!);
+          filterNotifier.setCategory(widget.paramValue!);
         }
-
         if (widget.paramKey == JewelleryProductKey.collection) {
-          filter.setSubCategory(widget.paramValue!);
+          filterNotifier.setSubCategory(widget.paramValue!);
         }
       }
+
+      filterNotifier.markInitialized();
+      ref.read(jewelleryProvider.notifier).resetAndFetch();
     });
 
-    /// 🔹 Fetch store list once
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
       final auth = ref.read(authProvider);
-      //final pjcode =  auth.user?.pjcode;//'OT025'; //
       final raw = auth.user?.pjcode ?? '';
-      //pjcode = raw.split(',').first.trim(); //'OT025'; //
+      final code = raw.split(',').first.trim();
+
       setState(() {
-        pjcode = raw.split(',').first.trim();
+        pjcode = code;
       });
 
-      if (pjcode.isNotEmpty) {
-        //ref.read(storeProvider.notifier).getPJStore(pjcode: pjcode);
-        final storeNotifier = ref.read(storeProvider.notifier);
-
-        storeNotifier.getPJStore(pjcode: pjcode);
-        //storeNotifier.getPJStore(pjcode: 'OT025');
-        storeNotifier.getFilters(); // ✅ ADD THIS
-      }
+      final storeNotifier = ref.read(storeProvider.notifier);
+      storeNotifier.getPJStore(pjcode: pjcode);
+      storeNotifier.getFilters();
     });
 
-    /// 🔹 Infinite scroll
-    _scrollController.addListener(() {
-      final notifier = ref.read(jewelleryProvider.notifier);
+    _scrollController.addListener(_onScroll);
+  }
 
-      if (_scrollController.position.pixels >=
-              _scrollController.position.maxScrollExtent - 300 &&
-          notifier.hasMore &&
-          !notifier.isLoadingMore) {
-        notifier.loadMore();
-      }
-    });
+  void _onScroll() {
+    final notifier = ref.read(jewelleryProvider.notifier);
+
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 300 &&
+        notifier.hasMore &&
+        !notifier.isLoadingMore) {
+      notifier.loadMore();
+    }
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
@@ -475,10 +477,16 @@ class _SolitaireListViewState extends ConsumerState<_SolitaireListView> {
                           if (_pcs[index] > 0) _pcs[index]--;
                         }),
                         onCart: () async {
+                          // final customer = await showDialog<CustomerDetail>(
+                          //   context: context,
+                          //   barrierDismissible: true,
+                          //   builder: (_) =>
+                          //       ContinueCartPopup(parentContext: context),
+                          // );
                           final customer = await showDialog<CustomerDetail>(
                             context: context,
                             barrierDismissible: true,
-                            builder: (_) =>
+                            builder: (dialogContext) =>
                                 ContinueCartPopup(parentContext: context),
                           );
                           if (customer == null) return;

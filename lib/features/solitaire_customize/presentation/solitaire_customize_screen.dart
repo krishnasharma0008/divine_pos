@@ -26,8 +26,19 @@ import '../data/add_to_cart_notifier.dart';
 
 class SolitaireCustomiseScreen extends ConsumerStatefulWidget {
   final SolitaireDetail? data;
+  // final String customercode;
+  // final String customername;
+  // final String branch;
+  // final int customerid;
 
-  const SolitaireCustomiseScreen({super.key, required this.data});
+  const SolitaireCustomiseScreen({
+    super.key,
+    required this.data,
+    // required this.customercode,
+    // required this.customername,
+    // required this.branch,
+    // required this.customerid,
+  });
 
   @override
   ConsumerState<SolitaireCustomiseScreen> createState() =>
@@ -48,6 +59,14 @@ class _SolitaireCustomiseScreenState
   int? clarityEndIndex;
   //final bool _isCustomized = false; // ← whether user has applied any customization
 
+  String pjcode = '';
+  String loginBranch = '';
+  int? loginCustomerId = null;
+  String loginCustomerName = '';
+  String loginCustomerCode = '';
+
+  int deliveryday = 0;
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +79,21 @@ class _SolitaireCustomiseScreenState
       if (!mounted) return;
       _calculateDefault();
     });
+
+    final auth = ref.read(authProvider);
+    final raw = auth.user?.pjcode ?? '';
+    pjcode = raw.split(',').first.trim();
+
+    final storeState = ref.read(storeProvider);
+
+    final matchedStore = storeState.stores.firstWhereOrNull(
+      (store) => store.code == pjcode,
+    );
+
+    loginBranch = storeState.selectedStore?.nickName ?? '';
+    loginCustomerId = matchedStore?.customerID ?? null;
+    loginCustomerName = matchedStore?.name ?? '';
+    loginCustomerCode = matchedStore?.code ?? '';
   }
 
   // ---------------------------------------------------------------------------
@@ -143,6 +177,29 @@ class _SolitaireCustomiseScreenState
     );
   }
 
+  // ------------------------------------------------------------------------
+  // DELIVERY DAYS
+  // ------------------------------------------------------------------------
+
+  String get _deliveryLabel {
+    final calc = ref.watch(solitaireCalcProvider).value;
+    final isCustomised = calc?.isCustomised ?? false;
+
+    if (widget.data?.laying_with?.isEmpty ?? true) {
+      return 'delivery 15 days';
+    }
+
+    if (isCustomised) {
+      return 'delivery 15 days';
+    }
+
+    if (widget.data?.laying_with == loginCustomerCode) {
+      return 'Instant delivery - Available';
+    }
+
+    return ' delivery 3 days';
+  }
+
   // ---------------------------------------------------------------------------
   // Add to cart
   // ---------------------------------------------------------------------------
@@ -203,11 +260,17 @@ class _SolitaireCustomiseScreenState
 
       final cartItem = CartDetail(
         orderFor: 'Customer',
-        customerId: isCustomized ? null : widget.data?.lying_with_id ?? 0,
-        customerCode: isCustomized ? '' : widget.data?.laying_with ?? '',
-        customerName: isCustomized ? '' : widget.data?.lying_with_name ?? '',
+        customerId: isCustomized
+            ? loginCustomerId
+            : widget.data?.lying_with_id ?? 0,
+        customerCode: isCustomized
+            ? loginCustomerCode
+            : widget.data?.laying_with ?? '',
+        customerName: isCustomized
+            ? loginCustomerName
+            : widget.data?.lying_with_name ?? '',
         customerBranch: isCustomized
-            ? ''
+            ? loginBranch
             : widget.data?.lying_with_nickname ?? '',
         productType: 'solitaire',
         orderType: 'RCO',
@@ -352,7 +415,10 @@ class _SolitaireCustomiseScreenState
                               ),
 
                               SizedBox(height: 18 * r),
-                              DeliveryBadge(r: r),
+                              DeliveryBadge(
+                                r: r,
+                                deliveryLabel: _deliveryLabel,
+                              ),
                               SizedBox(height: 23 * r),
 
                               // Details tab – shows live calc values;
@@ -702,13 +768,15 @@ class _SolitaireCustomiseScreenState
                       children: [
                         // Default Value button
                         if (widget.data != null)
-                          _DefaultValueButton(
-                            r: r,
-                            isLoading: calcAsync.isLoading,
-                            onTap: _onDefaultValueTapped,
-                          ),
+                          if (calc?.isCustomised ?? false) ...[
+                            _DefaultValueButton(
+                              r: r,
+                              isLoading: calcAsync.isLoading,
+                              onTap: _onDefaultValueTapped,
+                            ),
 
-                        SizedBox(width: 148 * r),
+                            SizedBox(width: 148 * r),
+                          ],
 
                         // Continue button
                         InkWell(
@@ -851,7 +919,12 @@ class _DefaultValueButton extends StatelessWidget {
 
 class DeliveryBadge extends StatelessWidget {
   final double r;
-  const DeliveryBadge({super.key, required this.r});
+  final String deliveryLabel;
+  const DeliveryBadge({
+    super.key,
+    required this.r,
+    required this.deliveryLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -888,7 +961,7 @@ class DeliveryBadge extends StatelessWidget {
           Expanded(
             child: Center(
               child: MyText(
-                'Est delivery 15 days',
+                deliveryLabel,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
