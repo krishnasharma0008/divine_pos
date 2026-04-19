@@ -26,23 +26,26 @@ class SolitaireCalcNotifier extends AsyncNotifier<SolitaireCalcState> {
   // Calculate from a SolitaireDetail directly (initial load + Default Value)
   // ---------------------------------------------------------------------------
   Future<void> calculateFromDetail(SolitaireDetail detail) async {
-    debugPrint(
-      "calculateFromDetail → shape:${detail.shape} "
-      "weight:${detail.weight} color:${detail.color} "
-      "clarity:${detail.clarity} pcs:${detail.pcs}",
-    );
+    final caratRange = '${detail.weight} - ${detail.weight} ct';
+    final colorRange = detail.color;
+    final clarityRange = detail.clarity;
 
     final calcState = SolitaireCalcState(
       detail: detail,
       solitaireShape: detail.shape,
-      caratRange: '${detail.weight} - ${detail.weight} ct',
-      colorRange: detail.color,
-      clarityRange: detail.clarity,
+      caratRange: caratRange,
+      colorRange: colorRange,
+      clarityRange: clarityRange,
+
+      // ✅ Set the baseline so isCustomised getter can compare later
+      initialCaratRange: caratRange,
+      initialColorRange: colorRange,
+      initialClarityRange: clarityRange,
+
       isCustomized: false,
     );
 
     state = const AsyncLoading();
-
     state = await AsyncValue.guard(() async {
       return await _recalculatePrice(calcState);
     });

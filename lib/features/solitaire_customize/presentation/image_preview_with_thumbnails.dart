@@ -263,15 +263,17 @@ class _ImagePreviewWithThumbnailsState
                         ),
                       ),
                     ),
-                    SizedBox(height: 6 * r),
-                    MyText(
-                      'Design No. : ${widget.uid ?? ''}',
-                      style: TextStyle(
-                        fontSize: 11 * r,
-                        fontFamily: 'Rushter Glory',
+                    if (widget.uid != null) ...[
+                      SizedBox(height: 6 * r),
+                      MyText(
+                        'Design No. : ${widget.uid ?? ''}',
+                        style: TextStyle(
+                          fontSize: 11 * r,
+                          fontFamily: 'Rushter Glory',
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 26 * r),
+                      SizedBox(height: 26 * r),
+                    ],
                   ],
                 );
               },
