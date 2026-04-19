@@ -16,6 +16,7 @@ class UltraDropdown<T> extends StatefulWidget {
   final String Function(T? item)? itemAsString;
   final ValueChanged<T> onSelected;
   final String placeholder;
+  final bool isSelected;
 
   const UltraDropdown({
     super.key,
@@ -29,6 +30,7 @@ class UltraDropdown<T> extends StatefulWidget {
     required this.onSelected,
     this.itemAsString,
     this.placeholder = "Select",
+    this.isSelected = false,
   });
 
   @override
@@ -194,16 +196,21 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
         ? widget.placeholder
         : widget.displayBuilder(widget.selectedItem);
 
+    final bool active = widget.isSelected;
+    final Color bgColor = active ? kMint : Colors.white;
+    final Color textColor = active ? Colors.white : kMint;
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: GestureDetector(
         onTap: _toggle,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           width: widget.width * fem,
           height: widget.height,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: bgColor,
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: kMint, width: 0.5),
           ),
@@ -214,7 +221,7 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
                   text,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: kMint,
+                    color: textColor,
                     fontSize: 15 * fem,
                     fontWeight: FontWeight.w600,
                   ),
@@ -222,7 +229,7 @@ class _UltraDropdownState<T> extends State<UltraDropdown<T>>
               ),
               Icon(
                 _isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                color: kMint,
+                color: textColor,
               ),
             ],
           ),

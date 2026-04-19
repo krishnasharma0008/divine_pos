@@ -30,8 +30,11 @@ class TopButtonsRow extends ConsumerStatefulWidget {
 }
 
 class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
-  int _selectedTab = 0;
-  StoreDetail? _selectedBranch;
+  // tracks which of the 4 controls is active — only one at a time
+  // 0 = Products In Store, 1 = Branch, 2 = All Designs, 3 = Sort
+  int _activeControl = 0;
+
+  Object? _selectedBranch;
   String? _selectedSort;
 
   @override
@@ -53,9 +56,9 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
 
                 _PillButton(
                   title: 'Products In Store',
-                  selected: _selectedTab == 0,
+                  selected: _activeControl == 0,
                   width: 178 * fem,
-                  onTap: () => _selectTab(0),
+                  onTap: () => _selectControl(0, tabIndex: 0),
                 ),
 
                 SizedBox(width: 14),
@@ -92,7 +95,8 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
                     'ALL', // All Store
                     ...?widget.branchStores, // real branches
                   ],
-                  selectedItem: _selectedBranch, // ?? 'ALL',
+                  selectedItem: _selectedBranch,
+                  isSelected: _activeControl == 1,
                   placeholder: 'Products At Other Branches',
                   itemBuilder: (item) {
                     if (item is String && item == 'ALL') return 'All Store';
@@ -118,15 +122,13 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
                   },
                   onSelected: (item) {
                     if (item is String && item == 'ALL') {
-                      setState(() {
-                        _selectedBranch = null;
-                      });
-                      widget.onBranchSelected?.call(null); // All Store
+                      _selectControl(1);
+                      setState(() => _selectedBranch = 'ALL');
+                      widget.onBranchSelected?.call(null);
                     } else {
                       final store = item as StoreDetail;
-                      setState(() {
-                        _selectedBranch = store;
-                      });
+                      _selectControl(1);
+                      setState(() => _selectedBranch = store);
                       widget.onBranchSelected?.call(store);
                     }
                   },
@@ -137,9 +139,9 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
                 if (!widget.isSolitaire)
                   _PillButton(
                     title: 'All Designs',
-                    selected: _selectedTab == 1,
+                    selected: _activeControl == 2,
                     width: 155 * fem,
-                    onTap: () => _selectTab(1),
+                    onTap: () => _selectControl(2, tabIndex: 1),
                   )
                 else
                   SizedBox(width: 155 * fem),
@@ -150,10 +152,12 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
                   height: 50 * fem,
                   items: const ['Low to high', 'High to low', 'New Arrivals'],
                   selectedItem: _selectedSort,
+                  isSelected: _activeControl == 3,
                   placeholder: 'Sort by',
                   itemBuilder: (s) => s,
                   displayBuilder: (s) => s ?? 'Sort by',
                   onSelected: (value) {
+                    _selectControl(3);
                     setState(() => _selectedSort = value);
                     widget.onSortSelected?.call(value);
                   },
@@ -166,11 +170,14 @@ class _TopButtonsRowState extends ConsumerState<TopButtonsRow> {
     );
   }
 
-  void _selectTab(int index) {
+  void _selectControl(int controlIndex, {int? tabIndex}) {
     setState(() {
-      _selectedTab = index;
+      _activeControl = controlIndex;
+      // reset non-active controls
+      if (controlIndex != 1) _selectedBranch = null;
+      if (controlIndex != 3) _selectedSort = null;
     });
-    widget.onTabSelected?.call(index);
+    if (tabIndex != null) widget.onTabSelected?.call(tabIndex);
   }
 
   String _branchLabel(StoreDetail item) {
