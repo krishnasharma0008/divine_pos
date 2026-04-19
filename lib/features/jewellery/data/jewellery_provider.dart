@@ -39,8 +39,13 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
     ref.listen(filterProvider, (_, __) {
       if (_isLoadingMore) return;
 
+      // ✅ Immediately show loading so stale data never flashes in the UI
+      // (critical for solitaire: isSolitaire becomes true instantly but
+      //  the old jewellery data would briefly render before debounce fires)
+      state = const AsyncLoading();
+
       _debounce?.cancel();
-      _debounce = Timer(const Duration(milliseconds: 500), resetAndFetch);
+      _debounce = Timer(const Duration(milliseconds: 300), resetAndFetch);
     });
 
     //return _fetchJewellery();

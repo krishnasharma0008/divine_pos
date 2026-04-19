@@ -210,24 +210,19 @@ class _JewelleryListingScreenState
                       ref.read(storeProvider.notifier).selectStore(store);
                       filterNotifier.setProductsAtOtherBranch(store.code);
                     }
-
-                    //jewelleryNotifier.resetAndFetch();
+                    // jewelleryProvider auto-fetches via its internal ref.listen on filterProvider
                   },
                   onSortSelected: (sort) {
                     filterNotifier.setSort(sort);
-                    jewelleryNotifier.resetAndFetch();
+                    // jewelleryProvider auto-fetches via its internal ref.listen on filterProvider
                   },
                   onTabSelected: (tab) {
                     if (tab == 0) {
                       filterNotifier.setProductsInStore();
-                    }
-                    // else if (tab == 1) {
-                    //   filterNotifier.setAllStore();
-                    // }
-                    else if (tab == 1) {
+                    } else if (tab == 1) {
                       filterNotifier.setAllDesigns();
                     }
-                    //jewelleryNotifier.resetAndFetch();
+                    // jewelleryProvider auto-fetches via its internal ref.listen on filterProvider
                   },
                 ),
 
@@ -263,6 +258,7 @@ class _JewelleryListingScreenState
                                   //   )
                                   //── SOLITAIRE VIEW ──────────────────────
                                   ? jewelleryAsync.when(
+                                      // overlay handles the spinner — SizedBox keeps it clean
                                       loading: () => const SizedBox(),
                                       error: (err, _) => Center(
                                         child: MyText(
