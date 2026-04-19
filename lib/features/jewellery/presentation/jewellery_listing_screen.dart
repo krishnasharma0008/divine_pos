@@ -158,7 +158,7 @@ class _JewelleryListingScreenState
         storeState.isLoading ||
         (jewelleryAsync.isLoading && !jewelleryNotifier.isLoadingMore);
 
-    final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
+    //final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -181,7 +181,7 @@ class _JewelleryListingScreenState
           ),
           AppBarActionConfig(
             type: AppBarAction.cart,
-            badgeCount: cartCount,
+            //badgeCount: cartCount,
             onTap: () => context.pushNamed(
               RoutePages.cart.routeName,
             ), //context.push('/cart'),

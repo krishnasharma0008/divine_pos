@@ -115,7 +115,7 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
           ),
           AppBarActionConfig(
             type: AppBarAction.cart,
-            badgeCount: 0,
+            //badgeCount: 0,
             onTap: () => context.pushNamed(RoutePages.cart.routeName),
           ),
         ],

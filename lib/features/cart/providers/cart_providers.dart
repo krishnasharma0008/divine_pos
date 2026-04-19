@@ -63,6 +63,17 @@ final filteredCartProvider = Provider<List<CartDetail>>((ref) {
   );
 });
 
+// ↓ CART ITEM COUNT PROVIDER
+final cartItemCountProvider = Provider<int>((ref) {
+  return ref
+      .watch(cartNotifierProvider)
+      .when(
+        data: (items) => items.length,
+        loading: () => 0,
+        error: (_, __) => 0,
+      );
+});
+
 class CartNotifier extends AsyncNotifier<List<CartDetail>> {
   List<CartDetail> _cartData = [];
   List<int> _selectedItems = [];

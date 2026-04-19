@@ -45,9 +45,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final fem = ScaleSize.aspectRatio;
 
     // cart item count
-    final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
+    //final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
 
-    debugPrint('cart count is : $cartCount');
+    //debugPrint('cart count is : $cartCount');
 
     return Scaffold(
       key: _scaffoldKey,
@@ -81,7 +81,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           AppBarActionConfig(
             type: AppBarAction.cart,
-            badgeCount: cartCount,
+            //badgeCount: cartCount,
             onTap: () {
               //context.push('/cart');
               context.pushNamed(RoutePages.cart.routeName);

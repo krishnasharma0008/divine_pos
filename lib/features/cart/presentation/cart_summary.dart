@@ -2,6 +2,7 @@ import 'package:divine_pos/constants/tax_constants.dart';
 import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../shared/utils/currency_formatter.dart';
 import '../data/cart_detail_model.dart';
 
@@ -62,6 +63,17 @@ class CartSummaryPanel extends StatelessWidget {
     // ✅ combine all items shown in summary
     final allItems = [...orderProducts, ...readyProducts];
 
+    // Get the latest (max) expDlvDate across all items
+    final maxExpDlvDate = allItems
+        .map((item) => item.expDlvDate)
+        .where((d) => d != null && d.trim().isNotEmpty)
+        .map((d) => DateTime.tryParse(d!))
+        .whereType<DateTime>()
+        .fold<DateTime?>(
+          null,
+          (max, date) => max == null || date.isAfter(max) ? date : max,
+        );
+
     return Dialog(
       backgroundColor: Colors.white,
       clipBehavior: Clip.hardEdge,
@@ -98,28 +110,14 @@ class CartSummaryPanel extends StatelessWidget {
                               for (int i = 0; i < orderProducts.length; i++)
                                 _buildProductCard(
                                   itemNumber: '${i + 1}',
-                                  productName:
-                                      '${orderProducts[i].productCategory ?? ''} - ${orderProducts[i].productCode ?? ''}',
-                                  priceRange:
-                                      orderProducts[i].productAmtMin == null &&
-                                          orderProducts[i].productAmtMax == null
-                                      ? '-'
-                                      : orderProducts[i].productAmtMin !=
-                                                null &&
-                                            orderProducts[i].productAmtMax !=
-                                                null &&
-                                            orderProducts[i].productAmtMin ==
-                                                orderProducts[i].productAmtMax
-                                      ? orderProducts[i].productAmtMin!
-                                            .inRupeesFormat()
-                                      : orderProducts[i].productAmtMin !=
-                                                null &&
-                                            orderProducts[i].productAmtMax !=
-                                                null
-                                      ? '${orderProducts[i].productAmtMin!.inRupeesFormat()} - ${orderProducts[i].productAmtMax!.inRupeesFormat()}'
-                                      : orderProducts[i].productAmtMax != null
-                                      ? 'Up to ${orderProducts[i].productAmtMax!.inRupeesFormat()}'
-                                      : 'From ${orderProducts[i].productAmtMin!.inRupeesFormat()}',
+                                  productName: _formatProductName(
+                                    orderProducts[i].productCategory,
+                                    orderProducts[i].productCode,
+                                  ),
+                                  priceRange: _formatPriceRange(
+                                    orderProducts[i].productAmtMin,
+                                    orderProducts[i].productAmtMax,
+                                  ),
                                   description:
                                       'Divine Solitaire: ${orderProducts[i].solitaireShape ?? ''} '
                                       '${orderProducts[i].solitaireSlab ?? ''} '
@@ -141,32 +139,18 @@ class CartSummaryPanel extends StatelessWidget {
                               for (int i = 0; i < readyProducts.length; i++)
                                 _buildProductCard(
                                   itemNumber: '${i + 1}',
-                                  productName:
-                                      '${readyProducts[i].productCategory ?? ''} - ${readyProducts[i].productCode ?? ''}',
+                                  productName: _formatProductName(
+                                    readyProducts[i].productCategory,
+                                    readyProducts[i].productCode,
+                                  ),
                                   // priceRange: _formatPriceRange(
                                   //   readyProducts[i].productAmtMin,
                                   //   readyProducts[i].productAmtMax,
                                   // ),
-                                  priceRange:
-                                      readyProducts[i].productAmtMin == null &&
-                                          readyProducts[i].productAmtMax == null
-                                      ? '-'
-                                      : readyProducts[i].productAmtMin !=
-                                                null &&
-                                            readyProducts[i].productAmtMax !=
-                                                null &&
-                                            readyProducts[i].productAmtMin ==
-                                                readyProducts[i].productAmtMax
-                                      ? readyProducts[i].productAmtMin!
-                                            .inRupeesFormat()
-                                      : readyProducts[i].productAmtMin !=
-                                                null &&
-                                            readyProducts[i].productAmtMax !=
-                                                null
-                                      ? '${readyProducts[i].productAmtMin!.inRupeesFormat()} - ${readyProducts[i].productAmtMax!.inRupeesFormat()}'
-                                      : readyProducts[i].productAmtMax != null
-                                      ? 'Up to ${readyProducts[i].productAmtMax!.inRupeesFormat()}'
-                                      : 'From ${readyProducts[i].productAmtMin!.inRupeesFormat()}',
+                                  priceRange: _formatPriceRange(
+                                    readyProducts[i].productAmtMin,
+                                    readyProducts[i].productAmtMax,
+                                  ),
                                   description:
                                       'Divine Solitaire: ${readyProducts[i].solitaireShape ?? ''} '
                                       '${readyProducts[i].solitaireSlab ?? ''} '
@@ -197,7 +181,7 @@ class CartSummaryPanel extends StatelessWidget {
                     ),
 
                     // Delivery Info
-                    _buildDeliveryInfo(fem),
+                    _buildDeliveryInfo(fem, maxExpDlvDate),
                   ],
                 ),
               ),
@@ -221,6 +205,42 @@ class CartSummaryPanel extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Formats min/max price into a clean string.
+  /// Treats both null and 0 as "not available".
+  ///
+  ///  min & max both absent  →  '-'
+  ///  min == max             →  '₹74,932'
+  ///  only min               →  'From ₹74,932'
+  ///  only max               →  'Up to ₹80,000'
+  ///  both present           →  '₹74,932 - ₹80,000'
+  String _formatPriceRange(num? min, num? max) {
+    final hasMin = min != null && min != 0;
+    final hasMax = max != null && max != 0;
+
+    if (!hasMin && !hasMax) return '-';
+    if (hasMin && hasMax && min == max) return min!.inRupeesFormat();
+    if (hasMin && hasMax)
+      return '${min!.inRupeesFormat()} - ${max!.inRupeesFormat()}';
+    if (hasMin) return 'From ${min!.inRupeesFormat()}';
+    return 'Up to ${max!.inRupeesFormat()}';
+  }
+
+  /// Formats category + code into a clean title.
+  /// Drops the ' - ' separator if category is null/empty.
+  ///
+  ///  category & code both present  →  'EARRING - DEF8634'
+  ///  only code                     →  'DEF8634'
+  ///  only category                 →  'EARRING'
+  ///  both absent                   →  ''
+  String _formatProductName(String? category, String? code) {
+    final parts = [
+      category?.trim() ?? '',
+      code?.trim() ?? '',
+    ].where((s) => s.isNotEmpty).toList();
+
+    return parts.join(' - ');
   }
 
   Widget _buildHeader(double fem, BuildContext context) {
@@ -544,7 +564,7 @@ class CartSummaryPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildDeliveryInfo(double fem) {
+  Widget _buildDeliveryInfo(double fem, DateTime? maxExpDlvDate) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 32 * fem, vertical: 10 * fem),
       child: Container(
@@ -581,7 +601,9 @@ class CartSummaryPanel extends StatelessWidget {
                     ),
                   ),
                   MyText(
-                    '20-11-2025',
+                    maxExpDlvDate != null
+                        ? DateFormat('dd-MM-yyyy').format(maxExpDlvDate)
+                        : 'N/A',
                     style: TextStyle(
                       fontSize: 15 * fem,
                       color: Color(0xFF155CFB),

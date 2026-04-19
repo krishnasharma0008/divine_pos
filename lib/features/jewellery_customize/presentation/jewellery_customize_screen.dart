@@ -251,7 +251,7 @@ class _JewelleryCustomiseScreenState
             detail.productSubCategory == 'Solitaire Coin' ||
             detail.productSubCategory == 'Locket';
 
-        final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
+        //final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
 
         // ── Price display resolved here ─────────────────────────────────────
         // Initial load / reset  → approxPriceFrom only
@@ -268,7 +268,7 @@ class _JewelleryCustomiseScreenState
             actions: [
               AppBarActionConfig(
                 type: AppBarAction.cart,
-                badgeCount: cartCount,
+                //badgeCount: cartCount,
                 onTap: () => context.pushNamed(RoutePages.cart.routeName),
               ),
             ],

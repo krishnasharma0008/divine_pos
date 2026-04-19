@@ -1,3 +1,4 @@
+import 'package:divine_pos/features/cart/providers/cart_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,7 +83,7 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
           ],
         ),
 
-        actions: _buildActions(context, fem),
+        actions: _buildActions(context, fem, ref),
       ),
     );
   }
@@ -124,7 +125,7 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
   /// ACTIONS
   //////////////////////////////////////////////////
 
-  List<Widget> _buildActions(BuildContext context, double fem) {
+  List<Widget> _buildActions(BuildContext context, double fem, WidgetRef ref) {
     final List<Widget> widgets = [];
 
     for (final action in actions) {
@@ -159,8 +160,9 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
         case AppBarAction.cart:
           widgets.add(
             _cartAction(
+              ref: ref,
               fem: fem,
-              badgeCount: action.badgeCount,
+              //badgeCount: action.badgeCount,
               onTap: action.onTap,
             ),
           );
@@ -262,10 +264,13 @@ class MyAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   // cart action
   Widget _cartAction({
+    required WidgetRef ref,
     required double fem,
     required VoidCallback? onTap,
-    int badgeCount = 0,
+    //int badgeCount = 0,
   }) {
+    final badgeCount = ref.watch(cartItemCountProvider); // ← live count
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 6 * fem, vertical: 9 * fem),
       child: GestureDetector(
