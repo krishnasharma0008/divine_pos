@@ -81,17 +81,6 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     DiamondShape(value: 'Heart', assetPath: 'assets/diamond_value/heart.png'),
   ];
 
-  // String? getShapeAsset(String? shape) {
-  //   if (shape == null) return null;
-
-  //   final match = allShapes.firstWhere(
-  //     (s) => s.value.toLowerCase() == shape.toLowerCase(),
-  //     orElse: () => const DiamondShape(value: '', assetPath: ''),
-  //   );
-
-  //   return match.assetPath.isEmpty ? null : match.assetPath;
-  // }
-
   String? getShapeAsset(String? shape) {
     if (shape == null) return null;
 
@@ -103,7 +92,7 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
       'RADQ' => 'Radiant',
       'CUSQ' => 'Cushion',
       'HRT' => 'Heart',
-      _ => shape.trim(), // whatever string comes from API, e.g. "Round"
+      _ => shape.trim(),
     };
 
     final match = allShapes.firstWhere(
@@ -112,6 +101,27 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     );
 
     return match.assetPath.isEmpty ? null : match.assetPath;
+  }
+
+  /// Resolves the image path/URL to display for a cart item.
+  ///
+  /// Priority:
+  ///   1. `image_url` from API  — used for ALL product types when available.
+  ///   2. Diamond shape asset   — fallback only when image_url is absent AND
+  ///                              product type is 'solitaire'.
+  ///   3. null                  — _buildImage falls back to No_Image_Available.jpg.
+  String? _resolveImageSource(CartDetail item) {
+    final hasNetworkImage =
+        item.imageUrl != null && item.imageUrl!.trim().isNotEmpty;
+
+    if (hasNetworkImage) return item.imageUrl;
+
+    final isSolitaire =
+        (item.productType ?? '').trim().toLowerCase() == 'solitaire';
+
+    if (isSolitaire) return getShapeAsset(item.solitaireShape);
+
+    return null;
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -156,12 +166,18 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
   }
 
   Widget _buildDetails(CartDetail item, CartNotifier notifier, double fem) {
+    final titleParts = [
+      item.productCategory ?? '',
+      item.productSubCategory ?? '',
+    ].where((s) => s.trim().isNotEmpty).toList();
+
+    final title = '${titleParts.join(' - ')} ${item.productCode ?? ''}'.trim();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        //if (item.productType != 'solitaire') ...[
         MyText(
-          '${item.productSubCategory ?? ''} ${item.productSubCategory ?? ' - '} ${item.productCode ?? ''}',
+          title,
           style: TextStyle(
             color: const Color(0xFF0A0A0A),
             fontSize: 18 * fem,
@@ -170,7 +186,6 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
             height: 1.56,
           ),
         ),
-        //],
         const SizedBox(height: 6),
         ...[
           'Divine Solitaire ${item.solitaireShape ?? ''}  ${(item.solitaireSlab ?? '')} '
@@ -198,7 +213,6 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
           ),
         ),
         SizedBox(height: 14 * fem),
-        //_buildQtyControl(item, notifier, fem),
       ],
     );
   }
@@ -265,8 +279,16 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
 
     if (min == 0 && max == 0) return null;
 
+    // Build price parts, filtering out zero values
+    final priceParts = [
+      if (min != 0) min.inRupeesFormat(),
+      if (max != 0) max.inRupeesFormat(),
+    ];
+
+    final priceText = priceParts.join(' - ');
+
     return MyText(
-      '${min == 0 ? '' : min.inRupeesFormat()} ${min == 0 ? '' : '-'} ${max == 0 ? '' : max.inRupeesFormat()}',
+      priceText,
       style: TextStyle(
         color: const Color(0xFF0A0A0A),
         fontSize: 24 * fem,
@@ -419,11 +441,12 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                (currentItem.productType ?? '').toLowerCase() == "jewellery"
-                    ? _buildImage(currentItem.imageUrl)
-                    : _buildImage(getShapeAsset(currentItem.solitaireShape)),
+                // ── Image: API image_url takes priority for ALL product types.
+                // Diamond shape asset is used only as a fallback for solitaire
+                // when image_url is absent. Everything else falls back to
+                // No_Image_Available.jpg via _buildImage.
+                _buildImage(_resolveImageSource(currentItem)),
 
-                //_buildImage(currentItem.imageUrl),
                 SizedBox(width: 24 * fem),
                 Expanded(
                   child: Column(

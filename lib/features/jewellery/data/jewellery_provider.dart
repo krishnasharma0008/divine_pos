@@ -191,11 +191,11 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
       };
 
       //debugPrint("🔄 Fetching jewellery - Page: $_page");
-      //debugPrint("📦 Post Data: ${jsonEncode(postData)}");
+      debugPrint("📦 Post Data: ${jsonEncode(postData)}");
 
-      // debugPrint(
-      //   '🌐cataloge URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_listing}',
-      // );
+      debugPrint(
+        '🌐cataloge URL => ${dio.options.baseUrl}${ApiEndPoint.get_jewellery_listing}',
+      );
 
       final response = await dio
           .post(ApiEndPoint.get_jewellery_listing, data: postData)

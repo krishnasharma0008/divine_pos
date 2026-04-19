@@ -145,10 +145,18 @@ class _JewelleryCustomiseScreenState
 
       final cartItem = await notifier.buildCartPayload(
         orderCustomer: customer,
-        customerCode: isCustomised ? loginCustomerCode : customercode,
-        customerName: isCustomised ? loginCustomerName : customername,
-        branch: isCustomised ? loginBranch : branch,
-        customerId: isCustomised ? loginCustomerId : customerid,
+        customerCode: isCustomised
+            ? loginCustomerCode
+            : (customercode.isEmpty ? loginCustomerCode : customercode),
+        customerName: isCustomised
+            ? loginCustomerName
+            : (customername.isEmpty ? loginCustomerName : customername),
+        branch: isCustomised
+            ? loginBranch
+            : (branch.isEmpty ? loginBranch : branch),
+        customerId: isCustomised
+            ? loginCustomerId
+            : (customerid ?? loginCustomerId),
       );
 
       if (cartItem == null) return;
