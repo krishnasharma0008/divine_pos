@@ -211,7 +211,8 @@ class _ImagePreviewWithThumbnailsState
                     ),
                     SizedBox(height: 6 * r),
                     MyText(
-                      'Design No. : ${widget.uid ?? ''}',
+                      'Design No. : ${widget.productCode ?? ''}'
+                      '${(widget.uid?.isNotEmpty ?? false) && widget.uid != widget.productCode ? ' | UID: ${widget.uid}' : ''}',
                       style: TextStyle(
                         fontSize: 11 * r,
                         fontFamily: 'Rushter Glory',

@@ -8,6 +8,7 @@ import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../provider/verify_track_providers.dart';
 
@@ -40,13 +41,11 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
   @override
   void initState() {
     super.initState();
-    // Mirror of JS useEffect on mount — auto-search if portfolio UID stored
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkPortfolioUid());
   }
 
   Future<void> _checkPortfolioUid() async {
     // TODO: replace with your portfolioStorageService
-    // final storedUid = ref.read(portfolioStorageProvider).getPortfolioUid();
     const String? storedUid = null;
 
     if (storedUid != null && storedUid.isNotEmpty) {
@@ -95,33 +94,24 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
     final uidController = ref.watch(uidControllerProvider);
     final isLoading = ref.watch(verifyTrackProvider.select((s) => s.isLoading));
     final fem = ScaleSize.aspectRatio;
+
     return Scaffold(
       backgroundColor: AppColors.bgGrey,
-
-      // ---- Swap with your shared MyAppBar ----
       appBar: MyAppBar(
         appBarLeading: AppBarLeading.drawer,
         showLogo: true,
         actions: [
           AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
-          // AppBarActionConfig(
-          //   type: AppBarAction.notification,
-          //   badgeCount: ref.watch(authProvider).user?.cartCount ?? 0,
-          //   onTap: () {},
-          // ),
           AppBarActionConfig(
             type: AppBarAction.profile,
             onTap: () => context.push('/profile'),
           ),
           AppBarActionConfig(
             type: AppBarAction.cart,
-            //badgeCount: 0,
             onTap: () => context.pushNamed(RoutePages.cart.routeName),
           ),
         ],
       ),
-
-      // ---- Swap with your SideDrawer ----
       drawer: SideDrawer(),
       body: SafeArea(
         child: Stack(
@@ -157,28 +147,46 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
                               ),
                               SizedBox(height: fem * 16),
                               _SubmitButton(
-                                //isLoading: isLoading,
                                 onPressed: () => _doSearch(uidController.text),
                               ),
                               SizedBox(height: fem * 20),
-                              _OrDivider(),
+                              const _OrDivider(),
                               SizedBox(height: fem * 16),
-                              // _QrScannerFrame(),
-                              // SizedBox(height: fem * 16),
                               _ScanQrButton(
                                 isLoading: isLoading,
                                 onPressed: isLoading
                                     ? null
-                                    : () {
-                                        // On result: _doSearch(scannedUid)
-                                        debugPrint('Open QR scanner');
+                                    : () async {
+                                        final scannedUid =
+                                            await showModalBottomSheet<String>(
+                                              context: context,
+                                              isScrollControlled: true,
+                                              backgroundColor:
+                                                  Colors.transparent,
+                                              builder: (_) =>
+                                                  const _QrBottomSheet(),
+                                            );
+
+                                        if (scannedUid != null &&
+                                            scannedUid.isNotEmpty) {
+                                          final controller = ref.read(
+                                            uidControllerProvider,
+                                          );
+                                          controller.value = TextEditingValue(
+                                            text: scannedUid,
+                                            selection: TextSelection.collapsed(
+                                              offset: scannedUid.length,
+                                            ),
+                                          );
+                                          await _doSearch(scannedUid);
+                                        }
                                       },
                               ),
                             ],
                           ),
                         ),
                         SizedBox(height: fem * 20),
-                        _AboutCard(),
+                        const _AboutCard(),
                       ],
                     ),
                   ),
@@ -186,7 +194,7 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
               ),
             ),
 
-            // Full-screen loader — mirrors JS showLoader/hideLoader
+            // Full-screen loader
             if (isLoading) const _LoaderOverlay(),
           ],
         ),
@@ -331,7 +339,6 @@ class _SubmitButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fem = ScaleSize.aspectRatio;
-
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: fem * 400),
@@ -363,7 +370,7 @@ class _SubmitButton extends StatelessWidget {
                   )
                 : MyText(
                     'SUBMIT',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 2,
@@ -430,10 +437,7 @@ class _ScanQrButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Image.asset('assets/vtdia/barcode_big.jpeg'),
-
               SizedBox(height: fem * 16),
-
-              // Custom button container
               Container(
                 height: fem * 40,
                 padding: EdgeInsets.symmetric(horizontal: fem * 16),
@@ -446,15 +450,12 @@ class _ScanQrButton extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.qr_code_scanner, size: 18),
-
                     SizedBox(width: fem * 8),
-
                     MyText(
                       'Scan QR Code',
                       style: TextStyle(
                         fontSize: fem * 14,
                         fontWeight: FontWeight.w600,
-                        //letterSpacing: 0.4,
                       ),
                     ),
                   ],
@@ -467,6 +468,164 @@ class _ScanQrButton extends StatelessWidget {
     );
   }
 }
+
+// =============================================================================
+// QR Bottom Sheet
+// =============================================================================
+
+class _QrBottomSheet extends StatefulWidget {
+  const _QrBottomSheet();
+
+  @override
+  State<_QrBottomSheet> createState() => _QrBottomSheetState();
+}
+
+class _QrBottomSheetState extends State<_QrBottomSheet> {
+  final MobileScannerController _controller = MobileScannerController();
+  bool _handled = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_handled) return;
+    final value = capture.barcodes.firstOrNull?.rawValue?.trim();
+    if (value == null || value.isEmpty) return;
+
+    _handled = true;
+    _controller.stop();
+    Navigator.pop(context, value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white24,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Title
+          const Text(
+            'Scan QR Code',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const Spacer(),
+
+          // Centered scanner square
+          SizedBox(
+            width: 260,
+            height: 260,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  MobileScanner(controller: _controller, onDetect: _onDetect),
+                  // Corner brackets overlay
+                  CustomPaint(
+                    size: const Size(260, 260),
+                    painter: _ScannerOverlayPainter(color: AppColors.mintGreen),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const Spacer(),
+
+          // Hint
+          const Padding(
+            padding: EdgeInsets.only(bottom: 32),
+            child: Text(
+              'Point at a QR code to scan automatically',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white54, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Scanner Corner Brackets Painter
+// =============================================================================
+
+class _ScannerOverlayPainter extends CustomPainter {
+  const _ScannerOverlayPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    const corner = 28.0;
+
+    final corners = [
+      // top-left
+      [Offset(0, corner), Offset.zero, Offset(corner, 0)],
+      // top-right
+      [
+        Offset(size.width - corner, 0),
+        Offset(size.width, 0),
+        Offset(size.width, corner),
+      ],
+      // bottom-left
+      [
+        Offset(0, size.height - corner),
+        Offset(0, size.height),
+        Offset(corner, size.height),
+      ],
+      // bottom-right
+      [
+        Offset(size.width - corner, size.height),
+        Offset(size.width, size.height),
+        Offset(size.width, size.height - corner),
+      ],
+    ];
+
+    for (final pts in corners) {
+      final path = Path()
+        ..moveTo(pts[0].dx, pts[0].dy)
+        ..lineTo(pts[1].dx, pts[1].dy)
+        ..lineTo(pts[2].dx, pts[2].dy);
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ScannerOverlayPainter old) => old.color != color;
+}
+
+// =============================================================================
+// About Card & Loader
+// =============================================================================
 
 class _AboutCard extends StatelessWidget {
   const _AboutCard();
@@ -503,7 +662,7 @@ class _AboutCard extends StatelessWidget {
               SizedBox(width: fem * 10),
               MyText(
                 'About Verify & Track',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.4,
@@ -520,7 +679,7 @@ class _AboutCard extends StatelessWidget {
             "Divine Solitaires, know its journey from mining to the finished product, avail a "
             "one-year free insurance and a lot more!.",
             textAlign: TextAlign.justify,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               color: AppColors.textMid,
               height: 1.7,

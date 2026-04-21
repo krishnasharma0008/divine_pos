@@ -300,6 +300,7 @@ class JewelleryCalculationService {
     required JewelleryDetail detail,
     required int qty,
     required bool isCustomised,
+    required bool isStoreProduct,
     required Future<double> Function({
       required String itemGroup,
       String? slab,
@@ -394,8 +395,8 @@ class JewelleryCalculationService {
       String fromClarity = '';
       String toClarity = '';
 
-      if (isCustomised == false) {
-        debugPrint('Entering non-customised logic branch');
+      if (isStoreProduct == false && isCustomised == false) {
+        debugPrint('Entering non-store product non-customised logic branch');
         if (isFancy && bomCaratFrom >= 0.10 && bomCaratTo <= 0.17) {
           bomColorMin = 'GH';
           bomColorMax = 'EF';
@@ -431,6 +432,19 @@ class JewelleryCalculationService {
         toColor = getSolitaireColor(bomColorMax);
         fromClarity = bomClarityMin;
         toClarity = bomClarityMax;
+      } else if (isStoreProduct == true && isCustomised == false) {
+        debugPrint('Entering store product non-customised logic branch');
+        if (shapeCode == 'RND') {
+          bomColorMin = parts[4];
+          bomColorMax = parts[4];
+          bomClarityMin = parts[5];
+          bomClarityMax = parts[5];
+
+          fromColor = getSolitaireColor(bomColorMin);
+          toColor = getSolitaireColor(bomColorMax);
+          fromClarity = bomClarityMin;
+          toClarity = bomClarityMax;
+        }
       } else {
         debugPrint('Entering customised logic branch');
         if (isFancy && bomCaratFrom >= 0.10 && bomCaratTo <= 0.17) {
@@ -482,7 +496,9 @@ class JewelleryCalculationService {
 
       final priceFrom = await fetchPrice(
         itemGroup: 'SOLITAIRE',
-        slab: bomCaratFrom.toStringAsFixed(2),
+        slab: isStoreProduct == true && isCustomised == false
+            ? row.avgWeight.toStringAsFixed(2)
+            : bomCaratFrom.toStringAsFixed(2),
         shape: shapeCode,
         color: fromColor,
         quality: fromClarity,
@@ -490,7 +506,9 @@ class JewelleryCalculationService {
 
       final priceTo = await fetchPrice(
         itemGroup: 'SOLITAIRE',
-        slab: bomCaratTo.toStringAsFixed(2),
+        slab: isStoreProduct == true && isCustomised == false
+            ? row.avgWeight.toStringAsFixed(2)
+            : bomCaratTo.toStringAsFixed(2),
         shape: shapeCode,
         color: toColor,
         quality: toClarity,
@@ -506,8 +524,23 @@ class JewelleryCalculationService {
       mcolour.add('$fromColor-$toColor');
       mclarity.add('$toClarity-$fromClarity');
 
-      amountFrom += priceFrom * bomCaratFrom * qty * pcs;
-      amountTo += priceTo * bomCaratTo * qty * pcs;
+      // amountFrom += priceFrom * bomCaratFrom * qty * pcs;
+      // amountTo += priceTo * bomCaratTo * qty * pcs;
+      amountFrom +=
+          priceFrom *
+          (isStoreProduct == true && isCustomised == false
+              ? row.avgWeight
+              : bomCaratFrom) *
+          qty *
+          pcs;
+
+      amountTo +=
+          priceTo *
+          (isStoreProduct == true && isCustomised == false
+              ? row.avgWeight
+              : bomCaratTo) *
+          qty *
+          pcs;
     }
 
     return (

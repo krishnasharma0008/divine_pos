@@ -110,6 +110,18 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         layingWith = pjcode;
       }
 
+      String? sortby;
+
+      if (filter.sortBy == 'Low to high') {
+        sortby = 'low_to_high';
+      } else if (filter.sortBy == 'High to low') {
+        sortby = 'high_to_low';
+      } else if (filter.sortBy == 'New Arrivals') {
+        sortby = 'new_arrival';
+      } else {
+        sortby = null; // default sorting
+      }
+
       // debugPrint("Button Type : ${filter.allDesigns}");
       // debugPrint("layingWith : $layingWith");
       //debugPrint("Sort by : ${filter.sortBy}");
@@ -183,7 +195,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
         "occasions": filter.selectedOccasions.isEmpty
             ? null
             : filter.selectedOccasions.join(","),
-        "sort_by": filter.sortBy,
+        "sort_by": sortby, // ✅ include sortBy in post data
         if (layingWith != null)
           "laying_with": layingWith, //"laying_with": layingWith,
 
