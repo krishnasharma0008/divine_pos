@@ -106,11 +106,41 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   void _onShapeChanged(DiamondShape shape) {
     final newConfig = _config.copyWith(shape: shape, caratIndex: 4);
     final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
+
+    // Reset carat field to the new default
+    _caratController.text = normalized.caratDouble.toStringAsFixed(2);
+    setState(() => _caratError = null);
+
     _updateConfig(normalized);
   }
 
   void _onYellowShapeChanged(String yellowShape) {
-    _updateConfig(_config.copyWith(yellowShape: yellowShape));
+    final newConfig = _config.copyWith(yellowShape: yellowShape, caratIndex: 4);
+
+    _caratController.text = newConfig.caratDouble.toStringAsFixed(2);
+    setState(() => _caratError = null);
+
+    _updateConfig(newConfig);
+  }
+
+  // -------------------------------------------------------------------------
+  // Carat validation helpers
+  // -------------------------------------------------------------------------
+  ({double min, double max}) _caratBounds() {
+    final isRound = _config.shape == DiamondShape.round;
+
+    if (_config.shapeType == ShapeType.regular) {
+      return isRound ? (min: 0.10, max: 2.99) : (min: 0.10, max: 1.23);
+    } else if (solusShapes.contains(_config.yellowShape)) {
+      return (min: 0.18, max: 1.50);
+    }
+
+    return (min: 0.10, max: 2.99); // fallback
+  }
+
+  String _caratValidationMessage() {
+    final b = _caratBounds();
+    return 'Enter a value between ${b.min.toStringAsFixed(2)} and ${b.max.toStringAsFixed(2)}';
   }
 
   // -------------------------------------------------------------------------
@@ -118,22 +148,23 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   // -------------------------------------------------------------------------
   void _onCaratChanged(String raw) {
     final value = double.tryParse(raw);
+    final bounds = _caratBounds();
 
-    if (value == null || value < 0.10 || value > 10.0) {
-      setState(() {
-        _caratError = 'Enter a value between 0.10 and 10.00';
-      });
+    if (value == null || value < bounds.min || value > bounds.max) {
+      setState(() => _caratError = _caratValidationMessage());
       return;
     }
 
     setState(() => _caratError = null);
 
-    // Snap to the nearest caratSteps index
+    // Clamp to bounds before snapping to nearest caratSteps index
+    final clamped = value.clamp(bounds.min, bounds.max);
+
     int closest = 0;
     double minDiff = double.infinity;
     for (int i = 0; i < caratSteps.length; i++) {
       final stepVal = double.tryParse(caratSteps[i]) ?? 0;
-      final diff = (stepVal - value).abs();
+      final diff = (stepVal - clamped).abs();
       if (diff < minDiff) {
         minDiff = diff;
         closest = i;
@@ -283,7 +314,7 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
               color: const Color(0xFF2A2A2A),
             ),
             decoration: InputDecoration(
-              hintText: '0.10 – 10.00',
+              hintText: '0.10 – 2.99',
               hintStyle: TextStyle(
                 color: const Color(0xFFAAAAAA),
                 fontSize: 14 * fem,
