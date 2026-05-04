@@ -99,6 +99,8 @@ class FilterNotifier extends Notifier<FilterState> {
   void toggleCategory(String v) {
     final value = v.toLowerCase();
 
+    //debugPrint('Toggling category: $v');
+
     // 1) Handle Solitaire specially
     if (value == 'solitaires') {
       final alreadySelected = state.selectedCategory.contains(v);
@@ -218,7 +220,7 @@ class FilterNotifier extends Notifier<FilterState> {
 
   void setCategory(String value) {
     state = state.copyWith(selectedCategory: {value});
-    //debugPrint('Selected Category : $value');
+    debugPrint('Selected Category : $value');
     // if (value.toLowerCase() == 'solitaire') {
     //   applySolitaireCategory();
     // } else {

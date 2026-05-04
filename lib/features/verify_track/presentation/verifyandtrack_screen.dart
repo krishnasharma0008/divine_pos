@@ -1,4 +1,5 @@
 import 'package:divine_pos/features/auth/data/auth_notifier.dart';
+import 'package:divine_pos/features/feedback_form/presentation/step_indicator.dart';
 import 'package:divine_pos/shared/app_bar.dart';
 import 'package:divine_pos/shared/routes/app_drawer.dart';
 import 'package:divine_pos/shared/routes/route_pages.dart';
@@ -80,11 +81,13 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: MyText(message),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: EdgeInsets.all(16 * fem),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8 * fem),
+        ),
       ),
     );
   }
@@ -481,8 +484,11 @@ class _QrBottomSheet extends StatefulWidget {
 }
 
 class _QrBottomSheetState extends State<_QrBottomSheet> {
-  final MobileScannerController _controller = MobileScannerController();
-  bool _handled = false;
+  final MobileScannerController _controller = MobileScannerController(
+    facing: CameraFacing.back,
+  );
+  bool _isFrontCamera = false;
+  String? _scannedValue; // null = still scanning, non-null = value detected
 
   @override
   void dispose() {
@@ -491,78 +497,276 @@ class _QrBottomSheetState extends State<_QrBottomSheet> {
   }
 
   void _onDetect(BarcodeCapture capture) {
-    if (_handled) return;
-    final value = capture.barcodes.firstOrNull?.rawValue?.trim();
-    if (value == null || value.isEmpty) return;
+    if (_scannedValue != null) return; // already captured
+    final raw = capture.barcodes.firstOrNull?.rawValue?.trim();
+    if (raw == null || raw.isEmpty) return;
 
-    _handled = true;
+    // If the scanned value is a URL, extract only the last path segment as the UID.
+    // e.g. "https://www.divinesolitaires.com/track/jewellery/17T8F" → "17T8F"
+    String value = raw;
+    if (raw.contains('/')) {
+      final uri = Uri.tryParse(raw);
+      final segments = (uri != null ? uri.pathSegments : raw.split('/'))
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (segments.isNotEmpty) value = segments.last;
+    }
+
     _controller.stop();
-    Navigator.pop(context, value);
+    if (mounted) Navigator.pop(context, value);
+  }
+
+  Future<void> _toggleCamera() async {
+    await _controller.switchCamera();
+    setState(() => _isFrontCamera = !_isFrontCamera);
+  }
+
+  void _rescan() {
+    setState(() => _scannedValue = null);
+    _controller.start();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.6,
-      decoration: const BoxDecoration(
+      height: MediaQuery.of(context).size.height * 0.72,
+      decoration: BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20 * fem)),
       ),
       child: Column(
         children: [
           // Handle bar
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 10),
-            width: 40,
-            height: 4,
+            margin: EdgeInsets.symmetric(vertical: 10 * fem),
+            width: 40 * fem,
+            height: 4 * fem,
             decoration: BoxDecoration(
               color: Colors.white24,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(2 * fem),
             ),
           ),
 
-          // Title
-          const Text(
-            'Scan QR Code',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+          // Title row with camera flip button
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16 * fem),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                MyText(
+                  'Scan QR Code',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16 * fem,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: _scannedValue == null ? _toggleCamera : null,
+                    child: Container(
+                      padding: EdgeInsets.all(8 * fem),
+                      decoration: BoxDecoration(
+                        color: Colors.white12,
+                        borderRadius: BorderRadius.circular(8 * fem),
+                      ),
+                      child: Icon(
+                        _isFrontCamera ? Icons.camera_front : Icons.camera_rear,
+                        color: _scannedValue == null
+                            ? Colors.white
+                            : Colors.white38,
+                        size: 22 * fem,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
-          const Spacer(),
+          SizedBox(height: 16 * fem),
 
-          // Centered scanner square
+          // Scanner square
           SizedBox(
-            width: 260,
-            height: 260,
+            width: 260 * fem,
+            height: 260 * fem,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12 * fem),
               child: Stack(
                 children: [
                   MobileScanner(controller: _controller, onDetect: _onDetect),
-                  // Corner brackets overlay
                   CustomPaint(
-                    size: const Size(260, 260),
-                    painter: _ScannerOverlayPainter(color: AppColors.mintGreen),
+                    size: Size(260 * fem, 260 * fem),
+                    painter: _ScannerOverlayPainter(
+                      color: _scannedValue != null
+                          ? AppColors.mintDark
+                          : AppColors.mintGreen,
+                    ),
                   ),
+                  // Green success overlay once scanned
+                  if (_scannedValue != null)
+                    Container(
+                      color: Colors.black54,
+                      child: Center(
+                        child: Icon(
+                          Icons.check_circle_outline,
+                          color: AppColors.mintGreen,
+                          size: 56 * fem,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
           ),
 
-          const Spacer(),
+          SizedBox(height: 20 * fem),
 
-          // Hint
-          const Padding(
-            padding: EdgeInsets.only(bottom: 32),
-            child: Text(
-              'Point at a QR code to scan automatically',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 13),
-            ),
+          // ── Scanned result area ──
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: _scannedValue == null
+                // Scanning hint
+                ? MyText(
+                    key: const ValueKey('hint'),
+                    _isFrontCamera
+                        ? 'Front camera — tap icon to switch'
+                        : 'Point at a QR code to scan automatically',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white54, fontSize: 13 * fem),
+                  )
+                // Result + action buttons
+                : Padding(
+                    key: const ValueKey('result'),
+                    padding: EdgeInsets.symmetric(horizontal: 24 * fem),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Scanned UID display
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14 * fem,
+                            vertical: 12 * fem,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            borderRadius: BorderRadius.circular(8 * fem),
+                            border: Border.all(
+                              color: AppColors.mintDark,
+                              width: 1.5 * fem,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.qr_code,
+                                color: AppColors.mintGreen,
+                                size: 18 * fem,
+                              ),
+                              SizedBox(width: 10 * fem),
+                              Expanded(
+                                child: MyText(
+                                  _scannedValue!,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14 * fem,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 12 * fem),
+                        // Search + Re-scan buttons
+                        Row(
+                          children: [
+                            // Re-scan
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: _rescan,
+                                child: Container(
+                                  height: 44 * fem,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white12,
+                                    borderRadius: BorderRadius.circular(
+                                      8 * fem,
+                                    ),
+                                    border: Border.all(
+                                      color: Colors.white24,
+                                      width: 1 * fem,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.refresh,
+                                        color: Colors.white70,
+                                        size: 18 * fem,
+                                      ),
+                                      SizedBox(width: 6 * fem),
+                                      MyText(
+                                        'Re-scan',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 13 * fem,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 10 * fem),
+                            // Search
+                            Expanded(
+                              flex: 2,
+                              child: GestureDetector(
+                                onTap: () =>
+                                    Navigator.pop(context, _scannedValue),
+                                child: Container(
+                                  height: 44 * fem,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.mintDark,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.search,
+                                        color: Colors.white,
+                                        size: 18 * fem,
+                                      ),
+                                      SizedBox(width: 6),
+                                      MyText(
+                                        'Search',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13 * fem,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1 * fem,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
           ),
+
+          SizedBox(height: 16 * fem),
         ],
       ),
     );
@@ -638,10 +842,10 @@ class _AboutCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.cardShadow,
-            blurRadius: 8,
+            blurRadius: 8 * fem,
             offset: Offset(0, 2),
           ),
         ],
@@ -652,18 +856,18 @@ class _AboutCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 3,
-                height: 18,
+                width: 3 * fem,
+                height: 18 * fem,
                 decoration: BoxDecoration(
                   color: AppColors.mintGreen,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(2 * fem),
                 ),
               ),
               SizedBox(width: fem * 10),
               MyText(
                 'About Verify & Track',
-                style: const TextStyle(
-                  fontSize: 13,
+                style: TextStyle(
+                  fontSize: 13 * fem,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.4,
                   color: AppColors.textDark,
@@ -679,8 +883,8 @@ class _AboutCard extends StatelessWidget {
             "Divine Solitaires, know its journey from mining to the finished product, avail a "
             "one-year free insurance and a lot more!.",
             textAlign: TextAlign.justify,
-            style: const TextStyle(
-              fontSize: 13,
+            style: TextStyle(
+              fontSize: 13 * fem,
               color: AppColors.textMid,
               height: 1.7,
             ),

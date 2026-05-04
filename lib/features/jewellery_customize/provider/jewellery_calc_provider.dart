@@ -19,6 +19,12 @@ final jewelleryCalcProvider =
     >(JewelleryCalcNotifier.new);
 
 class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
+  // Incremented each time _recalculatePrice starts.
+  // A stale recalc (e.g. from loadDetail) will detect it is no longer
+  // the latest and bail out before writing state, preventing it from
+  // overwriting a newer customised state with old isCustomised=false data.
+  int _recalcGeneration = 0;
+
   @override
   Future<JewelleryCalcState> build() async {
     return const JewelleryCalcState();
@@ -103,7 +109,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     final caratRange = filter.carat != null
         ? '${filter.carat!.startValue} - ${filter.carat!.endValue} ct'
         : null;
-
+    //debugPrint('Applying filter: Color =${filter.color?.displayRange}');
     final updated = current.copyWith(
       ringSize: filter.ringSize,
       selectedMetalColor: filter.metalColor,
@@ -149,6 +155,7 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
   // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> _recalculatePrice() async {
+    final generation = ++_recalcGeneration;
     final current = state.value;
     if (current == null || current.detail == null) return;
 
@@ -292,22 +299,28 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
               rowShapeCode == 'CUSQ' ||
               rowShapeCode == 'HRT';
           if (isFancy && caratFromVal >= 0.10 && caratToVal <= 0.17) {
-            colorRangeParts.add('EF-GH');
-            clarityRangeParts.add('VVS-VS');
+            colorRangeParts.add('GH-EF'); // min - max
+            clarityRangeParts.add('VS-VVS'); // min - max
           } else if (isFancy && caratFromVal >= 0.18 && caratToVal <= 0.22) {
-            colorRangeParts.add('D-H');
-            clarityRangeParts.add('IF-VS2');
+            colorRangeParts.add('H-D'); // min - max
+            clarityRangeParts.add('VS2-IF'); // min - max
+          } else if (isFancy && caratFromVal > 0.22) {
+            colorRangeParts.add('H-D'); // min - max
+            clarityRangeParts.add('VS2-IF'); // min - max
           } else if (rowShapeCode == 'RND' &&
               caratFromVal >= 0.10 &&
               caratToVal <= 0.17) {
-            colorRangeParts.add('EF-IJ');
-            clarityRangeParts.add('VVS-SI');
+            colorRangeParts.add('IJ-EF'); // min - max
+            clarityRangeParts.add('SI-VVS'); // min - max
           } else if (rowShapeCode == 'RND' &&
               caratFromVal >= 0.18 &&
               caratToVal <= 0.22) {
-            colorRangeParts.add('D-E');
-            clarityRangeParts.add('IF-VVS1');
-          } else if (isSolus && caratFromVal >= 0.18 && caratToVal <= 1.5) {
+            colorRangeParts.add('E-D'); // min - max
+            clarityRangeParts.add('VVS1-IF'); // min - max
+          } else if (rowShapeCode == 'RND' && caratFromVal >= 0.23) {
+            colorRangeParts.add('E-D');
+            clarityRangeParts.add('VVS1-IF');
+          } else if (isSolus && caratFromVal >= 0.18) {
             colorRangeParts.add('VDY');
             clarityRangeParts.add('VVS-VS');
           }
@@ -325,24 +338,44 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
         bomDefaultCaratRange = '${caratRangeParts.join(', ')} ct';
       }
       if (colorRangeParts.isNotEmpty) {
-        bomDefaultColorRange = colorRangeParts.map((c) => '$c - $c').join(', ');
+        bomDefaultColorRange = colorRangeParts.join(
+          ', ',
+        ); //colorRangeParts.map((c) => '$c - $c').join(', ');
       }
       if (clarityRangeParts.isNotEmpty) {
-        bomDefaultClarityRange = clarityRangeParts
-            .map((c) => '$c - $c')
-            .join(', ');
+        bomDefaultClarityRange = clarityRangeParts.join(', ');
+        // .map((c) => '$c - $c')
+        // .join(', ');
       }
     }
 
     final resolvedCaratRange = current.caratRange ?? bomDefaultCaratRange;
+    debugPrint(
+      'Resolved Color range: (current color ${current.colorRange}) (bom default was $bomDefaultColorRange)',
+    );
+
     final resolvedColorRange = current.colorRange ?? bomDefaultColorRange;
     final resolvedClarityRange = current.clarityRange ?? bomDefaultClarityRange;
 
-    // Metal defaults from cd (catalogue always has the authoritative list).
+    // Metal color/purity defaults:
+    //
+    // Scenario 1 (store product, !isCustomised):
+    //   Use detail — it holds the actual metal of the lying piece (e.g. "YG").
+    //   calcDetail.metalColor is the full catalogue CSV ("WG,YG,RG") whose
+    //   first entry may not match any product image, causing "No images" flicker.
+    //
+    // Scenario 1 (after customise) / Scenario 2 (catalogue):
+    //   Use cd — the full catalogue master has the authoritative color list.
     final resolvedMetalColor =
-        current.selectedMetalColor ?? cd.metalColor.split(',').first.trim();
+        current.selectedMetalColor ??
+        (useDetailBom
+            ? detail.metalColor.split(',').first.trim()
+            : cd.metalColor.split(',').first.trim());
     final resolvedMetalPurity =
-        current.selectedMetalPurity ?? cd.metalPurity.split(',').first.trim();
+        current.selectedMetalPurity ??
+        (useDetailBom
+            ? detail.metalPurity.split(',').first.trim()
+            : cd.metalPurity.split(',').first.trim());
     final resolvedSideDiamondQuality =
         current.selectedSideDiamondQuality ?? 'IJ-SI';
     final resolvedRingSize = current.ringSize ?? ringSize;
@@ -595,8 +628,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       itemGroup: 'SOLITAIRE',
       slab: minCt.toStringAsFixed(2),
       shape: shapeCode,
-      color: JewelleryCalculationService.getSolitaireColor(selectedColorTo),
-      quality: selectedClarityTo,
+      color: JewelleryCalculationService.getSolitaireColor(selectedColorFrom),
+      quality: selectedClarityFrom,
     );
 
     debugPrint(
@@ -608,8 +641,8 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       itemGroup: 'SOLITAIRE',
       slab: maxCt.toStringAsFixed(2),
       shape: shapeCode,
-      color: JewelleryCalculationService.getSolitaireColor(selectedColorFrom),
-      quality: selectedClarityFrom,
+      color: JewelleryCalculationService.getSolitaireColor(selectedColorTo),
+      quality: selectedClarityTo,
     );
 
     debugPrint(
@@ -735,6 +768,16 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       SolitairePcs: rowCount > 1 ? multipcsLabel : current.SolitairePcs,
     );
 
+    // Bail out if a newer recalculation has started since this one began.
+    // This prevents a stale loadDetail recalc (isCustomised=false) from
+    // overwriting state written by a faster applyFilter recalc.
+    if (generation != _recalcGeneration) {
+      debugPrint(
+        '⚠️ _recalculatePrice gen=$generation stale (current=$_recalcGeneration), skipping state write',
+      );
+      return;
+    }
+
     state = AsyncData(updated);
   }
 
@@ -827,8 +870,13 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
 
     double goldPrice = 0;
     double platinumPrice = 0;
-
-    if (goldWeight > 1) {
+    debugPrint(
+      'goldWeight raw = $goldWeight '
+      'fixed4 = ${goldWeight.toStringAsFixed(4)} '
+      'hash = ${goldWeight.hashCode}',
+    );
+    if (goldWeight >= 1) {
+      debugPrint('BRANCH: >= 1, goldWeight=$goldWeight');
       goldPrice = await _fetchPrice(
         itemGroup: 'GOLD',
         slab: '',
@@ -839,9 +887,11 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
           metalPurity,
         ),
       );
-    } else if (goldWeight > 0 && goldWeight <= 0.5) {
+    } else if (goldWeight > 0 && goldWeight < 0.5) {
+      debugPrint('BRANCH: 0–0.5, goldWeight=$goldWeight');
       goldPrice = (detail.Metalpriceless05gms ?? 0).toDouble();
-    } else if (goldWeight > 0 && goldWeight <= 1) {
+    } else if (goldWeight > 0 && goldWeight < 1) {
+      debugPrint('BRANCH: 0–1, goldWeight=$goldWeight');
       goldPrice = (detail.metalPriceLessOneGms ?? 0).toDouble();
     }
 
@@ -871,9 +921,9 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
         ? platinumWeight * platinumPrice * selectedQty
         : 0;
 
-    if (goldWeight > 0 && goldWeight <= 0.5) {
+    if (goldWeight > 0 && goldWeight < 0.5) {
       goldAmount = (detail.Metalpriceless05gms ?? 0).toDouble() * selectedQty;
-    } else if (goldWeight > 0 && goldWeight <= 1) {
+    } else if (goldWeight > 0 && goldWeight < 1) {
       goldAmount = (detail.metalPriceLessOneGms ?? 0).toDouble() * selectedQty;
     }
 

@@ -177,6 +177,80 @@ class _SolitaireCustomiseScreenState
     );
   }
 
+  // ── Helpers: calc range string → step-list index ───────────────────────────
+
+  int _indexIn(List<String> list, String val, int fallback) {
+    final idx = list.indexOf(val.trim());
+    return idx >= 0 ? idx : fallback;
+  }
+
+  /// "0.18-0.22 ct"  →  index of the FROM value in caratSteps
+  int _caratIndexFrom(String? range) {
+    if (range == null) return 4;
+    final seg = range.split(',').first.replaceAll('ct', '').trim();
+    final val = seg.split('-').first.trim();
+    return _indexIn(caratSteps, val, 4);
+  }
+
+  /// "0.18-0.22 ct"  →  index of the TO value in caratSteps
+  int _caratIndexTo(String? range) {
+    if (range == null) return 5;
+    final seg = range.split(',').first.replaceAll('ct', '').trim();
+    final parts = seg
+        .split('-')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final val = parts.length > 1
+        ? parts.last
+        : (parts.isNotEmpty ? parts.first : '');
+    return _indexIn(caratSteps, val, 5);
+  }
+
+  /// "EF - EF"  or  "D-E"  →  index of FROM in colors list
+  int _colorIndexFrom(String? range) {
+    if (range == null) return 2;
+    final val = range.split(',').first.split('-').first.trim();
+    return _indexIn(colors, val, 2);
+  }
+
+  /// "EF - EF"  or  "D-E"  →  index of TO in colors list
+  int _colorIndexTo(String? range) {
+    if (range == null) return 4;
+    final seg = range.split(',').first;
+    final parts = seg
+        .split('-')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final val = parts.length > 1
+        ? parts.last
+        : (parts.isNotEmpty ? parts.first : '');
+    return _indexIn(colors, val, 4);
+  }
+
+  /// "VVS - VVS"  or  "VS-SI"  →  index of FROM in clarities list
+  int _clarityIndexFrom(String? range) {
+    if (range == null) return 1;
+    final val = range.split(',').first.split('-').first.trim();
+    return _indexIn(clarities, val, 1);
+  }
+
+  /// "VVS - VVS"  or  "VS-SI"  →  index of TO in clarities list
+  int _clarityIndexTo(String? range) {
+    if (range == null) return 4;
+    final seg = range.split(',').first;
+    final parts = seg
+        .split('-')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final val = parts.length > 1
+        ? parts.last
+        : (parts.isNotEmpty ? parts.first : '');
+    return _indexIn(clarities, val, 4);
+  }
+
   // ------------------------------------------------------------------------
   // DELIVERY DAYS
   // ------------------------------------------------------------------------
@@ -286,8 +360,10 @@ class _SolitaireCustomiseScreenState
         designno: isCustomized ? '' : widget.data?.designNo ?? '',
         solitairePcs: 1,
         productQty: 1,
-        productAmtMin: isCustomized ? 0 : calc.solitaireAmountFrom,
-        productAmtMax: calc.solitaireAmountTo,
+        // Not customized → save From only, To = 0
+        // Customized     → save both From and To
+        productAmtMin: calc.solitaireAmountFrom ?? 0,
+        productAmtMax: isCustomized ? (calc.solitaireAmountTo ?? 0) : 0,
         solitaireShape: SolitaireCalcNotifier.mapShapeCodeToName(
           calc?.solitaireShape ?? '',
         ),
@@ -296,8 +372,8 @@ class _SolitaireCustomiseScreenState
         solitaireQuality: '$clarityTo-$clarityFrom',
         solitairePremSize: '',
         solitairePremPct: 0,
-        solitaireAmtMin: isCustomized ? 0 : calc.solitaireAmountFrom,
-        solitaireAmtMax: calc.solitaireAmountTo,
+        solitaireAmtMin: calc.solitaireAmountFrom ?? 0,
+        solitaireAmtMax: isCustomized ? (calc.solitaireAmountTo ?? 0) : 0,
         mountAmtMin: 0,
         mountAmtMax: 0,
         sizeFrom: '',
@@ -387,7 +463,10 @@ class _SolitaireCustomiseScreenState
                                 'Oval Bangle features a precision-cut Heart & Arrows '
                                 'diamond — a symbol of brilliance, balance, and '
                                 'timeless elegance.',
-                            shape: widget.data?.shape ?? 'RND',
+                            // Use selectedShape (updated on every drawer apply)
+                            // so the image reacts immediately to shape changes.
+                            // Falls back to widget.data shape, then 'RND'.
+                            shape: selectedShape ?? widget.data?.shape ?? 'RND',
                             uid: widget.data?.itemNumber.toString() ?? '',
                             r: r,
                           ),
@@ -504,6 +583,14 @@ class _SolitaireCustomiseScreenState
                                                   selectedShape ??
                                                   widget.data?.shape ??
                                                   'RND',
+                                              // Update the image immediately
+                                              // as the user taps a shape —
+                                              // no need to wait for Apply.
+                                              onShapeChanged: (shape) {
+                                                setState(
+                                                  () => selectedShape = shape,
+                                                );
+                                              },
                                             );
 
                                         if (!mounted || result == null) return;
@@ -612,7 +699,9 @@ class _SolitaireCustomiseScreenState
                                                 ),
                                               ),
                                               child: MyText(
-                                                'Start customizing',
+                                                calc?.isCustomized == true
+                                                    ? 'Edit Customization'
+                                                    : 'Start Customizing',
                                                 style: TextStyle(
                                                   color: const Color(
                                                     0xFF6C5022,
@@ -716,12 +805,14 @@ class _SolitaireCustomiseScreenState
                           else
                             Row(
                               children: [
+                                // From: show when widget.data exists (Scenario 1 initial)
+                                // OR when user has applied customization (Scenario 1 & 2)
                                 MyText(
-                                  calc?.isCustomized == false
-                                      ? ''
-                                      : calc!.approxPriceFrom!.inRupeesFormat(),
-                                  // ? calc!.approxPriceFrom!.inRupeesFormat()
-                                  // : '—',
+                                  (calc?.approxPriceFrom != null &&
+                                          (widget.data != null ||
+                                              calc?.isCustomized == true))
+                                      ? calc!.approxPriceFrom!.inRupeesFormat()
+                                      : '',
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: 20 * r,
@@ -730,12 +821,13 @@ class _SolitaireCustomiseScreenState
                                     letterSpacing: 0.40 * r,
                                   ),
                                 ),
+                                // Separator: only visible when customized (range exists)
                                 Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: 5 * r,
                                   ),
                                   child: MyText(
-                                    calc?.isCustomized == false ? '' : '–',
+                                    calc?.isCustomized == true ? '–' : '',
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 20 * r,
@@ -744,10 +836,12 @@ class _SolitaireCustomiseScreenState
                                     ),
                                   ),
                                 ),
+                                // To: only visible when customized
                                 MyText(
-                                  calc?.approxPriceTo != null
+                                  calc?.isCustomized == true &&
+                                          calc?.approxPriceTo != null
                                       ? calc!.approxPriceTo!.inRupeesFormat()
-                                      : '—',
+                                      : '',
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: 20 * r,

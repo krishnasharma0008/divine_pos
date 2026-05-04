@@ -11,12 +11,17 @@ class CategoriesSection extends ConsumerWidget {
 
   void ontap(BuildContext context, String paramValue) {
     if (paramValue.isEmpty) {
+      //
       GoRouter.of(
         context,
       ).pushReplacement(RoutePages.jewellerylisting.routePath);
+    } else if (paramValue == 'Solitaires') {
+      GoRouter.of(context).pushReplacement(
+        '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Solitaires')}',
+      );
     } else {
       GoRouter.of(context).pushReplacement(
-        '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent(paramValue)}',
+        '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.subCategory.value}=${Uri.encodeComponent(paramValue)}',
       );
     }
   }
@@ -42,7 +47,7 @@ class CategoriesSection extends ConsumerWidget {
           // context.push(
           //   '${RoutePages.jewellerylisting.routePath}?$paramKey=${Uri.encodeComponent('Ring')}',
           // );
-          ontap(context, 'Ring');
+          ontap(context, 'Female Ring');
         },
       ),
       CategoryTile(
@@ -60,7 +65,7 @@ class CategoriesSection extends ConsumerWidget {
           //   //context.push(
           //   '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Earring')}',
           // );
-          ontap(context, 'Earring');
+          ontap(context, 'Female Earring');
         },
       ),
       CategoryTile(
@@ -96,7 +101,7 @@ class CategoriesSection extends ConsumerWidget {
           //   //context.push(
           //   '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Pendants')}',
           // );
-          ontap(context, 'Pendants');
+          ontap(context, 'Female Pendant');
         },
       ),
       CategoryTile(
@@ -114,28 +119,20 @@ class CategoriesSection extends ConsumerWidget {
           //   //context.push(
           //   '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Bangles')}',
           // );
-          ontap(context, 'Bangles');
+          ontap(context, 'Oval Bangle');
         },
       ),
 
-      CategoryTile(
-        backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
-        productAsset: 'assets/dashboard/categories/cat_solitaire.png',
-        label: 'Solitaire',
-        productWidth: 111,
-        productHeight: 99,
-        onTap: () {
-          // notifier.resetFilters(); // optional
-          // notifier.toggleCategory('Solitaire'); // ✅ set category
-
-          // context.go(RoutePages.jewellerylisting.routePath);
-          // GoRouter.of(context).pushReplacement(
-          //   //context.push(
-          //   '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Solitaire')}',
-          // );
-          ontap(context, 'Solitaire');
-        },
-      ),
+      // CategoryTile(
+      //   backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
+      //   productAsset: 'assets/dashboard/categories/cat_solitaire.png',
+      //   label: 'Solitaire',
+      //   productWidth: 111,
+      //   productHeight: 99,
+      //   onTap: () {
+      //     ontap(context, 'Solitaires');
+      //   },
+      // ),
       CategoryTile(
         backgroundAsset: 'assets/dashboard/categories/bg_tile.png',
         productAsset: 'assets/dashboard/categories/cat_bracelet.png',
@@ -151,7 +148,7 @@ class CategoriesSection extends ConsumerWidget {
           //   //context.push(
           //   '${RoutePages.jewellerylisting.routePath}?${JewelleryProductKey.category.value}=${Uri.encodeComponent('Bracelet')}',
           // );
-          ontap(context, 'Bracelet');
+          ontap(context, 'Male Bracelet');
         },
       ),
       CategoryTile(
@@ -204,6 +201,15 @@ class CategoriesSection extends ConsumerWidget {
           //context.go(RoutePages.jewellerylisting.routePath);
           ontap(context, '');
         },
+      ),
+      CategoryTile(
+        backgroundAsset: '',
+        productAsset: '',
+        label: '',
+        productWidth: 143,
+        productHeight: 24,
+        isCta: true,
+        onTap: () {},
       ),
     ];
 
@@ -327,8 +333,13 @@ class CategoryTile extends StatelessWidget {
             height: 210 * ar,
             child: Stack(
               children: [
+                // Positioned.fill(
+                //   child: Image.asset(backgroundAsset, fit: BoxFit.cover),
+                // ),
                 Positioned.fill(
-                  child: Image.asset(backgroundAsset, fit: BoxFit.cover),
+                  child: backgroundAsset.isNotEmpty
+                      ? Image.asset(backgroundAsset, fit: BoxFit.cover)
+                      : const SizedBox.shrink(),
                 ),
                 if (isCta)
                   Center(

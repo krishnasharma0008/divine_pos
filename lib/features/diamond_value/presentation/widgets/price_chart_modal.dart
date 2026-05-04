@@ -16,7 +16,8 @@ import '../../../../shared/utils/scale_size.dart';
 class _MonthPrice {
   final DateTime month;
   final DateTime checkDate;
-  final double price;
+  final double currentPrice;
+  final double pastPrice;
   final double difference;
   final String currencyLocale;
   final String currencyCode;
@@ -24,7 +25,8 @@ class _MonthPrice {
   _MonthPrice(
     this.month,
     this.checkDate,
-    this.price,
+    this.currentPrice,
+    this.pastPrice,
     this.difference, {
     this.currencyLocale = 'en-IN',
     this.currencyCode = 'INR',
@@ -51,14 +53,11 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
   bool _loadingMonth = false;
   String? _error;
 
-  // ── Dropdown selections ──────────────────────────────────────────────────
   int? _selYear;
   int? _selMonth;
   int? _selDay;
 
   double get fem => ScaleSize.aspectRatio;
-
-  // ── Dropdown data helpers ────────────────────────────────────────────────
 
   final DateTime _now = DateTime.now();
 
@@ -80,8 +79,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
     return List.generate(maxDay, (i) => i + 1);
   }
 
-  // ── Fetch ────────────────────────────────────────────────────────────────
-
   Future<void> _fetchPrice() async {
     if (_selYear == null || _selMonth == null || _selDay == null) return;
 
@@ -93,10 +90,10 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
           e.month.month == selectedDate.month &&
           e.month.day == selectedDate.day,
     )) {
-      setState(
-        () => _error =
-            '${DateFormat('d MMMM yyyy').format(selectedDate)} is already added. Please select a different date.',
-      );
+      setState(() {
+        _error =
+            '${DateFormat('d MMMM yyyy').format(selectedDate)} is already added. Please select a different date.';
+      });
       return;
     }
 
@@ -118,14 +115,25 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
             year: _selYear!,
           );
 
+      final pastTotalPrice = result.pastPrice * widget.config.caratDouble;
+      final currentTotalPrice =
+          widget.currentPrice ??
+          (result.currentPrice * widget.config.caratDouble);
+
+      final differencePercent = pastTotalPrice == 0
+          ? 0.0
+          : ((currentTotalPrice - pastTotalPrice) / pastTotalPrice) * 100;
+
       if (!mounted) return;
+
       setState(() {
         _entries.add(
           _MonthPrice(
             selectedDate,
             result.checkDate,
+            result.currentPrice,
             result.pastPrice,
-            result.difference,
+            differencePercent,
             currencyLocale: result.currencyLocale.isNotEmpty
                 ? result.currencyLocale
                 : 'en-IN',
@@ -134,9 +142,8 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                 : 'INR',
           ),
         );
-        _entries.sort((a, b) => a.month.compareTo(b.month));
 
-        // Reset dropdowns after successful add
+        _entries.sort((a, b) => a.month.compareTo(b.month));
         _selYear = null;
         _selMonth = null;
         _selDay = null;
@@ -151,8 +158,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
   }
 
   void _removeEntry(int idx) => setState(() => _entries.removeAt(idx));
-
-  // ── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -189,7 +194,10 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
               SizedBox(height: 8 * fem),
               MyText(
                 _error!,
-                style: TextStyle(fontSize: 11 * fem, color: Color(0xFFE05050)),
+                style: TextStyle(
+                  fontSize: 11 * fem,
+                  color: const Color(0xFFE05050),
+                ),
               ),
             ],
             SizedBox(height: 16 * fem),
@@ -199,8 +207,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
       ),
     );
   }
-
-  // ── Header ───────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
     return Row(
@@ -215,13 +221,16 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                 fontFamily: 'Georgia',
                 fontSize: 17 * fem,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF2A2A2A),
+                color: const Color(0xFF2A2A2A),
               ),
             ),
             SizedBox(height: 2 * fem),
             MyText(
               '${widget.config.shapeName} · ${widget.config.caratLabel}ct · ${widget.config.colorLabel} · ${widget.config.clarityLabel}',
-              style: TextStyle(fontSize: 11 * fem, color: Color(0xFF9E9E9E)),
+              style: TextStyle(
+                fontSize: 11 * fem,
+                color: const Color(0xFF9E9E9E),
+              ),
             ),
           ],
         ),
@@ -234,14 +243,16 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFFDDDDDD)),
             ),
-            child: Icon(Icons.close, size: 14 * fem, color: Color(0xFF6B6B6B)),
+            child: Icon(
+              Icons.close,
+              size: 14 * fem,
+              color: const Color(0xFF6B6B6B),
+            ),
           ),
         ),
       ],
     );
   }
-
-  // ── Empty state ──────────────────────────────────────────────────────────
 
   Widget _buildEmptyState() {
     return Container(
@@ -271,11 +282,27 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
     );
   }
 
-  // ── Chart ────────────────────────────────────────────────────────────────
-
   Widget _buildChart() {
     final cts = widget.config.caratDouble;
-    final allPoints = List<_MonthPrice>.from(_entries)
+    final now = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
+
+    // Always include today's current price as a reference point so even a
+    // single past date produces a 2-point comparison line.
+    final currentTotalPrice = widget.currentPrice ?? 0.0;
+    final currentPricePerCt = cts > 0 ? currentTotalPrice / cts : 0.0;
+    final todayEntry = _MonthPrice(
+      now,
+      now,
+      currentPricePerCt,
+      currentPricePerCt,
+      0.0,
+    );
+
+    final allPoints = [todayEntry, ..._entries]
       ..sort((a, b) => a.month.compareTo(b.month));
 
     return SizedBox(
@@ -285,30 +312,73 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
           points: allPoints,
           cts: cts,
           fem: fem,
-          todayMonth: DateTime(
-            DateTime.now().year,
-            DateTime.now().month,
-            DateTime.now().day,
-          ),
+          todayMonth: now,
         ),
         child: Container(),
       ),
     );
   }
 
-  // ── Legend ───────────────────────────────────────────────────────────────
-
   Widget _buildLegend() {
+    final currentTotalPrice = widget.currentPrice ?? 0.0;
+    final now = DateTime.now();
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
+          // Today's price card — always shown first
+          Container(
+            margin: EdgeInsets.only(right: 8 * fem),
+            padding: EdgeInsets.all(10 * fem),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F3F3),
+              borderRadius: BorderRadius.circular(8 * fem),
+              border: Border.all(color: const Color(0xFFDDDDDD)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(right: 8 * fem, top: 2 * fem),
+                  child: Icon(
+                    Icons.show_chart,
+                    size: 16 * fem,
+                    color: const Color(0xFF2A2A2A),
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    MyText(
+                      'Date: ${DateFormat('d MMM, yyyy').format(now)} (Today)',
+                      style: TextStyle(
+                        fontSize: 10 * fem,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    SizedBox(height: 3 * fem),
+                    MyText(
+                      'Price: ${_formatPrice(currentTotalPrice)}',
+                      style: TextStyle(
+                        fontSize: 10 * fem,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           ..._entries.asMap().entries.map((e) {
             final idx = e.key;
             final entry = e.value;
             final growth = entry.difference;
             final isNeg = growth < 0;
-            final totalPrice = entry.price * widget.config.caratDouble;
+            final totalPrice = entry.pastPrice * widget.config.caratDouble;
 
             return Container(
               margin: EdgeInsets.only(right: 8 * fem),
@@ -336,7 +406,7 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                         child: Icon(
                           Icons.close,
                           size: 10 * fem,
-                          color: Color(0xFF9E9E9E),
+                          color: const Color(0xFF9E9E9E),
                         ),
                       ),
                     ),
@@ -361,7 +431,7 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                             style: TextStyle(
                               fontSize: 10 * fem,
                               fontWeight: FontWeight.w400,
-                              color: Color(0xFF1A1A1A),
+                              color: const Color(0xFF1A1A1A),
                             ),
                           ),
                           SizedBox(height: 3 * fem),
@@ -370,7 +440,7 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                             style: TextStyle(
                               fontSize: 10 * fem,
                               fontWeight: FontWeight.w400,
-                              color: Color(0xFF1A1A1A),
+                              color: const Color(0xFF1A1A1A),
                             ),
                           ),
                           SizedBox(height: 3 * fem),
@@ -381,7 +451,7 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                                 'Growth: ',
                                 style: TextStyle(
                                   fontSize: 10 * fem,
-                                  color: Color(0xFF1A1A1A),
+                                  color: const Color(0xFF1A1A1A),
                                 ),
                               ),
                               MyText(
@@ -419,8 +489,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
     );
   }
 
-  // ── Date dropdowns row ───────────────────────────────────────────────────
-
   Widget _buildDateDropdowns() {
     final canAdd =
         !_loadingMonth &&
@@ -431,7 +499,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Year
         Expanded(
           child: _buildDropdown<int>(
             label: 'Year',
@@ -448,8 +515,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
           ),
         ),
         SizedBox(width: 8 * fem),
-
-        // Month
         Expanded(
           child: _buildDropdown<int>(
             label: 'Month',
@@ -465,8 +530,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
           ),
         ),
         SizedBox(width: 8 * fem),
-
-        // Day
         Expanded(
           child: _buildDropdown<int>(
             label: 'Date',
@@ -481,9 +544,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
           ),
         ),
         SizedBox(width: 10 * fem),
-
-        // Add button — bottom-aligned via CrossAxisAlignment.end on the Row
-        // Compare Price button — bottom-aligned via CrossAxisAlignment.end on the Row
         SizedBox(
           height: 38 * fem,
           child: OutlinedButton.icon(
@@ -509,7 +569,7 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                     height: 14 * fem,
                     child: CircularProgressIndicator(
                       strokeWidth: 1.5 * fem,
-                      color: Color(0xFF5AB5A8),
+                      color: const Color(0xFF5AB5A8),
                     ),
                   )
                 : Icon(
@@ -617,8 +677,6 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
   Color _pointColor(int idx) {
     const palette = [
       Color(0xFF5AB5A8),
@@ -637,6 +695,7 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
     final rem = v % 100000;
     final th = rem ~/ 1000;
     final hu = rem % 1000;
+
     if (lakh > 0) {
       return '₹$lakh,${th.toString().padLeft(2, '0')},${hu.toString().padLeft(3, '0')}';
     }
@@ -665,8 +724,10 @@ class _ChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (points.isEmpty) return;
+
     if (points.length < 2) {
-      if (points.length == 1) _drawSinglePoint(canvas, size, points.first);
+      _drawSinglePoint(canvas, size, points.first);
       return;
     }
 
@@ -677,22 +738,23 @@ class _ChartPainter extends CustomPainter {
     final chartW = size.width - leftPad - rightPad;
     final chartH = size.height - topPad - botPad;
 
-    final minP = points.map((e) => e.price * cts).reduce(math.min);
-    final maxP = points.map((e) => e.price * cts).reduce(math.max);
+    final minP = points.map((e) => e.pastPrice * cts).reduce(math.min);
+    final maxP = points.map((e) => e.pastPrice * cts).reduce(math.max);
     final range = (maxP - minP).clamp(1.0, double.infinity);
 
     Offset toOffset(int i) {
       final x = leftPad + (i / (points.length - 1)) * chartW;
-      final y = topPad + (1 - (points[i].price * cts - minP) / range) * chartH;
+      final y =
+          topPad + (1 - (points[i].pastPrice * cts - minP) / range) * chartH;
       return Offset(x, y);
     }
 
     final offsets = List.generate(points.length, toOffset);
 
-    // Grid
     final gridPaint = Paint()
       ..color = const Color(0xFFEEEEEE)
       ..strokeWidth = 0.8 * fem;
+
     for (int i = 1; i < 5; i++) {
       final y = topPad + chartH * i / 4;
       canvas.drawLine(
@@ -702,19 +764,23 @@ class _ChartPainter extends CustomPainter {
       );
     }
 
-    final labelStyle = TextStyle(fontSize: 11 * fem, color: Color(0xFFAAAAAA));
+    final labelStyle = TextStyle(
+      fontSize: 11 * fem,
+      color: const Color(0xFFAAAAAA),
+    );
+
     for (int i = 0; i <= 4; i++) {
       final price = minP + (maxP - minP) * i / 4;
       final y = topPad + chartH * (1 - i / 4);
-      final text = _shortPrice(price);
+
       final tp = TextPainter(
-        text: TextSpan(text: text, style: labelStyle),
+        text: TextSpan(text: _shortPrice(price), style: labelStyle),
         textDirection: ui.TextDirection.ltr,
       )..layout();
+
       tp.paint(canvas, Offset(leftPad - tp.width - 6, y - tp.height / 2));
     }
 
-    // Gradient fill
     final gradPath = Path()..moveTo(offsets.first.dx, offsets.first.dy);
     for (int i = 1; i < offsets.length; i++) {
       _addCurve(gradPath, offsets[i - 1], offsets[i]);
@@ -737,11 +803,11 @@ class _ChartPainter extends CustomPainter {
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
     );
 
-    // Line
     final linePath = Path()..moveTo(offsets.first.dx, offsets.first.dy);
     for (int i = 1; i < offsets.length; i++) {
       _addCurve(linePath, offsets[i - 1], offsets[i]);
     }
+
     canvas.drawPath(
       linePath,
       Paint()
@@ -751,7 +817,6 @@ class _ChartPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // X-axis labels + dots
     const palette = [
       Color(0xFF5AB5A8),
       Color(0xFFC8AC7D),
@@ -760,13 +825,16 @@ class _ChartPainter extends CustomPainter {
       Color(0xFF4CAF50),
       Color(0xFF2196F3),
     ];
+
     for (int i = 0; i < offsets.length; i++) {
       final pt = points[i];
       final off = offsets[i];
+
       final isToday =
           pt.month.year == todayMonth.year &&
           pt.month.month == todayMonth.month &&
           pt.month.day == todayMonth.day;
+
       final color = isToday
           ? const Color(0xFF2A2A2A)
           : palette[i % palette.length];
@@ -781,7 +849,7 @@ class _ChartPainter extends CustomPainter {
           ..strokeWidth = 2.5,
       );
 
-      _drawTooltip(canvas, off, _shortPrice(pt.price * cts), color);
+      _drawTooltip(canvas, off, _shortPrice(pt.pastPrice * cts), color);
 
       final label = isToday ? 'Today' : pt.label;
       final tp = TextPainter(
@@ -791,6 +859,7 @@ class _ChartPainter extends CustomPainter {
         ),
         textDirection: ui.TextDirection.ltr,
       )..layout();
+
       tp.paint(canvas, Offset(off.dx - tp.width / 2, topPad + chartH + 6));
     }
   }
@@ -820,6 +889,7 @@ class _ChartPainter extends CustomPainter {
     final tipW = tp.width + padH * 2;
     final left = pos.dx - tipW / 2;
     final top = pos.dy - tipH - 10;
+
     final rect = RRect.fromRectAndRadius(
       Rect.fromLTWH(left, top, tipW, tipH),
       const Radius.circular(rr),
@@ -833,11 +903,51 @@ class _ChartPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1,
     );
+
     tp.paint(canvas, Offset(left + padH, top + (tipH - tp.height) / 2));
   }
 
   void _drawSinglePoint(Canvas canvas, Size size, _MonthPrice pt) {
-    final center = Offset(size.width / 2, size.height / 2);
+    final leftPad = 68.0 * fem;
+    final rightPad = 16.0 * fem;
+    final topPad = 32.0 * fem;
+    final botPad = 28.0 * fem;
+    final chartW = size.width - leftPad - rightPad;
+    final chartH = size.height - topPad - botPad;
+
+    final x = leftPad + chartW / 2;
+    final y = topPad + chartH / 2;
+    final center = Offset(x, y);
+
+    final gridPaint = Paint()
+      ..color = const Color(0xFFEEEEEE)
+      ..strokeWidth = 0.8 * fem;
+
+    for (int i = 1; i < 5; i++) {
+      final gy = topPad + chartH * i / 4;
+      canvas.drawLine(
+        Offset(leftPad, gy),
+        Offset(leftPad + chartW, gy),
+        gridPaint,
+      );
+    }
+
+    final totalPrice = pt.pastPrice * cts;
+
+    final yLabel = TextPainter(
+      text: TextSpan(
+        text: _shortPrice(totalPrice),
+        style: TextStyle(fontSize: 11 * fem, color: const Color(0xFFAAAAAA)),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    )..layout();
+
+    yLabel.paint(
+      canvas,
+      Offset(leftPad - yLabel.width - 6, y - yLabel.height / 2),
+    );
+
+    canvas.drawCircle(center, 7 * fem, Paint()..color = Colors.white);
     canvas.drawCircle(
       center,
       7 * fem,
@@ -846,12 +956,24 @@ class _ChartPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5,
     );
+
     _drawTooltip(
       canvas,
       center,
-      _shortPrice(pt.price * cts),
+      _shortPrice(totalPrice),
       const Color(0xFF5AB5A8),
     );
+
+    final label = pt.label;
+    final tp = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(fontSize: 11 * fem, color: const Color(0xFF5AB5A8)),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    )..layout();
+
+    tp.paint(canvas, Offset(center.dx - tp.width / 2, topPad + chartH + 6));
   }
 
   String _shortPrice(double p) {

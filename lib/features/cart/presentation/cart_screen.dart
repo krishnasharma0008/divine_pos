@@ -56,7 +56,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
   double _calculateSubtotal(List<CartDetail> items) {
     return items.fold(0.0, (total, item) {
-      final amount = item.productAmtMax ?? item.productAmtMin ?? 0;
+      //final amount = item.productAmtMax ?? item.productAmtMin ?? 0;
+      final max = item.productAmtMax;
+      final min = item.productAmtMin;
+
+      // if max is null or 0, use min; otherwise use max
+      final amount = (max != null && max != 0) ? max : (min ?? 0);
       final quantity = item.productQty ?? 1;
       double lineTotal = amount * quantity;
 

@@ -43,6 +43,8 @@ class CartSummaryPanel extends StatelessWidget {
     // 1) Base subtotal comes from parent (product amounts only)
     final baseSubtotal = subtotal;
 
+    debugPrint("Base Subtotal: $baseSubtotal");
+
     // Compute engraving cost using constant
     double engravingTotal = 0;
     for (final item in [...orderProducts, ...readyProducts]) {
@@ -223,8 +225,8 @@ class CartSummaryPanel extends StatelessWidget {
     if (hasMin && hasMax && min == max) return min!.inRupeesFormat();
     if (hasMin && hasMax)
       return '${min!.inRupeesFormat()} - ${max!.inRupeesFormat()}';
-    if (hasMin) return 'From ${min!.inRupeesFormat()}';
-    return 'Up to ${max!.inRupeesFormat()}';
+    if (hasMin) return '${min!.inRupeesFormat()}';
+    return '${max!.inRupeesFormat()}';
   }
 
   /// Formats category + code into a clean title.

@@ -74,15 +74,43 @@ class _ImagePreviewWithThumbnailsState
     extends State<ImagePreviewWithThumbnails> {
   int selectedImageIndex = 0;
 
+  // ── Reset thumbnail selection whenever the image list changes ────────────
+  // This happens when the user switches metal color — the parent rebuilds
+  // with a different List<ProductImage>, but Flutter reuses this State object,
+  // so selectedImageIndex can point at a stale or out-of-bounds position.
+  @override
+  void didUpdateWidget(ImagePreviewWithThumbnails oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final oldUrls = oldWidget.images.isNotEmpty
+        ? oldWidget.images.first.imageUrls
+        : <String>[];
+    final newUrls = widget.images.isNotEmpty
+        ? widget.images.first.imageUrls
+        : <String>[];
+
+    // Reset to first image only when the URL list actually changed.
+    if (oldUrls != newUrls) {
+      selectedImageIndex = 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final r = widget.r ?? ScaleSize.aspectRatio;
 
-    if (widget.images.isEmpty || widget.images.first.imageUrls.isEmpty) {
+    // Guard: find the first ProductImage that actually has URLs.
+    // widget.images can be non-empty but have a first entry with empty imageUrls
+    // (e.g., a color variant that has no photos yet).
+    final sourceImage = widget.images
+        .where((img) => img.imageUrls.isNotEmpty)
+        .firstOrNull;
+
+    if (sourceImage == null) {
       return const Center(child: Text('No images'));
     }
 
-    final allImages = widget.images.first.imageUrls;
+    final allImages = sourceImage.imageUrls;
     final safeIndex = selectedImageIndex.clamp(0, allImages.length - 1);
     final currentUrl = allImages[safeIndex];
 

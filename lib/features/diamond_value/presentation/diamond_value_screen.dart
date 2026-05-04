@@ -203,7 +203,9 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
     showDialog(
       context: context,
       barrierColor: Colors.black26,
-      builder: (_) => PriceChartModal(config: _config, currentPrice: _price),
+      //builder: (_) => PriceChartModal(config: _config, currentPrice: _price),
+      builder: (_) =>
+          PriceChartModal(config: _config, currentPrice: _totalPrice),
     );
   }
 

@@ -183,13 +183,23 @@ class SolitaireCalcNotifier extends AsyncNotifier<SolitaireCalcState> {
       quality: selectedClarityFrom,
     );
 
-    final rateTo = await _fetchPrice(
-      itemGroup: 'SOLITAIRE',
-      slab: maxCt.toStringAsFixed(2),
-      shape: shapeCode,
-      color: getSolitaireColor(selectedColorTo),
-      quality: selectedClarityTo,
-    );
+    // Skip second API call when all params are identical (e.g. initial load
+    // where minCt == maxCt and color/clarity ranges are single values).
+    // This avoids a redundant network request and cuts load time in half.
+    final bool sameParams =
+        minCt == maxCt &&
+        selectedColorFrom == selectedColorTo &&
+        selectedClarityFrom == selectedClarityTo;
+
+    final rateTo = sameParams
+        ? rateFrom
+        : await _fetchPrice(
+            itemGroup: 'SOLITAIRE',
+            slab: maxCt.toStringAsFixed(2),
+            shape: shapeCode,
+            color: getSolitaireColor(selectedColorTo),
+            quality: selectedClarityTo,
+          );
 
     final solFrom = rateFrom * minCt * pcs * qty;
     final solTo = rateTo * maxCt * pcs * qty;

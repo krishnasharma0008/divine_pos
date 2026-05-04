@@ -198,6 +198,10 @@ class JewelleryDetailNotifier extends AsyncNotifier<JewelleryDetail?> {
       throw Exception('Invalid price response');
     }
 
+    // debugPrint(
+    //   'price for $itemGroup $shape $color $quality  $slab : ${body['price']}',
+    // );
+
     final price = body['price'];
 
     if (price is num) {

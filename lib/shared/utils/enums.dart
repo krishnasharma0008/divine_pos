@@ -8,6 +8,7 @@ enum TopTabType { productInStore, allDesignCheck }
 
 enum JewelleryProductKey {
   category("category"),
+  subCategory("subCategory"),
   collection("collection");
 
   // Associate a custom string value

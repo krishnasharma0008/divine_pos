@@ -132,17 +132,17 @@ class SideDrawer extends ConsumerWidget {
                         ),
 
                         //SizedBox(height: fem * 12),
-                        sectionCard(
-                          fem: fem,
-                          context: context,
-                          routePage: RoutePages.jewellerylisting,
-                          iconPath: 'assets/icons/menu_vt.svg',
-                          title: "Categories",
-                          items: {
-                            for (var category in drawerState.categories)
-                              category: category,
-                          },
-                        ),
+                        // sectionCard(
+                        //   fem: fem,
+                        //   context: context,
+                        //   routePage: RoutePages.jewellerylisting,
+                        //   iconPath: 'assets/icons/menu_vt.svg',
+                        //   title: "Categories",
+                        //   items: {
+                        //     for (var category in drawerState.categories)
+                        //       category: category,
+                        //   },
+                        // ),
 
                         // sectionCard(
                         //   fem: fem,

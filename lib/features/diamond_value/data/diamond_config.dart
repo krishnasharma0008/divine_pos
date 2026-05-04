@@ -193,7 +193,7 @@ class DiamondConfig {
         case 'Radiant':
           return 'RADQ';
         case 'Cushion':
-          return 'CUSH';
+          return 'CUSQ';
         case 'Heart':
           return 'HRT';
         default:
@@ -204,7 +204,7 @@ class DiamondConfig {
       case DiamondShape.round:
         return 'RND';
       case DiamondShape.princess:
-        return 'PRC';
+        return 'PRN';
       case DiamondShape.oval:
         return 'OVL';
       case DiamondShape.pear:

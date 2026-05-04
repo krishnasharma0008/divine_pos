@@ -6,9 +6,6 @@ import '../../../shared/widgets/range_selector.dart';
 import '../../../shared/utils/scale_size.dart';
 import '../../../shared/widgets/text.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../shared/utils/currency_formatter.dart';
-import '../../../shared/utils/ring_size_utils.dart';
-import '../data/solitaire_detail_model.dart';
 import '../data/solitaire_filter.dart';
 import '../data/solitaire_constants.dart'; // solitaireShapes, solusShapes, slabs, colors, etc.
 import '../presentation/widget/shape_selector.dart';
@@ -21,6 +18,10 @@ List<String> getColorOptions({
 }) {
   final parts = slab.split('-');
   final double caratTo = parts.length > 1 ? double.tryParse(parts[1]) ?? 0 : 0;
+
+  debugPrint(
+    'getColorOptions - slab: $slab, isRound: $isRound, collection: $collection, caratTo: $caratTo',
+  );
 
   if (collection.toUpperCase() == 'SOLUS') {
     return solusColors;
@@ -73,7 +74,17 @@ class CustomizeSolitaire extends ConsumerStatefulWidget {
   final Map<String, dynamic>? initialValues;
   final String shape;
 
-  const CustomizeSolitaire({super.key, this.initialValues, this.shape = ''});
+  /// Called immediately when the user taps a shape in the drawer —
+  /// before "Apply Customization" is tapped — so the screen can
+  /// update the image in real time.
+  final ValueChanged<String>? onShapeChanged;
+
+  const CustomizeSolitaire({
+    super.key,
+    this.initialValues,
+    this.shape = '',
+    this.onShapeChanged,
+  });
 
   @override
   ConsumerState<CustomizeSolitaire> createState() => _CustomizeSolitaireState();
@@ -109,7 +120,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
 
   /// collection derived from shape type
   String get _collection {
-    final type = _selectedShapeObj?.value.toUpperCase() ?? '';
+    final type = _selectedShapeObj?.type.toUpperCase() ?? '';
     if (type == 'SOLUS') return 'SOLUS';
     return 'SOLITAIRE';
   }
@@ -252,9 +263,9 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                               _selectedShape = shape.value;
                             });
 
-                            // debugPrint('type: ${shape.type}');
-                            // debugPrint('label: ${shape.label}');
-                            // debugPrint('value: ${shape.value}');
+                            // Notify the screen immediately so the image
+                            // updates in real time before Apply is tapped.
+                            widget.onShapeChanged?.call(shape.value);
                           },
                         ),
 
@@ -486,6 +497,10 @@ Future<SolitaireFilter?> showCustomizeDrawer({
   required BuildContext context,
   Map<String, dynamic>? initialValues,
   String shape = '',
+
+  /// Called immediately on every shape tap inside the drawer
+  /// so the parent screen can update the image in real time.
+  ValueChanged<String>? onShapeChanged,
 }) {
   return showGeneralDialog<SolitaireFilter>(
     context: context,
@@ -525,6 +540,7 @@ Future<SolitaireFilter?> showCustomizeDrawer({
                   child: CustomizeSolitaire(
                     initialValues: initialValues,
                     shape: shape,
+                    onShapeChanged: onShapeChanged,
                   ),
                 ),
               ),

@@ -228,7 +228,7 @@ class ChipButton extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 18 * fem, vertical: 10 * fem),
         decoration: BoxDecoration(
-          color: selected ? FeedbackTheme.tealSelected : FeedbackTheme.tealBg,
+          color: selected ? FeedbackTheme.tealSelected : FeedbackTheme.cardBg,
           borderRadius: BorderRadius.circular(24 * fem),
           border: Border.all(
             color: selected

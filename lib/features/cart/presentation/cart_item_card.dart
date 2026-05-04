@@ -103,22 +103,13 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     return match.assetPath.isEmpty ? null : match.assetPath;
   }
 
-  /// Resolves the image path/URL to display for a cart item.
-  ///
-  /// Priority:
-  ///   1. `image_url` from API  — used for ALL product types when available.
-  ///   2. Diamond shape asset   — fallback only when image_url is absent AND
-  ///                              product type is 'solitaire'.
-  ///   3. null                  — _buildImage falls back to No_Image_Available.jpg.
   String? _resolveImageSource(CartDetail item) {
     final hasNetworkImage =
         item.imageUrl != null && item.imageUrl!.trim().isNotEmpty;
-
     if (hasNetworkImage) return item.imageUrl;
 
     final isSolitaire =
         (item.productType ?? '').trim().toLowerCase() == 'solitaire';
-
     if (isSolitaire) return getShapeAsset(item.solitaireShape);
 
     return null;
@@ -173,6 +164,8 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
 
     final title = '${titleParts.join(' - ')} ${item.productCode ?? ''}'.trim();
 
+    final isSolitaire = (item.productType ?? '').toLowerCase() == 'solitaire';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -187,22 +180,27 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
           ),
         ),
         const SizedBox(height: 6),
+
+        // FIX: Previously used a Set literal { } for non-solitaire rows.
+        // A Set is a single element in the outer list, so .toString() on it
+        // rendered as "{string1, string2, string3}" — causing the stray braces.
+        // Changed to a spread list [...] so every string is its own element.
         ...[
-          'Divine Solitaire ${item.solitaireShape ?? ''}  ${(item.solitaireSlab ?? '')} '
+          'Divine Solitaire ${item.solitaireShape ?? ''}  ${item.solitaireSlab ?? ''} '
               '${item.solitaireColor ?? ''} ${item.solitaireQuality ?? ''} '
               '(${item.solitairePcs ?? 0} Pcs)',
-          if ((item.productType ?? '').toLowerCase() != 'solitaire')
-            {
-              'Divine Mount:  Metal- ${item.metalPurity ?? ''} '
-                  '${item.metalColor ?? ''} ${item.metalWeight ?? 0}gms',
-              'Side Diamonds Qty ${item.sideStonePcs ?? 0} / '
-                  '${(item.sideStoneCts ?? 0).toStringAsFixed(2)}ct. ${item.sideStoneColor ?? ''} ${item.sideStoneQuality ?? ''}',
-              'Size: ${item.sizeFrom ?? ''}',
-            },
+          if (!isSolitaire) ...[
+            'Divine Mount:  Metal- ${item.metalPurity ?? ''} '
+                '${item.metalColor ?? ''} ${item.metalWeight ?? 0}gms',
+            'Side Diamonds Qty ${item.sideStonePcs ?? 0} / '
+                '${(item.sideStoneCts ?? 0).toStringAsFixed(2)}ct. '
+                '${item.sideStoneColor ?? ''} ${item.sideStoneQuality ?? ''}',
+            'Size: ${item.sizeFrom ?? ''}',
+          ],
           'Expected Delivery Date: ${item.expDlvDate != null && item.expDlvDate!.isNotEmpty ? DateFormat('dd-MM-yyyy').format(DateTime.parse(item.expDlvDate!)) : 'N/A'}',
         ].map(
           (text) => MyText(
-            text.toString(),
+            text,
             style: TextStyle(
               color: const Color(0xFF354152),
               fontSize: 14 * fem,
@@ -272,14 +270,12 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     );
   }
 
-  // ── Price: hidden when both min and max are 0 ────────────────────────────────
   Widget? _buildPrice(CartDetail item, double fem) {
     final min = item.productAmtMin ?? 0;
     final max = item.productAmtMax ?? 0;
 
     if (min == 0 && max == 0) return null;
 
-    // Build price parts, filtering out zero values
     final priceParts = [
       if (min != 0) min.inRupeesFormat(),
       if (max != 0) max.inRupeesFormat(),
@@ -403,8 +399,6 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     );
   }
 
-  // ─── Build ───────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final notifier = ref.read(cartNotifierProvider.notifier);
@@ -441,12 +435,7 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ── Image: API image_url takes priority for ALL product types.
-                // Diamond shape asset is used only as a fallback for solitaire
-                // when image_url is absent. Everything else falls back to
-                // No_Image_Available.jpg via _buildImage.
                 _buildImage(_resolveImageSource(currentItem)),
-
                 SizedBox(width: 24 * fem),
                 Expanded(
                   child: Column(
@@ -468,7 +457,6 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
             ),
           ),
 
-          // ── Circular close button — top-right of card ──────────────────────
           Positioned(
             top: 12 * fem,
             right: 12 * fem,

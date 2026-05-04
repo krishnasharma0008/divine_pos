@@ -45,6 +45,8 @@ Widget buildProductImage(
 
 /// ------------------------------------------------------------
 /// SHAPE → IMAGE MAP
+/// Keys match the shape codes used by the drawer and providers:
+///   RND, PRN, PER, OVL, MAQ, RADQ, CUSQ, HRT
 /// ------------------------------------------------------------
 const Map<String, List<String>> shapeImages = {
   'RND': [
@@ -59,7 +61,8 @@ const Map<String, List<String>> shapeImages = {
     'assets/diamond_value/oval.png',
     'assets/diamond_value/oval.png',
   ],
-  'PRC': [
+  // FIX: was 'PRC' — drawer sends 'PRN'
+  'PRN': [
     'assets/diamond_value/princess.png',
     'assets/diamond_value/princess.png',
     'assets/diamond_value/princess.png',
@@ -71,7 +74,8 @@ const Map<String, List<String>> shapeImages = {
     'assets/diamond_value/pear.png',
     'assets/diamond_value/pear.png',
   ],
-  'MRQ': [
+  // FIX: was 'MRQ' — drawer sends 'MAQ'
+  'MAQ': [
     'assets/diamond_value/marquise.png',
     'assets/diamond_value/marquise.png',
     'assets/diamond_value/marquise.png',
@@ -83,7 +87,8 @@ const Map<String, List<String>> shapeImages = {
     'assets/diamond_value/radiant.png',
     'assets/diamond_value/radiant.png',
   ],
-  'CUSH': [
+  // FIX: was 'CUSH' — drawer sends 'CUSQ'
+  'CUSQ': [
     'assets/diamond_value/cushion.png',
     'assets/diamond_value/cushion.png',
     'assets/diamond_value/cushion.png',
@@ -124,6 +129,16 @@ class ImagePreviewWithThumbnails extends StatefulWidget {
 class _ImagePreviewWithThumbnailsState
     extends State<ImagePreviewWithThumbnails> {
   int selectedImageIndex = 0;
+
+  @override
+  void didUpdateWidget(ImagePreviewWithThumbnails oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset to the first thumbnail whenever the shape changes so we never
+    // land mid-gallery on a new shape's image list.
+    if (oldWidget.shape != widget.shape) {
+      setState(() => selectedImageIndex = 0);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

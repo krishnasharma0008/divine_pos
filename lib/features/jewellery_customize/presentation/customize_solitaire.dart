@@ -653,7 +653,7 @@ class _CustomizeSolitaireState extends ConsumerState<CustomizeSolitaire> {
                                     selectedSideDiamondQuality = value;
                                   });
                                 },
-                                r: fem,
+                                //r: fem,
                               ),
                             ],
                           ),

@@ -39,10 +39,6 @@ class _RangeSelectorState extends State<RangeSelector> {
   bool _canScrollLeft = false;
   bool _canScrollRight = false;
 
-  // Tracks pointer-down position to distinguish tap vs drag on labels zone
-  double? _labelPointerDownDx;
-  static const double _tapMovementThreshold = 8.0;
-
   static const Color _tickActive = Color(0xFFBEE4DD);
   static const Color _tickInactive = Color(0xFFD9D9D9);
   static const Color _activeTrackColor = Color(0xFFCFF4EE);
@@ -120,9 +116,21 @@ class _RangeSelectorState extends State<RangeSelector> {
   String _displayText(String value) =>
       widget.valueToChipText?.call(value) ?? value;
 
-  void _emitRangeChanged() {
+  void _emitRangeChanged({bool immediate = false}) {
     if (widget.values.isEmpty) return;
-    widget.onRangeChanged(widget.values[_startIndex], widget.values[_endIndex]);
+    final start = widget.values[_startIndex];
+    final end = widget.values[_endIndex];
+
+    if (immediate) {
+      widget.onRangeChanged(start, end);
+      return;
+    }
+
+    // micro-debounce to avoid spamming parent on every tiny move
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.onRangeChanged(start, end);
+    });
   }
 
   double _centerX(int index, double itemWidth) =>
@@ -158,7 +166,7 @@ class _RangeSelectorState extends State<RangeSelector> {
       _endIndex = newEnd;
     });
 
-    _emitRangeChanged();
+    _emitRangeChanged(immediate: true);
     _autoScrollToIndex(index, itemWidth);
   }
 
@@ -203,17 +211,25 @@ class _RangeSelectorState extends State<RangeSelector> {
 
     final index = _indexFromLocalDx(localDx, itemWidth);
 
+    bool changed = false;
+
     if (_draggingThumb == _DragThumb.start) {
       final nextStart = index.clamp(0, _endIndex);
-      if (nextStart == _startIndex) return;
-      setState(() => _startIndex = nextStart);
+      if (nextStart != _startIndex) {
+        setState(() => _startIndex = nextStart);
+        changed = true;
+      }
     } else {
       final nextEnd = index.clamp(_startIndex, widget.values.length - 1);
-      if (nextEnd == _endIndex) return;
-      setState(() => _endIndex = nextEnd);
+      if (nextEnd != _endIndex) {
+        setState(() => _endIndex = nextEnd);
+        changed = true;
+      }
     }
 
-    _emitRangeChanged();
+    if (changed) {
+      _emitRangeChanged(); // debounced
+    }
   }
 
   void _handleDragEnd(double itemWidth) {
@@ -405,31 +421,16 @@ class _RangeSelectorState extends State<RangeSelector> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Labels + ticks — Listener bypasses gesture arena entirely ──────
-          // onPointerDown records where the finger landed.
-          // onPointerUp fires immediately; if finger barely moved it's a tap.
-          // No arena negotiation = no delay.
-          Listener(
-            behavior: HitTestBehavior.opaque,
-            onPointerDown: (event) {
-              _labelPointerDownDx = event.localPosition.dx;
-            },
-            onPointerUp: (event) {
-              final downDx = _labelPointerDownDx;
-              _labelPointerDownDx = null;
-              if (downDx == null) return;
-
-              final moved = (event.localPosition.dx - downDx).abs();
-              if (moved > _tapMovementThreshold)
-                return; // was a scroll, not a tap
-
+          // Labels + ticks: tap-only, scroll handles drags
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTapUp: (details) {
               final index = _indexFromLocalDx(
-                event.localPosition.dx,
+                details.localPosition.dx,
                 itemWidth,
               );
               _onTapIndex(index, itemWidth);
             },
-            onPointerCancel: (_) => _labelPointerDownDx = null,
             child: Row(
               children: List.generate(widget.values.length, (index) {
                 final bool isInRange =
@@ -475,13 +476,10 @@ class _RangeSelectorState extends State<RangeSelector> {
 
           SizedBox(height: 10 * fem),
 
-          // ── Track + thumbs ─────────────────────────────────────────────────
-          // dragStartBehavior: DragStartBehavior.down  →  drag recognizer wins
-          // the arena immediately from pointer-down, so the scroll view never
-          // steals the gesture mid-drag. onTapUp still fires for quick taps.
+          // Track + thumbs: drag + tap
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            dragStartBehavior: DragStartBehavior.down,
+            dragStartBehavior: DragStartBehavior.start,
             onTapUp: (details) {
               final index = _indexFromLocalDx(
                 details.localPosition.dx,
@@ -495,7 +493,7 @@ class _RangeSelectorState extends State<RangeSelector> {
                 _handleDragUpdate(details.localPosition.dx, itemWidth),
             onHorizontalDragEnd: (_) => _handleDragEnd(itemWidth),
             child: SizedBox(
-              height: thumbH,
+              height: 28 * fem, // slightly larger hit area
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -514,7 +512,7 @@ class _RangeSelectorState extends State<RangeSelector> {
                   // Active fill
                   Positioned(
                     left: activeLeft,
-                    top: (thumbH - 6 * fem) / 2,
+                    top: (28 * fem - 6 * fem) / 2,
                     child: Container(
                       width: activeWidth == 0 ? thumbW : activeWidth,
                       height: 6 * fem,
@@ -527,11 +525,11 @@ class _RangeSelectorState extends State<RangeSelector> {
                   // Start thumb
                   Positioned(
                     left: startLeft,
-                    top: 0,
-                    bottom: 0,
+                    top: (28 * fem - thumbH) / 2,
                     child: IgnorePointer(
                       child: SizedBox(
                         width: thumbW,
+                        height: thumbH,
                         child: Center(
                           child: CustomPaint(
                             size: Size(thumbW, thumbH),
@@ -544,11 +542,11 @@ class _RangeSelectorState extends State<RangeSelector> {
                   // End thumb
                   Positioned(
                     left: endLeft,
-                    top: 0,
-                    bottom: 0,
+                    top: (28 * fem - thumbH) / 2,
                     child: IgnorePointer(
                       child: SizedBox(
                         width: thumbW,
+                        height: thumbH,
                         child: Center(
                           child: CustomPaint(
                             size: Size(thumbW, thumbH),

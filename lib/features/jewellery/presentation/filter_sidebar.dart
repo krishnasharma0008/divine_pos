@@ -188,6 +188,9 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
         ? Clarityoption.indexOf(filter.clarityEndLabel!)
         : clarityDefaultEnd;
 
+    String toTitleCase(String s) =>
+        s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).toLowerCase();
+
     // final TextEditingController uidController = TextEditingController();
     // final FocusNode uidFocusNode = FocusNode();
 
@@ -460,7 +463,8 @@ class _FilterSidebarState extends ConsumerState<FilterSidebar> {
                       title: 'Category',
                       fem: fem,
                       child: twoColumnGrid(
-                        items: widget.categories,
+                        // items: widget.categories,
+                        items: widget.categories.map(toTitleCase).toList(),
                         selectedSet: filter.selectedCategory,
                         fem: fem,
                         groupName: "Category",

@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../cart/providers/cart_providers.dart';
 import '../../../cart/data/customer_detail_model.dart';
 
+import 'package:flutter/services.dart';
+
 class ContinueCartPopup extends ConsumerStatefulWidget {
   final BuildContext parentContext;
 
@@ -398,6 +400,10 @@ class _ContinueCartPopupState extends ConsumerState<ContinueCartPopup> {
                         child: TextField(
                           controller: _newMobileController,
                           keyboardType: TextInputType.phone,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
                           decoration: InputDecoration(
                             hintText: 'Enter Mobile Number',
                             hintStyle: TextStyle(

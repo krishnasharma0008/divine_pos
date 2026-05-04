@@ -207,7 +207,15 @@ class _JewelleryCustomiseScreenState
 
         final newdata = calc.calcDetail;
 
-        final allImages = detail.images;
+        // Scenario 1 initial  → images from detail (1st fetch, actual store piece)
+        // Scenario 1 customise → images from calcDetail (2nd fetch, full catalogue)
+        // Scenario 2           → images always from detail
+        final isCustomised = calc.isCustomised;
+        final imageSource = (isCustomised && newdata != null)
+            ? newdata
+            : detail;
+
+        final allImages = imageSource.images;
         final defaultMetalColor = detail.metalColor.split(',').first.trim();
         final defaultMetalPurity = detail.metalPurity.split(',').first.trim();
 
@@ -218,12 +226,18 @@ class _JewelleryCustomiseScreenState
         final activeColor = calc.selectedMetalColor ?? defaultMetalColor;
         final activePurity = calc.selectedMetalPurity ?? defaultMetalPurity;
 
+        // 1. Check active metal color
+        // 2. Filter images by that color
+        // 3. Screen decides: show widget or 'No images' — not delegated down
         final displayedImages = allImages
             .where(
               (img) =>
-                  (img.color ?? '').toLowerCase() == activeColor.toLowerCase(),
+                  (img.color ?? '').trim().toLowerCase() ==
+                  activeColor.trim().toLowerCase(),
             )
+            .where((img) => img.imageUrls.isNotEmpty)
             .toList();
+        final hasImages = displayedImages.isNotEmpty;
 
         final msg =
             calc.solitaireMessage ??
@@ -256,7 +270,6 @@ class _JewelleryCustomiseScreenState
         // ── Price display resolved here ─────────────────────────────────────
         // Initial load / reset  → approxPriceFrom only
         // After customise       → approxPriceFrom – approxPriceTo
-        final isCustomised = calc.isCustomised;
         final priceFrom = calc.approxPriceFrom;
         final priceTo = calc.approxPriceTo;
 
@@ -289,14 +302,16 @@ class _JewelleryCustomiseScreenState
                           children: [
                             Expanded(
                               flex: 6,
-                              child: ImagePreviewWithThumbnails(
-                                images: displayedImages,
-                                title: detail.collection,
-                                description: detail.productDescription,
-                                productCode: detail.productName,
-                                uid: widget.productCode,
-                                r: r,
-                              ),
+                              child: hasImages
+                                  ? ImagePreviewWithThumbnails(
+                                      images: displayedImages,
+                                      title: detail.collection,
+                                      description: detail.productDescription,
+                                      productCode: detail.productName,
+                                      uid: widget.productCode,
+                                      r: r,
+                                    )
+                                  : const Center(child: Text('No images')),
                             ),
 
                             SizedBox(width: 16 * r),
@@ -350,7 +365,15 @@ class _JewelleryCustomiseScreenState
                                     approxPriceFrom: calc.approxPriceFrom,
                                     approxPriceTo: calc.approxPriceTo,
                                     hidePriceBreakup: hidePriceBreakup,
-                                    hasBeenCustomised: _hasBeenCustomised,
+                                    // Show both prices only when:
+                                    // - user has customised (isCustomised=true), AND
+                                    // - approxPriceTo is populated (recalc has completed).
+                                    // Without the second guard, the first rebuild after
+                                    // applyFilter shows isCustomised=true but approxPriceTo=null,
+                                    // producing the '₹35,889 -' dash artifact.
+                                    hasBeenCustomised:
+                                        calc.isCustomised &&
+                                        (calc.approxPriceTo ?? 0) > 0,
                                   ),
 
                                   Padding(
@@ -358,217 +381,260 @@ class _JewelleryCustomiseScreenState
                                     child: SizedBox(
                                       width: 483 * r,
                                       height: 41 * r,
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(
-                                            20 * r,
-                                          ),
-                                          onTap: () async {
-                                            final metalColors = detail
-                                                .metalColor
-                                                .split(',');
-                                            final metalPurities = detail
-                                                .metalPurity
-                                                .split(',');
+                                      child: hidePriceBreakup
+                                          ? const SizedBox.shrink() // hide button for coins/locket
+                                          : Material(
+                                              color: Colors.transparent,
+                                              child: InkWell(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      20 * r,
+                                                    ),
+                                                onTap: () async {
+                                                  // Scenario 1: use calcDetail (full catalogue list)
+                                                  // Scenario 2: fall back to detail
+                                                  final sourceDetail =
+                                                      newdata ?? detail;
+                                                  final metalColors =
+                                                      sourceDetail.metalColor
+                                                          .split(',')
+                                                          .map((e) => e.trim())
+                                                          .where(
+                                                            (e) => e.isNotEmpty,
+                                                          )
+                                                          .toList();
+                                                  final metalPurities =
+                                                      sourceDetail.metalPurity
+                                                          .split(',')
+                                                          .map((e) => e.trim())
+                                                          .where(
+                                                            (e) => e.isNotEmpty,
+                                                          )
+                                                          .toList();
 
-                                            debugPrint(
-                                              'sizeFrom: ${calc.sizeFrom}, '
-                                              'sizeTo: ${calc.sizeTo}, '
-                                              'ringSize: ${calc.ringSize}',
-                                            );
+                                                  debugPrint(
+                                                    'sizeFrom: ${calc.sizeFrom}, '
+                                                    'sizeTo: ${calc.sizeTo}, '
+                                                    'ringSize: ${calc.ringSize}',
+                                                  );
 
-                                            final result = await showCustomizeDrawer(
-                                              context: context,
-                                              detail: newdata ?? detail,
-                                              totalSidePcs:
-                                                  calc.totalSidePcs ?? 0,
-                                              totalSideWeight:
-                                                  calc.totalSideWeight ?? 0.0,
-                                              collection: detail.collection,
-                                              isMultiSize: isMultiSize,
-                                              initialValues: {
-                                                if (priceStartIndex != null &&
-                                                    priceEndIndex != null)
-                                                  'price': {
-                                                    'startIndex':
-                                                        priceStartIndex,
-                                                    'endIndex': priceEndIndex,
-                                                  },
-                                                if (caratStartIndex != null &&
-                                                    caratEndIndex != null)
-                                                  'carat': {
-                                                    'startIndex':
-                                                        caratStartIndex,
-                                                    'endIndex': caratEndIndex,
-                                                  },
-                                                if (colorStartIndex != null &&
-                                                    colorEndIndex != null)
-                                                  'color': {
-                                                    'startIndex':
-                                                        colorStartIndex,
-                                                    'endIndex': colorEndIndex,
-                                                  },
-                                                if (clarityStartIndex != null &&
-                                                    clarityEndIndex != null)
-                                                  'clarity': {
-                                                    'startIndex':
-                                                        clarityStartIndex,
-                                                    'endIndex': clarityEndIndex,
-                                                  },
-                                                'shape': calc.solitaireShape,
-                                                'ringSizeFrom': calc.sizeFrom,
-                                                'ringSizeTo': calc.sizeTo,
-                                                if (calc.ringSize != null)
-                                                  'ringSize': calc.ringSize,
-                                                'metalColor':
-                                                    calc.selectedMetalColor ??
-                                                    metalColors.first.trim(),
-                                                'metalPurity':
-                                                    calc.selectedMetalPurity ??
-                                                    metalPurities.first.trim(),
-                                                'sideDiamondQuality': calc
-                                                    .selectedSideDiamondQuality,
-                                              },
-                                              metalColors: metalColors
-                                                  .map((e) => e.trim())
-                                                  .toList(),
-                                              metalPurity: metalPurities
-                                                  .map((e) => e.trim())
-                                                  .toList(),
-                                            );
+                                                  final result = await showCustomizeDrawer(
+                                                    context: context,
+                                                    detail: newdata ?? detail,
+                                                    totalSidePcs:
+                                                        calc.totalSidePcs ?? 0,
+                                                    totalSideWeight:
+                                                        calc.totalSideWeight ??
+                                                        0.0,
+                                                    collection:
+                                                        detail.collection,
+                                                    isMultiSize: isMultiSize,
+                                                    initialValues: {
+                                                      if (priceStartIndex !=
+                                                              null &&
+                                                          priceEndIndex != null)
+                                                        'price': {
+                                                          'startIndex':
+                                                              priceStartIndex,
+                                                          'endIndex':
+                                                              priceEndIndex,
+                                                        },
+                                                      if (caratStartIndex !=
+                                                              null &&
+                                                          caratEndIndex != null)
+                                                        'carat': {
+                                                          'startIndex':
+                                                              caratStartIndex,
+                                                          'endIndex':
+                                                              caratEndIndex,
+                                                        },
+                                                      if (colorStartIndex !=
+                                                              null &&
+                                                          colorEndIndex != null)
+                                                        'color': {
+                                                          'startIndex':
+                                                              colorStartIndex,
+                                                          'endIndex':
+                                                              colorEndIndex,
+                                                        },
+                                                      if (clarityStartIndex !=
+                                                              null &&
+                                                          clarityEndIndex !=
+                                                              null)
+                                                        'clarity': {
+                                                          'startIndex':
+                                                              clarityStartIndex,
+                                                          'endIndex':
+                                                              clarityEndIndex,
+                                                        },
+                                                      'shape':
+                                                          calc.solitaireShape,
+                                                      'ringSizeFrom':
+                                                          calc.sizeFrom,
+                                                      'ringSizeTo': calc.sizeTo,
+                                                      if (calc.ringSize != null)
+                                                        'ringSize':
+                                                            calc.ringSize,
+                                                      'metalColor':
+                                                          calc.selectedMetalColor ??
+                                                          metalColors.first
+                                                              .trim(),
+                                                      'metalPurity':
+                                                          calc.selectedMetalPurity ??
+                                                          metalPurities.first
+                                                              .trim(),
+                                                      'sideDiamondQuality': calc
+                                                          .selectedSideDiamondQuality,
+                                                    },
+                                                    metalColors: metalColors
+                                                        .map((e) => e.trim())
+                                                        .toList(),
+                                                    metalPurity: metalPurities
+                                                        .map((e) => e.trim())
+                                                        .toList(),
+                                                  );
 
-                                            if (!mounted || result == null) {
-                                              return;
-                                            }
+                                                  if (!mounted ||
+                                                      result == null) {
+                                                    return;
+                                                  }
 
-                                            setState(() {
-                                              _hasBeenCustomised = true;
-                                              priceStartIndex =
-                                                  result.price?.startIndex;
-                                              priceEndIndex =
-                                                  result.price?.endIndex;
-                                              caratStartIndex =
-                                                  result.carat?.startIndex;
-                                              caratEndIndex =
-                                                  result.carat?.endIndex;
-                                              colorStartIndex =
-                                                  result.color?.startIndex;
-                                              colorEndIndex =
-                                                  result.color?.endIndex;
-                                              clarityStartIndex =
-                                                  result.clarity?.startIndex;
-                                              clarityEndIndex =
-                                                  result.clarity?.endIndex;
-                                            });
+                                                  setState(() {
+                                                    _hasBeenCustomised = true;
+                                                    priceStartIndex = result
+                                                        .price
+                                                        ?.startIndex;
+                                                    priceEndIndex =
+                                                        result.price?.endIndex;
+                                                    caratStartIndex = result
+                                                        .carat
+                                                        ?.startIndex;
+                                                    caratEndIndex =
+                                                        result.carat?.endIndex;
+                                                    colorStartIndex = result
+                                                        .color
+                                                        ?.startIndex;
+                                                    colorEndIndex =
+                                                        result.color?.endIndex;
+                                                    clarityStartIndex = result
+                                                        .clarity
+                                                        ?.startIndex;
+                                                    clarityEndIndex = result
+                                                        .clarity
+                                                        ?.endIndex;
+                                                  });
 
-                                            ref
-                                                .read(
-                                                  jewelleryCalcProvider
-                                                      .notifier,
-                                                )
-                                                .applyFilter(result);
+                                                  ref
+                                                      .read(
+                                                        jewelleryCalcProvider
+                                                            .notifier,
+                                                      )
+                                                      .applyFilter(result);
 
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Customization applied',
-                                                ),
-                                                backgroundColor: Color(
-                                                  0xFF90DCD0,
-                                                ),
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                              ),
-                                            );
-                                          },
-                                          child: Stack(
-                                            children: [
-                                              Positioned.fill(
-                                                child: Container(
-                                                  decoration: ShapeDecoration(
-                                                    shape: RoundedRectangleBorder(
-                                                      side: const BorderSide(
-                                                        width: 1,
-                                                        color: Color(
-                                                          0xFF6C5022,
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'Customization applied',
+                                                      ),
+                                                      backgroundColor: Color(
+                                                        0xFF90DCD0,
+                                                      ),
+                                                      behavior: SnackBarBehavior
+                                                          .floating,
+                                                    ),
+                                                  );
+                                                },
+                                                child: Stack(
+                                                  children: [
+                                                    Positioned.fill(
+                                                      child: Container(
+                                                        decoration: ShapeDecoration(
+                                                          shape: RoundedRectangleBorder(
+                                                            side:
+                                                                const BorderSide(
+                                                                  width: 1,
+                                                                  color: Color(
+                                                                    0xFF6C5022,
+                                                                  ),
+                                                                ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  20,
+                                                                ),
+                                                          ),
                                                         ),
                                                       ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            20,
-                                                          ),
                                                     ),
-                                                  ),
-                                                ),
-                                              ),
 
-                                              Positioned(
-                                                left: 4 * r,
-                                                top: 4 * r,
-                                                bottom: 4 * r,
-                                                right: 84 * r,
-                                                child: Container(
-                                                  alignment: Alignment.center,
-                                                  decoration: ShapeDecoration(
-                                                    color: const Color(
-                                                      0xFFCBC4AE,
-                                                    ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            15 * r,
+                                                    Positioned(
+                                                      left: 4 * r,
+                                                      top: 4 * r,
+                                                      bottom: 4 * r,
+                                                      right: 84 * r,
+                                                      child: Container(
+                                                        alignment:
+                                                            Alignment.center,
+                                                        decoration: ShapeDecoration(
+                                                          color: const Color(
+                                                            0xFFCBC4AE,
                                                           ),
-                                                    ),
-                                                  ),
-                                                  child: MyText(
-                                                    _hasBeenCustomised
-                                                        ? 'Edit Customization'
-                                                        : 'Start customizing',
-                                                    style: TextStyle(
-                                                      color: const Color(
-                                                        0xFF6C5022,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  15 * r,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        child: MyText(
+                                                          _hasBeenCustomised
+                                                              ? 'Edit Customization'
+                                                              : 'Start customizing',
+                                                          style: TextStyle(
+                                                            color: const Color(
+                                                              0xFF6C5022,
+                                                            ),
+                                                            fontSize: 14 * r,
+                                                            fontFamily:
+                                                                'Montserrat',
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
                                                       ),
-                                                      fontSize: 14 * r,
-                                                      fontFamily: 'Montserrat',
-                                                      fontWeight:
-                                                          FontWeight.w500,
                                                     ),
-                                                  ),
-                                                ),
-                                              ),
 
-                                              Positioned(
-                                                top: 4 * r,
-                                                bottom: 4 * r,
-                                                right: 4 * r,
-                                                width: 72 * r,
-                                                child: Container(
-                                                  alignment: Alignment.center,
-                                                  decoration: ShapeDecoration(
-                                                    color: const Color(
-                                                      0xFF6C5022,
-                                                    ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            15 * r,
+                                                    Positioned(
+                                                      top: 4 * r,
+                                                      bottom: 4 * r,
+                                                      right: 4 * r,
+                                                      width: 72 * r,
+                                                      child: Container(
+                                                        alignment:
+                                                            Alignment.center,
+                                                        decoration: ShapeDecoration(
+                                                          color: const Color(
+                                                            0xFF6C5022,
                                                           ),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  15 * r,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        child: Image.asset(
+                                                          'assets/jewellery_pdp/cus-ticon.png',
+                                                          width: 18 * r,
+                                                          height: 18 * r,
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  child: Image.asset(
-                                                    'assets/jewellery_pdp/cus-ticon.png',
-                                                    width: 18 * r,
-                                                    height: 18 * r,
-                                                  ),
+                                                  ],
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
+                                            ),
                                     ),
                                   ),
                                 ],
@@ -645,7 +711,11 @@ class _JewelleryCustomiseScreenState
                                 ),
 
                                 // separator + approxPriceTo — only after customise
-                                if (!isCalculating && _hasBeenCustomised) ...[
+                                // Guard with priceTo > 0 so the dash never renders
+                                // while recalc is still in flight (priceTo still null).
+                                if (!isCalculating &&
+                                    calc.isCustomised &&
+                                    (priceTo ?? 0) > 0) ...[
                                   const SizedBox(width: 6),
                                   MyText(
                                     '-',

@@ -224,7 +224,14 @@ void _showSuccessDialog(BuildContext context, double fem) {
                 SizedBox(height: 32 * fem),
                 Center(
                   child: submitButton(fem, () {
-                    context.pushNamed(RoutePages.dashboard.routeName);
+                    //context.pushNamed(RoutePages.dashboard.routeName);
+                    // 1) Close the dialog on the root navigator
+                    Navigator.of(context, rootNavigator: true).pop();
+
+                    // 2) Then navigate to dashboard using the root router
+                    GoRouter.of(
+                      context,
+                    ).goNamed(RoutePages.dashboard.routeName);
                   }, label: 'OK'),
                 ),
                 SizedBox(height: 32 * fem),

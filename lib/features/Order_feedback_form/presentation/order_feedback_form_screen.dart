@@ -109,14 +109,18 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
   };
 
   // ── Step 1 validation ─────────────────────────────────────────────────────
+  // bool get _step1Valid =>
+  //     _experienceRating > 0 &&
+  //     _selectedSource != null &&
+  //     _customerType != null &&
+  //     _occasion != null &&
+  //     _nameController.text.trim().isNotEmpty &&
+  //     _mobileController.text.trim().isNotEmpty
+  // && _emailController.text.trim().isNotEmpty;
+
   bool get _step1Valid =>
-      // _experienceRating > 0 &&
-      // _selectedSource != null &&
-      // _customerType != null &&
-      // _occasion != null &&
       _nameController.text.trim().isNotEmpty &&
       _mobileController.text.trim().isNotEmpty;
-  // && _emailController.text.trim().isNotEmpty;
 
   void _handleNext() {
     setState(() => _step1Submitted = true);
@@ -180,51 +184,67 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
               onStepChanged: (step) => setState(() => _currentStep = step),
             ),
             SizedBox(height: 25 * fem),
+
             Expanded(
               child: Form(
                 key: _formKey,
-                child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: fem * 100),
-                  decoration: ShapeDecoration(
-                    shape: RoundedRectangleBorder(
-                      side: const BorderSide(color: Color(0xFFBEE4DD)),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 233 * fem),
-                  child: SingleChildScrollView(
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.onDrag,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 24 * fem),
-                        MyText(
-                          'Form to be filled by Sales Executive',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: const Color(0xFF3F3F3F),
-                            fontSize: 16 * fem,
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w400,
-                            height: 2.25,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Container(
+                      margin: EdgeInsets.symmetric(horizontal: fem * 100),
+                      decoration: ShapeDecoration(
+                        shape: RoundedRectangleBorder(
+                          side: const BorderSide(color: Color(0xFFBEE4DD)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      // keep padding but inside scroll
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 233 * fem,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 24 * fem),
+                                MyText(
+                                  'Form to be filled by Sales Executive',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: const Color(0xFF3F3F3F),
+                                    fontSize: 16 * fem,
+                                    fontFamily: 'Montserrat',
+                                    fontWeight: FontWeight.w400,
+                                    height: 2.25,
+                                  ),
+                                ),
+                                SizedBox(height: 30 * fem),
+                                Padding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    24 * fem,
+                                    24 * fem,
+                                    24 * fem,
+                                    24 * fem,
+                                  ),
+                                  child: _currentStep == 1
+                                      ? _buildStep1(fem)
+                                      : _buildStep2(fem, isSubmitting),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        SizedBox(height: 30 * fem),
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            24 * fem,
-                            24 * fem,
-                            24 * fem,
-                            24 * fem,
-                          ),
-                          child: _currentStep == 1
-                              ? _buildStep1(fem)
-                              : _buildStep2(fem, isSubmitting),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -299,7 +319,7 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
-                    backgroundColor: const Color(0xFFBEE4DD),
+                    backgroundColor: const Color(0xFFFFFFFF),
                   );
                 }).toList(),
               ),
@@ -444,7 +464,8 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
         QuestionSection(
           index: 7,
           fem: fem,
-          title: 'Email ID *',
+          title: 'Email ID ',
+          required: false,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -461,7 +482,7 @@ class _DivineFeedbackScreenState extends ConsumerState<DivineFeedbackScreen> {
                 onChanged: (_) => setState(() {}),
                 validator: (v) {
                   final value = v?.trim() ?? '';
-                  //if (value.isEmpty) return null; // optional
+                  if (value.isEmpty) return null; // optional
                   if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                     return 'Enter valid email';
                   }
@@ -805,6 +826,7 @@ class QuestionSection extends StatelessWidget {
   final int index;
   final String title;
   final Widget child;
+  final bool required; // add this
 
   const QuestionSection({
     super.key,
@@ -812,6 +834,7 @@ class QuestionSection extends StatelessWidget {
     required this.fem,
     required this.title,
     required this.child,
+    this.required = true, // default to true
   });
 
   @override
@@ -819,7 +842,7 @@ class QuestionSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _questionTitle(index: index, text: title, fem: fem),
+        _questionTitle(index: index, text: title, fem: fem, required: required),
         SizedBox(height: 15 * fem),
         child,
         SizedBox(height: 23 * fem),
@@ -832,6 +855,7 @@ Widget _questionTitle({
   required int index,
   required String text,
   required double fem,
+  bool required = true,
 }) {
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -856,7 +880,8 @@ Widget _questionTitle({
         ),
       ),
       const SizedBox(width: 8),
-      const MyText('*', style: TextStyle(color: Colors.red)),
+      // const MyText('*', style: TextStyle(color: Colors.red)),
+      if (required) const MyText('*', style: TextStyle(color: Colors.red)),
     ],
   );
 }
@@ -966,18 +991,18 @@ void _showSuccessDialog(BuildContext context, double fem) {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(
-                      Icons.close,
-                      size: 18,
-                      color: Color(0xFF707070),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 12 * fem),
+                // Align(
+                //   alignment: Alignment.topRight,
+                //   child: InkWell(
+                //     onTap: () => Navigator.of(context).pop(),
+                //     child: const Icon(
+                //       Icons.close,
+                //       size: 18,
+                //       color: Color(0xFF707070),
+                //     ),
+                //   ),
+                // ),
+                // SizedBox(height: 12 * fem),
                 Container(
                   width: 60 * fem,
                   height: 60 * fem,
@@ -1008,8 +1033,14 @@ void _showSuccessDialog(BuildContext context, double fem) {
                 SizedBox(height: 32 * fem),
                 Center(
                   child: submitButton(fem, () {
-                    //context.pushNamed(RoutePages.dashboard.routeName);
-                    GoRouter.of(context).go(RoutePages.dashboard.routeName);
+                    // 1) Close the dialog on the root navigator
+                    Navigator.of(context, rootNavigator: true).pop();
+
+                    // 2) Then navigate to dashboard using the root router
+                    GoRouter.of(
+                      context,
+                    ).goNamed(RoutePages.dashboard.routeName);
+                    //GoRouter.of(context).go(RoutePages.dashboard.routeName); commented bcoz of error on web "GoRouter.of() called with a context that does not contain a GoRouter. You can usually fix this by ensuring the context you use comes from a widget below a GoRouter widget."
                   }, label: 'OK'),
                 ),
                 SizedBox(height: 32 * fem),
