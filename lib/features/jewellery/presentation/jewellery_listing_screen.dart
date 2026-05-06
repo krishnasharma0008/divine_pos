@@ -61,6 +61,7 @@ class _JewelleryListingScreenState
       final filterNotifier = ref.read(filterProvider.notifier);
 
       filterNotifier.setProductsInStore();
+      //filterNotifier.setAllDesigns();
       filterNotifier.resetFilters();
 
       if (widget.paramKey != null && widget.paramValue != null) {

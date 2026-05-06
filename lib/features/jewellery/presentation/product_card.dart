@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../shared/utils/scale_size.dart';
 import '../../../shared/widgets/text.dart';
-import 'product_image_popup.dart'; // ← new popup
+import 'product_image_popup.dart';
 
 class ProductCard extends StatefulWidget {
   final String image;
@@ -23,7 +23,7 @@ class ProductCard extends StatefulWidget {
     required this.image,
     required this.description,
     required this.price,
-    this.tagText = "",
+    this.tagText = '',
     this.tagColor = Colors.transparent,
     this.isSoldOut = false,
     this.isWide = false,
@@ -45,9 +45,9 @@ class _ProductCardState extends State<ProductCard> {
       defaultTargetPlatform == TargetPlatform.macOS ||
       defaultTargetPlatform == TargetPlatform.linux;
 
-  // ── Opens the professional image popup ──────────────────────────────────
   void _openImagePopup() {
     if (widget.image.isEmpty) return;
+
     showProductImagePopup(
       context,
       imageUrl: widget.image,
@@ -101,63 +101,63 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  // ── NORMAL CARD ────────────────────────────────────────────────────────────
   Widget _buildNormal(BuildContext context, double r) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _imageStack(r),
-        //SizedBox(height: 8 * r),
-        _description(r), // 👈 description below price
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(child: _price(r)),
-            if (!widget.isSoldOut)
-              _actionsRow(mainAxisAlignment: MainAxisAlignment.end, r: r),
-          ],
-        ),
-
-        //SizedBox(height: 6 * r),
-      ],
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8 * r),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _imageStack(r),
+          SizedBox(height: 10 * r),
+          _description(r),
+          const Spacer(),
+          SizedBox(height: 8 * r),
+          _bottomRow(r),
+        ],
+      ),
     );
   }
 
-  // ── WIDE CARD ──────────────────────────────────────────────────────────────
   Widget _buildWide(BuildContext context, double r) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _imageStack(r),
-        //SizedBox(height: 8 * r),
-        _description(r), // 👈 description below price
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(child: _price(r)),
-            if (!widget.isSoldOut)
-              _actionsRow(mainAxisAlignment: MainAxisAlignment.end, r: r),
-          ],
-        ),
-
-        //SizedBox(height: 8 * r),
-      ],
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8 * r),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _imageStack(r),
+          SizedBox(height: 10 * r),
+          _description(r),
+          const Spacer(),
+          SizedBox(height: 8 * r),
+          _bottomRow(r),
+        ],
+      ),
     );
   }
 
-  // ── IMAGE STACK ────────────────────────────────────────────────────────────
+  Widget _bottomRow(double r) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 12 * r),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(child: _price(r)),
+          if (!widget.isSoldOut) ...[SizedBox(width: 8 * r), _actionsRow(r: r)],
+        ],
+      ),
+    );
+  }
+
   Widget _imageStack(double r) {
     final bool isNetwork = widget.image.startsWith('http');
-
-    //debugPrint('ProductCard img: "${widget.image}"');
+    final double imageHeight = widget.isWide ? 248 * r : 248 * r;
 
     return Stack(
       children: [
-        // ── Tappable image area ──────────────────────────────────────────
         GestureDetector(
           onTap: _openImagePopup,
           child: SizedBox(
-            height: 280 * r,
+            height: imageHeight,
             width: double.infinity,
             child: Center(
               child: isNetwork
@@ -184,8 +184,6 @@ class _ProductCardState extends State<ProductCard> {
             ),
           ),
         ),
-
-        // ── TAG ─────────────────────────────────────────────────────────
         if (widget.tagText.isNotEmpty)
           Positioned(
             left: 14 * r,
@@ -199,8 +197,6 @@ class _ProductCardState extends State<ProductCard> {
               ),
             ),
           ),
-
-        // ── HEART ───────────────────────────────────────────────────────
         Positioned(
           right: 14 * r,
           top: 14 * r,
@@ -213,36 +209,10 @@ class _ProductCardState extends State<ProductCard> {
             ),
           ),
         ),
-
-        // ── ZOOM HINT ────────────────────────────────────────────────────
-        // Small "expand" icon so the user knows the image is tappable.
-        // Positioned(
-        //   left: 14 * r,
-        //   bottom: 10 * r,
-        //   child: IgnorePointer(
-        //     child: AnimatedOpacity(
-        //       opacity: _isHovered ? 0.85 : 0.40,
-        //       duration: const Duration(milliseconds: 180),
-        //       child: Container(
-        //         padding: EdgeInsets.all(5 * r),
-        //         decoration: BoxDecoration(
-        //           color: Colors.black54,
-        //           borderRadius: BorderRadius.circular(8 * r),
-        //         ),
-        //         child: Icon(
-        //           Icons.zoom_in_rounded,
-        //           size: 16 * r,
-        //           color: Colors.white,
-        //         ),
-        //       ),
-        //     ),
-        //   ),
-        // ),
       ],
     );
   }
 
-  // ── SOLD OUT OVERLAY ───────────────────────────────────────────────────────
   Widget _soldOutOverlay(double r) {
     return Positioned.fill(
       child: Container(
@@ -255,7 +225,7 @@ class _ProductCardState extends State<ProductCard> {
               border: Border.all(color: Colors.grey.shade400),
             ),
             child: MyText(
-              "Sold out",
+              'Sold out',
               style: TextStyle(fontSize: 14 * r, fontWeight: FontWeight.bold),
             ),
           ),
@@ -264,7 +234,6 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  // ── HELPERS ────────────────────────────────────────────────────────────────
   Widget _noImageAsset(double r) {
     return Image.asset(
       'assets/jewellery/No_Image_Available.jpg',
@@ -274,10 +243,9 @@ class _ProductCardState extends State<ProductCard> {
     );
   }
 
-  Widget _description(double r) => Padding(
-    padding: EdgeInsets.symmetric(horizontal: 12 * r),
-    child: SizedBox(
-      //height: 36 * r,
+  Widget _description(double r) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 12 * r),
       child: MyText(
         widget.description,
         maxLines: 2,
@@ -285,28 +253,26 @@ class _ProductCardState extends State<ProductCard> {
         style: TextStyle(
           fontSize: 16 * r,
           fontWeight: FontWeight.w500,
-          height: 1.54,
+          height: 1.45,
         ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _price(double r) => Padding(
-    padding: EdgeInsets.symmetric(horizontal: 9 * r),
-    child: MyText(
+  Widget _price(double r) {
+    return MyText(
       widget.price == null
           ? 'Price on request'
           : widget.price!.inRupeesFormat(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: TextStyle(fontSize: 16 * r, fontWeight: FontWeight.w500),
-    ),
-  );
+    );
+  }
 
-  Widget _actionsRow({
-    required MainAxisAlignment mainAxisAlignment,
-    required double r,
-  }) {
+  Widget _actionsRow({required double r}) {
     return Row(
-      mainAxisAlignment: mainAxisAlignment,
+      mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
           onTap: widget.onAddToCart,

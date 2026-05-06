@@ -1,18 +1,14 @@
-import 'package:divine_pos/features/auth/data/auth_notifier.dart';
 import 'package:divine_pos/features/jewellery/data/add_to_cart_notifier.dart';
-import 'package:divine_pos/features/jewellery/data/filter_provider.dart';
-import 'package:collection/collection.dart';
-import 'package:divine_pos/features/jewellery/data/listing_provider.dart';
+import 'package:divine_pos/features/jewellery/presentation/product_card.dart';
+import 'package:divine_pos/features/jewellery/data/jewellery_model.dart';
+import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
+import 'package:divine_pos/features/jewellery_customize/presentation/widget/continue_cart_popup.dart';
+import 'package:divine_pos/shared/routes/route_pages.dart';
+import 'package:divine_pos/shared/utils/jewellery_helpers.dart';
+import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'product_card.dart';
-import '../data/jewellery_model.dart';
-import '../../../shared/utils/jewellery_helpers.dart';
-import '../../../shared/utils/scale_size.dart';
 import 'package:go_router/go_router.dart';
-import '../../../shared/routes/route_pages.dart';
-import 'package:divine_pos/features/cart/data/customer_detail_model.dart';
-import 'package:divine_pos/features/jewellery_customize/presentation/widget/continue_cart_popup.dart'; // customer selection and add to cart logic will be implemented here later
 
 class ProductGrid extends ConsumerWidget {
   final List<Jewellery> jewellery;
@@ -26,65 +22,22 @@ class ProductGrid extends ConsumerWidget {
     required this.isLoadingMore,
   });
 
-  static const double _rowSpacing = 20;
+  static const double _gridSpacing = 20;
   static const double _horizontalPadding = 24;
   static const double _cardHeight = 352;
-
-  void _onAddToCart(
-    BuildContext context,
-    WidgetRef ref, {
-    required CustomerDetail customer,
-    required String productCode,
-    required String customercode, //new
-    required String customername, //new
-    required String branch, //new
-    required int customerid, //new
-    //required String designno,
-  }) async {
-    // if (branch.isEmpty) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text('Select a store to add to cart')),
-    //   );
-    //   return;
-    // }
-
-    // ✅ No (productCode) family key — plain provider
-    await ref
-        .read(addToCartProvider.notifier)
-        .addToCart(
-          productCode: productCode,
-          customerid: customerid,
-          customercode: customercode,
-          customername: customername,
-          branch: branch,
-          customerOrder: customer, // retail customer whom to sale
-          //designno: designno,
-        );
-
-    if (!context.mounted) return;
-
-    // ✅ Read the inner AddToCartState from AsyncValue
-    final result = ref.read(addToCartProvider).value;
-
-    if (result?.isSuccess == true) {
-      // ✅ Reset so next add starts fresh
-      ref.read(addToCartProvider.notifier).reset();
-      context.pushNamed(RoutePages.cart.routeName);
-    } else if (result?.isError == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result?.errorMessage ?? 'Failed to add to cart'),
-        ),
-      );
-    }
-  }
+  static const double _topPadding = 6;
+  static const double _wideGap = 48;
+  static const double _wideRightInset = 5;
+  static const int _topGridCount = 3;
+  static const int _featuredStartIndex = 3;
+  static const int _tailStartIndex = 5;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final r = ScaleSize.aspectRatio;
 
     if (jewellery.isEmpty) {
-      return const Center(child: Text("No products found"));
+      return const Center(child: Text('No products found'));
     }
 
     return Container(
@@ -92,95 +45,16 @@ class ProductGrid extends ConsumerWidget {
       child: SingleChildScrollView(
         controller: controller,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            /// 🔹 FIRST 3 ITEMS
-            GridView.builder(
-              padding: EdgeInsets.symmetric(
-                horizontal: _horizontalPadding * r,
-                vertical: 6 * r,
-              ),
-              itemCount: jewellery.length.clamp(0, 3),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: _rowSpacing * r,
-                mainAxisSpacing: _rowSpacing * r,
-                mainAxisExtent: _cardHeight * r,
-              ),
-              itemBuilder: (context, index) {
-                return _buildCard(context, ref, jewellery[index]);
-              },
-            ),
-
-            /// spacing after first grid
-            if (jewellery.length > 3) SizedBox(height: _rowSpacing * r),
-
-            /// 🔹 4th (wide) + 5th (normal)
-            if (jewellery.length >= 4)
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: _horizontalPadding * r,
-                ),
-                child: Row(
-                  children: [
-                    /// 4th item → index 3 (always safe here)
-                    Expanded(
-                      flex: 2,
-                      child: SizedBox(
-                        height: _cardHeight * r,
-                        child: Padding(
-                          padding: EdgeInsets.only(right: 5 * r),
-                          child: _buildCard(
-                            context,
-                            ref,
-                            jewellery[3],
-                            isWide: true,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    /// spacing only if 5th exists
-                    if (jewellery.length >= 5) SizedBox(width: 48 * r),
-
-                    /// 5th item → index 4 (guarded)
-                    if (jewellery.length >= 5)
-                      Expanded(
-                        flex: 1,
-                        child: SizedBox(
-                          height: _cardHeight * r,
-                          child: _buildCard(context, ref, jewellery[4]),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-            /// spacing after wide row
-            if (jewellery.length > 5) SizedBox(height: _rowSpacing * r),
-
-            /// 🔹 REMAINING ITEMS (index 5+)
-            if (jewellery.length > 5)
-              GridView.builder(
-                padding: EdgeInsets.symmetric(
-                  horizontal: _horizontalPadding * r,
-                ),
-                itemCount: jewellery.length - 5,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: _rowSpacing * r,
-                  mainAxisSpacing: _rowSpacing * r,
-                  mainAxisExtent: _cardHeight * r,
-                ),
-                itemBuilder: (context, index) {
-                  return _buildCard(context, ref, jewellery[index + 5]);
-                },
-              ),
-
-            /// loading indicator
+            _buildTopGrid(context, ref, r),
+            if (jewellery.length > _topGridCount)
+              SizedBox(height: _gridSpacing * r),
+            if (jewellery.length >= 4) _buildFeaturedRow(context, ref, r),
+            if (jewellery.length > _tailStartIndex)
+              SizedBox(height: _gridSpacing * r),
+            if (jewellery.length > _tailStartIndex)
+              _buildRemainingGrid(context, ref, r),
             if (isLoadingMore)
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 24 * r),
@@ -190,6 +64,117 @@ class ProductGrid extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildTopGrid(BuildContext context, WidgetRef ref, double r) {
+    final items = jewellery.take(_topGridCount).toList();
+
+    return GridView.builder(
+      padding: EdgeInsets.symmetric(
+        horizontal: _horizontalPadding * r,
+        vertical: _topPadding * r,
+      ),
+      itemCount: items.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: _gridSpacing * r,
+        mainAxisSpacing: _gridSpacing * r,
+        mainAxisExtent: _cardHeight * r,
+      ),
+      itemBuilder: (_, index) => _buildCard(context, ref, items[index]),
+    );
+  }
+
+  Widget _buildFeaturedRow(BuildContext context, WidgetRef ref, double r) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: _horizontalPadding * r),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: SizedBox(
+              height: _cardHeight * r,
+              child: Padding(
+                padding: EdgeInsets.only(right: _wideRightInset * r),
+                child: _buildCard(
+                  context,
+                  ref,
+                  jewellery[_featuredStartIndex],
+                  isWide: true,
+                ),
+              ),
+            ),
+          ),
+          if (jewellery.length >= 5) SizedBox(width: _wideGap * r),
+          if (jewellery.length >= 5)
+            Expanded(
+              flex: 1,
+              child: SizedBox(
+                height: _cardHeight * r,
+                child: _buildCard(context, ref, jewellery[4]),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRemainingGrid(BuildContext context, WidgetRef ref, double r) {
+    final items = jewellery.skip(_tailStartIndex).toList();
+
+    return GridView.builder(
+      padding: EdgeInsets.symmetric(horizontal: _horizontalPadding * r),
+      itemCount: items.length,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: _gridSpacing * r,
+        mainAxisSpacing: _gridSpacing * r,
+        mainAxisExtent: _cardHeight * r,
+      ),
+      itemBuilder: (_, index) => _buildCard(context, ref, items[index]),
+    );
+  }
+
+  Future<void> _onAddToCart(
+    BuildContext context,
+    WidgetRef ref, {
+    required CustomerDetail customer,
+    required String productCode,
+    required String customercode,
+    required String customername,
+    required String branch,
+    required int customerid,
+  }) async {
+    await ref
+        .read(addToCartProvider.notifier)
+        .addToCart(
+          productCode: productCode,
+          customerid: customerid,
+          customercode: customercode,
+          customername: customername,
+          branch: branch,
+          customerOrder: customer,
+        );
+
+    if (!context.mounted) return;
+
+    final result = ref.read(addToCartProvider).value;
+
+    if (result?.isSuccess == true) {
+      ref.read(addToCartProvider.notifier).reset();
+      context.pushNamed(RoutePages.cart.routeName);
+    } else if (result?.isError == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result?.errorMessage ?? 'Failed to add to cart'),
+        ),
+      );
+    }
   }
 
   Widget _buildCard(
@@ -203,56 +188,31 @@ class ProductGrid extends ConsumerWidget {
     return ProductCard(
       isWide: isWide,
       image: item.imageUrl ?? '',
-      description: item.itemNumber ?? '', //item.description ?? '',
-      //description: item.description ?? '',
+      description: item.itemNumber ?? '',
       price: item.price ?? 0,
       tagText: tagText,
       tagColor: getTagColor(tagText),
       isSoldOut: false,
       onAddToCart: () async {
-        debugPrint("Add → ${item.itemNumber}");
-        final customer = await showDialog<CustomerDetail>(
+        final customer = await showDialog(
           context: context,
           barrierDismissible: true,
           builder: (_) => ContinueCartPopup(parentContext: context),
         );
+
         if (customer == null) return;
 
-        _onAddToCart(
+        await _onAddToCart(
           context,
           ref,
           customer: customer,
           productCode: item.itemNumber ?? '',
-          customercode: item.layingWith ?? '', //new customer code from DB
-          customername: item.lying_with_name ?? '', //new customer name from DB
-          branch: item.lying_with_nickname ?? '', //new branch from DB
-          customerid: item.lying_with_id ?? 0, //new customer id from DB
-          //designno: item.designno ?? '',
+          customercode: item.layingWith ?? '',
+          customername: item.lying_with_name ?? '',
+          branch: item.lying_with_nickname ?? '',
+          customerid: item.lying_with_id ?? 0,
         );
       },
-
-      //onTryOn: () => debugPrint("Try → ${item.itemNumber}"),
-      // onTryOn: () {
-      //   //debugPrint("Try → ${item.itemNumber}");
-      //   // context.pushNamed(
-      //   //   RoutePages.jewellerycustomize.routeName,
-      //   //   queryParameters: {'code': item.itemNumber ?? ''},
-      //   // );
-
-      //   //final branch = ref.read(filterProvider).productBranch ?? '';
-
-      //   context.pushNamed(
-      //     RoutePages.jewellerycustomize.routeName,
-      //     extra: {
-      //       'customercode': item.layingWith,
-      //       'customername': item.lying_with_name,
-      //       'branch': item.lying_with_nickname,
-      //       'customerid': item.lying_with_id,
-      //       //'designno': item.designno ?? '',
-      //       'productCode': item.itemNumber,
-      //     },
-      //   );
-      // },
       onTryOn: () {
         GoRouter.of(context).pushNamed(
           RoutePages.jewellerycustomize.routeName,
@@ -265,7 +225,7 @@ class ProductGrid extends ConsumerWidget {
           },
         );
       },
-      onHaertTap: () => debugPrint("❤️ ${item.itemNumber}"),
+      onHaertTap: () => debugPrint('❤️ ${item.itemNumber}'),
     );
   }
 }
