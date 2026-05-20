@@ -176,7 +176,7 @@ class HeroAndFeaturesSection extends ConsumerWidget {
                   fem: ar,
                   label: "Scan Ready Product",
                   image: "scan-ready-product.jpg",
-                  routePage: RoutePages.verifyTrack,
+                  routePage: RoutePages.scanready,
                 ),
               ],
             ),

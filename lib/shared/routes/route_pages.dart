@@ -17,6 +17,7 @@ enum RoutePages {
   cart,
   account,
   feedbackform,
+  scanready,
 }
 
 extension RoutePagesExtension on RoutePages {
@@ -75,6 +76,9 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.feedbackform:
         return "/Order_feedback_form";
+
+      case RoutePages.scanready:
+        return "/scan_ready";
     }
   }
 
@@ -133,6 +137,9 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.feedbackform:
         return "Order_feedback_form";
+
+      case RoutePages.scanready:
+        return "scan_ready";
     }
   }
 
@@ -191,6 +198,9 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.feedbackform:
         return "Feedback Form";
+
+      case RoutePages.scanready:
+        return "Scan Ready";
     }
   }
 }

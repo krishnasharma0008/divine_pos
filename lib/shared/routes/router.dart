@@ -6,6 +6,7 @@ import 'package:divine_pos/features/dashboard/presentation/dashboard_screen.dart
 import 'package:divine_pos/features/diamond_value/presentation/diamond_value_screen.dart';
 import 'package:divine_pos/features/feedback_form/presentation/feedback_form_screen.dart';
 import 'package:divine_pos/features/jewellery_customize/presentation/jewellery_customize_screen.dart';
+import 'package:divine_pos/features/scan_ready/presentation/scan_ready_product_screen.dart';
 import 'package:divine_pos/features/solitaire_customize/data/solitaire_detail_model.dart';
 import 'package:divine_pos/features/verify_track/presentation/verify_detail_shell.dart';
 import 'package:divine_pos/features/verify_track/presentation/verifyandtrack_screen.dart';
@@ -267,6 +268,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verify-detail',
         builder: (context, state) => const VerifyDetailShell(uid: ''),
+      ),
+      GoRoute(
+        path: RoutePages.scanready.routePath,
+        name: RoutePages.scanready.routeName,
+        builder: (context, state) => const ScanReadyProductScreen(),
       ),
       // ⭐ MAIN APP LAYOUT (Bottom Navigation)
       // ShellRoute(

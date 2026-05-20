@@ -228,7 +228,7 @@ class JewelleryNotifier extends AsyncNotifier<List<Jewellery>> {
           'HTTP ${response.statusCode}: ${response.statusMessage}',
         );
       }
-      //longPrint("📦 Fetched Listing screen Data: ${jsonEncode(response.data)}");
+      longPrint("📦 Fetched Listing screen Data: ${jsonEncode(response.data)}");
       // ✅ Response data validation
       if (response.data == null) {
         throw Exception('Empty response from server');
