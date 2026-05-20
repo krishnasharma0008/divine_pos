@@ -1,8 +1,10 @@
 import 'package:divine_pos/features/scan_ready/data/product_model.dart';
 import 'package:divine_pos/features/scan_ready/provider/scan_ready_provider.dart';
+import 'package:divine_pos/shared/utils/enums.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/app_bar.dart';
 import 'scan_ready_product_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,6 +34,12 @@ class _ProductCompareCartScreenState
   void initState() {
     super.initState();
     _products = List.from(widget.initialProducts);
+  }
+
+  @override
+  void dispose() {
+    //ref.read(scanReadyProvider.notifier).clearAll();
+    super.dispose();
   }
 
   // ---------------------------------------------------------------------------
@@ -83,18 +91,6 @@ class _ProductCompareCartScreenState
           setState(() {
             _products.add(product);
           });
-
-          // setState(() {
-          //   if (!_products.any((e) => _uniqueKey(e) == _uniqueKey(product))) {
-          //     _products.add(product);
-          //   } else {
-          //     ScaffoldMessenger.of(context).showSnackBar(
-          //       const SnackBar(
-          //         content: Text('This product is already in the comparison.'),
-          //       ),
-          //     );
-          //   }
-          // });
         },
       ),
     );
@@ -203,6 +199,7 @@ class _ProductCompareCartScreenState
     return PopScope(
       child: Scaffold(
         backgroundColor: _bg,
+        appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
         body: SafeArea(
           child: Column(
             children: [
@@ -223,18 +220,18 @@ class _ProductCompareCartScreenState
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          GestureDetector(
-            //onTap: () => Navigator.pop(context), back button should also clear the provider state to avoid stale products on next open
-            onTap: () {
-              ref.read(scanReadyProvider.notifier).clearAll();
-              Navigator.pop(context);
-            },
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 17,
-              color: Color(0xFF333333),
-            ),
-          ),
+          // GestureDetector(
+          //   //onTap: () => Navigator.pop(context), back button should also clear the provider state to avoid stale products on next open
+          //   onTap: () {
+          //     ref.read(scanReadyProvider.notifier).clearAll();
+          //     Navigator.pop(context);
+          //   },
+          //   child: const Icon(
+          //     Icons.arrow_back_ios_new,
+          //     size: 17,
+          //     color: Color(0xFF333333),
+          //   ),
+          // ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -263,10 +260,10 @@ class _ProductCompareCartScreenState
                     ],
                   ),
                 ),
-                const Text(
-                  'Tap "+ Add Product" to compare more',
-                  style: TextStyle(fontSize: 11, color: Color(0xFFBBBBBB)),
-                ),
+                // const Text(
+                //   'Tap "+ Add Product" to compare more',
+                //   style: TextStyle(fontSize: 11, color: Color(0xFFBBBBBB)),
+                // ),
               ],
             ),
           ),
@@ -276,7 +273,8 @@ class _ProductCompareCartScreenState
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
+                //color: const Color(0xFF1A1A1A),
+                color: _teal,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Row(
@@ -304,18 +302,19 @@ class _ProductCompareCartScreenState
   Widget _buildTableView() {
     return Column(
       children: [
-        Expanded(
-          child: _CompareTable(
-            products: _products,
-            mainRows: _mainRows,
-            breakupSections: _breakupSections,
-            showBreakup: _showBreakup,
-            // ✅ FIX: route remove through the dedicated helper so the
-            // provider stays in sync without touching clearAll().
-            onRemove: _removeProduct,
-            onAddProduct: _openScanPopup,
-          ),
+        //Expanded(
+        //child:
+        _CompareTable(
+          products: _products,
+          mainRows: _mainRows,
+          breakupSections: _breakupSections,
+          showBreakup: _showBreakup,
+          // ✅ FIX: route remove through the dedicated helper so the
+          // provider stays in sync without touching clearAll().
+          onRemove: _removeProduct,
+          //onAddProduct: _openScanPopup,
         ),
+        //),
         _buildToggle(),
       ],
     );
@@ -431,7 +430,7 @@ class _CompareTable extends StatefulWidget {
   final List<_SectionDef> breakupSections;
   final bool showBreakup;
   final void Function(int) onRemove;
-  final VoidCallback onAddProduct;
+  //final VoidCallback onAddProduct;
 
   const _CompareTable({
     required this.products,
@@ -439,7 +438,7 @@ class _CompareTable extends StatefulWidget {
     required this.breakupSections,
     required this.showBreakup,
     required this.onRemove,
-    required this.onAddProduct,
+    //required this.onAddProduct,
   });
 
   @override
@@ -453,16 +452,9 @@ class _CompareTableState extends State<_CompareTable> {
   // ── Layout constants ──────────────────────────────────────────────────────
   static const double _labelColW = 130.0;
 
-  // ✅ FIX: Reduced from 150 → 110 so product columns are more compact;
-  // combined with the sticky Add column this avoids unnecessary side-scrolling
-  // when there is only one product.
   static const double _minColW = 110.0;
 
-  // ✅ FIX (new): dedicated width for the always-visible "Add Product" column.
-  // Previously the add column lived inside the horizontal scroll, so it could
-  // be pushed off-screen by 3+ product columns.  Now it is pinned to the
-  // right edge of the table and is always accessible without scrolling.
-  static const double _addColW = 80.0;
+  //static const double _addColW = 80.0;
 
   static const double _headerH = 104.0;
   static const double _rowH = 44.0;
@@ -485,28 +477,18 @@ class _CompareTableState extends State<_CompareTable> {
 
   int get _count => widget.products.length;
 
-  // ✅ FIX: Compute column width for PRODUCT columns only.
-  // The Add column is now a fixed sticky column, so we exclude it from the
-  // available-width calculation.
-  //
-  // Formula (all in logical pixels):
-  //   screen
-  //   − left-margin(16) − right-margin(16)   ← Container margin
-  //   − left-border(1)  − right-border(1)    ← Border.all()
-  //   − labelColW(130)  − label-divider(1)   ← fixed label column
-  //   − add-divider(1)  − addColW(80)        ← fixed add column
-  //   = available space for the horizontal product scroll
   double _colW(BuildContext context) {
     final screen = MediaQuery.of(context).size.width;
-    const overhead =
-        16.0 +
-        16.0 + // horizontal margin
-        1.0 +
-        1.0 + // border left + right
-        _labelColW +
-        1.0 + // label col + its right divider
-        1.0 +
-        _addColW; // add col's left divider + add col
+    // const overhead =
+    //     16.0 +
+    //     16.0 + // horizontal margin
+    //     1.0 +
+    //     1.0 + // border left + right
+    //     _labelColW +
+    //     1.0 + // label col + its right divider
+    //     1.0 +
+    //     _addColW; // add col's left divider + add col
+    const overhead = 16.0 + 16.0 + 1.0 + 1.0 + _labelColW + 1.0;
     final available = screen - overhead;
     if (_count <= 0 || available <= 0) return _minColW;
     final each = available / _count;
@@ -539,11 +521,6 @@ class _CompareTableState extends State<_CompareTable> {
               SizedBox(width: _labelColW, child: _buildLabelColumn()),
               Container(width: 1, color: _border),
 
-              // ── Scrollable: product columns only ─────────────────────────
-              // ✅ FIX: Expanded fills remaining width between the two fixed
-              // columns (label & add).  The horizontal SingleChildScrollView
-              // inside lets the user swipe through 3+ product columns without
-              // the Add button ever going off-screen.
               Expanded(
                 child: SingleChildScrollView(
                   controller: _hScroll,
@@ -561,12 +538,8 @@ class _CompareTableState extends State<_CompareTable> {
                 ),
               ),
 
-              // ── Fixed: "Add Product" column – always visible ─────────────
-              // ✅ FIX: Extracted from the horizontal scroll.  No matter how
-              // many products are added, this column stays pinned at the right
-              // edge and is never cut off.
-              Container(width: 1, color: _border),
-              SizedBox(width: _addColW, child: _buildAddProductColumn()),
+              // Container(width: 1, color: _border),
+              // SizedBox(width: _addColW, child: _buildAddProductColumn()),
             ],
           ),
         ),
@@ -614,7 +587,7 @@ class _CompareTableState extends State<_CompareTable> {
     return Column(
       children: [
         GestureDetector(
-          onTap: widget.onAddProduct,
+          //onTap: widget.onAddProduct,
           behavior: HitTestBehavior.opaque,
           child: Container(
             height: _headerH,

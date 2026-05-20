@@ -93,7 +93,14 @@ class _ScanReadyProductScreenState
               ? const _LoadingView(key: ValueKey('loading'))
               : _ScanPromptView(
                   key: const ValueKey('prompt'),
-                  onScan: _openScanPopup,
+                  //onScan: _openScanPopup,
+                  onScan: () async {
+                    await ref
+                        .read(scanReadyProvider.notifier)
+                        .addByScannedCode('6YCJ62');
+
+                    if (!context.mounted) return;
+                  },
                 ),
         ),
       ),
@@ -347,6 +354,9 @@ class _ScanPopupState extends ConsumerState<ScanPopup>
   void _onDetect(BarcodeCapture capture) async {
     if (!_isScanning || _isProcessing) return;
 
+    // Close the scan sheet.
+    if (Navigator.canPop(context)) Navigator.pop(context);
+
     final Barcode? barcode = capture.barcodes.isNotEmpty
         ? capture.barcodes.first
         : null;
@@ -368,17 +378,6 @@ class _ScanPopupState extends ConsumerState<ScanPopup>
       final product = await ref
           .read(scanReadyProvider.notifier)
           .addByScannedCode(designNo);
-
-      if (!mounted) return;
-
-      if (product == null) {
-        final messenger = ScaffoldMessenger.of(context);
-        if (Navigator.canPop(context)) Navigator.pop(context);
-        messenger.showSnackBar(
-          SnackBar(content: Text('Product not found for $designNo')),
-        );
-        return;
-      }
 
       if (!mounted) return;
       widget.onDetected(product);
@@ -454,26 +453,28 @@ class _ScanPopupState extends ConsumerState<ScanPopup>
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Container(
-      height: screenHeight * 0.88,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          _handle(),
-          _header(context),
-          const SizedBox(height: 8),
-          Text(
-            'Position the QR code within the frame',
-            style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-          ),
-          const SizedBox(height: 24),
-          Expanded(child: _scanArea()),
-          _bottomControls(),
-          const SizedBox(height: 16),
-        ],
+    return SafeArea(
+      child: Container(
+        height: screenHeight * 0.8,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            _handle(),
+            _header(context),
+            const SizedBox(height: 8),
+            Text(
+              'Position the QR code within the frame',
+              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+            ),
+            const SizedBox(height: 24),
+            Expanded(child: _scanArea()),
+            _bottomControls(),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
