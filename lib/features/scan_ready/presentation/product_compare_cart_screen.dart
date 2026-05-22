@@ -24,6 +24,7 @@ class ProductCompareCartScreen extends ConsumerStatefulWidget {
 class _ProductCompareCartScreenState
     extends ConsumerState<ProductCompareCartScreen> {
   late List<ProductModel> _products;
+  late final ScanReadyNotifier _scanNotifier;
 
   bool _showBreakup = false;
 
@@ -34,11 +35,12 @@ class _ProductCompareCartScreenState
   void initState() {
     super.initState();
     _products = List.from(widget.initialProducts);
+    _scanNotifier = ref.read(scanReadyProvider.notifier);
   }
 
   @override
   void dispose() {
-    //ref.read(scanReadyProvider.notifier).clearAll();
+    // _scanNotifier.clearAll();
     super.dispose();
   }
 
@@ -71,27 +73,27 @@ class _ProductCompareCartScreenState
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => ScanPopup(
-        onDetected: (product) {
-          // Close the scan sheet.
-          if (Navigator.canPop(context)) Navigator.pop(context);
+        // onDetected: (product) {
+        //   // Close the scan sheet.
+        //   if (Navigator.canPop(context)) Navigator.pop(context);
 
-          final alreadyExists = _products.any(
-            (e) => _uniqueKey(e) == _uniqueKey(product),
-          );
+        //   final alreadyExists = _products.any(
+        //     (e) => _uniqueKey(e) == _uniqueKey(product),
+        //   );
 
-          if (alreadyExists) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('This product is already in the comparison.'),
-              ),
-            );
-            return;
-          }
+        //   if (alreadyExists) {
+        //     ScaffoldMessenger.of(context).showSnackBar(
+        //       const SnackBar(
+        //         content: Text('This product is already in the comparison.'),
+        //       ),
+        //     );
+        //     return;
+        //   }
 
-          setState(() {
-            _products.add(product);
-          });
-        },
+        //   setState(() {
+        //     _products.add(product);
+        //   });
+        // },
       ),
     );
   }
@@ -197,6 +199,11 @@ class _ProductCompareCartScreenState
   @override
   Widget build(BuildContext context) {
     return PopScope(
+      onPopInvoked: (didPop) {
+        if (didPop) {
+          _scanNotifier.clearAll();
+        }
+      },
       child: Scaffold(
         backgroundColor: _bg,
         appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
@@ -283,7 +290,7 @@ class _ProductCompareCartScreenState
                   Icon(Icons.qr_code_scanner, color: Colors.white, size: 14),
                   SizedBox(width: 5),
                   Text(
-                    'Scan product',
+                    'Scan to add product',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -386,7 +393,7 @@ class _ProductCompareCartScreenState
                   Icon(Icons.qr_code_scanner, color: Colors.white, size: 18),
                   SizedBox(width: 8),
                   Text(
-                    'Scan a product',
+                    'Scan to add product',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 14,
@@ -467,13 +474,6 @@ class _CompareTableState extends State<_CompareTable> {
   static const Color _sectionBg = Color(0xFFEEEBE6);
   static const Color _addColBg = Color(0xFFFAFAFA);
   static const Color _white = Colors.white;
-
-  @override
-  void dispose() {
-    _hScroll.dispose();
-    _vScroll.dispose();
-    super.dispose();
-  }
 
   int get _count => widget.products.length;
 

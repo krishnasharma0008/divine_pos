@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:upgrader/upgrader.dart';
 
+import 'custom_upgrader_messages.dart';
 import '../shared/routes/router.dart';
+import '../shared/utils/http_client.dart';
 
 final hiveBoxProvider = Provider<Box>((ref) {
   throw UnimplementedError("Hive box not initialized");
@@ -21,18 +24,10 @@ Future<void> main() async {
   /// Init Hive
   await Hive.initFlutter();
 
-  /// Open the auth box before runApp
-  //final authBox = await Hive.openBox('authBox');
+  /// Clear upgrader cache during testing
+  await Upgrader.clearSavedSettings();
 
-  /// Provide the opened box to Riverpodad
-  runApp(
-    ProviderScope(
-      // overrides: [
-      //   hiveBoxProvider.overrideWithValue(authBox),
-      // ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerStatefulWidget {
@@ -43,10 +38,32 @@ class MyApp extends ConsumerStatefulWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
+  late final Upgrader upgrader;
+
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addObserver(this);
+
+    upgrader = Upgrader(
+      debugLogging: true,
+
+      /// SHOW ALWAYS FOR TESTING
+      debugDisplayAlways: true,
+      debugDisplayOnce: false,
+
+      /// FORCE UPDATE
+      minAppVersion: '1.0.0',
+
+      /// CUSTOM TEXT
+      messages: MyUpgraderMessages(),
+
+      /// APPCAST XML
+      storeController: UpgraderStoreController(
+        onAndroid: () => UpgraderAppcastStore(appcastURL: baseUrlupgrader),
+      ),
+    );
   }
 
   @override
@@ -58,20 +75,44 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
-    //print("width: ${MediaQuery.of(context).size.aspectRatio}");
-    //print("width:t ${ScaleSize.aspectRatio}");
-    // print("width:x ${MediaQuery.of(context).size.width}");
-    // print(
-    //   "width: ${WidgetsBinding.instance.platformDispatcher.views.first.physicalSize.width}",
-    // );
-    // print(
-    //   "width:d ${WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio}",
-    // );
-    // ScaleSize.refresh();
 
     return MaterialApp.router(
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+
+      theme: ThemeData(
+        useMaterial3: true,
+
+        dialogTheme: DialogThemeData(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+      ),
+
+      builder: (context, child) {
+        return UpgradeAlert(
+          upgrader: upgrader,
+
+          /// REMOVE IGNORE BUTTON
+          showIgnore: false,
+
+          /// REMOVE LATER BUTTON
+          showLater: false,
+
+          /// FORCE USER TO UPDATE
+          barrierDismissible: false,
+
+          /// PREVENT BACK NAVIGATION
+          shouldPopScope: () => false,
+
+          /// REMOVE RELEASE NOTES
+          ///showReleaseNotes: false,
+          navigatorKey: router.routerDelegate.navigatorKey,
+
+          child: child ?? const SizedBox(),
+        );
+      },
     );
   }
 }

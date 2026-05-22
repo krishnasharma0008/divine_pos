@@ -18,7 +18,7 @@ dependencies:
 
   flutter_native_splash: ^2.4.0
   package_info_plus: ^8.0.0
-  upgrader: 12.3.0
+  upgrader: ^13.3.0
   mobile_scanner: ^5.2.3
   image_picker: ^1.1.2
 

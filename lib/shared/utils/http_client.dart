@@ -4,6 +4,9 @@ import '../../features/auth/data/auth_notifier.dart';
 
 const baseUrlProduction = "https://api2.divinesolitaires.com/softapi/";
 
+const baseUrlupgrader =
+    "https://api2.divinesolitaires.com/softapi/upgrader/pos_appcast.xml";
+
 final httpClientProvider = Provider<Dio>((ref) {
   final authRepo = ref.watch(authProvider);
 
