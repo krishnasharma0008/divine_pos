@@ -49,65 +49,12 @@ class _ScanReadyProductScreenState
     ref.read(scanReadyProvider.notifier).removeProduct(removed);
   }
 
-  // Future<void> _openScanPopup() async {
-  //   final scannedCode = await showModalBottomSheet<String>(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     backgroundColor: Colors.transparent,
-  //     builder: (_) => const ScanPopup(),
-  //   );
-
-  //   if (!mounted || scannedCode == null || scannedCode.trim().isEmpty) return;
-
-  //   final messenger = ScaffoldMessenger.of(context);
-
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (_) => const Center(child: CircularProgressIndicator()),
-  //   );
-
-  //   try {
-  //     final product = await ref
-  //         .read(scanReadyProvider.notifier)
-  //         .addByScannedCode(scannedCode.trim());
-
-  //     if (!mounted) return;
-  //     Navigator.of(context, rootNavigator: true).pop();
-
-  //     final name = (product.designno?.trim().isNotEmpty ?? false)
-  //         ? product.designno!.trim()
-  //         : (product.itemno?.trim().isNotEmpty ?? false)
-  //         ? product.itemno!.trim()
-  //         : 'Item';
-
-  //     messenger.showSnackBar(SnackBar(content: Text('Product added: $name')));
-  //   } catch (e) {
-  //     if (!mounted) return;
-  //     Navigator.of(context, rootNavigator: true).pop();
-
-  //     final raw = e.toString();
-
-  //     String message;
-  //     if (raw.contains('already in the comparison')) {
-  //       message = 'This product is already in the comparison.';
-  //     } else if (raw.contains('No product found')) {
-  //       message = 'Product not found.';
-  //     } else if (raw.contains('Invalid QR code')) {
-  //       message = 'Invalid QR code.';
-  //     } else {
-  //       message = raw.replaceFirst('Exception: ', '');
-  //     }
-
-  //     messenger.showSnackBar(SnackBar(content: Text(message)));
-  //   }
-  // }
-
   Future<void> _openScanPopup() async {
     final scannedCode = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      useSafeArea: true,
       builder: (_) => const ScanPopup(),
     );
 
@@ -209,7 +156,7 @@ class _ScanReadyProductScreenState
     _SectionDef('SIDE DIAMONDS', [
       _RowDef(
         'Count',
-        (p) => p.sideStonePcs != null && p.sideStonePcs! > 0
+        (p) => p.sideStoneCtw != null && p.sideStoneCtw! > 0
             ? '${p.sideStonePcs} pcs'
             : '—',
       ),
@@ -219,8 +166,22 @@ class _ScanReadyProductScreenState
             ? '${p.sideStoneCtw} ct'
             : '—',
       ),
-      _RowDef('Color', (p) => _v(p.sideStoneColor)),
-      _RowDef('Clarity', (p) => _v(p.sideStoneQuality)),
+
+      _RowDef(
+        'Clarity',
+        (p) => p.sideStoneCtw != null && p.sideStoneCtw! > 0
+            ? '${p.sideStoneColor} '
+            : '—',
+      ),
+      _RowDef(
+        'Total weight',
+        (p) => p.sideStoneCtw != null && p.sideStoneCtw! > 0
+            ? '${p.sideStoneQuality}'
+            : '—',
+      ),
+
+      // _RowDef('Color', (p) => _v(p.sideStoneColor)),
+      // _RowDef('Clarity', (p) => _v(p.sideStoneQuality)),
     ]),
   ];
 
@@ -280,14 +241,14 @@ class _ScanReadyProductScreenState
               ? _ScanPromptView(
                   key: const ValueKey('prompt'),
 
-                  ///onScan: _openScanPopup,
-                  onScan: () async {
-                    await ref
-                        .read(scanReadyProvider.notifier)
-                        .addByScannedCode('6YCJ62');
+                  onScan: _openScanPopup,
+                  // onScan: () async {
+                  //   await ref
+                  //       .read(scanReadyProvider.notifier)
+                  //       .addByScannedCode('6YCJ62');
 
-                    if (!context.mounted) return;
-                  },
+                  //   if (!context.mounted) return;
+                  // },
                 )
               : _buildCompareView(products),
         ),
@@ -774,26 +735,29 @@ class _ScanPopupState extends ConsumerState<ScanPopup>
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    return Container(
-      height: screenHeight * 0.88,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          _handle(),
-          _header(context),
-          const SizedBox(height: 8),
-          Text(
-            'Position the QR code within the frame',
-            style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-          ),
-          const SizedBox(height: 24),
-          Expanded(child: _scanArea()),
-          _bottomControls(),
-          const SizedBox(height: 16),
-        ],
+
+    return SafeArea(
+      child: Container(
+        height: screenHeight * 0.88,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            _handle(),
+            _header(context),
+            const SizedBox(height: 8),
+            Text(
+              'Position the QR code within the frame',
+              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+            ),
+            const SizedBox(height: 24),
+            Expanded(child: _scanArea()),
+            _bottomControls(),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
@@ -1294,8 +1258,10 @@ class _CompareTableState extends State<_CompareTable> {
       color: _sectionBg,
       border: Border(top: BorderSide(color: _border)),
     ),
-    child: Text(
+    child: MyText(
       title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: const TextStyle(
         fontSize: 9.5,
         fontWeight: FontWeight.w700,

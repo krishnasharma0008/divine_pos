@@ -261,9 +261,14 @@ class _JewelleryCustomiseScreenState
             calc.solitaireMessage != null && calc.solitaireMessage!.isNotEmpty;
 
         final hidePriceBreakup =
-            detail.productCategory == 'COIN' ||
-            detail.productSubCategory == 'Solitaire Coin' ||
-            detail.productSubCategory == 'Locket';
+            detail.productCategory.toLowerCase() == 'coin' ||
+            detail.productSubCategory.toLowerCase() == 'solitaire coin' ||
+            detail.productSubCategory.toLowerCase() == 'locket';
+
+        final displayPriceFrom = hidePriceBreakup
+            ? detail
+                  .productPrice // ← replace with the actual field name on your detail model
+            : calc.approxPriceFrom;
 
         //final cartCount = ref.watch(authProvider).user?.cartCount ?? 0;
 
@@ -698,7 +703,8 @@ class _JewelleryCustomiseScreenState
                                 MyText(
                                   isCalculating
                                       ? '--'
-                                      : priceFrom?.inRupeesFormat() ?? '--',
+                                      : displayPriceFrom?.inRupeesFormat() ??
+                                            '--',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.black,
