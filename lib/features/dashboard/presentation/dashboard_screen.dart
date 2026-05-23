@@ -63,6 +63,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             type: AppBarAction.search,
             onTap: () {
               debugPrint('Search tapped');
+              context.pushNamed(RoutePages.scanready.routeName);
             },
           ),
           // AppBarActionConfig(

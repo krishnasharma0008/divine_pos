@@ -8,6 +8,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../shared/app_bar.dart';
 import '../../../shared/routes/app_drawer.dart';
+import '../../../shared/utils/currency_formatter.dart';
 import '../../../shared/utils/enums.dart';
 import '../../../shared/widgets/text.dart';
 
@@ -35,15 +36,6 @@ class _ScanReadyProductScreenState
   static const Color _teal = Color(0xFF2BAFA0);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-
-  String _uniqueKey(ProductModel p) {
-    final key = p.itemno?.trim().isNotEmpty == true
-        ? p.itemno!.trim()
-        : p.designno?.trim().isNotEmpty == true
-        ? p.designno!.trim()
-        : p.id?.toString() ?? '';
-    return key;
-  }
 
   void _removeProduct(ProductModel removed) {
     ref.read(scanReadyProvider.notifier).removeProduct(removed);
@@ -102,11 +94,14 @@ class _ScanReadyProductScreenState
   List<_RowDef> get _mainRows => [
     _RowDef('MRP', (p) {
       if (p.productAmtMax != null && p.productAmtMax! > 0) {
-        return '₹${_fmtIndian(p.productAmtMax!)}';
+        return p.productAmtMax!.inRupeesFormat();
       }
       return '—';
     }, bold: true),
-    _RowDef('Solitaire weight', (p) => _v(p.solitaireSlab)),
+    _RowDef(
+      'Solitaire weight',
+      (p) => _v(p.solitaireSlab?.split('-').firstOrNull),
+    ),
     _RowDef(
       'Metal weight',
       (p) => p.metalWeight != null ? '${p.metalWeight} g' : '—',
@@ -117,18 +112,19 @@ class _ScanReadyProductScreenState
 
   List<_SectionDef> get _breakupSections => [
     _SectionDef('SOLITAIRE BREAKUP', [
-      _RowDef('Cut / Shape', (p) => _v(p.solitaireShape)),
+      _RowDef('Shape', (p) => _v(p.solitaireShape)),
+      _RowDef('Weight', (p) => _v(p.solitaireSlab?.split('-').firstOrNull)),
       _RowDef('Color', (p) => _v(p.solitaireColor)),
       _RowDef('Clarity', (p) => _v(p.solitaireQuality)),
       _RowDef(
-        'Pieces',
+        'Pcs',
         (p) => p.solitairePcs != null && p.solitairePcs! > 0
             ? '${p.solitairePcs} pcs'
             : '—',
       ),
       _RowDef('Amount', (p) {
         if (p.solitaireAmtMax != null && p.solitaireAmtMax! > 0) {
-          return '₹${_fmtIndian(p.solitaireAmtMax!)}';
+          return p.solitaireAmtMax!.inRupeesFormat();
         }
         return '—';
       }),
@@ -148,18 +144,12 @@ class _ScanReadyProductScreenState
       ),
       _RowDef('Price', (p) {
         if (p.metalPrice != null && p.metalPrice! > 0) {
-          return '₹${_fmtIndian(p.metalPrice!)}';
+          return p.metalPrice!.inRupeesFormat();
         }
         return '—';
       }),
     ]),
     _SectionDef('SIDE DIAMONDS', [
-      _RowDef(
-        'Count',
-        (p) => p.sideStoneCtw != null && p.sideStoneCtw! > 0
-            ? '${p.sideStonePcs} pcs'
-            : '—',
-      ),
       _RowDef(
         'Total weight',
         (p) => p.sideStoneCtw != null && p.sideStoneCtw! > 0
@@ -168,39 +158,23 @@ class _ScanReadyProductScreenState
       ),
 
       _RowDef(
-        'Clarity',
+        'Color',
         (p) => p.sideStoneCtw != null && p.sideStoneCtw! > 0
             ? '${p.sideStoneColor} '
             : '—',
       ),
       _RowDef(
-        'Total weight',
+        'Clarity',
         (p) => p.sideStoneCtw != null && p.sideStoneCtw! > 0
             ? '${p.sideStoneQuality}'
             : '—',
       ),
-
-      // _RowDef('Color', (p) => _v(p.sideStoneColor)),
-      // _RowDef('Clarity', (p) => _v(p.sideStoneQuality)),
     ]),
   ];
 
   String _v(String? s) {
     final t = s?.trim() ?? '';
     return t.isNotEmpty ? t : '—';
-  }
-
-  String _fmtIndian(double v) {
-    final s = v.toStringAsFixed(0);
-    if (s.length <= 3) return s;
-    final last3 = s.substring(s.length - 3);
-    final rest = s.substring(0, s.length - 3);
-    final buf = StringBuffer();
-    for (int i = 0; i < rest.length; i++) {
-      if (i > 0 && (rest.length - i) % 2 == 0) buf.write(',');
-      buf.write(rest[i]);
-    }
-    return '${buf.toString()},$last3';
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -221,17 +195,10 @@ class _ScanReadyProductScreenState
     final isLoading = scanState.asData?.value.isLoading ?? scanState.isLoading;
     final products = scanState.asData?.value.products ?? [];
 
-    // return PopScope(
-    //   onPopInvokedWithResult: (didPop, result) {
-    //     if (didPop) {
-    //       ref.read(scanReadyProvider.notifier).clearAll();
-    //     }
-    //   },
-    //   child:
     return Scaffold(
       backgroundColor: _bg,
-      appBar: MyAppBar(appBarLeading: AppBarLeading.drawer, showLogo: false),
-      drawer: const SideDrawer(),
+      appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
+      //drawer: const SideDrawer(),
       body: SafeArea(
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -240,15 +207,14 @@ class _ScanReadyProductScreenState
               : products.isEmpty
               ? _ScanPromptView(
                   key: const ValueKey('prompt'),
+                  //onScan: _openScanPopup,
+                  onScan: () async {
+                    await ref
+                        .read(scanReadyProvider.notifier)
+                        .addByScannedCode('9ENX79');
 
-                  onScan: _openScanPopup,
-                  // onScan: () async {
-                  //   await ref
-                  //       .read(scanReadyProvider.notifier)
-                  //       .addByScannedCode('6YCJ62');
-
-                  //   if (!context.mounted) return;
-                  // },
+                    if (!context.mounted) return;
+                  },
                 )
               : _buildCompareView(products),
         ),
@@ -1010,15 +976,15 @@ class _CompareTableState extends State<_CompareTable> {
 
   bool _isSyncing = false; // prevents infinite loop
 
-  static const double _labelColW = 130.0;
+  static const double _labelColW = 150.0;
   static const double _minColW = 110.0;
-  static const double _addColW = 80.0;
+  //static const double _addColW = 80.0;
   static const double _headerH = 104.0;
   static const double _rowH = 44.0;
   static const double _sectionH = 30.0;
 
   static const Color _teal = Color(0xFF2BAFA0);
-  static const Color _tealLight = Color(0xFFE0F5F2);
+  //static const Color _tealLight = Color(0xFFE0F5F2);
   static const Color _border = Color(0xFFE2DDD8);
   static const Color _labelBg = Color(0xFFF7F5F2);
   static const Color _sectionBg = Color(0xFFEEEBE6);
