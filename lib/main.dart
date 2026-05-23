@@ -25,7 +25,7 @@ Future<void> main() async {
   await Hive.initFlutter();
 
   /// Clear upgrader cache during testing
-  await Upgrader.clearSavedSettings();
+  // await Upgrader.clearSavedSettings();
 
   runApp(const ProviderScope(child: MyApp()));
 }

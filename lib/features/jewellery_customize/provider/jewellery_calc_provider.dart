@@ -947,9 +947,9 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
     final d = s.detail!;
 
     final skipValidation =
-        d.productCategory == 'COIN' ||
-        d.productSubCategory == 'Solitaire Coin' ||
-        d.productSubCategory == 'Locket';
+        d.productCategory.toLowerCase() == 'coin' ||
+        d.productSubCategory.toLowerCase() == 'solitaire coin' ||
+        d.productSubCategory.toLowerCase() == 'locket';
 
     if (!skipValidation) {
       if ((s.netMetalWeight ?? 0) <= 0) {
@@ -997,12 +997,12 @@ class JewelleryCalcNotifier extends AsyncNotifier<JewelleryCalcState> {
       solitairePcs: s.totalSolitairePcs ?? 1,
       productQty: s.selectedQty,
 
-      productAmtMin: (d.productPrice == null || d.productPrice == 0)
+      productAmtMin: !skipValidation
           ? (s.approxPriceFrom ?? 0).roundToDouble()
-          : d.productPrice?.toDouble(),
-      productAmtMax: (d.productPrice == null || d.productPrice == 0)
+          : d.productPrice?.roundToDouble() ?? 0,
+      productAmtMax: !skipValidation
           ? (s.approxPriceTo ?? 0).roundToDouble()
-          : d.productPrice?.toDouble(),
+          : 0,
 
       solitaireShape: s.solitaireShape ?? '',
       solitaireSlab: s.caratRange?.replaceAll('ct', '').replaceAll(' ', ''),
