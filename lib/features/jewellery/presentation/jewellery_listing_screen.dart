@@ -174,7 +174,10 @@ class _JewelleryListingScreenState
         //appBarLeading: AppBarLeading.back,
         showLogo: false,
         actions: [
-          AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
+          AppBarActionConfig(
+            type: AppBarAction.search,
+            onTap: () => context.pushNamed(RoutePages.scanready.routeName),
+          ),
           // AppBarActionConfig(
           //   type: AppBarAction.notification,
           //   badgeCount: 0,

@@ -50,7 +50,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       debugLogging: true,
 
       /// SHOW ALWAYS FOR TESTING
-      debugDisplayAlways: true,
+      debugDisplayAlways: false,
       debugDisplayOnce: false,
 
       /// FORCE UPDATE
