@@ -8,6 +8,7 @@ import 'package:divine_pos/shared/utils/enums.dart';
 import 'package:divine_pos/shared/utils/scale_size.dart';
 import 'package:divine_pos/shared/widgets/text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../presentation/widgets/shape_selector.dart';
@@ -26,30 +27,50 @@ class DiamondValueScreen extends ConsumerStatefulWidget {
 }
 
 class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
+  static const double _defaultCarat = 0.18;
+
   DiamondConfig _config = DiamondConfig(
     shape: DiamondShape.round,
     yellowShape: 'Radiant',
     shapeType: ShapeType.regular,
-    caratIndex: 4, // 0.18
+    enteredCarat: _defaultCarat,
     colorIndex: 0,
     clarityIndex: 0,
   );
 
   double? _price;
-  bool _loadingPrice = false;
-  Timer? _debounce;
-  final _ruleEngine = DiamondRuleEngine();
   double? _totalPrice;
 
+  bool _loadingPrice = false;
+
+  Timer? _debounce;
+
+  final _ruleEngine = DiamondRuleEngine();
+
   late final TextEditingController _caratController;
+
   String? _caratError;
+
+  int _requestId = 0;
+
+  late final FocusNode _caratFocusNode;
 
   @override
   void initState() {
     super.initState();
+
     _caratController = TextEditingController(
       text: _config.caratDouble.toStringAsFixed(2),
     );
+
+    _caratFocusNode = FocusNode();
+
+    _caratFocusNode.addListener(() {
+      if (!_caratFocusNode.hasFocus) {
+        _commitCarat();
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetchPrice(_config));
   }
 
@@ -57,17 +78,23 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
   void dispose() {
     _debounce?.cancel();
     _caratController.dispose();
+    _caratFocusNode.dispose();
     super.dispose();
   }
 
   // -------------------------------------------------------------------------
-  // fetchPrice — debounced 400ms so rapid changes don't spam the API
+  // fetchPrice
   // -------------------------------------------------------------------------
   void _fetchPrice(DiamondConfig config) {
     _debounce?.cancel();
+
+    final requestId = ++_requestId;
+
     _debounce = Timer(const Duration(milliseconds: 400), () async {
       if (!mounted) return;
+
       setState(() => _loadingPrice = true);
+
       try {
         final price = await ref
             .read(diamondPriceRepositoryProvider)
@@ -78,53 +105,84 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
               color: config.colorLabel,
               quality: config.clarityLabel,
             );
-        if (mounted) {
-          setState(() {
-            _price = price;
-            _totalPrice = price * config.caratDouble;
-          });
+
+        debugPrint(
+          'Fetched price: $price for config: $config  carat: ${config.caratLabel}',
+        );
+
+        if (!mounted || requestId != _requestId) {
+          return;
         }
+
+        setState(() {
+          _price = price;
+          _totalPrice = price * config.enteredCarat;
+        });
       } catch (e) {
         debugPrint('fetchPrice error: $e');
       } finally {
-        if (mounted) setState(() => _loadingPrice = false);
+        if (mounted && requestId == _requestId) {
+          setState(() => _loadingPrice = false);
+        }
       }
     });
   }
 
   // -------------------------------------------------------------------------
-  // Config update — always triggers a price fetch
+  // Config update
   // -------------------------------------------------------------------------
   void _updateConfig(DiamondConfig newConfig) {
     setState(() => _config = newConfig);
+
     _fetchPrice(newConfig);
   }
 
   // -------------------------------------------------------------------------
-  // Shape change
+  // Shape change — resets carat, color, clarity; keeps shape
   // -------------------------------------------------------------------------
   void _onShapeChanged(DiamondShape shape) {
-    final newConfig = _config.copyWith(shape: shape, caratIndex: 4);
-    final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
+    final newConfig = _config.copyWith(shape: shape);
 
-    // Reset carat field to the new default
-    _caratController.text = normalized.caratDouble.toStringAsFixed(2);
+    final normalized = normalizeConfig(
+      _config,
+      newConfig,
+      _ruleEngine,
+      trigger: NormalizeTrigger.shapeChange,
+      defaultCarat: _defaultCarat,
+    );
+
+    _caratController.value = TextEditingValue(
+      text: normalized.caratDouble.toStringAsFixed(2),
+      selection: TextSelection.collapsed(
+        offset: normalized.caratDouble.toStringAsFixed(2).length,
+      ),
+    );
+
     setState(() => _caratError = null);
 
     _updateConfig(normalized);
   }
 
   void _onYellowShapeChanged(String yellowShape) {
-    final newConfig = _config.copyWith(yellowShape: yellowShape, caratIndex: 4);
+    final newConfig = _config.copyWith(
+      yellowShape: yellowShape,
+      enteredCarat: _defaultCarat,
+    );
 
-    _caratController.text = newConfig.caratDouble.toStringAsFixed(2);
+    _caratController.value = TextEditingValue(
+      text: newConfig.caratDouble.toStringAsFixed(2),
+      selection: TextSelection.collapsed(
+        offset: newConfig.caratDouble.toStringAsFixed(2).length,
+      ),
+    );
+
     setState(() => _caratError = null);
 
     _updateConfig(newConfig);
   }
 
   // -------------------------------------------------------------------------
-  // Carat validation helpers
+  // Carat validation
   // -------------------------------------------------------------------------
   ({double min, double max}) _caratBounds() {
     final isRound = _config.shape == DiamondShape.round;
@@ -135,58 +193,89 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
       return (min: 0.18, max: 1.50);
     }
 
-    return (min: 0.10, max: 2.99); // fallback
+    return (min: 0.10, max: 2.99);
   }
 
   String _caratValidationMessage() {
     final b = _caratBounds();
-    return 'Enter a value between ${b.min.toStringAsFixed(2)} and ${b.max.toStringAsFixed(2)}';
+
+    return 'Enter a value between '
+        '${b.min.toStringAsFixed(2)} '
+        'and '
+        '${b.max.toStringAsFixed(2)}';
   }
 
   // -------------------------------------------------------------------------
-  // Carat change — text field, accepts 0.10 to 10.00
+  // Carat change — keeps color/clarity if still valid, resets only if invalid
   // -------------------------------------------------------------------------
-  void _onCaratChanged(String raw) {
-    final value = double.tryParse(raw);
-    final bounds = _caratBounds();
+  void _commitCarat() {
+    final raw = _caratController.text.trim();
 
-    if (value == null || value < bounds.min || value > bounds.max) {
-      setState(() => _caratError = _caratValidationMessage());
+    if (raw.isEmpty) {
       return;
     }
 
-    setState(() => _caratError = null);
+    final value = double.tryParse(raw);
 
-    // Clamp to bounds before snapping to nearest caratSteps index
-    final clamped = value.clamp(bounds.min, bounds.max);
+    final bounds = _caratBounds();
 
-    int closest = 0;
-    double minDiff = double.infinity;
-    for (int i = 0; i < caratSteps.length; i++) {
-      final stepVal = double.tryParse(caratSteps[i]) ?? 0;
-      final diff = (stepVal - clamped).abs();
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = i;
-      }
+    if (value == null || value < bounds.min || value > bounds.max) {
+      setState(() {
+        _caratError = _caratValidationMessage();
+      });
+
+      return;
     }
 
-    final newConfig = _config.copyWith(caratIndex: closest);
-    final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
+    setState(() {
+      _caratError = null;
+    });
+
+    final newConfig = _config.copyWith(enteredCarat: value);
+
+    final normalized = normalizeConfig(
+      _config,
+      newConfig,
+      _ruleEngine,
+      trigger: NormalizeTrigger.caratChange,
+    );
+
     _updateConfig(normalized);
   }
 
   // -------------------------------------------------------------------------
-  // Color change
+  // Color change — shapeType transitions; keeps carat
   // -------------------------------------------------------------------------
   void _onColorChanged(int index) {
-    final newConfig = _config.copyWith(colorIndex: index);
-    final normalized = normalizeConfig(_config, newConfig, _ruleEngine);
+    final selectedColor = _config.colorOptions[index];
+
+    ShapeType nextShapeType;
+
+    if (selectedColor == 'Yellow Vivid') {
+      nextShapeType = ShapeType.vdf;
+    } else if (selectedColor == 'Yellow Intense') {
+      nextShapeType = ShapeType.iny;
+    } else {
+      nextShapeType = ShapeType.regular;
+    }
+
+    final newConfig = _config.copyWith(
+      colorIndex: index,
+      shapeType: nextShapeType,
+    );
+
+    final normalized = normalizeConfig(
+      _config,
+      newConfig,
+      _ruleEngine,
+      trigger: NormalizeTrigger.colorChange,
+    );
+
     _updateConfig(normalized);
   }
 
   // -------------------------------------------------------------------------
-  // Clarity change
+  // Clarity change — nothing else resets
   // -------------------------------------------------------------------------
   void _onClarityChanged(int newClarityIndex) {
     _updateConfig(
@@ -199,11 +288,13 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Price chart
+  // -------------------------------------------------------------------------
   void _showPriceChart() {
     showDialog(
       context: context,
       barrierColor: Colors.black26,
-      //builder: (_) => PriceChartModal(config: _config, currentPrice: _price),
       builder: (_) =>
           PriceChartModal(config: _config, currentPrice: _totalPrice),
     );
@@ -215,6 +306,7 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
+      resizeToAvoidBottomInset: false,
       appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
       body: SafeArea(
         child: Column(
@@ -222,16 +314,13 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    12 * fem,
-                    28 * fem,
-                    8 * fem,
-                    0 * fem,
-                  ),
+                  padding: EdgeInsets.fromLTRB(12 * fem, 28 * fem, 8 * fem, 0),
                   child: Column(
                     children: [
                       _buildTitle(fem: fem),
+
                       SizedBox(height: 28 * fem),
+
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -239,16 +328,20 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
                             flex: 5,
                             child: DiamondDisplay(config: _config),
                           ),
+
                           SizedBox(width: 28 * fem),
+
                           Expanded(flex: 7, child: _buildControls(fem: fem)),
                         ],
                       ),
+
                       const SizedBox(height: 24),
                     ],
                   ),
                 ),
               ),
             ),
+
             PriceFooter(
               config: _config,
               totalPrice: _totalPrice,
@@ -275,14 +368,17 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
             letterSpacing: 1.20,
           ),
         ),
+
         SizedBox(height: 6 * fem),
+
         MyText(
-          "Know Your Divine Diamond's Value – Select Shape, Carat, Color & Clarity To Get The Price.",
+          "Know Your Divine Diamond's Value – "
+          'Select Shape, Carat, Color & '
+          'Clarity To Get The Price.',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: const Color(0xFF303030),
             fontSize: 15,
-            //fontFamily: 'Montserrat',
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -302,37 +398,50 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
             onYellowShapeChanged: _onYellowShapeChanged,
           ),
         ),
+
         SizedBox(height: 12 * fem),
+
         _ControlCard(
           label: 'Carat',
           fem: fem,
           child: TextField(
             controller: _caratController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+            ],
+
             style: TextStyle(
               fontFamily: 'Montserrat',
               fontSize: 14 * fem,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF2A2A2A),
             ),
+
             decoration: InputDecoration(
               hintText: '0.10 – 2.99',
+
               hintStyle: TextStyle(
                 color: const Color(0xFFAAAAAA),
                 fontSize: 14 * fem,
                 fontFamily: 'Montserrat',
               ),
+
               suffixText: 'ct',
+
               suffixStyle: TextStyle(
                 color: const Color(0xFF2A2A2A),
                 fontFamily: 'Montserrat',
                 fontWeight: FontWeight.w600,
                 fontSize: 14 * fem,
               ),
+
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 12 * fem,
                 vertical: 10 * fem,
               ),
+
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(
@@ -341,6 +450,7 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
                       : const Color(0xFFE4E4E0),
                 ),
               ),
+
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(
@@ -350,16 +460,33 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
                   width: 1.5,
                 ),
               ),
+
               errorText: _caratError,
+
               errorStyle: TextStyle(
                 fontSize: 11 * fem,
                 fontFamily: 'Montserrat',
               ),
             ),
-            onChanged: _onCaratChanged,
+
+            focusNode: _caratFocusNode,
+
+            onChanged: (_) {
+              if (_caratError != null) {
+                setState(() {
+                  _caratError = null;
+                });
+              }
+            },
+
+            onSubmitted: (_) {
+              _commitCarat();
+            },
           ),
         ),
+
         SizedBox(height: 12 * fem),
+
         _ControlCard(
           label: 'Color',
           fem: fem,
@@ -369,7 +496,9 @@ class _DiamondValueScreenState extends ConsumerState<DiamondValueScreen> {
             onChanged: _onColorChanged,
           ),
         ),
+
         SizedBox(height: 12 * fem),
+
         _ControlCard(
           label: 'Clarity',
           fem: fem,
@@ -420,7 +549,9 @@ class _ControlCard extends StatelessWidget {
               color: const Color(0xFF2A2A2A),
             ),
           ),
+
           const SizedBox(height: 10),
+
           child,
         ],
       ),

@@ -2,7 +2,6 @@ import 'package:divine_pos/features/jewellery_customize/data/solitaire_constants
 
 export 'package:divine_pos/features/jewellery_customize/data/solitaire_constants.dart'
     show
-        caratSteps,
         solitaireShapes,
         solusShapes,
         allShapes,
@@ -25,7 +24,11 @@ class DiamondConfig {
   final DiamondShape shape;
   final String yellowShape; // one of solusShapes
   final ShapeType shapeType;
-  final int caratIndex;
+
+  /// Exact user-entered carat value
+  final double enteredCarat;
+
+  //final int caratIndex;
   final int colorIndex;
   final int clarityIndex;
 
@@ -33,7 +36,8 @@ class DiamondConfig {
     required this.shape,
     this.yellowShape = 'Radiant',
     required this.shapeType,
-    required this.caratIndex,
+    //required this.caratIndex,
+    required this.enteredCarat,
     required this.colorIndex,
     required this.clarityIndex,
   });
@@ -100,14 +104,13 @@ class DiamondConfig {
   // ---------------------------------------------------------------------------
   // Convenience getters
   // ---------------------------------------------------------------------------
-  double get caratDouble => double.parse(caratSteps[caratIndex]);
+  double get caratDouble =>
+      enteredCarat; // double.parse(caratSteps[caratIndex]);
   bool get isRound =>
       shapeType == ShapeType.regular && shape == DiamondShape.round;
   bool get isYellowColor =>
       shapeType == ShapeType.vdf || shapeType == ShapeType.iny;
 
-  // Cached so the same list instance is returned when nothing changed,
-  // preventing listEquals from seeing a "new" list on every build.
   late final List<String> colorOptions = getColorOptions(
     caratTo: caratDouble,
     isRound: isRound,
@@ -119,7 +122,7 @@ class DiamondConfig {
     shapeType: shapeType,
   );
 
-  String get caratLabel => caratSteps[caratIndex];
+  String get caratLabel => enteredCarat.toStringAsFixed(2);
   String get colorLabel =>
       colorOptions[colorIndex.clamp(0, colorOptions.length - 1)];
   String get clarityLabel =>
@@ -244,48 +247,13 @@ class DiamondConfig {
   String get diamondCode => '$shapeCode-$caratLabel-$colorLabel-$clarityLabel';
 
   // ---------------------------------------------------------------------------
-  // Price placeholder — replace with real API call
-  // ---------------------------------------------------------------------------
-  int get price {
-    int base = 80000;
-    base += caratIndex * 8000;
-    base += (9 - colorIndex.clamp(0, 9)) * 2000;
-    base += (6 - clarityIndex.clamp(0, 6)) * 1500;
-    return base;
-  }
-
-  String get priceFormatted {
-    final p = price;
-    final lakh = p ~/ 100000;
-    final remainder = p % 100000;
-    final thousand = remainder ~/ 1000;
-    final hundreds = remainder % 1000;
-    if (lakh > 0) {
-      return '₹$lakh,${thousand.toString().padLeft(2, '0')},${hundreds.toString().padLeft(3, '0')}';
-    }
-    return '₹${_formatINR(p)}';
-  }
-
-  static String _formatINR(int n) {
-    final s = n.toString();
-    if (s.length <= 3) return s;
-    final last3 = s.substring(s.length - 3);
-    final rest = s.substring(0, s.length - 3);
-    final parts = <String>[];
-    for (var i = rest.length; i > 0; i -= 2) {
-      parts.insert(0, rest.substring(i < 2 ? 0 : i - 2, i));
-    }
-    return '${parts.join(',')},${last3}';
-  }
-
-  // ---------------------------------------------------------------------------
   // copyWith
   // ---------------------------------------------------------------------------
   DiamondConfig copyWith({
     DiamondShape? shape,
     String? yellowShape,
     ShapeType? shapeType,
-    int? caratIndex,
+    double? enteredCarat,
     int? colorIndex,
     int? clarityIndex,
   }) {
@@ -293,7 +261,7 @@ class DiamondConfig {
       shape: shape ?? this.shape,
       yellowShape: yellowShape ?? this.yellowShape,
       shapeType: shapeType ?? this.shapeType,
-      caratIndex: caratIndex ?? this.caratIndex,
+      enteredCarat: enteredCarat ?? this.enteredCarat,
       colorIndex: colorIndex ?? this.colorIndex,
       clarityIndex: clarityIndex ?? this.clarityIndex,
     );

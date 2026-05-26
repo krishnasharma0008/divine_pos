@@ -455,7 +455,7 @@ class _PriceChartModalState extends ConsumerState<PriceChartModal> {
                                 ),
                               ),
                               MyText(
-                                '${growth.toStringAsFixed(1)}%',
+                                '${growth.toStringAsFixed(2)}%',
                                 style: TextStyle(
                                   fontSize: 10 * fem,
                                   fontWeight: FontWeight.w500,

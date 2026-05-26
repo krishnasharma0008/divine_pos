@@ -296,11 +296,119 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
     );
   }
 
+  // Widget _buildEngravingSection(
+  //   CartDetail item,
+  //   CartNotifier notifier,
+  //   double fem,
+  // ) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Row(
+  //         children: [
+  //           Checkbox(
+  //             value: _engravingEnabled,
+  //             onChanged: (value) {
+  //               setState(() => _engravingEnabled = value ?? false);
+  //               notifier.toggleEngraving(item.id ?? 0, value ?? false);
+  //             },
+  //             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  //             visualDensity: VisualDensity.compact,
+  //             shape: RoundedRectangleBorder(
+  //               borderRadius: BorderRadius.circular(4 * fem),
+  //             ),
+  //             side: BorderSide(
+  //               width: 0.88,
+  //               color: Colors.black.withValues(alpha: 0.10),
+  //             ),
+  //             activeColor: Colors.black,
+  //             checkColor: Colors.white,
+  //           ),
+  //           MyText(
+  //             'Add Engraving',
+  //             style: TextStyle(
+  //               color: const Color(0xFF0A0A0A),
+  //               fontSize: 14 * fem,
+  //               fontWeight: FontWeight.w400,
+  //               height: 1.43,
+  //             ),
+  //           ),
+  //           SizedBox(width: 4 * fem),
+  //           MyText(
+  //             '(+ ₹ 1,000)',
+  //             style: TextStyle(
+  //               color: const Color(0xFF697282),
+  //               fontSize: 14 * fem,
+  //               fontWeight: FontWeight.w400,
+  //               height: 1.43,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //       if (_engravingEnabled) ...[
+  //         SizedBox(height: 8 * fem),
+  //         Container(
+  //           padding: EdgeInsets.all(16 * fem),
+  //           decoration: BoxDecoration(
+  //             color: const Color(0x19BEE4DD),
+  //             borderRadius: BorderRadius.circular(14),
+  //             border: Border.all(color: const Color(0x4CBEE4DD)),
+  //           ),
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               MyText(
+  //                 'Engraving Text',
+  //                 style: TextStyle(
+  //                   fontWeight: FontWeight.w600,
+  //                   fontSize: 14 * fem,
+  //                 ),
+  //               ),
+  //               SizedBox(height: 10 * fem),
+  //               TextField(
+  //                 key: ValueKey('engraving_${item.id}'),
+  //                 maxLength: 100,
+  //                 controller: _engravingController,
+  //                 onChanged: (val) =>
+  //                     notifier.updateEngravingText(item.id ?? 0, val),
+  //                 decoration: const InputDecoration(
+  //                   hintText: 'Enter your engraving text (max 10 words)',
+  //                   border: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.all(Radius.circular(10)),
+  //                     borderSide: BorderSide(color: Color(0xFFE2ECE9)),
+  //                   ),
+  //                   counterText: '',
+  //                   isDense: true,
+  //                   contentPadding: EdgeInsets.symmetric(
+  //                     horizontal: 12,
+  //                     vertical: 10,
+  //                   ),
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 4),
+  //               const Text(
+  //                 'Maximum 10 words',
+  //                 style: TextStyle(fontSize: 11, color: Colors.grey),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //       SizedBox(height: 14 * fem),
+  //     ],
+  //   );
+  // }
+
   Widget _buildEngravingSection(
     CartDetail item,
     CartNotifier notifier,
     double fem,
   ) {
+    void toggleEngraving(bool value) {
+      setState(() => _engravingEnabled = value);
+      notifier.toggleEngraving(item.id ?? 0, value);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -308,10 +416,7 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
           children: [
             Checkbox(
               value: _engravingEnabled,
-              onChanged: (value) {
-                setState(() => _engravingEnabled = value ?? false);
-                notifier.toggleEngraving(item.id ?? 0, value ?? false);
-              },
+              onChanged: (value) => toggleEngraving(value ?? false),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
               shape: RoundedRectangleBorder(
@@ -324,23 +429,31 @@ class _CartItemCardState extends ConsumerState<CartItemCard> {
               activeColor: Colors.black,
               checkColor: Colors.white,
             ),
-            MyText(
-              'Add Engraving',
-              style: TextStyle(
-                color: const Color(0xFF0A0A0A),
-                fontSize: 14 * fem,
-                fontWeight: FontWeight.w400,
-                height: 1.43,
-              ),
-            ),
-            SizedBox(width: 4 * fem),
-            MyText(
-              '(+ ₹ 1,000)',
-              style: TextStyle(
-                color: const Color(0xFF697282),
-                fontSize: 14 * fem,
-                fontWeight: FontWeight.w400,
-                height: 1.43,
+            GestureDetector(
+              onTap: () => toggleEngraving(!_engravingEnabled),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  MyText(
+                    'Add Engraving',
+                    style: TextStyle(
+                      color: const Color(0xFF0A0A0A),
+                      fontSize: 14 * fem,
+                      fontWeight: FontWeight.w400,
+                      height: 1.43,
+                    ),
+                  ),
+                  SizedBox(width: 4 * fem),
+                  MyText(
+                    '(+ ₹ 1,000)',
+                    style: TextStyle(
+                      color: const Color(0xFF697282),
+                      fontSize: 14 * fem,
+                      fontWeight: FontWeight.w400,
+                      height: 1.43,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

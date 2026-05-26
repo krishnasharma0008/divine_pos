@@ -67,6 +67,10 @@ class DiamondPriceRepository {
       _ => color,
     };
 
+    debugPrint(
+      'Fetching price for itemGroup: $itemGroup, slab: $slab, shape: $shape, color: $color, quality: $quality',
+    );
+
     final response = await dio.post(
       ApiEndPoint.get_price,
       data: {
@@ -85,6 +89,7 @@ class DiamondPriceRepository {
     }
 
     final body = response.data;
+    debugPrint('📦 fetchPrice raw body => $body');
     if (body == null || body['success'] != true) {
       throw Exception('Invalid price response');
     }
@@ -98,13 +103,6 @@ class DiamondPriceRepository {
     throw Exception('Invalid price response: $body');
   }
 
-  // -------------------------------------------------------------------------
-  // comparePastPrices
-  // mirrors callWebService(`${url}?countrycode=${countryCode}&islocal=0`, {
-  //               method, params: state })
-  // state = { shape, colour, clarity, cts, month, year, day }
-  // returns: res.data.data = IPastPrice { past_price, difference }
-  // -------------------------------------------------------------------------
   Future<ComparePriceResult> comparePastPrices({
     required String shape,
     required String colour,

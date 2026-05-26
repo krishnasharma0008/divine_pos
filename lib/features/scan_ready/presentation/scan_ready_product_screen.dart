@@ -207,14 +207,14 @@ class _ScanReadyProductScreenState
               : products.isEmpty
               ? _ScanPromptView(
                   key: const ValueKey('prompt'),
-                  //onScan: _openScanPopup,
-                  onScan: () async {
-                    await ref
-                        .read(scanReadyProvider.notifier)
-                        .addByScannedCode('9ENX79');
+                  onScan: _openScanPopup,
+                  // onScan: () async {
+                  //   await ref
+                  //       .read(scanReadyProvider.notifier)
+                  //       .addByScannedCode('9ENX79');
 
-                    if (!context.mounted) return;
-                  },
+                  //   if (!context.mounted) return;
+                  // },
                 )
               : _buildCompareView(products),
         ),

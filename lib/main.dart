@@ -16,10 +16,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   /// Force landscape orientation
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+  // await SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.landscapeLeft,
+  //   DeviceOrientation.landscapeRight,
+  // ]);
 
   /// Init Hive
   await Hive.initFlutter();
