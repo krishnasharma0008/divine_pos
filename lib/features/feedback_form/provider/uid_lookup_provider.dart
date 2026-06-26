@@ -26,16 +26,20 @@ class UidLookupNotifier extends Notifier<AsyncValue<UidLookupResult?>> {
       final auth = ref.read(authProvider);
       final pjcode = auth.user?.pjcode;
 
+      debugPrint('Starting UID lookup for "$uid" with pjcode: $pjcode');
+
       final res = await dio.post(
         ApiEndPoint.get_jewellery_listing,
         data: {
           'item_number': uid.trim(),
           'pageno': 1,
           if (pjcode != null) 'laying_with': pjcode, // ← only sent if not null
+          'only_own': 1,
         },
       );
 
       final raw = res.data;
+      debugPrint('UID Lookup response: $raw');
       if (raw['success'] != true) {
         throw Exception(raw['message'] ?? 'Not found');
       }
@@ -52,7 +56,7 @@ class UidLookupNotifier extends Notifier<AsyncValue<UidLookupResult?>> {
 
       final result = UidLookupResult(
         uid:
-            item['designno']?.toString() ??
+            item['item_number']?.toString() ??
             uid.trim(), // ← 'designno' from response
         mrp: (rawMrp as num).toDouble(),
       );

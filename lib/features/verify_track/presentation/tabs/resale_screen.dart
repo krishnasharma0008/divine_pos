@@ -218,7 +218,7 @@ class _UpgradeTabState extends State<_UpgradeTab> {
               child: MyText(
                 'Minimum amount to upgrade is '
                 '${p.upgradeMinimumPrice.inRupeesFormat()}',
-                style: TextStyle(fontSize: 12 * fem, color: AppColors.textDark),
+                style: TextStyle(fontSize: 12 * fem, color: Colors.red),
               ),
             ),
           ],
@@ -226,29 +226,34 @@ class _UpgradeTabState extends State<_UpgradeTab> {
           SizedBox(height: 20 * fem),
 
           // Black approximate value box
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 16 * fem),
-            decoration: const BoxDecoration(color: AppColors.textDark),
-            child: Column(
-              children: [
-                MyText(
-                  _approxValue > 0 ? _approxValue.inRupeesFormat() : '₹0',
-                  style: TextStyle(
-                    fontSize: 20 * fem,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.white,
+          if (_approxValue > 0) ...[
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 16 * fem),
+              decoration: const BoxDecoration(color: AppColors.textDark),
+              child: Column(
+                children: [
+                  MyText(
+                    _approxValue > 0 ? _approxValue.inRupeesFormat() : '₹0',
+                    style: TextStyle(
+                      fontSize: 20 * fem,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.white,
+                    ),
                   ),
-                ),
-                SizedBox(height: 6 * fem),
-                MyText(
-                  'Approximate Value Payable:',
-                  style: TextStyle(fontSize: 13 * fem, color: AppColors.white),
-                ),
-              ],
+                  SizedBox(height: 6 * fem),
+                  MyText(
+                    'Approximate Value Payable:',
+                    style: TextStyle(
+                      fontSize: 13 * fem,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          SizedBox(height: 24 * fem),
+            SizedBox(height: 24 * fem),
+          ],
 
           // Buttons — PROCEED disabled until amount >= minimum
           // Row(

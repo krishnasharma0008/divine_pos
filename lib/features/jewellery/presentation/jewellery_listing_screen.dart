@@ -176,7 +176,10 @@ class _JewelleryListingScreenState
         actions: [
           AppBarActionConfig(
             type: AppBarAction.search,
-            onTap: () => context.pushNamed(RoutePages.scanready.routeName),
+            //onTap: () => context.pushNamed(RoutePages.scanready.routeName),
+            onTap: () {
+              context.pushNamed(RoutePages.readyproduct.routeName);
+            },
           ),
           // AppBarActionConfig(
           //   type: AppBarAction.notification,

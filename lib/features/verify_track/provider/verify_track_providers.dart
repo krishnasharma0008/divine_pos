@@ -20,7 +20,7 @@ class VerifyTrackRepository {
   }) async {
     final endpoint = '$_base/getproductinfo/${uid.toUpperCase()}';
 
-    debugPrint('>>> VerifyTrack URL: $endpoint');
+    //debugPrint('>>> VerifyTrack URL: $endpoint');
 
     final response = await _dio.get<Map<String, dynamic>>(
       endpoint,
@@ -30,6 +30,8 @@ class VerifyTrackRepository {
         receiveTimeout: const Duration(seconds: 60),
       ),
     );
+
+    debugPrint('<<< VerifyTrack response for UID "$uid": ${response.data}');
 
     return VerifyTrackByUidResponse.fromJson(
       response.data as Map<String, dynamic>,

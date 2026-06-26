@@ -5,8 +5,8 @@ import '../../../shared/utils/enums.dart';
 import '../../../shared/themes.dart';
 import '../../../shared/widgets/text.dart';
 import '../../auth/data/auth_notifier.dart';
-import '../../jewellery/data/listing_provider.dart';
 import '../../jewellery/data/store_details.dart';
+import '../../jewellery/data/listing_provider.dart';
 import '../../../shared/utils/scale_size.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
@@ -23,8 +23,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   void initState() {
     super.initState();
 
-    /// Call API once
-    Future.microtask(() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final authRepo = ref.read(authProvider);
       final pjcode = authRepo.user?.pjcode;
 
@@ -38,43 +37,13 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     final storeState = ref.watch(storeProvider);
-
     final fem = ScaleSize.aspectRatio;
-
-    // if (storeState.isLoading) {
-    //   return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    // }
-
-    // if (storeState.stores.isEmpty) {
-    //   return const Scaffold(body: Center(child: Text('Store not found')));
-    // }
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: MyAppBar(
-        appBarLeading: AppBarLeading.back,
-        showLogo: false,
-        // actions: [
-        //   AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
-        //   AppBarActionConfig(
-        //     type: AppBarAction.notification,
-        //     badgeCount: 1,
-        //     onTap: () => context.push('/notifications'),
-        //   ),
-        //   AppBarActionConfig(
-        //     type: AppBarAction.profile,
-        //     onTap: () => context.push('/profile'),
-        //   ),
-        //   AppBarActionConfig(
-        //     type: AppBarAction.cart,
-        //     badgeCount: 2,
-        //     onTap: () => context.push('/cart'),
-        //   ),
-        // ],
-      ),
-      //drawer: const SideDrawer(),
+      appBar: MyAppBar(appBarLeading: AppBarLeading.back, showLogo: false),
       body: storeState.isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : storeState.stores.isEmpty
           ? Center(
               child: MyText(
@@ -87,7 +56,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: 640 * fem),
-                  //child: _StoreCard(store: mainBranch, subBranches: subBranches),
                   child: _StoreCard(stores: storeState.stores, fem: fem),
                 ),
               ),
@@ -97,29 +65,39 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
 }
 
 class _StoreCard extends StatelessWidget {
-  // final StoreDetail store;
-  // final List<StoreDetail> subBranches;
-
-  // const _StoreCard({required this.store, required this.subBranches});
   final double fem;
-
   final List<StoreDetail> stores;
-  _StoreCard({required this.stores, required this.fem}) {
-    store = stores.firstWhere(
-      (s) => s.locationType.toUpperCase() == 'MAIN BRANCH',
-    );
 
-    subBranches = stores.where((s) {
-      return s.locationType.toUpperCase() == 'OUTLET' &&
-          s.pCustomerCode == store.code;
-    }).toList();
-  }
-
-  late final StoreDetail store;
-  late final List<StoreDetail> subBranches;
+  const _StoreCard({required this.stores, required this.fem, super.key});
 
   @override
   Widget build(BuildContext context) {
+    if (stores.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(24 * fem),
+        decoration: BoxDecoration(
+          color: MyThemes.White,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: MyText('Store not found', style: TextStyle(fontSize: 16 * fem)),
+      );
+    }
+
+    final StoreDetail store = stores.firstWhere(
+      (s) => s.locationType.trim().toUpperCase() == 'MAIN BRANCH',
+      orElse: () => stores.firstWhere(
+        (s) => s.locationType.trim().toUpperCase() != 'OUTLET',
+        orElse: () => stores.first,
+      ),
+    );
+
+    final bool isOutlet = store.locationType.trim().toUpperCase() == 'OUTLET';
+
+    final List<StoreDetail> subBranches = stores.where((s) {
+      return s.locationType.trim().toUpperCase() == 'OUTLET' &&
+          s.pCustomerCode == store.code;
+    }).toList();
+
     return Container(
       padding: EdgeInsets.fromLTRB(24 * fem, 32 * fem, 24 * fem, 24 * fem),
       decoration: BoxDecoration(
@@ -149,28 +127,49 @@ class _StoreCard extends StatelessWidget {
             fem: fem,
           ),
           SizedBox(height: 12 * fem),
-          _InfoField(label: 'Name', value: store.salesPerson, fem: fem),
-          SizedBox(height: 8 * fem),
-          _InfoField(label: 'Mobile', value: 'N/A', fem: fem),
-          SizedBox(height: 24 * fem),
-          const _SectionDivider(),
-          SizedBox(height: 12 * fem),
-          SectionTitle(
-            icon: Icons.store_outlined,
-            title: 'Sub Branches',
+          _InfoField(
+            label: 'Name',
+            value: store.salesPerson.isNotEmpty ? store.salesPerson : 'N/A',
             fem: fem,
           ),
-          SizedBox(height: 12 * fem),
-          if (subBranches.isNotEmpty)
-            Column(
-              children: subBranches.map((branch) {
-                return BranchTile(
-                  title: branch.nickName,
-                  address: branch.address,
-                  fem: fem,
-                );
-              }).toList(),
+          SizedBox(height: 8 * fem),
+          _InfoField(
+            label: 'Mobile',
+            value: store.contactNo?.isNotEmpty == true
+                ? store.contactNo!
+                : 'N/A',
+            fem: fem,
+          ),
+
+          if (!isOutlet) ...[
+            SizedBox(height: 24 * fem),
+            const _SectionDivider(),
+            SizedBox(height: 12 * fem),
+            SectionTitle(
+              icon: Icons.store_outlined,
+              title: 'Sub Branches',
+              fem: fem,
             ),
+            SizedBox(height: 12 * fem),
+            if (subBranches.isNotEmpty)
+              Column(
+                children: subBranches.map((branch) {
+                  return BranchTile(
+                    title: branch.nickName,
+                    address: branch.address,
+                    fem: fem,
+                  );
+                }).toList(),
+              )
+            else
+              MyText(
+                'No sub branches found',
+                style: TextStyle(
+                  fontSize: 14 * fem,
+                  color: MyThemes.Muted_grey,
+                ),
+              ),
+          ],
         ],
       ),
     );
@@ -180,6 +179,7 @@ class _StoreCard extends StatelessWidget {
 class _StoreHeader extends StatelessWidget {
   final StoreDetail store;
   final double fem;
+
   const _StoreHeader({required this.store, required this.fem});
 
   @override
@@ -199,9 +199,10 @@ class _StoreHeader extends StatelessWidget {
             fontSize: 16 * fem,
             fontWeight: FontWeight.w400,
             letterSpacing: 0.4,
-            color: Color(0xFF697282),
+            color: const Color(0xFF697282),
             height: 1.5,
           ),
+          textAlign: TextAlign.center,
         ),
         SizedBox(height: 4 * fem),
         MyText(
@@ -211,6 +212,7 @@ class _StoreHeader extends StatelessWidget {
             fontSize: 13 * fem,
             color: MyThemes.Muted_grey,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -220,11 +222,12 @@ class _StoreHeader extends StatelessWidget {
 class _JewellerContact extends StatelessWidget {
   final StoreDetail store;
   final double fem;
+
   const _JewellerContact({required this.store, required this.fem});
 
   @override
   Widget build(BuildContext context) {
-    final contact = (store.contactNo?.isNotEmpty == true)
+    final String contact = store.contactNo?.isNotEmpty == true
         ? store.contactNo!
         : 'N/A';
 
@@ -244,7 +247,11 @@ class _JewellerContact extends StatelessWidget {
               color: Color(0xFFBEE4DD),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.call, size: 20 * fem, color: Color(0xFF1D2838)),
+            child: Icon(
+              Icons.call,
+              size: 20 * fem,
+              color: const Color(0xFF1D2838),
+            ),
           ),
           SizedBox(width: 16 * fem),
           Expanded(
@@ -255,7 +262,7 @@ class _JewellerContact extends StatelessWidget {
                 MyText(
                   'Jeweller Contact',
                   style: TextStyle(
-                    color: Color(0xFF697282),
+                    color: const Color(0xFF697282),
                     fontSize: 16 * fem,
                     fontFamily: 'Montserrat',
                   ),
@@ -263,7 +270,7 @@ class _JewellerContact extends StatelessWidget {
                 MyText(
                   contact,
                   style: TextStyle(
-                    color: Color(0xFF1D2838),
+                    color: const Color(0xFF1D2838),
                     fontSize: 16 * fem,
                     fontFamily: 'Montserrat',
                   ),
@@ -315,7 +322,7 @@ class SectionTitle extends StatelessWidget {
           child: MyText(
             suffix == null ? title : '$title $suffix',
             style: TextStyle(
-              color: Color(0xFF354152),
+              color: const Color(0xFF354152),
               fontSize: 16 * fem,
               fontFamily: 'Montserrat',
             ),
@@ -332,6 +339,7 @@ class _InfoField extends StatelessWidget {
   final String label;
   final String value;
   final double fem;
+
   const _InfoField({
     required this.label,
     required this.value,
@@ -376,6 +384,7 @@ class BranchTile extends StatelessWidget {
   final String title;
   final String address;
   final double fem;
+
   const BranchTile({
     super.key,
     required this.title,
@@ -399,7 +408,7 @@ class BranchTile extends StatelessWidget {
           MyText(
             title.toUpperCase(),
             style: TextStyle(
-              color: Color(0xFF1D2838),
+              color: const Color(0xFF1D2838),
               fontSize: 16 * fem,
               fontFamily: 'Montserrat',
             ),
@@ -408,7 +417,7 @@ class BranchTile extends StatelessWidget {
           MyText(
             address,
             style: TextStyle(
-              color: Color(0xFF495565),
+              color: const Color(0xFF495565),
               fontSize: 16 * fem,
               fontFamily: 'Montserrat',
             ),

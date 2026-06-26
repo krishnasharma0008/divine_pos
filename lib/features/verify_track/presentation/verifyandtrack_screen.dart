@@ -104,7 +104,13 @@ class _VerifyAndTrackScreenState extends ConsumerState<VerifyAndTrackScreen> {
         appBarLeading: AppBarLeading.drawer,
         showLogo: true,
         actions: [
-          AppBarActionConfig(type: AppBarAction.search, onTap: () {}),
+          AppBarActionConfig(
+            type: AppBarAction.search,
+            //onTap: () => context.pushNamed(RoutePages.scanready.routeName),
+            onTap: () {
+              context.pushNamed(RoutePages.readyproduct.routeName);
+            },
+          ),
           AppBarActionConfig(
             type: AppBarAction.profile,
             onTap: () => context.push('/profile'),

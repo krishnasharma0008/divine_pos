@@ -18,6 +18,7 @@ enum RoutePages {
   account,
   feedbackform,
   scanready,
+  readyproduct,
 }
 
 extension RoutePagesExtension on RoutePages {
@@ -79,6 +80,9 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.scanready:
         return "/scan_ready";
+
+      case RoutePages.readyproduct:
+        return "/ready_product";
     }
   }
 
@@ -140,6 +144,9 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.scanready:
         return "scan_ready";
+
+      case RoutePages.readyproduct:
+        return "ready_product";
     }
   }
 
@@ -201,6 +208,9 @@ extension RoutePagesExtension on RoutePages {
 
       case RoutePages.scanready:
         return "Scan Ready";
+
+      case RoutePages.readyproduct:
+        return "Ready Product";
     }
   }
 }

@@ -22,24 +22,21 @@ class _DiamondShapeMeta {
 }
 
 const _diamondShapes = [
-  _DiamondShapeMeta(
-    name: 'Round',
-    assetPath: 'assets/images/diamond_round.png',
-  ),
-  _DiamondShapeMeta(
-    name: 'Princess',
-    assetPath: 'assets/images/diamond_princess.png',
-  ),
-  _DiamondShapeMeta(name: 'Oval', assetPath: 'assets/images/diamond_oval.png'),
-  _DiamondShapeMeta(
-    name: 'Cushion',
-    assetPath: 'assets/images/diamond_cushion.png',
-  ),
-  _DiamondShapeMeta(name: 'Pear', assetPath: 'assets/images/diamond_pear.png'),
-  _DiamondShapeMeta(
-    name: 'Emerald',
-    assetPath: 'assets/images/diamond_emerald.png',
-  ),
+  _DiamondShapeMeta(name: 'Round', assetPath: 'assets/diamond_value/round.png'),
+  // _DiamondShapeMeta(
+  //   name: 'Princess',
+  //   assetPath: 'assets/images/diamond_princess.png',
+  // ),
+  // _DiamondShapeMeta(name: 'Oval', assetPath: 'assets/images/diamond_oval.png'),
+  // _DiamondShapeMeta(
+  //   name: 'Cushion',
+  //   assetPath: 'assets/images/diamond_cushion.png',
+  // ),
+  // _DiamondShapeMeta(name: 'Pear', assetPath: 'assets/images/diamond_pear.png'),
+  // _DiamondShapeMeta(
+  //   name: 'Emerald',
+  //   assetPath: 'assets/images/diamond_emerald.png',
+  // ),
 ];
 
 const _caratSteps = [
@@ -85,12 +82,16 @@ class _PydsAddButtonState extends ConsumerState<_PydsAddButton> {
     setState(() => _isFetching = true);
     try {
       final dio = ref.read(httpClientProvider);
+
+      debugPrint(
+        'Fetching price for: shape=${widget.shape}, carat=${widget.carat}, color=${widget.color}, clarity=${widget.clarity}',
+      );
       final response = await dio.post(
         ApiEndPoint.get_price,
         data: {
           'itemgroup': 'SOLITAIRE',
           'weight': double.parse(widget.carat),
-          'shape': widget.shape,
+          'shape': 'RND',
           'color': widget.color,
           'quality': widget.clarity,
         },
@@ -101,11 +102,12 @@ class _PydsAddButtonState extends ConsumerState<_PydsAddButton> {
       }
 
       final body = response.data;
+      debugPrint('Price API response: $body');
       if (body == null || body['success'] != true) {
         throw Exception('Invalid price response');
       }
 
-      final price = body['price'];
+      final price = body['price']; // Assuming price is per carat
       if (price is! num) throw Exception('Invalid price response: $body');
 
       widget.onAdd(
@@ -114,7 +116,7 @@ class _PydsAddButtonState extends ConsumerState<_PydsAddButton> {
           carat: widget.carat,
           color: widget.color,
           clarity: widget.clarity,
-          mrp: price.toDouble(),
+          mrp: price.toDouble() * double.parse(widget.carat),
         ),
       );
     } catch (e) {

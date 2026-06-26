@@ -55,6 +55,7 @@ class _UpgradeAddUidRowState extends ConsumerState<_UpgradeAddUidRow> {
           'item_number': uid,
           'pageno': 1,
           if (pjcode != null) 'laying_with': pjcode,
+          'only_own': 1,
         },
       );
 
@@ -71,7 +72,7 @@ class _UpgradeAddUidRowState extends ConsumerState<_UpgradeAddUidRow> {
 
       widget.onAdd(
         ProductDetail(
-          uid: item['designno']?.toString() ?? uid,
+          uid: item['item_number']?.toString() ?? uid,
           mrp: (rawMrp as num).toDouble(),
         ),
       );
